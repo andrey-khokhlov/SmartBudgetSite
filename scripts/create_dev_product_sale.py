@@ -47,7 +47,7 @@ def main() -> None:
                 slug="smartbudget-int-standard",
                 name="SmartBudget",
                 edition="Standard",
-                version="1.0",
+
                 archive_path="dev/smartbudget-int-standard.zip",
                 status="in_sale",
             )

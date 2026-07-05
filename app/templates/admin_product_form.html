@@ -9,6 +9,12 @@
 <div class="admin-form">
     <h1 class="admin-form-title">{{ page_title }}</h1>
 
+    {% if request.query_params.get("error") == "duplicate_product" %}
+        <div class="admin-error">
+            Product with this slug and edition already exists.
+        </div>
+    {% endif %}
+
     <form method="post" action="{{ form_action }}" class="admin-form-body">
 
         <div class="form-group">
@@ -42,11 +48,6 @@
                 </option>
                 {% endfor %}
             </select>
-        </div>
-
-        <div class="form-group">
-            <label>Version</label>
-            <input type="text" name="version" value="{{ product.version if product else '' }}" required>
         </div>
 
         <div class="form-group">

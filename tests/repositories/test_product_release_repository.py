@@ -10,7 +10,7 @@ def create_test_product(db_session, slug: str = "smartbudget-test-standard") -> 
         name="SmartBudget",
         archive_path="legacy/path.zip",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
     )
 

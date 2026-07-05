@@ -22,7 +22,7 @@ def test_admin_products_list_page_renders_products(
         slug="smartbudget-ru-standard",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="products/smartbudget-ru-standard/v1/archive.zip",
         status="in_sale",
     )
@@ -42,7 +42,6 @@ def test_admin_products_list_page_renders_products(
     assert response.status_code == 200
     assert "SmartBudget" in response.text
     assert "Standard" in response.text
-    assert "1.0" in response.text
     assert "in_sale" in response.text
     assert "49.00 RUB" in response.text
 

@@ -5,3 +5,13 @@
 .products-page {
     max-width: 900px;
 }
+
+.admin-error {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #dc2626;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-weight: 600;
+}

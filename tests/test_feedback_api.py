@@ -92,7 +92,7 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
         slug="smartbudget",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )

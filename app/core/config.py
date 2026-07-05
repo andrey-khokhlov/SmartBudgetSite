@@ -38,6 +38,12 @@ class Settings(BaseSettings):
 
     ADMIN_TOKEN: str = ""
 
+    R2_ACCOUNT_ID: str | None = None
+    R2_ACCESS_KEY_ID: str | None = None
+    R2_SECRET_ACCESS_KEY: str | None = None
+    R2_BUCKET_NAME: str | None = None
+    R2_PRODUCT_RELEASES_PREFIX: str = "product-releases"
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
         env_file_encoding="utf-8",

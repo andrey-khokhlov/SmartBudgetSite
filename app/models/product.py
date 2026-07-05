@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Date, DateTime, UniqueConstraint, func
+from sqlalchemy import String, Date, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from app.core.db import Base
@@ -16,10 +16,6 @@ ALLOWED_PRODUCT_STATUSES = {"in_sale", "in_development", "discontinued"}
 
 class Product(Base):
     __tablename__ = "products"
-
-    __table_args__ = (
-        UniqueConstraint("slug", "edition", "version", name="uq_products_slug_edition_version"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
@@ -42,9 +38,6 @@ class Product(Base):
 
     # Product edition / variant, e.g. Standard, Pro
     edition: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-
-    # Semantic or business version, e.g. 1.0
-    version: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Release date can be empty for products still in development
     release_date: Mapped[date | None] = mapped_column(Date, nullable=True)

@@ -13,11 +13,22 @@
             <h1 class="admin-form-title">Manage Product Releases</h1>
 
             <p>
-                <strong>Product ID:</strong> {{ product_id }}
+                <strong>Product:</strong>
+                {{ product.name }}
+                / {{ package }}
+                / {{ product.edition }}
+                / {{ product.slug }}
+            </p>
+
+            <p>
+                <strong>Product ID:</strong> {{ product.id }}
             </p>
         </div>
 
-        <a href="#" class="btn-primary product-releases-upload-link">
+        <a
+            href="/products/{{ product_id }}/releases/new"
+            class="btn-primary product-releases-upload-link"
+        >
             Upload Release
         </a>
     </div>

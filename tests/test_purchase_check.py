@@ -47,7 +47,7 @@ def test_check_purchase_verified(client, db_session):
         slug="smartbudget",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )
@@ -132,7 +132,7 @@ def test_product_invalid_edition(db_session):
             slug="smartbudget-invalid",
             name="SmartBudget",
             edition="InvalidEdition",
-            version="1.0",
+
             status="in_sale",
             archive_path="test/path.zip",
         )
@@ -165,7 +165,7 @@ def test_check_purchase_returns_product_item_type(client, db_session):
         slug="smartbudget-ru-standard",
         name="SmartBudget RU Standard",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )

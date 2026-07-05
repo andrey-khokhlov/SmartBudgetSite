@@ -13,7 +13,7 @@ def test_set_product_price_creates_first_active_price(db_session):
         slug="smartbudget-ru-standard",
         name="SmartBudget RU Standard",
         edition="Standard",
-        version="1.0",
+
         archive_path="products/smartbudget-ru-standard/v1/archive.zip",
         status="in_sale",
     )
@@ -51,7 +51,7 @@ def test_set_product_price_replaces_active_price(db_session):
         slug="smartbudget-ru-standard",
         name="SmartBudget RU Standard",
         edition="Standard",
-        version="1.0",
+
         archive_path="products/smartbudget-ru-standard/v1/archive.zip",
         status="in_sale",
     )
@@ -99,7 +99,7 @@ def test_set_product_price_rejects_unsupported_currency(db_session):
         slug="smartbudget-ru-standard",
         name="SmartBudget RU Standard",
         edition="Standard",
-        version="1.0",
+
         archive_path="products/smartbudget-ru-standard/v1/archive.zip",
         status="in_sale",
     )

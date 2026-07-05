@@ -52,7 +52,7 @@ def create_product_sale(
         sale_id=sale.id,
         item_type=SaleItemType.PRODUCT,
         product_id=product.id,
-        item_name=f"{product.name} {product.edition} {product.version}",
+        item_name=f"{product.name} {product.edition}",
         currency_code=currency,
         amount=amount,
         quantity=1,

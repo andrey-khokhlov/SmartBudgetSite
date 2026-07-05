@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_product_releases.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-form product-releases-page">
+
+    <h1 class="admin-form-title">Upload Product Release</h1>
+
+    {% if request.query_params.get("error") == "r2_upload_failed" %}
+        <div class="admin-error">
+            R2 upload failed. Check network access or storage configuration.
+        </div>
+    {% endif %}
+
+    <p>
+        <strong>Product:</strong>
+        {{ product.name }}
+        / {{ package }}
+        / {{ product.edition }}
+        / {{ product.slug }}
+    </p>
+
+    <p>
+        <strong>Product ID:</strong> {{ product.id }}
+    </p>
+
+    {% if latest_release %}
+        <p>
+            <strong>Latest release:</strong>
+            {{ latest_release.version }}
+        </p>
+    {% else %}
+        <p>
+            <strong>Latest release:</strong>
+            none yet
+        </p>
+    {% endif %}
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+        <div class="form-group">
+            <label for="version">Version</label>
+            <input
+                id="version"
+                name="version"
+                type="text"
+                placeholder="example: 1.0"
+                required
+            >
+        </div>
+
+        <small>
+            Enter the new release version. Current latest:
+            {% if latest_release %}{{ latest_release.version }}{% else %}none{% endif %}
+        </small>
+
+        <div class="form-group">
+            <label for="release_notes">Release notes</label>
+            <textarea
+                id="release_notes"
+                name="release_notes"
+                rows="6"
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="release_file">Release file</label>
+            <input
+                id="release_file"
+                name="release_file"
+                type="file"
+                required
+            >
+        </div>
+
+        <button type="submit" class="btn-primary">
+            Upload Release
+        </button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="/products/{{ product_id }}/releases">
+            Back to releases
+        </a>
+    </p>
+
+</div>
+{% endblock %}

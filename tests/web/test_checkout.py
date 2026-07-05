@@ -20,7 +20,7 @@ def test_checkout_with_consultation_shows_product_addon_and_total(client, db_ses
         slug="smartbudget-ru-standard-checkout-addon-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="",
         status="in_sale",
     )
@@ -73,7 +73,7 @@ def test_checkout_with_consultation_rejects_currency_mismatch(client, db_session
         slug="smartbudget-ru-standard-currency-mismatch-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="",
         status="in_sale",
     )
@@ -125,7 +125,7 @@ def test_checkout_with_consultation_uses_addon_usage_type_only(client, db_sessio
         slug="smartbudget-ru-standard-addon-usage-type-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="",
         status="in_sale",
     )

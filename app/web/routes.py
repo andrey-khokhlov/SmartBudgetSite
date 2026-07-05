@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Request, HTTPException, Depends, Form, Query
+import hashlib
+
+from fastapi import APIRouter, Request, HTTPException, Depends, Form, Query, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -21,15 +23,19 @@ from app.services.consultation_entitlement_service import (
     get_valid_consultation_entitlement_by_token,
 )
 from app.services.product_release_service import ProductReleaseService
+from app.services.storage.r2_storage_service import R2StorageService
+
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
 from app.utils.product_utils import get_product_package
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from app.models.product import Product
 from datetime import timezone, timedelta
 from decimal import Decimal
+from botocore.exceptions import BotoCoreError, ClientError
 
 
 moscow_tz = timezone(timedelta(hours=3))
@@ -326,8 +332,7 @@ async def admin_products_create(
     name: str = Form(...),
     slug: str = Form(...),
     edition: str = Form(...),
-    version: str = Form(...),
-    archive_path: str = Form(...),
+    archive_path: str = Form(default=""),
     price: Decimal = Form(...),
     currency_code: str = Form(...),
     status: str = Form(...),
@@ -357,26 +362,34 @@ async def admin_products_create(
         name=name.strip(),
         slug=slug.strip(),
         edition=edition,
-        version=version.strip(),
         archive_path=archive_path.strip(),
         status=status,
     )
 
-    db.add(product)
-    db.flush()
+    try:
+        db.add(product)
+        db.flush()
 
-    product_price = ProductPrice(
-        product_id=product.id,
-        currency_code=currency_code.strip().upper(),
-        amount=price,
-        is_active=True,
-    )
+        product_price = ProductPrice(
+            product_id=product.id,
+            currency_code=currency_code.strip().upper(),
+            amount=price,
+            is_active=True,
+        )
 
-    db.add(product_price)
-    db.commit()
+        db.add(product_price)
+        db.commit()
+
+    except IntegrityError:
+        db.rollback()
+
+        return RedirectResponse(
+            url="/admin/products/new?error=duplicate_product",
+            status_code=303,
+        )
 
     return RedirectResponse(
-        url="/admin/products",
+        url=f"/products/{product.id}/releases",
         status_code=303,
     )
 
@@ -442,7 +455,6 @@ async def admin_products_update(
     name: str = Form(...),
     slug: str = Form(...),
     edition: str = Form(...),
-    version: str = Form(...),
     price: Decimal = Form(...),
     currency_code: str = Form(...),
     status: str = Form(...),
@@ -477,7 +489,6 @@ async def admin_products_update(
     product.name = name.strip()
     product.slug = slug.strip()
     product.edition = edition
-    product.version = version.strip()
     product.status = status
 
     normalized_currency = currency_code.strip().upper()
@@ -857,22 +868,159 @@ async def admin_sales_list(
     )
 
 
+@admin_router.get(
+    "/products/{product_id}/releases/new",
+    response_class=HTMLResponse,
+)
+def admin_product_release_new(
+    request: Request,
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+        Render the upload release form.
+        Business rules:
+        - Product release upload is a separate admin workflow.
+        - New releases are created as inactive release candidates.
+        Side effects:
+        - None.
+        Invariants/restrictions:
+        - Does not upload files.
+        - Does not create ProductRelease records.
+        - Does not publish releases.
+        """
+    product = db.get(Product, product_id)
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    release_service = ProductReleaseService(db)
+    releases = release_service.list_releases_by_product_id(product_id)
+
+    latest_release = releases[0] if releases else None
+
+    product_slug = str(product.slug)
+    package = get_product_package(product_slug)
+
+    return render(
+        request,
+        "admin_product_release_form.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "package": package,
+            "latest_release": latest_release,
+        },
+    )
+
+
+@admin_router.post("/products/{product_id}/releases/new")
+def admin_product_release_create(
+    product_id: int,
+    version: str = Form(...),
+    release_notes: str = Form(""),
+    release_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a product release file and create an inactive release candidate.
+
+    Business rules:
+    - Release version belongs to ProductRelease, not Product.
+    - Uploaded releases are inactive until explicitly published.
+
+    Side effects:
+    - Uploads the release file to Cloudflare R2.
+    - Creates a ProductRelease record.
+
+    Invariants/restrictions:
+    - Product must exist.
+    - Release version format is validated by ProductReleaseService.
+    """
+
+    product = db.get(Product, product_id)
+
+    if product is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found",
+        )
+
+    original_filename = release_file.filename
+
+    if not original_filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Release file must have a filename.",
+        )
+
+    file_content = release_file.file.read()
+
+    file_size = len(file_content)
+    sha256_hash = hashlib.sha256(file_content).hexdigest()
+
+    release_file.file.seek(0)
+
+    storage_service = R2StorageService()
+
+    try:
+        uploaded_object = storage_service.upload_product_release_file(
+            product_slug=str(product.slug),
+            version=version.strip(),
+            filename=original_filename,
+            file_obj=release_file.file,
+        )
+    except (BotoCoreError, ClientError):
+        return RedirectResponse(
+            url=f"/products/{product_id}/releases/new?error=r2_upload_failed",
+            status_code=303,
+        )
+
+    release_service = ProductReleaseService(db)
+
+    release_service.create_release(
+        product_id=product_id,
+        version=version,
+        release_notes=release_notes.strip() or None,
+        storage_provider=uploaded_object.storage_provider,
+        storage_key=uploaded_object.storage_key,
+        original_filename=original_filename,
+        file_size=file_size,
+        sha256_hash=sha256_hash,
+    )
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/products/{product_id}/releases",
+        status_code=303,
+    )
+
+
 @admin_router.get("/products/{product_id}/releases")
 def admin_product_releases(
     request: Request,
     product_id: int,
     db: Session = Depends(get_db),
 ):
+    product = db.get(Product, product_id)
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
     release_service = ProductReleaseService(db)
-
     releases = release_service.list_releases_by_product_id(product_id)
+    product_slug = str(product.slug)
+    package = get_product_package(product_slug)
 
-    return templates.TemplateResponse(
+    return render(
+        request,
         "admin_product_releases.html",
         {
-            "request": request,
+            "product": product,
             "product_id": product_id,
             "releases": releases,
+            "package": package,
         },
     )
 

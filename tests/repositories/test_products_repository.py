@@ -19,7 +19,7 @@ def test_list_products_by_family_slug_returns_only_in_sale_products(db_session):
         name="SmartBudget RU Standard",
         archive_path="",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
     )
     product_int = Product(
@@ -28,7 +28,7 @@ def test_list_products_by_family_slug_returns_only_in_sale_products(db_session):
         name="SmartBudget INT Standard",
         archive_path="",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
     )
     product_future = Product(
@@ -37,7 +37,7 @@ def test_list_products_by_family_slug_returns_only_in_sale_products(db_session):
         name="SmartBudget RU Pro",
         archive_path="",
         edition="Pro",
-        version="1.0",
+
         status="in_development",
     )
     another_family_product = Product(
@@ -46,7 +46,7 @@ def test_list_products_by_family_slug_returns_only_in_sale_products(db_session):
         name="Another Product Standard",
         archive_path="",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
     )
 
@@ -87,7 +87,7 @@ def test_list_products_by_family_slug_returns_active_price(db_session):
         name="SmartBudget INT Standard",
         archive_path="",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
     )
 

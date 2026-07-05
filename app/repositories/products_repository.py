@@ -94,7 +94,7 @@ class ProductsRepository:
             )
             .filter(Product.family_slug == family_slug)
             .filter(Product.status == "in_sale")
-            .order_by(Product.name.asc(), Product.edition.asc(), Product.version.asc())
+            .order_by(Product.name.asc(), Product.edition.asc(), Product.slug.asc())
             .all()
         )
 

@@ -15,7 +15,7 @@ def test_create_product_sale_creates_sale_and_sale_item(db_session):
         slug="smartbudget-int-standard-sale-service-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="archives/smartbudget.zip",
         status="in_sale",
     )
@@ -57,7 +57,7 @@ def test_create_service_sale_item_builds_service_item(db_session):
         slug="smartbudget-int-standard-service-item-helper-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="archives/smartbudget.zip",
         status="in_sale",
     )

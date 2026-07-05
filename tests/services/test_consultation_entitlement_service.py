@@ -135,7 +135,7 @@ def test_create_consultation_entitlement_rejects_product_sale_item(db_session):
         slug="smartbudget-int-standard-entitlement-reject-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="downloads/smartbudget-int-standard.zip",
         status="in_sale",
     )

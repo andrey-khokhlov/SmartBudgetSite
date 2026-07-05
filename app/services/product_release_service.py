@@ -1,3 +1,5 @@
+import re
+
 from sqlalchemy.orm import Session
 from datetime import UTC, datetime
 from fastapi import HTTPException, status
@@ -5,6 +7,9 @@ from fastapi import HTTPException, status
 from app.models.product_release import ProductRelease
 
 from app.repositories.product_release_repository import ProductReleaseRepository
+
+
+RELEASE_VERSION_PATTERN = re.compile(r"^\d+\.\d+$")
 
 
 class ProductReleaseService:
@@ -51,9 +56,18 @@ class ProductReleaseService:
         file_size: int | None = None,
         sha256_hash: str | None = None,
     ) -> ProductRelease:
+
+        normalized_version = version.strip()
+
+        if not RELEASE_VERSION_PATTERN.fullmatch(normalized_version):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Release version must use format like 1.0 or 1.1.",
+            )
+
         release = ProductRelease(
             product_id=product_id,
-            version=version,
+            version=normalized_version,
             release_notes=release_notes,
             storage_provider=storage_provider,
             storage_key=storage_key,

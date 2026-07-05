@@ -16,7 +16,7 @@ def test_sale_item_product_can_be_created(db_session):
         slug="smartbudget-int-standard-sale-item-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="archives/smartbudget.zip",
         status="in_sale",
     )
@@ -57,7 +57,7 @@ def test_sale_item_service_can_be_created(db_session):
         slug="smartbudget-int-standard-sale-item-service-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="archives/smartbudget.zip",
         status="in_sale",
     )
@@ -112,7 +112,7 @@ def test_sale_item_requires_exactly_one_reference(db_session):
         slug="smartbudget-int-standard-sale-item-invalid-test",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         archive_path="archives/smartbudget.zip",
         status="in_sale",
     )

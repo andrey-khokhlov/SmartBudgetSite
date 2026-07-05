@@ -12,7 +12,7 @@ def test_reviews_page_returns_200(client: TestClient, db_session) -> None:
         slug="smartbudget",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )
@@ -31,7 +31,7 @@ def test_reviews_page_shows_only_published_product_feedback(client, db_session):
         slug="smartbudget",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )
@@ -40,7 +40,7 @@ def test_reviews_page_shows_only_published_product_feedback(client, db_session):
         slug="other-product",
         name="Other Product",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )

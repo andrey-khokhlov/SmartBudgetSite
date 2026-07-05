@@ -17,7 +17,7 @@ def test_list_published_product_feedback_returns_only_published_product_feedback
         slug="smartbudget",
         name="SmartBudget",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )
@@ -38,7 +38,7 @@ def test_list_published_product_feedback_returns_only_published_product_feedback
         slug="other-product",
         name="Other Product",
         edition="Standard",
-        version="1.0",
+
         status="in_sale",
         archive_path="test/path.zip",
     )
