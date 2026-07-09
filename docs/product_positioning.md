@@ -174,17 +174,23 @@ SmartBudget should differentiate itself through the combination of:
 * planned vs actual comparison
 * decision-oriented interpretation
 * spreadsheet transparency and user control
+* familiar Excel interaction patterns strengthened by financial logic and automation
+* local-first handling of sensitive personal financial data
 * practical support for irregular expenses
 * future GPT-assisted financial analysis
 * optional human consultation for setup and interpretation
 
 The strongest differentiator is not Excel itself.
 
-Excel is the initial delivery platform.
+Excel is a deliberate product platform, not merely a temporary delivery format.
+
+SmartBudget should preserve familiar Excel interaction patterns and strengthen them with financial logic, controlled automation, and explainable system-generated calculations instead of replacing them with a proprietary workflow.
+
+The product should hide technical Excel infrastructure where it creates friction, while preserving the parts of Excel that support direct modeling, immediate recalculation, transparency, and user control.
+
+Local-first handling of personal financial data is a product advantage. SmartBudget should not assume that moving the financial model to the cloud is inherently a product improvement.
 
 The product differentiator is the financial planning logic and the way SmartBudget helps users reason about future consequences.
-
-SmartBudget should remain conceptually portable to a future web product.
 
 ---
 
@@ -296,6 +302,8 @@ What is likely to happen, and what should I reconsider?
 
 Product mechanics should support the positioning, but technical implementation should remain secondary.
 
+Excel should normally answer the question "How does SmartBudget work?", not "What is SmartBudget?" The landing page should lead with the financial problem and decision-support value, then explain that the product runs locally on the familiar Excel platform.
+
 ---
 
 ## 11. Marketing Messages
@@ -372,6 +380,10 @@ The product should also avoid premature platform complexity.
 
 SmartBudget does not need to become a full SaaS ecosystem before product-market validation.
 
+SmartBudget should be designed as a serious niche commercial product of professional quality, not as a disposable spreadsheet template or hobby workbook. The working design assumption is that the product should remain maintainable by a solo developer while supporting hundreds to low thousands of active users without requiring a fundamental redesign of its financial model.
+
+This is a design assumption, not a sales forecast.
+
 ---
 
 ## 14. Long-Term Product Evolution
@@ -386,8 +398,8 @@ Long-term evolution may include:
 * decision-oriented notifications
 * GPT-assisted interpretation
 * personalized onboarding
-* web-based SmartBudget experience
-* richer cross-device access
+* optional future interfaces where they preserve privacy, explainability, and the core planning workflow
+* richer cross-device access only where it creates clear user value
 * optional operational integrations
 
 The product should evolve from:
@@ -404,6 +416,6 @@ Personal financial forecasting and decision-support system
 
 The financial model and product philosophy should survive changes in delivery technology.
 
-Excel, web, and future interfaces are implementation stages.
+Excel should remain the primary product platform while its familiar interaction model, local-first privacy, and immediate scenario modeling provide meaningful user value. Web or other future interfaces are optional product directions, not an assumed destination.
 
 The long-term product identity is forecasting-first personal financial decision support.
