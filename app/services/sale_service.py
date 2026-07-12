@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.enums import PaymentStatus, SaleItemType
 from app.models.product import Product
+from app.models.product_release import ProductRelease
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 
@@ -12,6 +13,7 @@ def create_product_sale(
     db: Session,
     *,
     product: Product,
+    product_release: ProductRelease | None,
     customer_email: str,
     amount: Decimal,
     currency: str,
@@ -32,9 +34,16 @@ def create_product_sale(
     - Flushes the session to assign sale.id.
 
     Invariants / restrictions:
+    - New product SaleItems require an exact ProductRelease.
     - This function does not commit.
     - Caller controls transaction boundaries.
     """
+
+    if product_release is None or product_release.id is None:
+        raise ValueError("New product sale items require a product release.")
+
+    if product_release.product_id != product.id:
+        raise ValueError("Product release does not belong to the selected product.")
 
     sale = Sale(
         product_id=product.id,  # temporary legacy compatibility
@@ -52,6 +61,7 @@ def create_product_sale(
         sale_id=sale.id,
         item_type=SaleItemType.PRODUCT,
         product_id=product.id,
+        product_release_id=product_release.id,
         item_name=f"{product.name} {product.edition}",
         currency_code=currency,
         amount=amount,

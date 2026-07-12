@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     MAIL_SMTP_USER: str = ""
     MAIL_SMTP_PASSWORD: str = ""
     MAIL_SMTP_TLS: bool = True
+    ADMIN_NOTIFICATION_EMAIL: str = ""
 
     CALENDLY_CONSULTATION_URL: str | None = None
     CALENDLY_WEBHOOK_SIGNING_SECRET: str | None = None

@@ -10,6 +10,9 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     Send email via SMTP (Gmail).
     """
 
+    if not to_email:
+        raise ValueError("Recipient email address is not configured.")
+
     msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM_EMAIL}>"

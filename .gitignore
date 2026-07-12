@@ -15,5 +15,6 @@ __pycache__/
 
 # Test / build
 .pytest_cache/
+.pytest-tmp*/
 dist/
 build/

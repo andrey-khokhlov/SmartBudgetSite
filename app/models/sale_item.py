@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,6 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 
 from app.models.enums import SaleItemType
+
+if TYPE_CHECKING:
+    from app.models.product_release import ProductRelease
 
 
 class SaleItem(Base):
@@ -50,6 +54,12 @@ class SaleItem(Base):
         index=True,
     )
 
+    product_release_id: Mapped[int | None] = mapped_column(
+        ForeignKey("product_releases.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+
     service_addon_id: Mapped[int | None] = mapped_column(
         ForeignKey("service_addons.id", ondelete="RESTRICT"),
         nullable=True,
@@ -64,6 +74,7 @@ class SaleItem(Base):
 
     sale = relationship("Sale", back_populates="items")
     product = relationship("Product")
+    product_release: Mapped["ProductRelease | None"] = relationship("ProductRelease")
     service_addon = relationship("ServiceAddon")
     consultation_entitlement = relationship(
         "ConsultationEntitlement",

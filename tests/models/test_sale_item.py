@@ -48,7 +48,13 @@ def test_sale_item_product_can_be_created(db_session):
     assert item.id is not None
     assert item.sale_id == sale.id
     assert item.product_id == product.id
+    assert item.product_release_id is None
     assert item.service_addon_id is None
+
+    db_session.expire_all()
+    legacy_item = db_session.get(SaleItem, item.id)
+    assert legacy_item is not None
+    assert legacy_item.product_release_id is None
 
 
 def test_sale_item_service_can_be_created(db_session):

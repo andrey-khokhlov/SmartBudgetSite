@@ -8,6 +8,7 @@ from datetime import timedelta, UTC, datetime
 from app.models.consultation_entitlement import ConsultationEntitlementStatus, ConsultationEntitlement
 from app.models.service_addon import ServiceAddon
 from app.models.product import Product
+from app.models.product_release import ProductRelease
 from app.services.consultation_entitlement_service import (
     DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS,
     create_consultation_entitlement,
@@ -142,9 +143,21 @@ def test_create_consultation_entitlement_rejects_product_sale_item(db_session):
     db_session.add(product)
     db_session.flush()
 
+    release = ProductRelease(
+        product_id=product.id,
+        version="1.0",
+        storage_provider="cloudflare_r2",
+        storage_key="product-releases/entitlement-reject/1.0.zip",
+        original_filename="SmartBudget_1.0.zip",
+        is_active=True,
+    )
+    db_session.add(release)
+    db_session.flush()
+
     sale = create_product_sale(
         db=db_session,
         product=product,
+        product_release=release,
         customer_email="customer@example.com",
         amount=Decimal("39.00"),
         currency="EUR",

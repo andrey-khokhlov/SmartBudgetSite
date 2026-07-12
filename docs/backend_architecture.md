@@ -138,6 +138,23 @@ API route → Service → Repository → DB
 
 ---
 
+### Payment transaction boundary
+
+Payment preparation services may:
+
+- validate business rules;
+- create pending Sale/SaleItem records;
+- flush the database session.
+
+Payment preparation services must NOT:
+
+- commit transactions;
+- communicate directly with payment providers.
+
+The transaction boundary is owned by the higher-level payment orchestration flow.
+
+---
+
 ## Design principles
 
 * Keep routes thin (no business logic)
@@ -145,6 +162,20 @@ API route → Service → Repository → DB
 * Avoid duplication
 * Use a single DI entry point
 * Keep layers independent
+
+---
+
+## Configuration management
+
+Whenever a new application setting is introduced:
+
+- add it to `.env.example`;
+- add it to the active local development `.env`;
+- verify whether deployment documentation and production environment variables also require updating.
+
+A configuration change is not considered complete until both the example configuration and the active development configuration have been updated.
+
+Sensitive values must never be committed to the repository. Only placeholder values belong in `.env.example`.
 
 ---
 
@@ -3145,16 +3176,14 @@ Examples:
 New product delivery logic must resolve downloadable files through:
 
 SaleItem
-    ↓
-DownloadEntitlement
-    ↓
+    ↓ product_release_id
 ProductRelease
-    ↓
+    ↓ storage_key
 Cloudflare R2 object
 
-Each product SKU may have many releases, but only one active public release should be used for normal customer download delivery.
+Each product SKU may have many releases, but only one release may be active at a time for new payment preparation.
 
-Customers own the purchased SKU, while download delivery resolves to the active release for that SKU unless support/admin explicitly reissues a specific release.
+Customers own the purchased SKU. Each new product `SaleItem` also stores the exact `ProductRelease` selected before payment-provider interaction so later release publication cannot change the purchased release snapshot.
 
 #### Legacy Product fields cleanup rule
 
@@ -3222,7 +3251,7 @@ Product creation and release upload must remain separate operations.
 
 After a product is created successfully, the admin flow should redirect to the product release management page for that product.
 
-Admin Dashboard must also provide a direct Product Releases entry point for routine release uploads.
+The Admin Dashboard should also provide a dedicated release management entry point for routine release uploads.
 
 Workflow:
 
@@ -3243,6 +3272,12 @@ Select product / open product releases
 Upload new release
     ↓
 Mark release as active
+
+Administrative usability note:
+
+This page should list all products together with their current active release and allow administrators to navigate directly to release management for an existing product.
+
+This is a usability improvement only. The underlying release management architecture remains unchanged.
 
 #### Release publishing rule
 
@@ -3280,17 +3315,17 @@ The backend must guarantee that only one active public release exists for each p
 
 Decision:
 
-* customers purchase a product edition, not a specific file version
-* product ownership is tied to the purchased SKU
-* By default, customers receive the current active release of the purchased SKU.
-* The backend may explicitly bind a DownloadEntitlement to a specific ProductRelease for support, rollback, or controlled reissue scenarios.
-* download delivery should resolve to the current active release for that SKU
-* historical product versions may be retained for operational purposes but are not part of the customer entitlement model
+* customers purchase a product edition/SKU, not release metadata as a separate commercial product
+* product ownership remains tied to the purchased SKU
+* each new product `SaleItem` is bound to the exact active `ProductRelease` selected during payment preparation
+* future download delivery must preserve that fixed release snapshot rather than dynamically switching the purchase to a later active release
+* a future `DownloadEntitlement` may reference the purchased release for delivery, support, rollback, or controlled reissue scenarios
+* historical product versions may be retained for operational and customer-delivery purposes without changing SKU ownership
 
 Examples:
 
-* SmartBudget RU Standard → latest SmartBudget RU Standard release
-* SmartBudget INT Standard → latest SmartBudget INT Standard release
+* SmartBudget RU Standard purchase → active RU Standard release fixed on its `SaleItem`
+* SmartBudget INT Standard purchase → active INT Standard release fixed on its `SaleItem`
 
 Important:
 
@@ -3403,7 +3438,7 @@ Remaining:
 
 Important:
 
-* payment provider selection remains unresolved
+* Stripe is selected for the first direct payment-provider integration; real Checkout Session creation is not implemented yet
 * international banking infrastructure remains a prerequisite for production launch
 
 ---
@@ -3589,3 +3624,50 @@ Important:
 * Product Release publish action is not wired to Admin UI yet
 * download entitlements are not implemented yet
 * legacy `products.version`, `products.release_date`, and `products.archive_path` still exist temporarily
+
+## Sprint 39 checkpoint: Payment foundation and release binding
+
+### Completed
+
+* added a database-level invariant allowing at most one active `ProductRelease` per `Product`
+* added a partial unique index on `product_releases.product_id` where `is_active IS TRUE`
+* added nullable `SaleItem.product_release_id` for legacy compatibility
+* bound every new product `SaleItem` to the exact active `ProductRelease` selected at payment preparation time
+* added provider-agnostic `payment_service.prepare_product_payment()`
+* implemented pending `Sale` and `SaleItem` creation before payment-provider interaction
+* blocked payment preparation when the selected product has no active release
+* added a synchronous admin email notification attempt when payment preparation is blocked by a missing release
+* ensured notification failure is logged and does not replace the unavailable-release business result
+* added dedicated `ADMIN_NOTIFICATION_EMAIL` configuration
+* added recipient validation in `mail_service`
+* added a partial unique index on `(payment_provider, external_payment_id)` where `external_payment_id IS NOT NULL`
+* decided that `Sale.external_payment_id` will store the Stripe Checkout Session ID
+* kept this foundation provider-independent: no real Stripe API calls or payment initiation POST route are implemented yet
+* all automated tests passing: 112
+
+### Architecture decisions
+
+* product ownership remains tied to the purchased `Product`/SKU
+* each new product `SaleItem` stores the exact `ProductRelease` selected before payment-provider interaction
+* payment preparation services may flush the database session but must not commit
+* higher-level payment orchestration owns transaction completion
+* payment preparation services do not communicate with payment providers
+* a missing active release blocks payment before any provider interaction
+* failed payment-session creation must preserve the `Sale`, mark it as `failed`, keep `external_payment_id` as `NULL`, and create no entitlements
+* retrying payment after a failed payment-session creation creates a new `Sale`
+* admin notification SMTP failure must not break the customer-facing unavailable result
+* new configuration settings require updates to `.env.example`, the active local `.env`, and deployment configuration
+* unique payment identity is scoped by `(payment_provider, external_payment_id)`
+
+### Current limitations / next work
+
+* no real Stripe Checkout Session creation
+* no payment initiation POST route
+* no payment-provider adapter
+* no payment webhook processing
+* no transition from `pending` to `paid` or `failed` through provider events
+* no `DownloadEntitlement` creation after successful payment
+* no localized route response for release unavailability yet
+* no real PostgreSQL migration execution validation yet
+* no end-to-end SMTP notification test outside mocked tests
+* no commit yet
