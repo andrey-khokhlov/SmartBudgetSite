@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/download.css') }}">
+{% endblock %}
+
+{% block title %}{{ t("download_title") }}{% endblock %}
+
+{% block content %}
+<section class="download-page">
+    <div class="download-card">
+        {% if error_key %}
+            <div class="download-icon" aria-hidden="true">!</div>
+            <h1>{{ t("download_error_title") }}</h1>
+            <p class="download-error">{{ t(error_key) }}</p>
+            <p class="download-support-note">
+                {{ t("download_error_support_prefix") }}
+                <a href="{{ url_for('feedback_page') }}">
+                    {{ t("download_feedback_link") }}
+                </a>
+                {{ t("download_error_support_suffix").format(reference=support_reference) }}
+            </p>
+        {% else %}
+            <div class="download-icon" aria-hidden="true">↓</div>
+            <p class="download-kicker">{{ t("download_kicker") }}</p>
+            <h1>{{ product_name }}</h1>
+            <p class="download-intro">{{ t("download_intro") }}</p>
+
+            <dl class="download-details">
+                <div>
+                    <dt>{{ t("download_version") }}</dt>
+                    <dd>{{ release.version }}</dd>
+                </div>
+                {% if released_at %}
+                <div>
+                    <dt>{{ t("download_release_date") }}</dt>
+                    <dd>{{ released_at.strftime("%d.%m.%Y") }}</dd>
+                </div>
+                {% endif %}
+                <div>
+                    <dt>{{ t("download_filename") }}</dt>
+                    <dd>{{ release.original_filename }}</dd>
+                </div>
+                {% if file_size %}
+                <div>
+                    <dt>{{ t("download_file_size") }}</dt>
+                    <dd>{{ file_size }}</dd>
+                </div>
+                {% endif %}
+                {% if release.sha256_hash %}
+                <div>
+                    <dt>{{ t("download_sha256") }}</dt>
+                    <dd class="download-hash">{{ release.sha256_hash }}</dd>
+                </div>
+                {% endif %}
+                <div>
+                    <dt>{{ t("download_expires_at") }}</dt>
+                    <dd>{{ expires_at.strftime("%d.%m.%Y %H:%M") }}</dd>
+                </div>
+                <div>
+                    <dt>{{ t("download_remaining_attempts") }}</dt>
+                    <dd>{{ remaining_attempts }}</dd>
+                </div>
+                <div>
+                    <dt>{{ t("download_support_reference") }}</dt>
+                    <dd>{{ support_reference }}</dd>
+                </div>
+            </dl>
+
+            <form method="post">
+                <button class="download-button" type="submit">
+                    {{ t("download_button") }}
+                </button>
+            </form>
+
+            <p class="download-security-note">
+                {{ t("download_secure_note").format(minutes=signed_url_ttl_minutes) }}
+            </p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str | None = None
     R2_PRODUCT_RELEASES_PREFIX: str = "product-releases"
 
+    DOWNLOAD_TOKEN_TTL_HOURS: int = 12
+    DOWNLOAD_SIGNED_URL_TTL_SECONDS: int = 900
+    DOWNLOAD_MAX_ATTEMPTS: int = 3
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
         env_file_encoding="utf-8",

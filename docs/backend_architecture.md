@@ -3124,9 +3124,9 @@ Decision:
 * customers receive a protected download page link, not a direct public file URL
 * each paid product sale item creates one backend-owned download entitlement
 * each download entitlement is tied to the delivered product version
-* MVP delivery should prioritize successful customer download completion over strict one-click download blocking
+* MVP delivery should prioritize reliable customer access over strict one-click download blocking
 * repeated download attempts are allowed only within controlled retry limits
-* download access must be blocked after successful completion criteria are met or retry limits are exceeded
+* download access must be blocked when token expiration or retry limits are exceeded
 
 MVP download retry policy:
 
@@ -3135,8 +3135,10 @@ MVP download retry policy:
 * track download attempt count
 * track first download attempt timestamp
 * track last download attempt timestamp
-* track successful/completed download timestamp when technically available
-* mark entitlement as completed after successful delivery criteria are met
+* treat signed-URL issuance as a download attempt, not as successful completion
+* keep the entitlement status `available` after signed-URL issuance
+* do not infer successful completion from a direct Cloudflare R2 redirect because the backend cannot reliably confirm that the browser completed the download
+* defer strict one-time completion until reliable completion criteria are available
 
 Anti-abuse controls:
 
@@ -3145,8 +3147,14 @@ Anti-abuse controls:
 * generate short-lived file access URLs only after backend validation
 * limit total download attempts per entitlement
 * limit download access by expiration window
-* log download attempts with timestamp, IP address, and user agent
 * show a support-oriented message when access is blocked
+
+Deferred beyond the MVP:
+
+* strict one-time completion
+* automatic completion detection
+* richer attempt audit logging, including IP address and user agent persistence
+* backend file proxying
 
 Support rule:
 
@@ -3671,3 +3679,99 @@ Important:
 * no real PostgreSQL migration execution validation yet
 * no end-to-end SMTP notification test outside mocked tests
 * no commit yet
+
+## Sprint 40 checkpoint: Download entitlement and protected delivery MVP
+
+### Completed
+
+* added `DownloadEntitlement` model
+* added download entitlement statuses:
+  * `available`
+  * `completed`
+  * `expired`
+  * `cancelled`
+  * implemented relationship chain:
+
+```
+  Sale
+    ↓
+  SaleItem
+    ├──→ ProductRelease
+    └──→ DownloadEntitlement
+```
+
+* enforced one download entitlement per `SaleItem`
+* bound each entitlement to the exact `ProductRelease` stored in `SaleItem.product_release_id`
+* added secure unique download token generation
+* added configurable download token lifetime:
+  * `DOWNLOAD_TOKEN_TTL_HOURS`
+  * current default: 12 hours
+* added download lifecycle fields:
+  * `attempt_count`
+  * `first_attempt_at`
+  * `last_attempt_at`
+  * `completed_at`
+  * `expires_at`
+* added `DownloadEntitlementRepository`
+* added `download_entitlement_service`
+* implemented entitlement creation rules:
+  * only product sale items are eligible
+  * parent sale must be paid
+  * `product_release_id` is required
+  * duplicate entitlement creation is blocked
+  * service uses `flush()` and does not commit
+* implemented backend validation of download entitlements by secure download token
+* added customer-facing protected download page
+* added `GET /download/{token}` with read-only entitlement validation
+* added `POST /download/{token}` with entitlement revalidation and attempt recording
+* backend validates every download request before exposing temporary storage access
+* added Cloudflare R2 signed GET URL generation
+* configured signed URL lifetime through `DOWNLOAD_SIGNED_URL_TTL_SECONDS`
+  * current default: 900 seconds / 15 minutes
+* configured retry limit through `DOWNLOAD_MAX_ATTEMPTS`
+  * current default: 3 attempts
+* signed-URL issuance increments `attempt_count`
+* `first_attempt_at` is populated only once and `last_attempt_at` is updated for every attempt
+* entitlement intentionally remains `available` after signed-URL issuance
+* retries remain available while the token is unexpired and the attempt count is below `DOWNLOAD_MAX_ATTEMPTS`
+* added localized RU/EN download page and error handling
+* added masked support reference without exposing the download token
+* added focused repository, service, storage, and route regression coverage
+* added Alembic migration:
+  * `b8f4a2d91c6e_add_download_entitlements.py`
+* all automated tests passing: 143
+
+### Architecture decisions
+
+* `DownloadEntitlement` is the backend-owned source of truth for product download access.
+* Product download ownership belongs to `SaleItem`, not directly to `Sale`.
+* Delivered release is fixed from `SaleItem.product_release_id`.
+* Entitlement creation must never resolve the currently active release dynamically.
+* One product `SaleItem` may have at most one download entitlement in the MVP.
+* Service `SaleItem`s must not receive download entitlements.
+* Download tokens are secure, unique, and expire after a configurable lifetime.
+* Entitlement expiration may be validated dynamically without immediately mutating status.
+* Services may raise `HTTPException` under the current documented project convention.
+* Transaction ownership remains outside the entitlement service.
+* customer-facing download access must always pass through backend entitlement validation before any storage-provider URL is exposed.
+* Direct Cloudflare R2 delivery through a redirect does not reliably confirm that the browser completed the download.
+* Signed-URL issuance is a download attempt, not successful completion.
+* Download access is controlled by token expiration and `DOWNLOAD_MAX_ATTEMPTS`.
+* Automatic completion detection, strict one-time completion, richer attempt audit logging, and backend file proxying are deferred.
+
+### Current limitations / next work
+
+* automatic download completion detection is intentionally deferred
+* strict one-time completion is intentionally deferred
+* richer attempt audit logging, including IP address and user agent persistence, is deferred
+* backend file proxying is not implemented
+* no purchase email with download link
+* no payment-success orchestration creating download entitlements
+* no Stripe webhook integration
+* no admin reissue/reset workflow
+* integrate the protected download flow with the Feedback workflow:
+  * add a dedicated "Purchase or download issue" feedback type;
+  * allow preselecting the feedback type from download pages;
+  * prefill the download support reference;
+  * streamline customer support for download-related issues.
+  * download attempts are committed before storage-provider interaction

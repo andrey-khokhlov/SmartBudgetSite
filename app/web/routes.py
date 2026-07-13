@@ -22,8 +22,12 @@ from app.services.feedback_service import (
 from app.services.consultation_entitlement_service import (
     get_valid_consultation_entitlement_by_token,
 )
+from app.services.download_entitlement_service import (
+    get_valid_download_entitlement_by_token,
+    record_download_attempt,
+)
 from app.services.product_release_service import ProductReleaseService
-from app.services.storage.r2_storage_service import R2StorageService
+from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -33,7 +37,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.models.product import Product
-from datetime import timezone, timedelta
+from datetime import UTC, datetime, timezone, timedelta
 from decimal import Decimal
 from botocore.exceptions import BotoCoreError, ClientError
 
@@ -51,7 +55,13 @@ admin_router = APIRouter(
 )
 
 
-def render(request: Request, template_name: str, context: dict):
+def render(
+    request: Request,
+    template_name: str,
+    context: dict,
+    *,
+    status_code: int = 200,
+):
     lang = get_lang(request)
 
     response = templates.TemplateResponse(
@@ -62,12 +72,65 @@ def render(request: Request, template_name: str, context: dict):
             "t": lambda k: t(lang, k),
             **context,
         },
+        status_code=status_code,
     )
 
     if (request.query_params.get("lang") or "").lower() in {"en", "ru"}:
         set_lang_cookie(response, lang)
 
     return response
+
+
+DOWNLOAD_ERROR_TRANSLATION_KEYS = {
+    "Download link was not found.": "download_error_unknown",
+    "Download link has expired.": "download_error_expired",
+    "Download link has been cancelled.": "download_error_cancelled",
+    "This download has already been completed.": "download_error_completed",
+    "Download attempt limit has been reached.": "download_error_attempt_limit",
+    "Download release was not found.": "download_error_missing_release",
+}
+
+
+def _download_support_reference(download_token: str) -> str:
+    digest = hashlib.sha256(download_token.encode("utf-8")).hexdigest()
+    return f"DL-{digest[:6].upper()}"
+
+
+def _render_download_error(
+    request: Request,
+    exc: HTTPException,
+    download_token: str,
+):
+    error_key = DOWNLOAD_ERROR_TRANSLATION_KEYS.get(
+        str(exc.detail),
+        "download_error_unavailable",
+    )
+
+    return render(
+        request,
+        "download.html",
+        {
+            "error_key": error_key,
+            "support_reference": _download_support_reference(download_token),
+        },
+        status_code=exc.status_code,
+    )
+
+
+def _as_moscow_time(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(moscow_tz)
+
+
+def _format_file_size(file_size: int | None) -> str | None:
+    if file_size is None:
+        return None
+    if file_size < 1024:
+        return f"{file_size} B"
+    if file_size < 1024 * 1024:
+        return f"{file_size / 1024:.1f} KB"
+    return f"{file_size / (1024 * 1024):.1f} MB"
 
 
 def format_money(value, lang: str = "ru"):
@@ -118,6 +181,112 @@ async def faq(request: Request):
 @router.get("/feedback", response_class=HTMLResponse)
 async def feedback_page(request: Request):
     return render(request, "feedback.html", {})
+
+
+@router.get("/download/{download_token}", response_class=HTMLResponse)
+def download_page(
+    download_token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    try:
+        entitlement = get_valid_download_entitlement_by_token(db, download_token)
+    except HTTPException as exc:
+        return _render_download_error(
+            request,
+            exc,
+            download_token,
+        )
+
+    release = entitlement.release
+    product_name = (
+        release.product.name
+        if release.product is not None
+        else entitlement.sale_item.item_name
+    )
+
+    # return render(
+    #     request,
+    #     "download.html",
+    #     {
+    #         "product_name": "SmartBudget Standard",
+    #         "release": type(
+    #             "Release",
+    #             (),
+    #             {
+    #                 "version": "1.2.0",
+    #                 "original_filename": "SmartBudget_v1.2.0.zip",
+    #                 "sha256_hash": "3b2d6f7d8a4d0b2e1f8b6c5a4d3e2f1c9b8a7d6e5f4c3b2a1d0e9f8a7b6c5d4",
+    #             },
+    #         )(),
+    #         "released_at": datetime.now(UTC),
+    #         "expires_at": datetime.now(UTC),
+    #         "file_size": "18.6 MB",
+    #         "remaining_attempts": 3,
+    #         "support_reference": "DL-8F3A19",
+    #         "signed_url_ttl_minutes": 15,
+    #     },
+    # )
+
+    return render(
+        request,
+        "download.html",
+        {
+            "entitlement": entitlement,
+            "release": release,
+            "product_name": product_name,
+            "file_size": _format_file_size(release.file_size),
+            "released_at": (
+                _as_moscow_time(release.released_at)
+                if release.released_at is not None
+                else None
+            ),
+            "expires_at": _as_moscow_time(entitlement.expires_at),
+            "remaining_attempts": (
+                settings.DOWNLOAD_MAX_ATTEMPTS - entitlement.attempt_count
+            ),
+            "support_reference": _download_support_reference(download_token),
+            "signed_url_ttl_minutes": (
+                settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS + 59
+            )
+            // 60,
+        },
+    )
+
+
+@router.post("/download/{download_token}")
+def issue_download(
+    download_token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    try:
+        entitlement = record_download_attempt(db, download_token)
+    except HTTPException as exc:
+        return _render_download_error(
+            request,
+            exc,
+            download_token,
+        )
+
+    storage_key = entitlement.release.storage_key
+    db.commit()
+
+    try:
+        signed_url = R2StorageService().generate_signed_get_url(
+            storage_key=storage_key,
+        )
+    except (HTTPException, R2SignedUrlError):
+        return _render_download_error(
+            request,
+            HTTPException(
+                status_code=503,
+                detail="Download storage is temporarily unavailable.",
+            ),
+            download_token,
+        )
+
+    return RedirectResponse(url=signed_url, status_code=303)
 
 
 @router.get("/products/{slug}", response_class=HTMLResponse)
@@ -695,7 +864,7 @@ def product_buy_page(
     repository = ProductsRepository(db)
     family_products = repository.list_products_by_family_slug(family_slug)
 
-    if not products:
+    if not family_products:
         raise HTTPException(status_code=404, detail="Product family not found")
 
     lang = get_lang(request)

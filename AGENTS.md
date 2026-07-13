@@ -129,13 +129,19 @@ Do not read provider secrets from request headers or user input. Provider secret
 
 Run the relevant tests after changes.
 
-Default local checks:
+Always execute tests through the project's configured Python interpreter.
+
+Preferred command:
 
 ```bash
-pytest
+python -m pytest
 ```
 
-If formatting/type/lint tools are present in the current branch or environment, run the project-standard checks as well. Do not invent new tooling configuration without approval.
+Do not assume that a standalone `pytest` executable is available on the system PATH.
+
+When running focused or full test suites, use the project's configured virtual environment or interpreter rather than a globally installed Python.
+
+If formatting, type-checking, or lint tools are present in the current branch or environment, run the project-standard checks as well. Do not invent new tooling configuration without approval.
 
 When a task adds a migration, model, repository, service, or route, add focused regression coverage.
 

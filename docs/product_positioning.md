@@ -64,6 +64,64 @@ SmartBudget should not try to impress users with the amount of data collected.
 
 It should help users answer financially meaningful questions.
 
+## Entitlement-Based Platform Philosophy
+
+SmartBudgetSite should represent purchased customer rights as backend-owned entitlements rather than as files, external links, or provider-controlled access.
+
+A customer does not merely receive a download link or a booking link. The customer receives a defined business right to perform an action, such as:
+
+* download a purchased product;
+* book a paid consultation;
+* access another paid service introduced in the future.
+
+The general platform pattern is:
+
+```text
+Purchase
+    ↓
+Backend-owned entitlement
+    ↓
+Secure access token
+    ↓
+Protected page
+    ↓
+Validated customer action
+```
+
+Examples:
+
+```text
+DownloadEntitlement
+    ↓
+Download a specific purchased ProductRelease
+```
+
+```text
+ConsultationEntitlement
+    ↓
+Book one paid consultation
+```
+
+The SmartBudgetSite backend must remain the source of truth for whether the customer is entitled to perform the action.
+
+External providers such as Cloudflare R2, Calendly, Stripe, or future integrations may provide infrastructure, scheduling, storage, or payment processing, but they must not own SmartBudget business rights.
+
+Important principles:
+
+* entitlements originate from validated business events, normally successful payment;
+* each entitlement belongs to the relevant purchased `SaleItem`;
+* access is validated by the backend before any external provider resource is exposed;
+* secure tokens provide access to protected pages, not permanent direct provider URLs;
+* entitlement lifecycle rules remain under SmartBudgetSite control;
+* completed, expired, cancelled, or otherwise unavailable entitlements must block further use;
+* external providers should remain replaceable without changing the underlying customer ownership model.
+
+Different entitlement types should remain separate domain entities when their lifecycle and business rules differ.
+
+SmartBudgetSite should not introduce a universal entitlement table merely to remove duplication. Shared principles and consistent patterns are preferable to an over-generalized model containing unrelated nullable fields and conditional behavior.
+
+This approach keeps customer ownership explicit, protects paid functionality, reduces dependency on external providers, and provides a consistent foundation for future product delivery and paid services.
+
 ---
 
 ## 3. Target Audience

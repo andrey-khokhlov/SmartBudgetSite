@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.core.db import Base
 
 if TYPE_CHECKING:
+    from app.models.download_entitlement import DownloadEntitlement
     from app.models.product import Product
 
 ALLOWED_STORAGE_PROVIDERS = {
@@ -61,10 +62,10 @@ class ProductRelease(Base):
 
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    # download_entitlements: Mapped[list["DownloadEntitlement"]] = relationship(
-    #     "DownloadEntitlement",
-    #     back_populates="product_release",
-    # )
+    download_entitlements: Mapped[list["DownloadEntitlement"]] = relationship(
+        "DownloadEntitlement",
+        back_populates="release",
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

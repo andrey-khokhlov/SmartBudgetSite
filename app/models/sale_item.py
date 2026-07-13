@@ -9,6 +9,7 @@ from app.core.db import Base
 from app.models.enums import SaleItemType
 
 if TYPE_CHECKING:
+    from app.models.download_entitlement import DownloadEntitlement
     from app.models.product_release import ProductRelease
 
 
@@ -78,6 +79,12 @@ class SaleItem(Base):
     service_addon = relationship("ServiceAddon")
     consultation_entitlement = relationship(
         "ConsultationEntitlement",
+        back_populates="sale_item",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    download_entitlement: Mapped["DownloadEntitlement | None"] = relationship(
+        "DownloadEntitlement",
         back_populates="sale_item",
         uselist=False,
         cascade="all, delete-orphan",

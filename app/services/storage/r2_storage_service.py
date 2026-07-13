@@ -7,6 +7,7 @@ import certifi
 import boto3
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException, status
 
 from app.core.config import settings
@@ -16,6 +17,10 @@ from app.core.config import settings
 class UploadedObject:
     storage_provider: str
     storage_key: str
+
+
+class R2SignedUrlError(Exception):
+    """Raised when R2 cannot issue a temporary download URL."""
 
 
 class R2StorageService:
@@ -79,6 +84,20 @@ class R2StorageService:
             storage_provider=self.storage_provider,
             storage_key=storage_key,
         )
+
+    def generate_signed_get_url(self, *, storage_key: str) -> str:
+        """Generate a short-lived GET-only URL without persisting it."""
+        try:
+            return self.client.generate_presigned_url(
+                ClientMethod="get_object",
+                Params={
+                    "Bucket": settings.R2_BUCKET_NAME,
+                    "Key": storage_key,
+                },
+                ExpiresIn=settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS,
+            )
+        except (BotoCoreError, ClientError) as exc:
+            raise R2SignedUrlError("Could not generate a signed R2 URL.") from exc
 
     @staticmethod
     def _validate_settings() -> None:
