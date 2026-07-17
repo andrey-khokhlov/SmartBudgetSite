@@ -168,3 +168,95 @@ def test_create_general_feedback_empty_message(client):
     print(response.json())
 
     assert response.status_code == 422
+
+
+def test_create_purchase_or_download_issue_persists_safe_reference_and_email(
+    client,
+    db_session,
+):
+    from app.models.feedback import FeedbackMessage
+
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "purchase_or_download_issue",
+            "email": "customer@example.com",
+            "subject": "Download problem",
+            "message": "The download page says that my access is unavailable.",
+            "support_reference": "DL-ABCDEFGH",
+        },
+    )
+
+    assert response.status_code == 200
+    feedback = db_session.get(FeedbackMessage, response.json()["id"])
+    assert feedback is not None
+    assert feedback.type == "purchase_or_download_issue"
+    assert feedback.email == "customer@example.com"
+    assert feedback.support_reference == "DL-ABCDEFGH"
+
+
+def test_create_purchase_or_download_issue_normalizes_empty_reference(
+    client,
+    db_session,
+):
+    from app.models.feedback import FeedbackMessage
+
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "purchase_or_download_issue",
+            "subject": "Payment question",
+            "message": "I need help understanding what happened to my purchase.",
+            "support_reference": "   ",
+        },
+    )
+
+    assert response.status_code == 200
+    feedback = db_session.get(FeedbackMessage, response.json()["id"])
+    assert feedback is not None
+    assert feedback.support_reference is None
+
+
+def test_create_purchase_or_download_issue_rejects_malformed_reference(client):
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "purchase_or_download_issue",
+            "subject": "Download problem",
+            "message": "The download page says that my access is unavailable.",
+            "support_reference": "/download/private-token",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid support reference"
+
+
+def test_create_purchase_or_download_issue_rejects_oversized_reference(client):
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "purchase_or_download_issue",
+            "subject": "Download problem",
+            "message": "The download page says that my access is unavailable.",
+            "support_reference": "DL-" + ("A" * 100),
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid support reference"
+
+
+def test_create_feedback_rejects_reference_for_unrelated_type(client):
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "general_question",
+            "subject": "General question",
+            "message": "This is a general question with enough message length.",
+            "support_reference": "DL-ABCDEFGH",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "only allowed" in response.json()["detail"]

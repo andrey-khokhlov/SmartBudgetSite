@@ -8,6 +8,7 @@ class FeedbackMessageType(str, Enum):
     SITE_ISSUE = "site_issue"
     GENERAL_QUESTION = "general_question"
     PRODUCT_FEEDBACK = "product_feedback"
+    PURCHASE_OR_DOWNLOAD_ISSUE = "purchase_or_download_issue"
 
 
 class FeedbackCreate(BaseModel):

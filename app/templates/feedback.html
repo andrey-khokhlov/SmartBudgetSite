@@ -17,6 +17,7 @@
             <option value="site_issue">{{ t("feedback_type_site_issue") }}</option>
             <option value="general_question">{{ t("feedback_type_general_question") }}</option>
             <option value="product_feedback">{{ t("feedback_type_product_feedback") }}</option>
+            <option value="purchase_or_download_issue"{% if preselected_type == "purchase_or_download_issue" %} selected{% endif %}>{{ t("feedback_type_purchase_or_download_issue") }}</option>
         </select>
 
         <label class="feedback-form__label" for="name">{{ t("feedback_name_label") }}</label>
@@ -31,15 +32,21 @@
 
         <input class="feedback-form__control" type="email" id="email" name="email">
 
-        <div id="contactEmailGroup" style="display: none;">
-            <label class="feedback-form__label" for="contact_email">
-                {{ t("feedback_contact_email_label") }}
-                <span class="feedback-form__hint">
-                    {{ t("feedback_contact_email_hint") }}
-                </span>
+        {% if prefilled_support_reference %}
+        <div id="supportReferenceGroup">
+            <label class="feedback-form__label" for="support_reference">
+                {{ t("feedback_support_reference_label") }}
             </label>
-            <input class="feedback-form__control" type="email" id="contact_email" name="contact_email">
+            <input
+                class="feedback-form__control"
+                type="text"
+                id="support_reference"
+                name="support_reference"
+                value="{{ prefilled_support_reference }}"
+                readonly
+            >
         </div>
+        {% endif %}
 
         <div class="feedback-purchase-status" id="purchase-status" style="display: none;"></div>
 
@@ -113,6 +120,8 @@ window.feedbackTexts = {
     sentSuccessPrefix: "{{ t('feedback_sent_success_prefix') }}",
     sendFailed: "{{ t('feedback_send_failed') }}",
     noFiles: "{{ t('feedback_dropzone_no_files') }}",
+    productEmailHint: "{{ t('feedback_email_hint') }}",
+    contactEmailHint: "{{ t('feedback_contact_email_hint') }}",
 };
 </script>
 <script src="{{ url_for('static', path='js/feedback.js') }}"></script>

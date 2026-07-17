@@ -27,6 +27,9 @@ from app.services.sale_service import (
     create_product_sale,
     create_standalone_service_sale,
 )
+from app.services.support_reference_service import (
+    is_valid_download_support_reference,
+)
 
 
 def create_product(db_session, suffix: str | None = None) -> Product:
@@ -94,6 +97,7 @@ def test_create_download_entitlement_for_paid_product_item(db_session):
     assert entitlement.release_id == release.id
     assert entitlement.status == DownloadEntitlementStatus.AVAILABLE.value
     assert entitlement.attempt_count == 0
+    assert is_valid_download_support_reference(entitlement.support_reference)
     assert entitlement.first_attempt_at is None
     assert entitlement.last_attempt_at is None
     assert entitlement.completed_at is None
@@ -145,6 +149,44 @@ def test_database_enforces_unique_sale_item_ownership(db_session):
         sale_item_id=sale_item.id,
         release_id=release.id,
         download_token="different-secure-token",
+        support_reference="DL-23456789",
+        status=DownloadEntitlementStatus.AVAILABLE.value,
+        expires_at=datetime.now(UTC) + timedelta(hours=12),
+        attempt_count=0,
+    )
+    db_session.add(duplicate)
+
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+    db_session.rollback()
+
+
+def test_creation_retries_duplicate_support_reference(db_session, monkeypatch):
+    first_item, _ = create_product_item(db_session)
+    second_item, _ = create_product_item(db_session)
+    references = iter(["DL-ABCDEFGH", "DL-ABCDEFGH", "DL-JKMNPQRS"])
+    monkeypatch.setattr(
+        "app.services.download_entitlement_service.generate_download_support_reference",
+        lambda: next(references),
+    )
+
+    first = create_download_entitlement(db_session, first_item)
+    second = create_download_entitlement(db_session, second_item)
+
+    assert first.support_reference == "DL-ABCDEFGH"
+    assert second.support_reference == "DL-JKMNPQRS"
+
+
+def test_database_enforces_unique_support_reference(db_session):
+    first_item, _ = create_product_item(db_session)
+    second_item, second_release = create_product_item(db_session)
+    first = create_download_entitlement(db_session, first_item)
+    duplicate = DownloadEntitlement(
+        sale_item_id=second_item.id,
+        release_id=second_release.id,
+        download_token="different-secure-token",
+        support_reference=first.support_reference,
         status=DownloadEntitlementStatus.AVAILABLE.value,
         expires_at=datetime.now(UTC) + timedelta(hours=12),
         attempt_count=0,

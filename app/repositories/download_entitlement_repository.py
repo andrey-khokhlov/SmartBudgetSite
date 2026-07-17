@@ -16,6 +16,16 @@ class DownloadEntitlementRepository:
             .one_or_none()
         )
 
+    def get_by_support_reference(
+        self,
+        support_reference: str,
+    ) -> DownloadEntitlement | None:
+        return (
+            self.db.query(DownloadEntitlement)
+            .filter(DownloadEntitlement.support_reference == support_reference)
+            .one_or_none()
+        )
+
     def get_by_sale_item_id(self, sale_item_id: int) -> DownloadEntitlement | None:
         return (
             self.db.query(DownloadEntitlement)

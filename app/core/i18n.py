@@ -173,11 +173,13 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_type_site_issue": "Website issue",
         "feedback_type_general_question": "General question",
         "feedback_type_product_feedback": "Product feedback or question",
+        "feedback_type_purchase_or_download_issue": "Purchase or download issue",
 
         "feedback_name_label": "Name",
         "feedback_email_label": "Email",
         "feedback_subject_label": "Subject",
         "feedback_message_label": "Message",
+        "feedback_support_reference_label": "Support reference",
         "feedback_submit": "Send",
 
         "feedback_email_hint": "For product feedback and questions, please provide the email used during purchase — this is required for verification.",
@@ -445,11 +447,13 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_type_site_issue": "Ошибка сайта",
         "feedback_type_general_question": "Общий вопрос",
         "feedback_type_product_feedback": "Отзыв или вопрос по продукту",
+        "feedback_type_purchase_or_download_issue": "Проблема с покупкой или скачиванием",
 
         "feedback_name_label": "Имя",
         "feedback_email_label": "Email",
         "feedback_subject_label": "Тема",
         "feedback_message_label": "Сообщение",
+        "feedback_support_reference_label": "Номер обращения",
         "feedback_submit": "Отправить",
 
         "feedback_email_hint": "Для отзывов и вопросов по работе продукта укажите email, использованный при покупке — это нужно для проверки.",

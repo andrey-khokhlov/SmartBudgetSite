@@ -177,3 +177,32 @@ def test_admin_toggle_publish_route_unpublish(
     assert feedback.is_published is False
     assert feedback.published_at is None
 
+
+def test_admin_feedback_displays_private_support_reference(
+    request: Any,
+    db_session: Any,
+) -> None:
+    admin_client: TestClient = request.getfixturevalue("auth_client")
+    feedback = FeedbackMessage(
+        type="purchase_or_download_issue",
+        email="customer@example.com",
+        subject="Download problem",
+        message="The download is unavailable.",
+        support_reference="DL-ABCDEFGH",
+        admin_reply="I am checking this.",
+        is_resolved=False,
+        is_published=False,
+    )
+    db_session.add(feedback)
+    db_session.commit()
+
+    list_response = admin_client.get("/admin/feedback?lang=en")
+    detail_response = admin_client.get(f"/admin/feedback/{feedback.id}?lang=en")
+
+    assert list_response.status_code == 200
+    assert "Purchase or download issue" in list_response.text
+    assert "DL-ABCDEFGH" in list_response.text
+    assert detail_response.status_code == 200
+    assert "Support reference" in detail_response.text
+    assert "DL-ABCDEFGH" in detail_response.text
+    assert "Publish Review" not in detail_response.text

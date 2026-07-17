@@ -21,6 +21,33 @@ from app.repositories.feedback_admin_repository import FeedbackAdminRepository
 from app.models.feedback import FeedbackMessage
 from app.services import mail_service
 from app.core.config import settings
+from app.services.support_reference_service import (
+    is_valid_download_support_reference,
+)
+
+PURCHASE_OR_DOWNLOAD_ISSUE = "purchase_or_download_issue"
+
+
+def validate_feedback_support_reference(
+    *,
+    message_type: str,
+    support_reference: str | None,
+) -> str | None:
+    """Normalize and validate the structured public support reference."""
+    normalized = (support_reference or "").strip() or None
+    if normalized is None:
+        return None
+
+    if message_type != PURCHASE_OR_DOWNLOAD_ISSUE:
+        raise HTTPException(
+            status_code=400,
+            detail="Support reference is only allowed for purchase or download issues",
+        )
+
+    if len(normalized) > 64 or not is_valid_download_support_reference(normalized):
+        raise HTTPException(status_code=400, detail="Invalid support reference")
+
+    return normalized
 
 
 def send_feedback_reply(db: Session, feedback_id: int) -> None:
@@ -42,7 +69,11 @@ def send_feedback_reply(db: Session, feedback_id: int) -> None:
     if not item:
         raise HTTPException(status_code=404, detail="Feedback not found")
 
-    if item.type not in ("general_question", "site_issue"):
+    if item.type not in (
+        "general_question",
+        "site_issue",
+        PURCHASE_OR_DOWNLOAD_ISSUE,
+    ):
         raise HTTPException(
             status_code=400,
             detail="Email reply is not applicable for this feedback type",

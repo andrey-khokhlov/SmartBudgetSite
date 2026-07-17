@@ -108,7 +108,6 @@ def test_toggle_publish_fails_for_non_product_feedback(db_session):
 
     assert exc.value.status_code == 400
     assert exc.value.detail == "Only product feedback can be published"
-
 def test_toggle_publish_success(db_session):
     """
     Should successfully publish product feedback
@@ -509,3 +508,50 @@ def test_save_feedback_reply_draft_empty_string_becomes_none(db_session):
 
     db_session.refresh(feedback)
     assert feedback.admin_reply is None
+
+
+def test_purchase_or_download_issue_supports_one_time_email_reply(db_session):
+    feedback = FeedbackMessage(
+        type="purchase_or_download_issue",
+        email="customer@example.com",
+        subject="Download problem",
+        message="The download is unavailable.",
+        support_reference="DL-ABCDEFGH",
+        admin_reply="I have checked your download access.",
+        is_resolved=False,
+        is_published=False,
+    )
+    db_session.add(feedback)
+    db_session.commit()
+
+    send_feedback_reply(db=db_session, feedback_id=feedback.id)
+    db_session.refresh(feedback)
+
+    assert feedback.reply_sent_at is not None
+    assert feedback.reply_sent_to_email == "customer@example.com"
+
+    with pytest.raises(HTTPException) as exc:
+        send_feedback_reply(db=db_session, feedback_id=feedback.id)
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Email already sent"
+
+
+def test_purchase_or_download_issue_cannot_be_published(db_session):
+    feedback = FeedbackMessage(
+        type="purchase_or_download_issue",
+        email="customer@example.com",
+        subject="Download problem",
+        message="The download is unavailable.",
+        support_reference="DL-ABCDEFGH",
+        admin_reply="I have checked your download access.",
+        is_resolved=False,
+        is_published=False,
+    )
+    db_session.add(feedback)
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        toggle_feedback_publish(db=db_session, feedback_id=feedback.id)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Only product feedback can be published"

@@ -15,10 +15,12 @@
             <p class="download-error">{{ t(error_key) }}</p>
             <p class="download-support-note">
                 {{ t("download_error_support_prefix") }}
-                <a href="{{ url_for('feedback_page') }}">
+                <a href="{{ feedback_url }}">
                     {{ t("download_feedback_link") }}
                 </a>
-                {{ t("download_error_support_suffix").format(reference=support_reference) }}
+                {% if support_reference %}
+                    {{ t("download_error_support_suffix").format(reference=support_reference) }}
+                {% endif %}
             </p>
         {% else %}
             <div class="download-icon" aria-hidden="true">↓</div>

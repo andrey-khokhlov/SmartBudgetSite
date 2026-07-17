@@ -72,7 +72,9 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert release.sha256_hash in response.text
     assert "01.07.2026" in response.text
     assert "DL-" in response.text
+    assert entitlement.support_reference in response.text
     assert token not in response.text
+    assert release.storage_key not in response.text
     db_session.expire_all()
     assert db_session.get(type(entitlement), entitlement.id).attempt_count == 0
 
@@ -188,3 +190,9 @@ def test_download_post_storage_failure_is_localized_and_still_counts_attempt(
     refreshed = db_session.get(type(entitlement), entitlement.id)
     assert refreshed.attempt_count == 1
     assert refreshed.status == DownloadEntitlementStatus.AVAILABLE.value
+    assert entitlement.support_reference in response.text
+    assert "message_type=purchase_or_download_issue" in response.text
+    assert f"support_reference={entitlement.support_reference}" in response.text
+    assert entitlement.download_token not in response.text
+    assert "provider detail" not in response.text
+    assert entitlement.release.storage_key not in response.text

@@ -60,6 +60,13 @@ Feedback:
   `feedback_messages` via `is_published`.
 - The intended separation into private feedback and distinct curated public
   review/Q&A entities remains future work.
+- Private `purchase_or_download_issue` feedback is integrated with protected
+  downloads through safe structured prefill.
+- Download entitlements own unique random `DL-XXXXXXXX` support references;
+  feedback stores an optional generic copy without a foreign key. Download
+  tokens and provider/storage details are not exposed through this workflow.
+- The generic field is compatible with future `PAY-*` references, but payment
+  support-reference generation is not implemented.
 
 Infrastructure and quality:
 
@@ -95,8 +102,6 @@ timeline.
    persistence from the VPS.
 6. Wire the Product Release publish action into the admin UI.
 7. Add explicit, auditable download-entitlement reissue/reset support.
-8. Integrate download support with the feedback flow, including a purchase or
-   download issue type, preselection, and a masked support reference.
 
 ## Intentionally deferred
 
@@ -108,4 +113,3 @@ timeline.
 - advanced admin authentication beyond the accepted MVP token/cookie approach
 - advanced BI, cohort, attribution, retention, CRM, helpdesk, and enterprise
   administration features
-

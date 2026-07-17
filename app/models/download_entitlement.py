@@ -46,6 +46,13 @@ class DownloadEntitlement(Base):
         index=True,
     )
 
+    support_reference: Mapped[str] = mapped_column(
+        String(11),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

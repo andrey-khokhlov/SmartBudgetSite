@@ -2,6 +2,7 @@
 # - site_issue: private support/admin handling only
 # - general_question: private admin reply by email only
 # - product_feedback: may be answered privately and may later be published on public reviews page
+# - purchase_or_download_issue: private purchase/download support only
 
 from datetime import datetime, UTC
 
@@ -29,13 +30,14 @@ class FeedbackMessage(Base):
         nullable=True,
         index=True,
     )
-    type: Mapped[str] = mapped_column(String(20), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
     name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     email: Mapped[str] = mapped_column(String(200), nullable=True)
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     page_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    support_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_resolved: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

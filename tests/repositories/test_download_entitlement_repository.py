@@ -49,6 +49,7 @@ def create_entitlement(db_session) -> DownloadEntitlement:
         sale_item_id=sale.items[0].id,
         release_id=release.id,
         download_token="repository-lookup-token",
+        support_reference="DL-ABCDEFGH",
         status=DownloadEntitlementStatus.AVAILABLE.value,
         expires_at=datetime.now(UTC) + timedelta(hours=12),
         attempt_count=0,
@@ -72,6 +73,17 @@ def test_get_download_entitlement_by_sale_item_id(db_session):
 
     result = DownloadEntitlementRepository(db_session).get_by_sale_item_id(
         entitlement.sale_item_id
+    )
+
+    assert result is not None
+    assert result.id == entitlement.id
+
+
+def test_get_download_entitlement_by_support_reference(db_session):
+    entitlement = create_entitlement(db_session)
+
+    result = DownloadEntitlementRepository(db_session).get_by_support_reference(
+        entitlement.support_reference
     )
 
     assert result is not None

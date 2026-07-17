@@ -13,6 +13,7 @@ from app.repositories.sales_repository import (
 )
 from app.schemas.feedback import FeedbackCreateResponse, FeedbackListResponse, FeedbackMessageType
 from app.schemas.purchase_check import PurchaseItem, PurchaseLookupRequest, PurchaseLookupResponse
+from app.services.feedback_service import validate_feedback_support_reference
 
 import uuid
 import shutil
@@ -43,6 +44,7 @@ def create_feedback(
     name: str | None = Form(None),
     page_url: str | None = Form(None),
     sale_id: int | None = Form(None),
+    support_reference: str | None = Form(None),
     files: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ):
@@ -134,6 +136,11 @@ def create_feedback(
                 detail="Invalid sale selection",
             )
 
+    normalized_support_reference = validate_feedback_support_reference(
+        message_type=message_type.value,
+        support_reference=support_reference,
+    )
+
     feedback = repo.create(
         message_type=str(message_type.value),
         email=email,
@@ -142,6 +149,7 @@ def create_feedback(
         name=name,
         page_url=page_url,
         user_agent=user_agent,
+        support_reference=normalized_support_reference,
     )
 
     attachments = []

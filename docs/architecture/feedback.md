@@ -56,6 +56,39 @@ unrelated admin functionality.
   product review when all publication requirements are satisfied.
 - Email sending is blocked after publication.
 
+#### `purchase_or_download_issue`
+
+- Used for private support when a customer has a purchase or download problem.
+- It does not require the product-feedback purchase-verification flow.
+- Admin may review the message, prepare a reply draft, and send one email reply
+  when an email address is available.
+- It must never be published as a public review.
+- It may include a generic `support_reference` copied from a safe
+  customer-facing error page.
+
+### Support references
+
+`FeedbackMessage.support_reference` is nullable, structured support context. It
+does not create ownership and has no foreign key to an entitlement or payment
+record. This keeps the field compatible with download references and future
+payment references such as `PAY-*` without coupling private feedback to one
+provider or domain entity.
+
+Each `DownloadEntitlement` owns a unique, randomly generated public reference in
+the format `DL-XXXXXXXX`. The suffix uses uppercase unambiguous alphanumeric
+characters. The reference is independent from the private download token and
+does not expose database identifiers, sale identifiers, customer data, provider
+identifiers, storage keys, or exception text.
+
+Download error pages may link to `/feedback` using only the exact private
+feedback type, the stored public support reference, and language context. The
+feedback GET route validates these values before rendering them. The feedback
+POST route validates the structured reference again before persistence. Invalid
+prefill values are ignored; malformed submitted references are rejected.
+
+Payment support-reference generation is not implemented. The generic feedback
+field and prefill contract only preserve compatibility for that future work.
+
 ### Protected admin workflow
 
 Feedback administration is available through protected admin routes.
@@ -129,6 +162,10 @@ Public display uses:
   SmartBudget INT.
 - When `sale_id` is present, its product must be consistent with `product_id`.
 - `site_issue` and `general_question` always remain private.
+- `purchase_or_download_issue` always remains private.
+- Support references must never contain access tokens, provider identifiers,
+  signed URLs, storage keys, raw exceptions, customer email addresses, or
+  database identifiers.
 - Publishing is an explicit admin action, not an automatic consequence of
   receiving positive feedback.
 - Feedback, reviews, and Q&A are different content concepts:

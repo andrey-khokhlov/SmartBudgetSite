@@ -37,7 +37,13 @@
 
     <div style="margin-top: 20px; display: grid; gap: 12px;">
         <div><strong>Created:</strong> {{ item.created_at }}</div>
-        <div><strong>Type:</strong> {{ item.type }}</div>
+        <div><strong>Type:</strong> {{ t("feedback_type_" ~ item.type) }}</div>
+        {% if item.support_reference %}
+        <div style="padding: 12px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 6px;">
+            <strong>{{ t("feedback_support_reference_label") }}:</strong>
+            {{ item.support_reference }}
+        </div>
+        {% endif %}
         <div><strong>Email:</strong> {{ item.email }}</div>
         <div><strong>Subject:</strong> {{ item.subject }}</div>
         <div><strong>Page:</strong> {{ item.page_url }}</div>

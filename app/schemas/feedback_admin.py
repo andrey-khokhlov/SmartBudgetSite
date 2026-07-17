@@ -18,6 +18,7 @@ class FeedbackAdminListItem(BaseModel):
     email: str
     subject: str
     is_resolved: bool
+    support_reference: str | None = None
 
 
 class FeedbackAdminDetail(BaseModel):
@@ -37,6 +38,7 @@ class FeedbackAdminDetail(BaseModel):
     page_url: str | None
     user_agent: str | None
     is_resolved: bool
+    support_reference: str | None = None
 
 
 class FeedbackResolveUpdate(BaseModel):

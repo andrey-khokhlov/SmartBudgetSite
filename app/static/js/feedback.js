@@ -20,9 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const submitButton = form.querySelector('button[type="submit"]');
 
-    const contactEmailGroup = document.getElementById("contactEmailGroup");
-    const contactEmailInput = document.getElementById("contact_email");
-
     const messageInput = document.getElementById("message");
     const messageCounter = document.getElementById("messageCounter");
 
@@ -41,20 +38,14 @@ document.addEventListener("DOMContentLoaded", () => {
             emailLabel.style.display = "block";
             emailInput.style.display = "block";
             emailHint.style.display = "block";
+            emailHint.textContent = texts.productEmailHint;
             emailInput.required = true;
-
-            contactEmailGroup.style.display = "none";
-            contactEmailInput.required = false;
-            contactEmailInput.value = "";
         } else {
-            emailLabel.style.display = "none";
-            emailInput.style.display = "none";
-            emailHint.style.display = "none";
+            emailLabel.style.display = "block";
+            emailInput.style.display = "block";
+            emailHint.style.display = "block";
+            emailHint.textContent = texts.contactEmailHint;
             emailInput.required = false;
-            emailInput.value = "";
-
-            contactEmailGroup.style.display = "block";
-            contactEmailInput.required = false;
         }
     }
 

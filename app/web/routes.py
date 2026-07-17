@@ -23,11 +23,15 @@ from app.services.consultation_entitlement_service import (
     get_valid_consultation_entitlement_by_token,
 )
 from app.services.download_entitlement_service import (
+    get_download_support_reference_by_token,
     get_valid_download_entitlement_by_token,
     record_download_attempt,
 )
 from app.services.product_release_service import ProductReleaseService
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
+from app.services.support_reference_service import (
+    is_valid_download_support_reference,
+)
 
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -91,15 +95,23 @@ DOWNLOAD_ERROR_TRANSLATION_KEYS = {
 }
 
 
-def _download_support_reference(download_token: str) -> str:
-    digest = hashlib.sha256(download_token.encode("utf-8")).hexdigest()
-    return f"DL-{digest[:6].upper()}"
+def _feedback_prefill_url(
+    request: Request,
+    support_reference: str | None,
+) -> str:
+    params = {
+        "message_type": "purchase_or_download_issue",
+        "lang": get_lang(request),
+    }
+    if support_reference is not None:
+        params["support_reference"] = support_reference
+    return str(request.url_for("feedback_page").include_query_params(**params))
 
 
 def _render_download_error(
     request: Request,
     exc: HTTPException,
-    download_token: str,
+    support_reference: str | None,
 ):
     error_key = DOWNLOAD_ERROR_TRANSLATION_KEYS.get(
         str(exc.detail),
@@ -111,7 +123,8 @@ def _render_download_error(
         "download.html",
         {
             "error_key": error_key,
-            "support_reference": _download_support_reference(download_token),
+            "support_reference": support_reference,
+            "feedback_url": _feedback_prefill_url(request, support_reference),
         },
         status_code=exc.status_code,
     )
@@ -179,8 +192,31 @@ async def faq(request: Request):
 
 
 @router.get("/feedback", response_class=HTMLResponse)
-async def feedback_page(request: Request):
-    return render(request, "feedback.html", {})
+async def feedback_page(
+    request: Request,
+    message_type: str | None = Query(default=None),
+    support_reference: str | None = Query(default=None),
+):
+    preselected_type = (
+        "purchase_or_download_issue"
+        if message_type == "purchase_or_download_issue"
+        else None
+    )
+    prefilled_support_reference = (
+        support_reference
+        if preselected_type is not None
+        and support_reference is not None
+        and is_valid_download_support_reference(support_reference)
+        else None
+    )
+    return render(
+        request,
+        "feedback.html",
+        {
+            "preselected_type": preselected_type,
+            "prefilled_support_reference": prefilled_support_reference,
+        },
+    )
 
 
 @router.get("/download/{download_token}", response_class=HTMLResponse)
@@ -192,10 +228,14 @@ def download_page(
     try:
         entitlement = get_valid_download_entitlement_by_token(db, download_token)
     except HTTPException as exc:
+        support_reference = get_download_support_reference_by_token(
+            db,
+            download_token,
+        )
         return _render_download_error(
             request,
             exc,
-            download_token,
+            support_reference,
         )
 
     release = entitlement.release
@@ -245,7 +285,11 @@ def download_page(
             "remaining_attempts": (
                 settings.DOWNLOAD_MAX_ATTEMPTS - entitlement.attempt_count
             ),
-            "support_reference": _download_support_reference(download_token),
+            "support_reference": entitlement.support_reference,
+            "feedback_url": _feedback_prefill_url(
+                request,
+                entitlement.support_reference,
+            ),
             "signed_url_ttl_minutes": (
                 settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS + 59
             )
@@ -263,10 +307,14 @@ def issue_download(
     try:
         entitlement = record_download_attempt(db, download_token)
     except HTTPException as exc:
+        support_reference = get_download_support_reference_by_token(
+            db,
+            download_token,
+        )
         return _render_download_error(
             request,
             exc,
-            download_token,
+            support_reference,
         )
 
     storage_key = entitlement.release.storage_key
@@ -283,7 +331,7 @@ def issue_download(
                 status_code=503,
                 detail="Download storage is temporarily unavailable.",
             ),
-            download_token,
+            entitlement.support_reference,
         )
 
     return RedirectResponse(url=signed_url, status_code=303)
