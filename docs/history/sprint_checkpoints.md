@@ -1,27 +1,29 @@
-## How to resume work
+# Sprint Checkpoints
 
-When continuing development in a new session:
+> Status: Historical record.
+>
+> This document preserves the project checkpoints, decisions, limitations, and
+> planning notes that were previously maintained in
+> the former monolithic backend architecture document. It is not an active source of truth. Use
+> `docs/README.md`, `docs/current_state.md`, and the documents under
+> `docs/architecture/` for current guidance.
 
-1. Start by reviewing:
+## Historical resume instructions
 
-   * docs/backend_architecture.md
-   * docs/feedback_workflow.md
-
-2. Focus on:
-
-   * "Sprint checkpoint" section (current state)
-   * "Next sprint priorities" section
-
-3. Then continue from the first unfinished item
+The former monolithic document began with session-resume instructions. At that
+time, developers were directed to review the architecture and feedback workflow,
+locate the latest sprint checkpoint and next-sprint priorities, and continue from
+the first unfinished item. Those instructions were superseded by the current
+documentation index and source-of-truth boundaries.
 
 ---
 
-# Backend Architecture
+# Historical Backend Architecture and Sprint Record
 
 ## Related project documents
 
 * `docs/product_positioning.md` — primary product strategy document describing the long-term vision, positioning, and product philosophy of SmartBudget.
-* `docs/feedback_workflow.md` — feedback workflow and related operational rules.
+* `docs/architecture/feedback.md` — feedback workflow and related operational rules.
 
 ---
 
@@ -3504,14 +3506,16 @@ Project decision:
 
 ---
 
-### Documentation rule
+### Historical documentation rule (superseded)
 
-`backend_architecture.md` remains the primary project state document.
+At this checkpoint, the monolithic backend architecture document was the primary
+project state document. The approved documentation architecture later replaced that role with
+`docs/current_state.md` and the active documents under `docs/architecture/`.
 
-Before starting new implementation work:
+The operational rules recorded at that checkpoint were:
 
-* update documentation first
-* keep sprint checkpoints current
+* update the authoritative documentation when implementation changes it
+* preserve sprint checkpoints as history
 * avoid re-validating already-confirmed infrastructure decisions
 
 ## Sprint 37 checkpoint: Product release foundation

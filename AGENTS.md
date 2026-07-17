@@ -11,8 +11,16 @@ SmartBudgetSite is the FastAPI backend and website for SmartBudget. SmartBudget 
 Before starting non-trivial work, review:
 
 - `docs/product_positioning.md` — product vision, positioning, product philosophy, and strategic feature fit.
-- `docs/backend_architecture.md` — backend architecture, layer boundaries, implementation patterns, sprint continuity, and current priorities.
-- `docs/feedback_workflow.md` — feedback workflow and related operational rules when working on feedback features.
+- `docs/README.md` — documentation map and source-of-truth boundaries.
+- `docs/current_state.md` — current implementation state, constraints, and priorities.
+- `docs/architecture/backend.md` — backend layers, responsibility boundaries, and implementation patterns.
+- `docs/architecture/commerce_and_delivery.md` — commerce, payment, release, entitlement, and delivery rules when working in those domains.
+- `docs/architecture/consultations.md` — consultation purchase, entitlement, booking, and webhook rules when working on consultation features.
+- `docs/architecture/feedback.md` — feedback, reviews, Q&A, publication, and operational workflow rules when working on feedback features.
+- `docs/operations.md` — development, configuration, deployment, and validation procedures.
+
+`docs/history/sprint_checkpoints.md` is a historical record only. It preserves
+implementation continuity and rationale but is not an active source of truth.
 
 If these documents conflict with the requested implementation, stop and report the conflict before making changes.
 

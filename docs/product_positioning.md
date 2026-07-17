@@ -6,7 +6,9 @@ This document is the primary product strategy document for SmartBudget.
 
 It describes the long-term product vision, positioning, and product philosophy.
 
-Technical architecture and implementation state remain documented in `docs/backend_architecture.md`.
+Technical architecture is documented under `docs/architecture/`. Current
+implementation state and priorities are documented in `docs/current_state.md`.
+Use `docs/README.md` as the documentation index.
 
 ---
 
@@ -121,6 +123,10 @@ Different entitlement types should remain separate domain entities when their li
 SmartBudgetSite should not introduce a universal entitlement table merely to remove duplication. Shared principles and consistent patterns are preferable to an over-generalized model containing unrelated nullable fields and conditional behavior.
 
 This approach keeps customer ownership explicit, protects paid functionality, reduces dependency on external providers, and provides a consistent foundation for future product delivery and paid services.
+
+The active domain rules are documented in
+`docs/architecture/commerce_and_delivery.md` and
+`docs/architecture/consultations.md`.
 
 ---
 

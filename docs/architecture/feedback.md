@@ -1,0 +1,184 @@
+# Feedback Architecture and Workflow
+
+## Document role
+
+This document is the authoritative source for feedback and review workflow,
+publication rules, and founder-operated feedback administration.
+
+Backend layer boundaries are documented in `docs/architecture/backend.md`.
+Implementation status and current priorities are documented in
+`docs/current_state.md`.
+
+## Purpose
+
+SmartBudgetSite uses feedback as a private communication channel that may, in a
+limited and deliberate case, provide the source material for a public product
+review. The workflow is designed for clear, sustainable operation by a solo
+founder rather than as a general-purpose support platform.
+
+## Scope
+
+This document covers:
+
+- feedback message types and lifecycle;
+- admin list and detail workflows;
+- reply-draft and one-time email rules;
+- current publication rules;
+- product/SKU-scoped reviews;
+- the intentionally deferred separation of private feedback from curated public
+  reviews, Q&A, and FAQ content.
+
+It does not define the general backend layers, product or pricing models, or
+unrelated admin functionality.
+
+## Current implemented behavior
+
+### Feedback message types
+
+#### `site_issue`
+
+- Used for private support.
+- Admin may review the message, prepare a reply draft, and send one email reply
+  when an email address is available.
+- It must never be published as a public review.
+
+#### `general_question`
+
+- Used for private communication.
+- Admin may review the message, prepare a reply draft, and send one email reply
+  when an email address is available.
+- It must never be published as a public review.
+
+#### `product_feedback`
+
+- Used for product-related feedback.
+- Admin may handle it privately through the reply workflow or publish it as a
+  product review when all publication requirements are satisfied.
+- Email sending is blocked after publication.
+
+### Protected admin workflow
+
+Feedback administration is available through protected admin routes.
+
+The list page:
+
+- shows feedback ID, creation time, type, email, subject, and resolution state;
+- orders unresolved messages first and newest messages first within each group;
+- paginates the result set.
+
+The detail page allows the admin to:
+
+- view the message;
+- mark it resolved or open;
+- save or edit the reply draft;
+- send the one permitted email reply;
+- publish or unpublish eligible product feedback.
+
+This is a lightweight operational inbox. It is not a helpdesk, ticketing system,
+CRM, live chat system, or customer-success platform.
+
+### Reply draft and email
+
+`admin_reply` is an internal draft. It is not sent automatically and remains
+editable before sending.
+
+Email sending is a one-time action and requires:
+
+- a non-empty `admin_reply`;
+- a non-empty customer email address;
+- no previous send recorded in `reply_sent_at`;
+- feedback that is not currently published.
+
+After sending:
+
+- `reply_sent_at` is set;
+- `reply_sent_to_email` stores the destination address;
+- any further conversation continues in the regular email client.
+
+The admin interface is not a threaded email client. It sends the initial reply
+only and does not manage an ongoing conversation thread.
+
+### Publication and product reviews
+
+The current direct-publication model uses fields on `feedback_messages`.
+Eligibility is governed by the authoritative business rules below.
+
+When published:
+
+- `is_published = true`;
+- `published_at` is set;
+- email sending is blocked.
+
+When unpublished:
+
+- `is_published = false`;
+- `published_at = null`.
+
+Public display uses:
+
+- `/reviews/{slug}` for one product;
+- `/reviews` as a redirect to the configured default product review page.
+
+## Authoritative business rules
+
+- Raw feedback is private by default and must not be displayed publicly as-is.
+- Only `product_feedback` may currently be published.
+- Publication requires both `admin_reply` and `product_id`.
+- Public reviews belong to the exact product/SKU identified by `product_id`.
+  Reviews are not global or shared across variants such as SmartBudget RU and
+  SmartBudget INT.
+- When `sale_id` is present, its product must be consistent with `product_id`.
+- `site_issue` and `general_question` always remain private.
+- Publishing is an explicit admin action, not an automatic consequence of
+  receiving positive feedback.
+- Feedback, reviews, and Q&A are different content concepts:
+  - feedback is raw private input;
+  - a review is public content derived from approved product feedback;
+  - Q&A is curated and rewritten public content.
+- The admin workflow supports one initial email reply and does not become a
+  threaded email client.
+
+## Recorded test coverage
+
+Existing documentation records service coverage for:
+
+- email sending with a missing email, successful send, repeated-send rejection,
+  missing reply, and published-feedback restriction;
+- publication type validation, successful publication, publish/unpublish toggle,
+  and missing-reply rejection;
+- resolved-state toggling;
+- reply-draft saving;
+- empty-value normalization.
+
+Route coverage is recorded for successful and repeated email sending and for
+publish/unpublish behavior. SMTP is blocked in tests and mail is mocked globally.
+
+The established testing boundary is:
+
+- service tests cover business rules;
+- route tests cover HTTP wiring.
+
+## Intentionally deferred target architecture
+
+The current use of `feedback_messages.is_published` is transitional. It remains
+the implemented behavior until a separate public-content model is explicitly
+introduced.
+
+The target separation is:
+
+- `feedback_messages` — private raw input that is never itself a public display
+  entity;
+- `product_reviews` — explicitly approved and curated public reviews linked to
+  `product_id`;
+- `product_qna` — curated product questions and founder answers;
+- curated FAQ content — generally useful questions and answers with optional
+  product association, visibility, and ordering metadata.
+
+Separate entities allow private support, reviews, Q&A, and FAQ content to have
+independent lifecycles. Public records may retain the relevant product reference,
+curated text and reply, publication state, timestamps, and an optional display
+name or anonymized author label.
+
+This target is intentionally deferred. It must not be described as current
+behavior, and implementation should occur only when that work is explicitly in
+scope.
