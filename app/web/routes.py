@@ -323,6 +323,7 @@ def issue_download(
     try:
         signed_url = R2StorageService().generate_signed_get_url(
             storage_key=storage_key,
+            download_filename=entitlement.release.original_filename,
         )
     except (HTTPException, R2SignedUrlError):
         return _render_download_error(

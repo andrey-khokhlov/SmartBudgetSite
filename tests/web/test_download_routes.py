@@ -118,11 +118,11 @@ def test_download_post_records_attempt_and_redirects_to_signed_url(
 ):
     monkeypatch.setattr(settings, "DOWNLOAD_MAX_ATTEMPTS", 3)
     entitlement, release = create_download(db_session)
-    requested_keys = []
+    requested_downloads = []
 
     class FakeStorage:
-        def generate_signed_get_url(self, *, storage_key):
-            requested_keys.append(storage_key)
+        def generate_signed_get_url(self, *, storage_key, download_filename):
+            requested_downloads.append((storage_key, download_filename))
             return "https://r2.example/temporary-download"
 
     monkeypatch.setattr("app.web.routes.R2StorageService", FakeStorage)
@@ -134,7 +134,7 @@ def test_download_post_records_attempt_and_redirects_to_signed_url(
 
     assert response.status_code == 303
     assert response.headers["location"] == "https://r2.example/temporary-download"
-    assert requested_keys == [release.storage_key]
+    assert requested_downloads == [(release.storage_key, release.original_filename)]
     db_session.expire_all()
     refreshed = db_session.get(type(entitlement), entitlement.id)
     assert refreshed.attempt_count == 1
@@ -176,7 +176,7 @@ def test_download_post_storage_failure_is_localized_and_still_counts_attempt(
     entitlement, _ = create_download(db_session)
 
     class FailingStorage:
-        def generate_signed_get_url(self, *, storage_key):
+        def generate_signed_get_url(self, *, storage_key, download_filename):
             raise R2SignedUrlError("provider detail must stay hidden")
 
     monkeypatch.setattr("app.web.routes.R2StorageService", FailingStorage)

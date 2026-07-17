@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass
 from typing import BinaryIO
+from urllib.parse import quote
 
 import certifi
 import boto3
@@ -11,6 +14,9 @@ from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException, status
 
 from app.core.config import settings
+
+DEFAULT_DOWNLOAD_FILENAME = "download"
+ASCII_FILENAME_UNSAFE_PATTERN = re.compile(r"[^A-Za-z0-9._ -]+")
 
 
 @dataclass(frozen=True)
@@ -85,7 +91,12 @@ class R2StorageService:
             storage_key=storage_key,
         )
 
-    def generate_signed_get_url(self, *, storage_key: str) -> str:
+    def generate_signed_get_url(
+        self,
+        *,
+        storage_key: str,
+        download_filename: str,
+    ) -> str:
         """Generate a short-lived GET-only URL without persisting it."""
         try:
             return self.client.generate_presigned_url(
@@ -93,6 +104,9 @@ class R2StorageService:
                 Params={
                     "Bucket": settings.R2_BUCKET_NAME,
                     "Key": storage_key,
+                    "ResponseContentDisposition": _build_content_disposition(
+                        download_filename
+                    ),
                 },
                 ExpiresIn=settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS,
             )
@@ -120,3 +134,46 @@ class R2StorageService:
                         + ", ".join(missing_settings)
                 ),
             )
+
+
+def _build_content_disposition(filename: str) -> str:
+    safe_filename = _sanitize_download_filename(filename)
+    ascii_filename = _ascii_download_filename(safe_filename)
+    encoded_filename = quote(safe_filename, safe="")
+    return (
+        f'attachment; filename="{ascii_filename}"; '
+        f"filename*=UTF-8''{encoded_filename}"
+    )
+
+
+def _sanitize_download_filename(filename: str) -> str:
+    without_controls = "".join(
+        character
+        for character in filename
+        if not unicodedata.category(character).startswith("C")
+    )
+    basename = without_controls.replace("\\", "/").rsplit("/", 1)[-1]
+    basename = basename.replace('"', "").strip(" .")
+    if not basename:
+        return DEFAULT_DOWNLOAD_FILENAME
+    return basename
+
+
+def _ascii_download_filename(filename: str) -> str:
+    normalized = unicodedata.normalize("NFKD", filename)
+    ascii_filename = normalized.encode("ascii", "ignore").decode("ascii")
+    ascii_filename = ASCII_FILENAME_UNSAFE_PATTERN.sub("_", ascii_filename)
+    ascii_filename = ascii_filename.strip()
+    if ascii_filename.startswith("."):
+        ascii_filename = ""
+    else:
+        ascii_filename = ascii_filename.strip(" .")
+    if ascii_filename:
+        return ascii_filename
+
+    extension = ""
+    if "." in filename:
+        candidate = filename.rsplit(".", 1)[-1]
+        if candidate.isascii() and candidate.isalnum() and len(candidate) <= 16:
+            extension = f".{candidate}"
+    return f"{DEFAULT_DOWNLOAD_FILENAME}{extension}"
