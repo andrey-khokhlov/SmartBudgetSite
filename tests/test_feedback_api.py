@@ -2,6 +2,37 @@
 from decimal import Decimal
 from app.services.product_service import set_product_price
 
+
+def _empty_filename_multipart(file_content: bytes) -> tuple[bytes, str]:
+    boundary = "----WebKitFormBoundaryFeedbackTest"
+    fields = {
+        "message_type": "purchase_or_download_issue",
+        "email": "browser@example.com",
+        "subject": "Browser multipart submission",
+        "message": "This browser multipart submission has enough message length.",
+    }
+    parts: list[bytes] = []
+    for name, value in fields.items():
+        parts.append(
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+                f"{value}\r\n"
+            ).encode()
+        )
+    parts.append(
+        (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="files"; filename=""\r\n'
+            "Content-Type: application/octet-stream\r\n\r\n"
+        ).encode()
+        + file_content
+        + b"\r\n"
+    )
+    parts.append(f"--{boundary}--\r\n".encode())
+    return b"".join(parts), f"multipart/form-data; boundary={boundary}"
+
+
 def test_create_general_feedback_success(client, db_session):
     """
     Test case: create general feedback message
@@ -260,3 +291,84 @@ def test_create_feedback_rejects_reference_for_unrelated_type(client):
 
     assert response.status_code == 400
     assert "only allowed" in response.json()["detail"]
+
+
+def test_create_feedback_normalizes_browser_empty_file_sentinel(
+    client,
+    db_session,
+):
+    from app.models.feedback import FeedbackMessage
+    from app.models.feedback_attachment import FeedbackAttachment
+
+    body, content_type = _empty_filename_multipart(b"")
+
+    response = client.post(
+        "/v1/feedback",
+        content=body,
+        headers={"Content-Type": content_type},
+    )
+
+    assert response.status_code == 200
+    feedback = db_session.get(FeedbackMessage, response.json()["id"])
+    assert feedback is not None
+    assert feedback.type == "purchase_or_download_issue"
+    assert (
+        db_session.query(FeedbackAttachment)
+        .filter_by(feedback_id=feedback.id)
+        .count()
+        == 0
+    )
+
+
+def test_create_feedback_persists_valid_named_attachment(client, db_session):
+    from app.models.feedback import FeedbackMessage
+    from app.models.feedback_attachment import FeedbackAttachment
+
+    file_content = b"%PDF-1.4 test attachment"
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "general_question",
+            "email": "attachment@example.com",
+            "subject": "Valid attachment",
+            "message": "This feedback includes one valid named PDF attachment.",
+        },
+        files={
+            "files": (
+                "evidence.pdf",
+                file_content,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    feedback = db_session.get(FeedbackMessage, response.json()["id"])
+    assert feedback is not None
+    attachment = (
+        db_session.query(FeedbackAttachment)
+        .filter_by(feedback_id=feedback.id)
+        .one()
+    )
+    assert attachment.original_filename == "evidence.pdf"
+    assert attachment.content_type == "application/pdf"
+    assert attachment.file_size_bytes == len(file_content)
+
+
+def test_create_feedback_rejects_empty_filename_with_nonzero_content(
+    client,
+    db_session,
+):
+    from app.models.feedback import FeedbackMessage
+
+    body, content_type = _empty_filename_multipart(b"not empty")
+
+    response = client.post(
+        "/v1/feedback",
+        content=body,
+        headers={"Content-Type": content_type},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "File must have a filename"
+    assert db_session.query(FeedbackMessage).count() == 0

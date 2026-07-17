@@ -71,6 +71,12 @@ def create_feedback(
 
     user_agent = request.headers.get("user-agent")
 
+    files = [
+        file
+        for file in files
+        if not (file.filename == "" and file.size == 0)
+    ]
+
     if len(files) > MAX_FILES_COUNT:
         raise HTTPException(
             status_code=400,
