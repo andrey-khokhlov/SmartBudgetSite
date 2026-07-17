@@ -103,3 +103,34 @@ credentials are server-owned configuration and must never come from request
 headers or user input. Operational rules for `.env`, `.env.example`, deployment
 configuration, and secret handling are in `../operations.md`.
 
+## Browser-facing static compatibility
+
+Templates and their JavaScript and CSS assets form one browser-facing contract.
+When a template change is incompatible with a previously cached asset, the
+changed asset URL must receive an explicit version query parameter or a content
+hash. A deployment must not rely on customers performing a hard refresh to make
+the page functional.
+
+Validation for such changes must include a normal browser refresh with
+previously cached assets. Cache incompatibility that can prevent initialization,
+hide required controls, or break interaction is a release risk even when the
+server response and API behavior are correct.
+
+## Database schema parity
+
+`Base.metadata.create_all()` against SQLite does not prove that the production
+PostgreSQL schema matches SQLAlchemy models or Alembic history. In particular,
+SQLite-only test setup can mask missing server defaults and differences in
+constraint or index behavior.
+
+Migration-sensitive behavior must be validated by applying the Alembic chain to
+PostgreSQL and inspecting the resulting schema. Validation must cover, as
+applicable:
+
+- server defaults and nullability;
+- constraints and unique indexes;
+- backfills and existing-row invariants;
+- PostgreSQL-specific types, expressions, and partial-index behavior.
+
+This is an ongoing validation requirement for schema changes, not a one-time
+release check.

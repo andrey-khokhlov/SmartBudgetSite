@@ -195,6 +195,39 @@ The established testing boundary is:
 - service tests cover business rules;
 - route tests cover HTTP wiring.
 
+### Browser and multipart validation
+
+Feedback browser behavior must be tested as the browser sends it, not only as an
+equivalent logical API payload. In particular, omitting the optional `files`
+field from a test request does not reproduce `FormData` behavior when a browser
+includes an empty multipart file part for an unselected file input.
+
+Regression coverage for optional attachments must include:
+
+- submission with no attachment selected through the real browser form;
+- the browser-equivalent zero-byte empty-file sentinel;
+- one or more valid named attachments;
+- rejection of malformed upload states rather than treating them as absent.
+
+Browser coverage for the dynamic form should also capture page and console
+errors, verify initialization, switch through every supported message type, and
+assert the expected visible and hidden fields. The general browser-validation
+and release rules are defined in `../operations.md`.
+
+## Planned support-flow enhancement
+
+A future customer-facing failure-to-Feedback flow should minimize repeated
+typing without submitting anything automatically. When the application already
+knows safe customer context, the Feedback page should preselect the appropriate
+private message type and prefill the email address, safe support reference,
+other non-secret known information, and a useful initial message. The customer
+must be able to review and edit all customer-facing content before choosing
+Send.
+
+This is planned behavior, not the current implementation. It must preserve the
+support-reference safety rules above and must never prefill tokens, provider
+identifiers, signed URLs, storage keys, raw exceptions, or other secrets.
+
 ## Intentionally deferred target architecture
 
 The current use of `feedback_messages.is_published` is transitional. It remains

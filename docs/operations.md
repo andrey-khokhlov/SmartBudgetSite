@@ -8,9 +8,12 @@ configuration rules, deployment preparation, and operational validation.
 ## Run application
 
 ```bash
-# Start FastAPI app with auto-reload (dev mode)
-uvicorn app.main:app --reload
+python run.py
 ```
+
+The application is available at `http://127.0.0.1:8800` by default. This is the
+authoritative local development startup method; avoid documenting or running
+parallel startup commands that can create duplicate application processes.
 
 ## Alembic (database migrations)
 ```
@@ -100,6 +103,34 @@ introducing architecture changes or repeating local integration troubleshooting.
 
 See `current_state.md` for current priorities and blockers.
 
+## Validation policy
+
+Critical user-facing flows require automated browser validation where it is
+appropriate and at least one real manual browser check before release. A
+technically successful request or persisted record is not sufficient when the
+rendered interface is incomplete, misleading, or unusable.
+
+Manual browser checks validate the complete rendered experience, including:
+
+- field and control completeness;
+- conditional visibility and dynamic state transitions;
+- JavaScript initialization and error-free execution;
+- the intended customer interaction from entry point through confirmation;
+- behavior after a normal refresh with previously cached static assets.
+
+Playwright is a development/test-only layer and is not a production runtime
+dependency. Browser tests remain separate from ordinary pytest discovery, use
+Chromium as the supported browser, and should capture page errors and console
+errors while exercising dynamic behavior and critical journeys. The single
+source for local Playwright setup and browser-test commands is
+`../browser_tests/README.md`; do not duplicate those installation instructions
+here. The ordinary non-browser suite continues to run with `python -m pytest`.
+
+Migration-sensitive behavior must also be validated against PostgreSQL through
+Alembic. SQLite schemas created from SQLAlchemy metadata are useful for tests but
+do not prove production schema parity. See `architecture/backend.md` for the
+authoritative database-parity rule.
+
 # Operational Reviews
 
 ## Sprint Closing Review
@@ -144,5 +175,27 @@ notes.
 
 Review payment-provider readiness, download delivery, support workflow, backup,
 recovery, and production configuration.
+
+### Required end-to-end journeys
+
+Before the first public release, manually execute every supported customer
+journey end to end. Validation is scenario-based rather than page-based: opening
+individual pages does not prove that the customer can complete a workflow or
+that the corresponding admin follow-up is usable.
+
+At minimum, verify:
+
+- successful purchase;
+- protected download;
+- failed payment;
+- download failure followed by the support flow;
+- product feedback after purchase verification;
+- general question submission and follow-up;
+- site issue submission and follow-up;
+- consultation booking;
+- the related admin review and follow-up for each applicable journey.
+
+The product is not release-ready until every supported journey has been
+completed and verified in the release environment.
 
 Perform the Release Readiness Review before any public product release.

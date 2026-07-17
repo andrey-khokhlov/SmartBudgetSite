@@ -76,6 +76,9 @@ Infrastructure and quality:
 - Cloudflare R2 integration is implemented, but live R2 upload validation is
   deferred to the future VPS because the current local network cannot complete
   the TLS connection to the R2 S3 API.
+- A separate Playwright/Chromium browser regression layer protects critical
+  client-side behavior without changing ordinary pytest discovery. Playwright
+  remains a development/test-only dependency.
 - The latest recorded full automated test result is 143 passing tests at Sprint
   40. This is a historical test count, not a substitute for rerunning tests after
   code changes.
@@ -90,23 +93,48 @@ The project decision remains to continue development while banking and payment
 infrastructure are arranged rather than block product work on that external
 timeline.
 
-## Immediate priorities
+## Next sprint priorities
 
-1. Implement real payment-provider checkout and webhook processing.
-2. Orchestrate paid-sale transitions, entitlement creation, and customer delivery
-   email.
-3. Validate PostgreSQL migrations and SMTP behavior outside mocked tests.
-4. Deploy to a public HTTPS environment and validate existing Calendly webhook
-   processing with real payloads before changing reconciliation architecture.
-5. Validate R2 connectivity, authenticated upload, stored metadata, and release
-   persistence from the VPS.
-6. Wire the Product Release publish action into the admin UI.
-7. Add explicit, auditable download-entitlement reissue/reset support.
+### 1. Smart Feedback support flow
+
+Implement a fully prefilled Feedback experience for payment and download
+failures.
+
+The support form should automatically populate:
+
+- message type;
+- customer email;
+- support reference;
+- product information;
+- known purchase context;
+- an initial support message.
+
+The expected user workflow is:
+
+`Review` → optionally edit → `Send`
+
+### 2. Continue release-readiness validation
+
+Continue manually validating complete end-to-end user journeys as major
+functionality is completed.
+
+Each discovered issue should be evaluated for:
+
+- browser regression coverage;
+- backend regression coverage;
+- documentation improvements;
+- user experience improvements.
+
+Treat release readiness as an incremental activity rather than a final project
+phase.
 
 ## Intentionally deferred
 
 - strict one-time download completion and automatic completion detection
 - richer download-attempt audit data and backend file proxying
+- Feedback form UI polish: apply the project's primary button style to the
+  submit control and bring the file-selection control into the site design;
+  these are known non-blocking release-polish items
 - consultation cancellation synchronization
 - persisted webhook audit storage, delivery correlation, metrics, and replay
   diagnostics
