@@ -10,6 +10,8 @@ separately as history.
   strategic feature fit.
 - `current_state.md` — current implementation state, constraints, and next
   priorities.
+- `release_readiness.md` — first public commercial release criteria, accepted
+  release backlog, expected release gaps, and completion definition.
 - `architecture/backend.md` — backend layers, boundaries, and implementation
   rules.
 - `architecture/commerce_and_delivery.md` — catalog, sales, payments, releases,
