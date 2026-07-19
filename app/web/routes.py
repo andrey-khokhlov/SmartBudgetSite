@@ -783,6 +783,7 @@ async def admin_login(
         value=token,
         httponly=True,
         samesite="lax",
+        secure=settings.APP_ENV == "prod",
         max_age=60 * 60 * 8,
     )
     return response
