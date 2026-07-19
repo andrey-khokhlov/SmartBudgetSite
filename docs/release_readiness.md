@@ -119,11 +119,11 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-004` — Fail-closed production secrets.**
+**Current first incomplete item: `SEC-006` — Secure production admin cookie.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
-| 1 | Security configuration | `SEC-004` | Fail-closed production secrets | `Not started` |
+| 1 | Security configuration | `SEC-004` | Fail-closed production secrets | `Completed` |
 | 2 | Security configuration | `SEC-006` | Secure production admin cookie | `Not started` |
 | 3 | Feedback security | `SEC-001` | Protect private feedback listing | `Not started` |
 | 4 | Feedback security | `SEC-002` | Protect feedback status mutation | `Not started` |

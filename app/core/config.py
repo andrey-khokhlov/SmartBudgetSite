@@ -1,6 +1,7 @@
 import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ENV_FILE allows switching environments (dev/prod/test)
 # Default is ".env" if ENV_FILE is not explicitly set
@@ -54,6 +55,19 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="forbid",
     )
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.APP_ENV != "prod":
+            return self
+
+        for field_name in ("ADMIN_TOKEN", "SECRET_KEY"):
+            if not getattr(self, field_name).strip():
+                raise ValueError(
+                    f"{field_name} must be non-empty when APP_ENV is 'prod'"
+                )
+
+        return self
 
 
 settings = Settings()
