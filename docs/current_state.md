@@ -60,8 +60,16 @@ Feedback:
   `feedback_messages` via `is_published`.
 - The intended separation into private feedback and distinct curated public
   review/Q&A entities remains future work.
-- Private `purchase_or_download_issue` feedback is integrated with protected
-  downloads through safe structured prefill.
+- Protected download pages link to Feedback with `purchase_or_download_issue`;
+  an existing `DL-*` reference is resolved server-side through the service and
+  repository layers before any customer context is shown.
+- Successful download-context lookup prefills the customer email, readonly
+  support reference, public product name and edition, release version, purchase
+  date, subject, and initial message in English or Russian. Customer-editable
+  fields remain editable and submission always requires an explicit Send.
+- Unknown, malformed, or `PAY-*` references expose no customer context and are
+  not displayed. A separately supplied safe
+  `message_type=purchase_or_download_issue` may remain selected.
 - Download entitlements own unique random `DL-XXXXXXXX` support references;
   feedback stores an optional generic copy without a foreign key. Download
   tokens and provider/storage details are not exposed through this workflow.
@@ -97,8 +105,9 @@ timeline.
 
 ### 1. Smart Feedback support flow
 
-Implement a fully prefilled Feedback experience for payment and download
-failures.
+Extend the fully prefilled Feedback experience to payment failures. The bounded
+download-support slice is implemented; payment support-reference generation and
+prefill remain future work.
 
 The support form should automatically populate:
 

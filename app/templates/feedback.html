@@ -30,9 +30,9 @@
             </span>
         </label>
 
-        <input class="feedback-form__control" type="email" id="email" name="email">
+        <input class="feedback-form__control" type="email" id="email" name="email" value="{{ prefill_context.customer_email if prefill_context else '' }}">
 
-        {% if prefilled_support_reference %}
+        {% if prefill_context %}
         <div id="supportReferenceGroup">
             <label class="feedback-form__label" for="support_reference">
                 {{ t("feedback_support_reference_label") }}
@@ -42,7 +42,7 @@
                 type="text"
                 id="support_reference"
                 name="support_reference"
-                value="{{ prefilled_support_reference }}"
+                value="{{ prefill_context.support_reference }}"
                 readonly
             >
         </div>
@@ -63,12 +63,12 @@
 
         <div id="subjectGroup" style="display: none;">
             <label class="feedback-form__label" for="subject">{{ t("feedback_subject_label") }}</label>
-            <input class="feedback-form__control" type="text" id="subject" name="subject" maxlength="200" required>
+            <input class="feedback-form__control" type="text" id="subject" name="subject" maxlength="200" required value="{{ prefill_context.subject if prefill_context else '' }}">
         </div>
 
         <div id="messageGroup" style="display: none;">
             <label class="feedback-form__label" for="message">{{ t("feedback_message_label") }}</label>
-            <textarea class="feedback-form__control feedback-form__control--textarea" id="message" name="message" required maxlength="2000"></textarea>
+            <textarea class="feedback-form__control feedback-form__control--textarea" id="message" name="message" required maxlength="2000">{{ prefill_context.message if prefill_context else '' }}</textarea>
             <div class="feedback-form__counter" id="messageCounter">0 / 2000</div>
         </div>
 
@@ -124,6 +124,6 @@ window.feedbackTexts = {
     contactEmailHint: "{{ t('feedback_contact_email_hint') }}",
 };
 </script>
-<script src="{{ url_for('static', path='js/feedback.js') }}?v=2"></script>
+<script src="{{ url_for('static', path='js/feedback.js') }}?v=3"></script>
 
 {% endblock %}

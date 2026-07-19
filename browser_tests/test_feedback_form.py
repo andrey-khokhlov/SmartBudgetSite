@@ -11,6 +11,8 @@ import uvicorn
 from playwright.sync_api import Page, expect, sync_playwright
 
 from app.main import app
+from app.dependencies import get_db
+from app.services.feedback_prefill_service import DownloadFeedbackPrefillContext
 
 
 @contextmanager
@@ -68,9 +70,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
         page.on(
             "console",
             lambda message: (
-                console_errors.append(message.text)
-                if message.type == "error"
-                else None
+                console_errors.append(message.text) if message.type == "error" else None
             ),
         )
         page.route(
@@ -80,7 +80,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
-        expect(page.locator("script[src$='feedback.js?v=2']")).to_have_count(1)
+        expect(page.locator("script[src$='feedback.js?v=3']")).to_have_count(1)
         expect(page.locator("#email")).to_have_count(1)
         expect(page.locator("#contact_email")).to_have_count(0)
         expect(page.locator("#contactEmailGroup")).to_have_count(0)
@@ -136,3 +136,175 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
     assert page_errors == []
     assert console_errors == []
+
+
+def _download_prefill_context() -> DownloadFeedbackPrefillContext:
+    return DownloadFeedbackPrefillContext(
+        message_type="purchase_or_download_issue",
+        customer_email="browser-prefill@example.com",
+        support_reference="DL-ABCDEFGH",
+        product_name="SmartBudget Browser",
+        product_edition="Standard",
+        release_version="5.0.0",
+        purchase_date="2026-07-18",
+        subject="Help with downloading SmartBudget Browser (Standard)",
+        message="Safe browser prefill message",
+    )
+
+
+def _install_download_prefill(monkeypatch: pytest.MonkeyPatch) -> None:
+    context = _download_prefill_context()
+    monkeypatch.setattr(
+        "app.web.routes.get_download_feedback_prefill_context",
+        lambda db, support_reference, lang: context,
+    )
+    app.dependency_overrides[get_db] = lambda: object()
+
+
+@pytest.mark.browser
+def test_download_prefill_survives_initialization_and_message_type_switches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = _download_prefill_context()
+    _install_download_prefill(monkeypatch)
+
+    try:
+        with _running_app() as base_url, sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, channel="chromium")
+            page = browser.new_page()
+            page.route(
+                "**/v1/check-purchase",
+                lambda route: route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body='{"verified": false, "purchases": []}',
+                ),
+            )
+            page.goto(
+                f"{base_url}/feedback?message_type=purchase_or_download_issue"
+                "&support_reference=DL-ABCDEFGH",
+                wait_until="networkidle",
+            )
+
+            expect(page.locator("#message_type")).to_have_value(
+                "purchase_or_download_issue"
+            )
+            expect(page.locator("#email")).to_have_value("browser-prefill@example.com")
+            expect(page.locator("#support_reference")).to_have_value("DL-ABCDEFGH")
+            expect(page.locator("#subject")).to_have_value(context.subject)
+            expect(page.locator("#message")).to_have_value(context.message)
+            expect(page.locator("#subjectGroup")).to_be_visible()
+            expect(page.locator("#messageGroup")).to_be_visible()
+
+            reference = page.locator("#support_reference")
+            expect(reference).to_be_visible()
+            expect(reference).to_be_enabled()
+            expect(reference).to_have_attribute("readonly", "")
+            assert page.evaluate(
+                "new FormData(document.querySelector('#feedback-form'))"
+                ".has('support_reference')"
+            )
+
+            for message_type in (
+                "site_issue",
+                "general_question",
+                "product_feedback",
+            ):
+                page.locator("#message_type").select_option(message_type)
+                expect(reference).to_be_hidden()
+                expect(reference).to_be_disabled()
+                assert not page.evaluate(
+                    "new FormData(document.querySelector('#feedback-form'))"
+                    ".has('support_reference')"
+                )
+
+            page.locator("#message_type").select_option("purchase_or_download_issue")
+            expect(reference).to_be_visible()
+            expect(reference).to_be_enabled()
+            expect(reference).to_have_attribute("readonly", "")
+            expect(reference).to_have_value("DL-ABCDEFGH")
+            expect(page.locator("#email")).to_have_value("browser-prefill@example.com")
+            expect(page.locator("#subject")).to_have_value(context.subject)
+            expect(page.locator("#message")).to_have_value(context.message)
+            expect(page.locator("#subjectGroup")).to_be_visible()
+            expect(page.locator("#messageGroup")).to_be_visible()
+            assert page.evaluate(
+                "new FormData(document.querySelector('#feedback-form'))"
+                ".get('support_reference') === 'DL-ABCDEFGH'"
+            )
+
+            browser.close()
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.browser
+def test_successful_download_prefill_submission_clears_active_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_download_prefill(monkeypatch)
+    submissions: list[str] = []
+
+    def capture_feedback_submission(route) -> None:
+        submissions.append(route.request.post_data or "")
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"status": "ok", "id": 42}',
+        )
+
+    try:
+        with _running_app() as base_url, sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, channel="chromium")
+            page = browser.new_page()
+            page.route("**/v1/feedback", capture_feedback_submission)
+            page.goto(
+                f"{base_url}/feedback?message_type=purchase_or_download_issue"
+                "&support_reference=DL-ABCDEFGH",
+                wait_until="networkidle",
+            )
+
+            page.locator('button[type="submit"]').click()
+
+            expect(page.locator("#feedback-status")).to_contain_text(
+                "Sent successfully. Message ID: 42"
+            )
+            assert len(submissions) == 1
+            assert 'name="support_reference"' in submissions[0]
+            assert "DL-ABCDEFGH" in submissions[0]
+
+            expect(page.locator("#message_type")).to_have_value("site_issue")
+            expect(page.locator("#email")).to_have_value("")
+            expect(page.locator("#subject")).to_have_value("")
+            expect(page.locator("#message")).to_have_value("")
+            expect(page.locator("#support_reference")).to_have_value("")
+            expect(page.locator("#support_reference")).to_be_hidden()
+            expect(page.locator("#support_reference")).to_be_disabled()
+            expect(page.locator("#subjectGroup")).to_be_visible()
+            expect(page.locator("#messageGroup")).to_be_visible()
+            expect(page.locator('button[type="submit"]')).to_be_enabled()
+            assert not page.evaluate(
+                "new FormData(document.querySelector('#feedback-form'))"
+                ".has('support_reference')"
+            )
+            assert page.evaluate("document.querySelector('#email').defaultValue") == ""
+            assert (
+                page.evaluate("document.querySelector('#subject').defaultValue") == ""
+            )
+            assert (
+                page.evaluate("document.querySelector('#message').defaultValue") == ""
+            )
+            assert (
+                page.evaluate(
+                    "document.querySelector('#support_reference').defaultValue"
+                )
+                == ""
+            )
+
+            page.locator('button[type="submit"]').click()
+            page.wait_for_timeout(100)
+            assert len(submissions) == 1
+
+            browser.close()
+    finally:
+        app.dependency_overrides.clear()

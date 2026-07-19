@@ -19,6 +19,9 @@ from app.services.feedback_service import (
     toggle_feedback_resolved,
     save_feedback_reply_draft
     )
+from app.services.feedback_prefill_service import (
+    get_download_feedback_prefill_context,
+)
 from app.services.consultation_entitlement_service import (
     get_valid_consultation_entitlement_by_token,
 )
@@ -29,10 +32,6 @@ from app.services.download_entitlement_service import (
 )
 from app.services.product_release_service import ProductReleaseService
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
-from app.services.support_reference_service import (
-    is_valid_download_support_reference,
-)
-
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
 from app.utils.product_utils import get_product_package
@@ -196,17 +195,21 @@ async def feedback_page(
     request: Request,
     message_type: str | None = Query(default=None),
     support_reference: str | None = Query(default=None),
+    db: Session = Depends(get_db),
 ):
     preselected_type = (
         "purchase_or_download_issue"
         if message_type == "purchase_or_download_issue"
         else None
     )
-    prefilled_support_reference = (
-        support_reference
+    prefill_context = (
+        get_download_feedback_prefill_context(
+            db,
+            support_reference,
+            get_lang(request),
+        )
         if preselected_type is not None
         and support_reference is not None
-        and is_valid_download_support_reference(support_reference)
         else None
     )
     return render(
@@ -214,7 +217,7 @@ async def feedback_page(
         "feedback.html",
         {
             "preselected_type": preselected_type,
-            "prefilled_support_reference": prefilled_support_reference,
+            "prefill_context": prefill_context,
         },
     )
 

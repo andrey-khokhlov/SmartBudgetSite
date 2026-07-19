@@ -82,9 +82,11 @@ identifiers, storage keys, or exception text.
 
 Download error pages may link to `/feedback` using only the exact private
 feedback type, the stored public support reference, and language context. The
-feedback GET route validates these values before rendering them. The feedback
-POST route validates the structured reference again before persistence. Invalid
-prefill values are ignored; malformed submitted references are rejected.
+feedback GET route validates these values and resolves an existing `DL-*`
+reference through a service and repository before rendering customer context.
+The feedback POST route validates the structured reference again before
+persistence. Invalid, unknown, or unsupported prefill references are ignored;
+malformed submitted references are rejected.
 
 Payment support-reference generation is not implemented. The generic feedback
 field and prefill contract only preserve compatibility for that future work.
@@ -214,19 +216,26 @@ errors, verify initialization, switch through every supported message type, and
 assert the expected visible and hidden fields. The general browser-validation
 and release rules are defined in `../operations.md`.
 
-## Planned support-flow enhancement
+## Download support-flow prefill
 
-A future customer-facing failure-to-Feedback flow should minimize repeated
-typing without submitting anything automatically. When the application already
-knows safe customer context, the Feedback page should preselect the appropriate
-private message type and prefill the email address, safe support reference,
-other non-secret known information, and a useful initial message. The customer
-must be able to review and edit all customer-facing content before choosing
-Send.
+The implemented download failure-to-Feedback flow minimizes repeated typing
+without submitting anything automatically. After an existing `DL-*` reference
+is resolved server-side, a small service-level DTO carries only customer-facing
+context: customer email, public support reference, public product name and
+edition, release version, purchase date, and localized initial subject and
+message. The form preselects the private `purchase_or_download_issue` type and
+shows the support reference as readonly. Email, subject, and message remain
+editable, and the customer must explicitly choose Send.
 
-This is planned behavior, not the current implementation. It must preserve the
-support-reference safety rules above and must never prefill tokens, provider
-identifiers, signed URLs, storage keys, raw exceptions, or other secrets.
+If the customer selects another message type, the reference is hidden and
+disabled so it is excluded from submission; switching back restores the same
+readonly reference. After a successful submission, the browser clears all
+prefilled values and returns the form to a clean ordinary state while retaining
+the success confirmation.
+
+The prefill DTO never contains download tokens, provider identifiers, signed
+URLs, storage keys, raw exceptions, database or ownership identifiers, or
+internal statuses. Payment support prefill remains unimplemented.
 
 ## Intentionally deferred target architecture
 

@@ -5,11 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const status = document.getElementById("feedback-status");
 
     const typeSelect = document.getElementById("message_type");
+    const nameInput = document.getElementById("name");
     const emailInput = document.getElementById("email");
     const emailLabel = document.querySelector('label[for="email"]');
     const emailHint = document.getElementById("email-hint");
 
     const purchaseStatus = document.getElementById("purchase-status");
+    const supportReferenceGroup = document.getElementById("supportReferenceGroup");
+    const supportReferenceInput = document.getElementById("support_reference");
 
     const subjectGroup = document.getElementById("subjectGroup");
     const messageGroup = document.getElementById("messageGroup");
@@ -30,6 +33,64 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedFilesText = document.getElementById("selectedFilesText");
 
     const feedbackDropzone = document.getElementById("feedbackDropzone");
+
+    function updateSupportReferenceState() {
+        if (!supportReferenceGroup || !supportReferenceInput) {
+            return;
+        }
+
+        const shouldIncludeReference =
+            typeSelect.value === "purchase_or_download_issue" &&
+            supportReferenceInput.value !== "";
+
+        supportReferenceGroup.style.display = shouldIncludeReference ? "block" : "none";
+        supportReferenceInput.disabled = !shouldIncludeReference;
+    }
+
+    function updateMessageCounter() {
+        if (!messageInput || !messageCounter) {
+            return;
+        }
+
+        messageCounter.textContent =
+            `${messageInput.value.length} / ${messageInput.maxLength}`;
+    }
+
+    function resetAfterSuccessfulSubmission() {
+        typeSelect.value = "site_issue";
+        Array.from(typeSelect.options).forEach((option) => {
+            option.defaultSelected = option.value === "site_issue";
+        });
+
+        [nameInput, emailInput, subjectInput, messageInput].forEach((input) => {
+            input.value = "";
+            input.defaultValue = "";
+        });
+
+        if (supportReferenceInput) {
+            supportReferenceInput.value = "";
+            supportReferenceInput.defaultValue = "";
+        }
+
+        attachmentsInput.value = "";
+        form.page_url.value = window.location.pathname;
+
+        selectedFilesText.textContent = texts.noFiles || "No files selected";
+        feedbackDropzone.classList.remove("is-dragover");
+
+        purchaseSelectorGroup.style.display = "none";
+        purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
+
+        purchaseStatus.style.display = "none";
+        purchaseStatus.textContent = "";
+        purchaseStatus.className = "feedback-purchase-status";
+
+        updateSupportReferenceState();
+        updateFormVisibility(true);
+        updateEmailVisibility();
+        updateMessageCounter();
+        updateSubmitState();
+    }
 
     function updateEmailVisibility() {
         const type = typeSelect.value;
@@ -188,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateEmailVisibility();
+    updateSupportReferenceState();
     updatePurchaseStatus();
     updateSubmitState();
 
@@ -202,20 +264,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (messageInput && messageCounter) {
-        const maxLength = messageInput.maxLength;
-
-        const updateCounter = () => {
-            const currentLength = messageInput.value.length;
-            messageCounter.textContent = `${currentLength} / ${maxLength}`;
-        };
-
-        messageInput.addEventListener("input", updateCounter);
-
-        updateCounter(); // ← важно: инициализация при загрузке
+        messageInput.addEventListener("input", updateMessageCounter);
+        updateMessageCounter();
     }
 
     typeSelect.addEventListener("change", () => {
         updateEmailVisibility();
+        updateSupportReferenceState();
         updatePurchaseStatus();
     });
 
@@ -265,22 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
             status.textContent = `${texts.sentSuccessPrefix} ${result.id}`;
             status.className = "feedback-form__status feedback-form__status--success";
 
-            form.reset();
-            form.page_url.value = window.location.pathname;
-
-            selectedFilesText.textContent = texts.noFiles || "No files selected";
-            feedbackDropzone.classList.remove("is-dragover");
-
-            purchaseSelectorGroup.style.display = "none";
-            purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
-
-            purchaseStatus.style.display = "none";
-            purchaseStatus.textContent = "";
-            purchaseStatus.className = "feedback-purchase-status";
-
-            updateFormVisibility(false);
-            updateEmailVisibility();
-            updateSubmitState();
+            resetAfterSuccessfulSubmission();
         } catch (error) {
             status.textContent = texts.sendFailed;
             status.className = "feedback-form__status feedback-form__status--error";
