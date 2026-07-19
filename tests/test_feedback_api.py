@@ -1,6 +1,20 @@
 # tests/test_feedback_api.py
 from decimal import Decimal
+
+from app.core.config import settings
+from app.dependencies import ADMIN_COOKIE_NAME
+from app.models.feedback import FeedbackMessage
 from app.services.product_service import set_product_price
+
+TEST_ADMIN_TOKEN = "test-feedback-admin-token"
+
+
+def test_admin_feedback_pages_reject_anonymous_access(client, monkeypatch):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+
+    for path in ("/admin/feedback", "/admin/feedback/1"):
+        response = client.get(path)
+        assert response.status_code == 403
 
 
 def _empty_filename_multipart(file_content: bytes) -> tuple[bytes, str]:
@@ -372,3 +386,125 @@ def test_create_feedback_rejects_empty_filename_with_nonzero_content(
     assert response.status_code == 400
     assert response.json()["detail"] == "File must have a filename"
     assert db_session.query(FeedbackMessage).count() == 0
+
+
+def _create_private_feedback(db_session) -> FeedbackMessage:
+    feedback = FeedbackMessage(
+        type="general_question",
+        email="private-sentinel@example.com",
+        subject="Private sentinel subject",
+        message="Private sentinel feedback message",
+        page_url="https://private.example.test/sentinel-page",
+        user_agent="PrivateSentinelAgent/1.0",
+        is_resolved=False,
+        is_published=False,
+    )
+    db_session.add(feedback)
+    db_session.commit()
+    db_session.refresh(feedback)
+    return feedback
+
+
+def test_recent_feedback_rejects_anonymous_access_without_disclosing_data(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    _create_private_feedback(db_session)
+
+    response = client.get("/v1/feedback/recent")
+
+    assert response.status_code == 403
+    for sentinel in (
+        "private-sentinel@example.com",
+        "Private sentinel feedback message",
+        "https://private.example.test/sentinel-page",
+        "PrivateSentinelAgent/1.0",
+    ):
+        assert sentinel not in response.text
+
+
+def test_recent_feedback_rejects_invalid_admin_cookie(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    _create_private_feedback(db_session)
+    client.cookies.set(ADMIN_COOKIE_NAME, "invalid-feedback-admin-token")
+
+    response = client.get("/v1/feedback/recent")
+
+    assert response.status_code == 403
+
+
+def test_recent_feedback_allows_authenticated_admin(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    feedback = _create_private_feedback(db_session)
+    client.cookies.set(ADMIN_COOKIE_NAME, TEST_ADMIN_TOKEN)
+
+    response = client.get("/v1/feedback/recent")
+
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert response.json()["count"] == 1
+    assert items[0]["id"] == feedback.id
+    assert items[0]["email"] == "private-sentinel@example.com"
+    assert items[0]["message"] == "Private sentinel feedback message"
+
+
+def test_resolve_feedback_rejects_anonymous_access_without_mutation(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    feedback = _create_private_feedback(db_session)
+
+    response = client.patch(f"/v1/feedback/{feedback.id}/resolve")
+
+    assert response.status_code == 403
+    db_session.expire_all()
+    assert db_session.get(FeedbackMessage, feedback.id).is_resolved is False
+
+
+def test_resolve_feedback_rejects_invalid_admin_cookie_without_mutation(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    feedback = _create_private_feedback(db_session)
+    client.cookies.set(ADMIN_COOKIE_NAME, "invalid-feedback-admin-token")
+
+    response = client.patch(f"/v1/feedback/{feedback.id}/resolve")
+
+    assert response.status_code == 403
+    db_session.expire_all()
+    assert db_session.get(FeedbackMessage, feedback.id).is_resolved is False
+
+
+def test_resolve_feedback_allows_authenticated_admin(
+    client,
+    db_session,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", TEST_ADMIN_TOKEN)
+    feedback = _create_private_feedback(db_session)
+    client.cookies.set(ADMIN_COOKIE_NAME, TEST_ADMIN_TOKEN)
+
+    response = client.patch(f"/v1/feedback/{feedback.id}/resolve")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "id": feedback.id,
+        "is_resolved": True,
+    }
+    db_session.expire_all()
+    assert db_session.get(FeedbackMessage, feedback.id).is_resolved is True

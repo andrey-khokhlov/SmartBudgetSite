@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.dependencies import get_db
+from app.dependencies import get_db, require_admin
 from app.repositories.feedback_repository import FeedbackRepository
 from app.repositories.sales_repository import (
     get_verified_purchases_by_email,
@@ -212,7 +212,12 @@ def create_feedback(
         "id": feedback.id,
     }
 
-@router.get("/feedback/recent", response_model=FeedbackListResponse)
+
+@router.get(
+    "/feedback/recent",
+    response_model=FeedbackListResponse,
+    dependencies=[Depends(require_admin)],
+)
 def get_recent_feedback(
     limit: int = 20,
     db: Session = Depends(get_db),
@@ -225,7 +230,11 @@ def get_recent_feedback(
         "count": len(items),
     }
 
-@router.patch("/feedback/{feedback_id}/resolve")
+
+@router.patch(
+    "/feedback/{feedback_id}/resolve",
+    dependencies=[Depends(require_admin)],
+)
 def resolve_feedback(
     feedback_id: int,
     db: Session = Depends(get_db),
