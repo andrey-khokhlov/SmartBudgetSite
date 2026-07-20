@@ -64,6 +64,14 @@ SELECT current_database(), current_user;
 * Store all secrets (DB credentials, SECRET_KEY) only in .env.
 * Never commit .env to Git.
 
+## Current OpenAI platform notes
+
+These are current operational observations, not permanent platform guarantees:
+
+* Treat Codex usage as a limited engineering resource and reserve it for bounded repository work.
+* When a Weekly Full Reset is available, it can immediately begin a new usage period.
+* Additional Codex Credits are available separately when needed.
+
 ## Environment variables rule
 
 * Every variable added to `.env` MUST be added to `.env.example`

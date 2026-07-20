@@ -24,6 +24,14 @@ implementation continuity and rationale but is not an active source of truth.
 
 If these documents conflict with the requested implementation, stop and report the conflict before making changes.
 
+## Efficient Codex workflow
+
+- Resolve architectural questions and solution design in ChatGPT before starting repository work.
+- Use Codex primarily for bounded implementation tasks with an explicit scope, accepted end state, and verification commands.
+- Avoid repeating repository-wide analysis unless new information invalidates the existing analysis.
+- Keep each Codex task narrowly scoped and prefer ChatGPT discussion for exploratory work.
+- After an A-approved review, avoid additional implementation or review cycles unless a new concrete finding appears.
+
 ## Current architecture
 
 Follow the existing layered architecture:
