@@ -87,9 +87,10 @@ Infrastructure and quality:
 - A separate Playwright/Chromium browser regression layer protects critical
   client-side behavior without changing ordinary pytest discovery. Playwright
   remains a development/test-only dependency.
-- The latest recorded full automated test result is 143 passing tests at Sprint
-  40. This is a historical test count, not a substitute for rerunning tests after
-  code changes.
+- Structured webhook audit fields preserve provider, event type, and processing
+  status in operational console log output without changing ordinary log output.
+- The latest confirmed full automated test result is 201 passing tests after
+  completion of `OPS-002`.
 
 ## Current launch constraint
 
