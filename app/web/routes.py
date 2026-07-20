@@ -65,8 +65,10 @@ def render(
     context: dict,
     *,
     status_code: int = 200,
+    document_lang: str | None = None,
 ):
     lang = get_lang(request)
+    resolved_document_lang = document_lang if document_lang is not None else lang
 
     response = templates.TemplateResponse(
         request,
@@ -75,6 +77,7 @@ def render(
             "lang": lang,
             "t": lambda k: t(lang, k),
             **context,
+            "document_lang": resolved_document_lang,
         },
         status_code=status_code,
     )
@@ -389,6 +392,7 @@ async def admin_feedback_list(
             "page_size": page_size,
             "has_next": has_next,
         },
+        document_lang="en",
     )
 
 @admin_router.get("/admin/feedback/{feedback_id}", response_class=HTMLResponse)
@@ -415,6 +419,7 @@ async def admin_feedback_detail(
             "item": item,
             "local_reply_sent_at": local_reply_sent_at,
         },
+        document_lang="en",
     )
 
 
@@ -533,6 +538,7 @@ async def admin_products_list(
         {
             "products": product_list,
             "t": lambda key: t(lang, key),
+            "document_lang": "en",
         },
     )
 
@@ -550,6 +556,7 @@ async def admin_products_new(request: Request):
             "form_action": "/admin/products/new",
             "page_title": "Create product",
         },
+        document_lang="en",
     )
 
 
@@ -666,6 +673,7 @@ async def admin_products_edit(
         "admin_product_form.html",
         {
             "t": lambda key: t(lang, key),
+            "document_lang": "en",
             "product": product,
             "active_price": active_price,
             "allowed_editions": sorted(ALLOWED_EDITIONS),
@@ -757,7 +765,12 @@ async def admin_products_update(
 
 @router.get("/admin/login", response_class=HTMLResponse)
 async def admin_login_page(request: Request):
-    return render(request, "admin_login.html", {})
+    return render(
+        request,
+        "admin_login.html",
+        {},
+        document_lang="en",
+    )
 
 
 @router.post("/admin/login")
@@ -804,7 +817,8 @@ async def admin_dashboard(
     return render(
         request,
         "admin_dashboard.html",
-        {}
+        {},
+        document_lang="en",
     )
 
 
@@ -958,6 +972,7 @@ def product_buy_page(
             "family_slug": family_slug,
             "lang": lang,
             "t": lambda key: t(lang, key),
+            "document_lang": lang,
         },
     )
 
@@ -1001,6 +1016,7 @@ def consultation_booking_page(
             "calendly_consultation_url": settings.CALENDLY_CONSULTATION_URL,
             "lang": lang,
             "t": lambda key: t(lang, key),
+            "document_lang": lang,
             "masked_token": masked_token,
         },
     )
@@ -1050,6 +1066,7 @@ def admin_consultations_page(
             "entitlements": entitlements,
             "lang": lang,
             "t": lambda key: t(lang, key),
+            "document_lang": "en",
             "selected_status": status,
             "entitlements_count": entitlements_count,
             "page": page,
@@ -1095,6 +1112,7 @@ async def admin_sales_list(
             "page_size": page_size,
             "has_next": has_next,
         },
+        document_lang="en",
     )
 
 
@@ -1141,6 +1159,7 @@ def admin_product_release_new(
             "package": package,
             "latest_release": latest_release,
         },
+        document_lang="en",
     )
 
 
@@ -1259,6 +1278,7 @@ def admin_product_releases(
             "releases": releases,
             "package": package,
         },
+        document_lang="en",
     )
 
 

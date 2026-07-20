@@ -116,6 +116,18 @@ previously cached assets. Cache incompatibility that can prevent initialization,
 hide required controls, or break interaction is a release risk even when the
 server response and API behavior are correct.
 
+## HTML document language
+
+The selected UI locale and the primary language declared by an HTML document
+are separate template context values. `lang` controls translations, while
+`document_lang` supplies the root `<html lang>` attribute.
+
+Localized public pages derive both values from the authoritative language
+resolution in `app/core/i18n.py`. Administrative pages explicitly declare
+English because their primary interface is currently English. Every site HTML
+response must provide a non-empty supported language tag; the base template
+does not hide missing context with a fallback.
+
 ## Database schema parity
 
 `Base.metadata.create_all()` against SQLite does not prove that the production

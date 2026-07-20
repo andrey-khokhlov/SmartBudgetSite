@@ -96,8 +96,11 @@ Infrastructure and quality:
   remains a development/test-only dependency.
 - Structured webhook audit fields preserve provider, event type, and processing
   status in operational console log output without changing ordinary log output.
-- The latest confirmed full automated test result is 232 passing tests after
-  completion of `REL-003`.
+- Localized public HTML documents declare the resolved English or Russian
+  language, while the currently English administrative interface declares
+  English independently of the selected public UI locale.
+- The latest confirmed full automated test result is 242 passing tests after
+  completion of `A11Y-001`.
 
 ## Current launch constraint
 
