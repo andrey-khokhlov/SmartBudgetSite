@@ -87,3 +87,15 @@ def test_test_environment_preserves_empty_security_defaults(
 
     assert configured_settings.ADMIN_TOKEN == ""
     assert configured_settings.SECRET_KEY == ""
+
+
+def test_release_upload_limit_has_safe_default() -> None:
+    configured_settings = build_settings()
+
+    assert configured_settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES == 52_428_800
+
+
+@pytest.mark.parametrize("invalid_limit", [0, -1])
+def test_release_upload_limit_must_be_positive(invalid_limit: int) -> None:
+    with pytest.raises(ValidationError, match="greater than 0"):
+        build_settings(PRODUCT_RELEASE_MAX_UPLOAD_BYTES=invalid_limit)

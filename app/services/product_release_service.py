@@ -1,15 +1,68 @@
+import hashlib
 import re
-
-from sqlalchemy.orm import Session
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import BinaryIO
+
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.models.product_release import ProductRelease
-
 from app.repositories.product_release_repository import ProductReleaseRepository
 
-
 RELEASE_VERSION_PATTERN = re.compile(r"^\d+\.\d+$")
+RELEASE_ARCHIVE_INSPECTION_CHUNK_SIZE = 1024 * 1024
+
+
+class ReleaseArchiveTooLargeError(Exception):
+    """Raised when a product release archive exceeds its configured limit."""
+
+
+@dataclass(frozen=True)
+class ReleaseArchiveMetadata:
+    file_size: int
+    sha256_hash: str
+
+
+def inspect_release_archive(
+    file_obj: BinaryIO,
+    *,
+    max_bytes: int,
+) -> ReleaseArchiveMetadata:
+    """Calculate bounded release archive metadata and rewind the input stream."""
+    if max_bytes <= 0:
+        raise ValueError("max_bytes must be greater than zero")
+
+    sha256 = hashlib.sha256()
+    file_size = 0
+
+    file_obj.seek(0)
+
+    try:
+        while True:
+            remaining_with_overflow_byte = max_bytes - file_size + 1
+            read_size = min(
+                RELEASE_ARCHIVE_INSPECTION_CHUNK_SIZE,
+                remaining_with_overflow_byte,
+            )
+            chunk = file_obj.read(read_size)
+
+            if not chunk:
+                break
+
+            file_size += len(chunk)
+
+            if file_size > max_bytes:
+                raise ReleaseArchiveTooLargeError
+
+            sha256.update(chunk)
+
+        return ReleaseArchiveMetadata(
+            file_size=file_size,
+            sha256_hash=sha256.hexdigest(),
+        )
+    finally:
+        file_obj.seek(0)
 
 
 class ProductReleaseService:
@@ -30,7 +83,9 @@ class ProductReleaseService:
                 detail="Product release not found.",
             )
 
-        releases = self.product_release_repository.list_by_product_id(release.product_id)
+        releases = self.product_release_repository.list_by_product_id(
+            release.product_id
+        )
 
         now = datetime.now(UTC)
 
@@ -80,8 +135,8 @@ class ProductReleaseService:
         return self.product_release_repository.create(release)
 
     def list_releases_by_product_id(
-            self,
-            product_id: int,
+        self,
+        product_id: int,
     ) -> list[ProductRelease]:
         """Return all releases belonging to a product."""
 

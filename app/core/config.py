@@ -1,6 +1,6 @@
 import os
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ENV_FILE allows switching environments (dev/prod/test)
@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str | None = None
     R2_BUCKET_NAME: str | None = None
     R2_PRODUCT_RELEASES_PREFIX: str = "product-releases"
+    PRODUCT_RELEASE_MAX_UPLOAD_BYTES: int = Field(
+        default=50 * 1024 * 1024,
+        gt=0,
+    )
 
     DOWNLOAD_TOKEN_TTL_HOURS: int = 12
     DOWNLOAD_SIGNED_URL_TTL_SECONDS: int = 900

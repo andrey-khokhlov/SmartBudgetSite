@@ -118,6 +118,13 @@ selected release, sets `released_at` when needed, and guarantees one active
 public release per SKU. Templates and admin controls must not implement this
 lifecycle themselves.
 
+Administrative release archives have an inclusive application-level size limit
+of 50 MiB (52,428,800 bytes). Archive size and SHA-256 metadata are calculated
+in one bounded pass using chunks no larger than 1 MiB; the route does not read
+the complete archive into a process-memory bytes object. An archive larger than
+the limit is rejected with HTTP 413 before R2 upload or `ProductRelease`
+persistence.
+
 ```text
 Release candidate -> Published (active) -> Archived
 ```
@@ -128,6 +135,13 @@ Cloudflare R2 is the primary binary storage provider. Product archives must not
 be stored permanently on application VPS instances. R2 objects remain private;
 the backend owns authorization and issues short-lived signed access only after
 entitlement validation.
+
+The application-level release limit is evaluated after Starlette has parsed the
+multipart request. It bounds application processing and route memory, but does
+not prevent the request parser from receiving and temporarily spooling the full
+multipart body. The production reverse proxy must therefore enforce a request
+body limit slightly above 50 MiB to allow multipart overhead without weakening
+the application file limit.
 
 ```text
 SaleItem
@@ -168,4 +182,3 @@ status. Support-facing pages expose only a masked reference, never the token.
 Strict one-time completion, automatic completion detection, IP/user-agent audit
 records, and backend file proxying are deferred until reliable completion
 criteria justify them. Future admin reissue/reset must be explicit and auditable.
-

@@ -83,6 +83,19 @@ A configuration change is not complete until the example and active development
 configuration are updated. Secrets, tokens, credentials, and provider signing
 secrets must never be committed or accepted from request input.
 
+`PRODUCT_RELEASE_MAX_UPLOAD_BYTES` owns the application-level administrative
+release archive limit. Its default and production value are 52,428,800 bytes
+(50 MiB), and the value must remain strictly positive. The inclusive limit is
+enforced while size and SHA-256 metadata are calculated in bounded 1 MiB chunks;
+larger archives receive HTTP 413 before storage upload or database persistence.
+
+The deployment reverse proxy must set its request-body limit slightly above the
+50 MiB application file limit to allow multipart overhead. This perimeter limit
+is not configured in the current repository. Without it, Starlette can receive
+and temporarily spool the complete multipart body before the application-level
+release check runs, even though the route no longer buffers the complete archive
+in process memory.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,

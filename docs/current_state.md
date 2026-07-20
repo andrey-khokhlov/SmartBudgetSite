@@ -28,6 +28,10 @@ Commerce and delivery:
   preparation.
 - Product release archives are uploaded through the admin flow to private
   Cloudflare R2 storage.
+- Release archives have an inclusive application-level limit of 50 MiB. Size
+  and SHA-256 metadata are calculated in bounded 1 MiB chunks without buffering
+  the complete archive in route memory; larger archives receive HTTP 413 before
+  R2 upload or `ProductRelease` persistence.
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
 - Payment preparation is provider-independent and creates pending records, but
@@ -92,8 +96,8 @@ Infrastructure and quality:
   remains a development/test-only dependency.
 - Structured webhook audit fields preserve provider, event type, and processing
   status in operational console log output without changing ordinary log output.
-- The latest confirmed full automated test result is 219 passing tests after
-  completion of `SEC-005`.
+- The latest confirmed full automated test result is 232 passing tests after
+  completion of `REL-003`.
 
 ## Current launch constraint
 

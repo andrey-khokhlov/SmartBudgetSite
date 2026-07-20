@@ -1,5 +1,3 @@
-import hashlib
-
 from fastapi import APIRouter, Request, HTTPException, Depends, Form, Query, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -30,7 +28,11 @@ from app.services.download_entitlement_service import (
     get_valid_download_entitlement_by_token,
     record_download_attempt,
 )
-from app.services.product_release_service import ProductReleaseService
+from app.services.product_release_service import (
+    ProductReleaseService,
+    ReleaseArchiveTooLargeError,
+    inspect_release_archive,
+)
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -39,7 +41,6 @@ from app.utils.product_utils import get_product_package
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from app.models.product import Product
 from datetime import UTC, datetime, timezone, timedelta
 from decimal import Decimal
 from botocore.exceptions import BotoCoreError, ClientError
@@ -143,6 +144,13 @@ def _format_file_size(file_size: int | None) -> str | None:
     if file_size < 1024 * 1024:
         return f"{file_size / 1024:.1f} KB"
     return f"{file_size / (1024 * 1024):.1f} MB"
+
+
+def _format_release_upload_limit(max_bytes: int) -> str:
+    bytes_per_mib = 1024 * 1024
+    if max_bytes % bytes_per_mib == 0:
+        return f"{max_bytes // bytes_per_mib} MiB"
+    return f"{max_bytes} bytes"
 
 
 def format_money(value, lang: str = "ru"):
@@ -1176,12 +1184,19 @@ def admin_product_release_create(
             detail="Release file must have a filename.",
         )
 
-    file_content = release_file.file.read()
+    max_upload_bytes = settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES
 
-    file_size = len(file_content)
-    sha256_hash = hashlib.sha256(file_content).hexdigest()
-
-    release_file.file.seek(0)
+    try:
+        archive_metadata = inspect_release_archive(
+            release_file.file,
+            max_bytes=max_upload_bytes,
+        )
+    except ReleaseArchiveTooLargeError:
+        display_limit = _format_release_upload_limit(max_upload_bytes)
+        raise HTTPException(
+            status_code=413,
+            detail=f"Release archive exceeds the {display_limit} limit.",
+        )
 
     storage_service = R2StorageService()
 
@@ -1207,8 +1222,8 @@ def admin_product_release_create(
         storage_provider=uploaded_object.storage_provider,
         storage_key=uploaded_object.storage_key,
         original_filename=original_filename,
-        file_size=file_size,
-        sha256_hash=sha256_hash,
+        file_size=archive_metadata.file_size,
+        sha256_hash=archive_metadata.sha256_hash,
     )
 
     db.commit()

@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `REL-003` — Bound release-upload resource use.**
+**Current first incomplete item: `A11Y-001` — Declare the active document language.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -129,7 +129,7 @@ together even though each finding retains its own identifier.
 | 4 | Feedback security | `SEC-002` | Protect feedback status mutation | `Completed` |
 | 5 | Webhook operations | `OPS-002` | Preserve structured webhook audit fields | `Completed` |
 | 6 | Calendly security | `SEC-005` | Enforce webhook timestamp tolerance | `Completed` |
-| 7 | Release upload | `REL-003` | Bound release-upload resource use | `Not started` |
+| 7 | Release upload | `REL-003` | Bound release-upload resource use | `Completed` |
 | 8 | Accessibility | `A11Y-001` | Declare the active document language | `Not started` |
 | 9 | Database | `DB-001` | Restore model and migration parity | `Not started` |
 | 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Not started` |
