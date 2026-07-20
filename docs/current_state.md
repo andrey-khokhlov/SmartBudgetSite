@@ -46,6 +46,9 @@ Consultations:
 - Booking lifecycle, normalized webhook handling, real HMAC verification,
   reconciliation orchestration, replay-safe transitions, and admin visibility
   are implemented.
+- Calendly webhook signatures enforce a symmetric, inclusive 180-second
+  timestamp tolerance at the HTTP transport boundary. This is separate from the
+  idempotent consultation lifecycle transitions applied after verification.
 - Manual Calendly booking, Google Meet, email, cancellation, Google Calendar,
   API, and PAT validation are complete.
 - No Calendly webhook subscription exists yet. A public HTTPS endpoint and real
@@ -89,8 +92,8 @@ Infrastructure and quality:
   remains a development/test-only dependency.
 - Structured webhook audit fields preserve provider, event type, and processing
   status in operational console log output without changing ordinary log output.
-- The latest confirmed full automated test result is 201 passing tests after
-  completion of `OPS-002`.
+- The latest confirmed full automated test result is 219 passing tests after
+  completion of `SEC-005`.
 
 ## Current launch constraint
 

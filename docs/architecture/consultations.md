@@ -133,6 +133,9 @@ or inline provider-payload parsing.
 Provider payload shapes remain isolated in normalizers. Domain services consume
 normalized events. Verification fails closed for missing, malformed, invalid, or
 unknown-provider signatures and uses raw payload bytes with HMAC SHA-256.
+Calendly signed timestamps must be non-negative ASCII Unix seconds within an
+inclusive 180-second window on either side of server time; requests outside this
+transport-level tolerance are rejected before provider event processing.
 
 Webhook orchestration coordinates event routing and handoff; repositories perform
 lookup only; the consultation entitlement service owns state transitions.
@@ -168,4 +171,3 @@ Manual Calendly booking, cancellation emails, Google Meet, and Google Calendar
 synchronization have been validated. Some users in Russia may require VPN access
 to Calendly; a customer-facing fallback support option remains desirable before
 launch.
-
