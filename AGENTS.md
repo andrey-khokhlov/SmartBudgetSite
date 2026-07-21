@@ -32,6 +32,71 @@ If these documents conflict with the requested implementation, stop and report t
 - Keep each Codex task narrowly scoped and prefer ChatGPT discussion for exploratory work.
 - After an A-approved review, avoid additional implementation or review cycles unless a new concrete finding appears.
 
+## ChatGPT and Codex responsibilities
+
+ChatGPT is responsible for:
+
+- architecture and design decisions;
+- repository analysis from information provided to the conversation;
+- implementation scoping;
+- technical guidance;
+- independent review after implementation;
+- documentation consistency review;
+- release readiness review.
+
+Codex is responsible for:
+
+- operating directly on the local repository;
+- inspecting Git state;
+- implementing bounded tasks;
+- running pytest through the configured project interpreter;
+- running and validating Alembic operations;
+- executing local quality tools;
+- preparing commits when explicitly requested;
+- pushing only after explicit approval.
+
+## Repository execution policy
+
+ChatGPT must not assume direct access to the user's local repository. Repository
+state and command results must come from information supplied by the user or
+from a bounded Codex task that operates in the local repository.
+
+When work requires any of the following, the normal workflow is to prepare a
+bounded Codex task instead of attempting direct repository operations in
+ChatGPT:
+
+- `git status`;
+- `git diff`;
+- pytest execution;
+- Alembic execution;
+- local file inspection;
+- repository-wide searches;
+- execution of local tooling.
+
+## Development workflow
+
+Use the established sequence:
+
+```text
+Architecture discussion
+    -> Bounded implementation task
+        -> Codex implementation
+            -> Independent ChatGPT review
+                -> Commit
+                    -> Push
+```
+
+Each transition remains explicit. A completed implementation does not authorize
+a commit, and a completed commit does not authorize a push.
+
+## Quality-tooling baseline
+
+Repository-wide Ruff, Black, isort, and mypy enforcement is intentionally
+deferred until a future repository quality baseline initiative. Codex may run
+these tools for changed files or report existing repository-wide findings, but a
+bounded task must not expand into unrelated cleanup solely to make a
+repository-wide quality command pass.
+
 ## Current architecture
 
 Follow the existing layered architecture:
