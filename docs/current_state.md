@@ -99,8 +99,13 @@ Infrastructure and quality:
 - Localized public HTML documents declare the resolved English or Russian
   language, while the currently English administrative interface declares
   English independently of the selected public UI locale.
-- The latest confirmed full automated test result is 242 passing tests after
-  completion of `A11Y-001`.
+- `DB-001` is complete. A clean PostgreSQL database migrated through the full
+  Alembic chain to `2f6a9d7c4e10`; the three consultation entitlement
+  timestamps use `timestamp with time zone`, the existing active-price partial
+  unique index matches SQLAlchemy metadata, and `alembic check` reported no new
+  upgrade operations.
+- The latest confirmed full automated test result is 246 passing tests after
+  completion of `DB-001`.
 
 ## Current launch constraint
 
@@ -114,7 +119,14 @@ timeline.
 
 ## Next sprint priorities
 
-### 1. Smart Feedback support flow
+### 1. Continue the Official Release Backlog
+
+The first incomplete Official Release Backlog item is `CODE-003` — require paid
+consultation ownership. Continue in the authoritative order defined in
+`release_readiness.md`; do not substitute roadmap work for the next incomplete
+remediation item.
+
+### 2. Smart Feedback support flow (later work)
 
 Extend the fully prefilled Feedback experience to payment failures. The bounded
 download-support slice is implemented; payment support-reference generation and
@@ -133,7 +145,11 @@ The expected user workflow is:
 
 `Review` → optionally edit → `Send`
 
-### 2. Continue release-readiness validation
+This remains planned support-flow work after the applicable Official Release
+Backlog priorities. It is separate from the Expected Release Gaps roadmap in
+`release_readiness.md`.
+
+### 3. Continue release-readiness validation
 
 Continue manually validating complete end-to-end user journeys as major
 functionality is completed.

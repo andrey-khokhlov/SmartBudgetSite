@@ -3,8 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import String, Numeric, Boolean, DateTime, ForeignKey, func, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func, text
 
 from app.core.db import Base
 
@@ -20,6 +21,17 @@ class ProductPrice(Base):
     """
 
     __tablename__ = "product_prices"
+
+    __table_args__ = (
+        Index(
+            "uq_product_price_active_per_currency",
+            "product_id",
+            "currency_code",
+            unique=True,
+            postgresql_where=text("is_active = true"),
+            sqlite_where=text("is_active = true"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
