@@ -7,6 +7,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from decimal import Decimal
 
 from app.core.db import SessionLocal
+from app.models.enums import PaymentStatus
 from app.models.service_addon import ServiceAddon
 from app.services.sale_service import create_standalone_service_sale
 from app.services.consultation_entitlement_service import (
@@ -60,6 +61,7 @@ def main() -> None:
             customer_email="dev.customer@example.com",
             amount=service_addon.amount,
             currency=service_addon.currency_code,
+            payment_status=PaymentStatus.PAID,
         )
         db.flush()
 

@@ -45,6 +45,8 @@ Consultations:
 - Add-on and standalone consultation offers are distinguished by `usage_type`.
 - Consultation ownership is represented by a backend-owned
   `ConsultationEntitlement` tied to a service `SaleItem`.
+- `CODE-003` is complete: consultation entitlement creation requires a
+  consultation service item owned by a `PaymentStatus.PAID` sale.
 - The protected booking page validates the entitlement before exposing the
   configured Calendly URL.
 - Booking lifecycle, normalized webhook handling, real HMAC verification,
@@ -104,8 +106,8 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full automated test result is 246 passing tests after
-  completion of `DB-001`.
+- The latest confirmed full automated test result is 251 passing tests after
+  completion of `CODE-003`.
 
 ## Current launch constraint
 
@@ -121,8 +123,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `CODE-003` — require paid
-consultation ownership. Continue in the authoritative order defined in
+The first incomplete Official Release Backlog item is `CONS-001` — persist
+webhook lifecycle transitions. Continue in the authoritative order defined in
 `release_readiness.md`; do not substitute roadmap work for the next incomplete
 remediation item.
 

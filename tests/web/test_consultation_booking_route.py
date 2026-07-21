@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.models.enums import PaymentStatus
 from app.models.service_addon import ServiceAddon
 from app.services.consultation_entitlement_service import (
     create_consultation_entitlement,
@@ -38,6 +39,7 @@ def test_consultation_booking_page_opens_with_valid_token(client, db_session, mo
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 

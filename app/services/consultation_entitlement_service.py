@@ -7,6 +7,7 @@ from app.models.consultation_entitlement import (
     ConsultationEntitlement,
     ConsultationEntitlementStatus,
 )
+from app.models.enums import PaymentStatus
 from app.models.sale_item import SaleItem, SaleItemType
 
 
@@ -24,6 +25,7 @@ def create_consultation_entitlement(
     Business rules:
     - Only service sale items can receive consultation entitlements.
     - The linked service_addon must represent a consultation.
+    - The owning sale must be paid.
     - MVP allows only one entitlement per consultation sale item.
     - Booking access expires after the default booking window.
 
@@ -54,6 +56,12 @@ def create_consultation_entitlement(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Consultation entitlement can only be created for consultation services.",
+        )
+
+    if sale_item.sale is None or sale_item.sale.payment_status != PaymentStatus.PAID:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Consultation entitlement requires a paid sale.",
         )
 
     if sale_item.consultation_entitlement is not None:

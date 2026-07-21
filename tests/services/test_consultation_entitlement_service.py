@@ -6,6 +6,8 @@ from decimal import Decimal
 from datetime import timedelta, UTC, datetime
 
 from app.models.consultation_entitlement import ConsultationEntitlementStatus, ConsultationEntitlement
+from app.models.enums import PaymentStatus, SaleItemType
+from app.models.sale_item import SaleItem
 from app.models.service_addon import ServiceAddon
 from app.models.product import Product
 from app.models.product_release import ProductRelease
@@ -55,6 +57,7 @@ def create_test_consultation_entitlement(db_session):
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -97,6 +100,7 @@ def test_create_consultation_entitlement_for_consultation_service_item(db_sessio
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -120,6 +124,133 @@ def test_create_consultation_entitlement_for_consultation_service_item(db_sessio
     assert entitlement.expires_at is not None
 
     assert sale_item.consultation_entitlement == entitlement
+
+
+@pytest.mark.parametrize(
+    "payment_status",
+    [
+        PaymentStatus.PENDING,
+        PaymentStatus.FAILED,
+        PaymentStatus.REFUNDED,
+    ],
+)
+def test_create_consultation_entitlement_rejects_unpaid_sale(
+    db_session,
+    payment_status,
+):
+    service_addon = ServiceAddon(
+        code=f"consultation_1h_int_{payment_status}_sale_test",
+        name="1:1 SmartBudget consultation",
+        service_type="consultation",
+        usage_type="standalone",
+        family_slug="smartbudget",
+        package_code="INT",
+        currency_code="EUR",
+        amount=Decimal("79.00"),
+        is_active=True,
+    )
+    db_session.add(service_addon)
+    db_session.flush()
+
+    sale = create_standalone_service_sale(
+        db=db_session,
+        service_addon_id=service_addon.id,
+        service_name=service_addon.name,
+        customer_email="customer@example.com",
+        amount=service_addon.amount,
+        currency=service_addon.currency_code,
+        payment_status=payment_status,
+    )
+    db_session.flush()
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_consultation_entitlement(
+            db=db_session,
+            sale_item=sale.items[0],
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Consultation entitlement requires a paid sale."
+    assert db_session.query(ConsultationEntitlement).count() == 0
+
+
+def test_create_consultation_entitlement_rejects_missing_owning_sale(db_session):
+    service_addon = ServiceAddon(
+        code="consultation_1h_int_missing_sale_test",
+        name="1:1 SmartBudget consultation",
+        service_type="consultation",
+        usage_type="standalone",
+        family_slug="smartbudget",
+        package_code="INT",
+        currency_code="EUR",
+        amount=Decimal("79.00"),
+        is_active=True,
+    )
+    db_session.add(service_addon)
+    db_session.flush()
+
+    sale_item = SaleItem(
+        item_type=SaleItemType.SERVICE,
+        product_id=None,
+        service_addon_id=service_addon.id,
+        service_addon=service_addon,
+        item_name=service_addon.name,
+        currency_code=service_addon.currency_code,
+        amount=service_addon.amount,
+        quantity=1,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_consultation_entitlement(
+            db=db_session,
+            sale_item=sale_item,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Consultation entitlement requires a paid sale."
+    assert db_session.query(ConsultationEntitlement).count() == 0
+
+
+def test_create_consultation_entitlement_rejects_non_consultation_service(
+    db_session,
+):
+    service_addon = ServiceAddon(
+        code="support_1h_int_entitlement_reject_test",
+        name="1:1 SmartBudget support",
+        service_type="support",
+        usage_type="standalone",
+        family_slug="smartbudget",
+        package_code="INT",
+        currency_code="EUR",
+        amount=Decimal("79.00"),
+        is_active=True,
+    )
+    db_session.add(service_addon)
+    db_session.flush()
+
+    sale = create_standalone_service_sale(
+        db=db_session,
+        service_addon_id=service_addon.id,
+        service_name=service_addon.name,
+        customer_email="customer@example.com",
+        amount=service_addon.amount,
+        currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
+    )
+    db_session.flush()
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_consultation_entitlement(
+            db=db_session,
+            sale_item=sale.items[0],
+        )
+
+    assert exc_info.value.status_code == 400
+    assert (
+        exc_info.value.detail
+        == "Consultation entitlement can only be created for consultation services."
+    )
+    assert db_session.query(ConsultationEntitlement).count() == 0
 
 
 def test_create_consultation_entitlement_rejects_product_sale_item(db_session):
@@ -161,6 +292,7 @@ def test_create_consultation_entitlement_rejects_product_sale_item(db_session):
         customer_email="customer@example.com",
         amount=Decimal("39.00"),
         currency="EUR",
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -209,6 +341,7 @@ def test_create_consultation_entitlement_rejects_duplicate_creation(db_session):
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -264,6 +397,7 @@ def test_get_valid_consultation_entitlement_by_token_returns_entitlement(
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -340,6 +474,7 @@ def test_get_valid_consultation_entitlement_by_token_rejects_expired_token(
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -423,6 +558,7 @@ def test_mark_entitlement_as_booked_happy_path(db_session):
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -505,6 +641,7 @@ def test_mark_entitlement_as_booked_is_idempotent(db_session):
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 
@@ -596,6 +733,7 @@ def test_expired_entitlement_cannot_be_marked_as_booked(db_session):
         customer_email="customer@example.com",
         amount=service_addon.amount,
         currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
     )
     db_session.flush()
 

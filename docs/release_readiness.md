@@ -119,8 +119,8 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `CODE-003` — Require paid consultation
-ownership.**
+**Current first incomplete item: `CONS-001` — Persist webhook lifecycle
+transitions.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -133,7 +133,7 @@ ownership.**
 | 7 | Release upload | `REL-003` | Bound release-upload resource use | `Completed` |
 | 8 | Accessibility | `A11Y-001` | Declare the active document language | `Completed` |
 | 9 | Database | `DB-001` | Restore model and migration parity | `Completed` |
-| 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Not started` |
+| 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Completed` |
 | 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Not started` |
 | 12 | Public purchase API | `SEC-003` | Require proof for purchase lookup | `Not started` |
 | 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Not started` |
@@ -265,6 +265,11 @@ ownership.**
   owning sale is paid.
 - **Accepted end state:** A consultation entitlement can exist only for a valid
   paid consultation service item.
+- **Completed behavior:** Consultation entitlement creation requires an owning
+  sale whose payment status is `PaymentStatus.PAID`.
+- **Regression validation:** Paid consultation creation succeeds, while pending,
+  failed, refunded, missing-sale, product-item, non-consultation-service, and
+  duplicate cases are covered by rejection tests.
 - **Dependencies:** `DB-001`.
 - **References:** [Consultation entitlement](architecture/consultations.md#consultation-entitlement),
   [commerce sales and sale items](architecture/commerce_and_delivery.md#sales-and-sale-items).
