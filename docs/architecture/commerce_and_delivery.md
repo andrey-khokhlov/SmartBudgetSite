@@ -50,7 +50,7 @@ logic must resolve ownership through `Sale -> SaleItems`.
 
 ## Public purchase lookup
 
-The approved SEC-003 MVP lookup supports the product-feedback flow without
+The implemented SEC-003 MVP lookup supports the product-feedback flow without
 turning the public API into a purchase-history endpoint. The customer enters the
 purchase email, which is treated as a practical lookup key rather than strong
 proof of identity or mailbox ownership. No email confirmation, magic link,
@@ -59,7 +59,7 @@ MVP.
 
 The request contains the entered email, and the public response contract is only
 `{"verified": true}` or `{"verified": false}` according to whether a
-qualifying paid product purchase exists. It must not contain:
+qualifying paid product purchase exists. It does not contain:
 
 - purchase history or a list of purchases;
 - purchase dates;
@@ -71,7 +71,9 @@ The API route delegates the lookup rule to a service, and the service uses a
 repository existence query against paid product `SaleItem` ownership. The
 browser does not select or submit an internal purchase record. Product-feedback
 submission repeats the ownership check on the backend; browser state is never
-treated as authorization.
+treated as authorization. The browser opens protected feedback fields only for
+the literal boolean result `verified === true`; false, malformed, and request
+error responses fail closed.
 
 The accepted residual risk is that a person who knows the purchaser's email may
 submit feedback as that purchaser. The lookup does not expose downloadable

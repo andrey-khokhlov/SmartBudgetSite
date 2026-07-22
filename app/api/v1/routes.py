@@ -7,13 +7,10 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.dependencies import get_db, require_admin
 from app.repositories.feedback_repository import FeedbackRepository
-from app.repositories.sales_repository import (
-    get_verified_purchases_by_email,
-    is_verified_sale_for_email,
-)
 from app.schemas.feedback import FeedbackCreateResponse, FeedbackListResponse, FeedbackMessageType
-from app.schemas.purchase_check import PurchaseItem, PurchaseLookupRequest, PurchaseLookupResponse
+from app.schemas.purchase_check import PurchaseLookupRequest, PurchaseLookupResponse
 from app.services.feedback_service import validate_feedback_support_reference
+from app.services.purchase_lookup_service import has_verified_product_purchase
 
 import uuid
 import shutil
@@ -43,7 +40,6 @@ def create_feedback(
     email: str = Form(""),
     name: str | None = Form(None),
     page_url: str | None = Form(None),
-    sale_id: int | None = Form(None),
     support_reference: str | None = Form(None),
     files: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
@@ -126,20 +122,13 @@ def create_feedback(
                 detail="Email is required for product feedback",
             )
 
-        if sale_id is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Sale selection is required for product feedback",
-            )
-
-        if not is_verified_sale_for_email(
+        if not has_verified_product_purchase(
             db=db,
-            sale_id=sale_id,
             email=str(email),
         ):
             raise HTTPException(
                 status_code=400,
-                detail="Invalid sale selection",
+                detail="No verified product purchase found",
             )
 
     normalized_support_reference = validate_feedback_support_reference(
@@ -256,15 +245,7 @@ def check_purchase(
     payload: PurchaseLookupRequest,
     db: Session = Depends(get_db),
 ) -> PurchaseLookupResponse:
-    purchases_data = get_verified_purchases_by_email(
-        db=db,
-        email=str(payload.email),
-    )
-
-    purchases = [PurchaseItem(**item) for item in purchases_data]
-
     return PurchaseLookupResponse(
-        verified=any(item.get("item_type") == "product" for item in purchases_data),
-        purchases=purchases,
+        verified=has_verified_product_purchase(db=db, email=str(payload.email)),
     )
 

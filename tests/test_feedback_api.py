@@ -105,7 +105,6 @@ def test_create_product_feedback_without_verified_purchase(client):
             "subject": "Product feedback",
             "message": "This is a valid feedback message with enough length.",
             "page_url": "http://localhost/product-page",
-            "sale_id": "999999",
         },
     )
 
@@ -113,15 +112,15 @@ def test_create_product_feedback_without_verified_purchase(client):
 
     data = response.json()
 
-    assert "detail" in data
+    assert data["detail"] == "No verified product purchase found"
 
 def test_create_product_feedback_with_verified_purchase(client, db_session):
     """
     Test case: create product feedback with verified purchase
 
     What we verify:
-    - Endpoint /v1/feedback accepts product_feedback
-      when a verified purchase exists for the given email and sale_id
+    - Endpoint /v1/feedback accepts product_feedback without a sale_id
+      when a verified paid product SaleItem exists for the given email
     - Response is successful
     - Feedback is stored in the database
     """
@@ -131,6 +130,7 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
     from app.models.feedback import FeedbackMessage
     from app.models.product import Product
     from app.models.sale import Sale
+    from app.models.sale_item import SaleItem
 
     product = Product(
         family_slug="smartbudget",
@@ -161,6 +161,18 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
         created_at=datetime.now(UTC),
     )
     db_session.add(sale)
+    db_session.flush()
+    db_session.add(
+        SaleItem(
+            sale_id=sale.id,
+            item_type="product",
+            product_id=product.id,
+            item_name=product.name,
+            currency_code="EUR",
+            amount=Decimal("10.00"),
+            quantity=1,
+        )
+    )
     db_session.commit()
 
     response = client.post(
@@ -172,7 +184,6 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
             "subject": "Product feedback",
             "message": "This is a valid product feedback message with enough length.",
             "page_url": "http://localhost/product-page",
-            "sale_id": str(sale.id),
         },
     )
 

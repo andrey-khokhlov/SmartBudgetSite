@@ -12,7 +12,6 @@ class FeedbackMessageType(str, Enum):
 
 
 class FeedbackCreate(BaseModel):
-    sale_id: int | None = None
     message_type: FeedbackMessageType
     email: EmailStr | None = None
     subject: str = Field(..., min_length=3, max_length=200)
@@ -29,8 +28,6 @@ class FeedbackCreate(BaseModel):
         if self.message_type == FeedbackMessageType.PRODUCT_FEEDBACK:
             if not self.email:
                 raise ValueError("Email is required for product feedback.")
-            if self.sale_id is None:
-                raise ValueError("Sale selection is required for product feedback.")
         return self
 
 

@@ -154,11 +154,9 @@ Public display uses:
 - `/reviews/{slug}` for one product;
 - `/reviews` as a redirect to the configured default product review page.
 
-## Approved SEC-003 MVP target (not yet implemented)
-
 ### Product-feedback purchase lookup
 
-The approved SEC-003 MVP flow preserves the current low-friction interaction:
+The implemented SEC-003 MVP flow preserves the low-friction interaction:
 
 1. The customer selects product feedback and enters the purchase email.
 2. The browser performs the existing public purchase lookup roundtrip.
@@ -171,18 +169,30 @@ of identity, mailbox ownership, or exclusive authority to act for the purchase.
 MVP does not add email confirmation, a magic link, a one-time code, or another
 browser verification roundtrip.
 
-The approved public response contract is only `{"verified": true}` or
+The public response contract is only `{"verified": true}` or
 `{"verified": false}`. It does not return or render purchase history, purchase
 dates, internal `sale_id`, `sale_item_id`, or `product_id` values, provider
 identifiers, or other purchase metadata. The browser does not use an internal
-purchase selector and does not submit internal ownership identifiers. Backend
-code repeats the paid-product ownership check when product feedback is submitted;
-a successful browser lookup is UI state, not authorization.
+purchase selector and does not submit internal ownership identifiers. The public
+product-feedback contract does not accept `sale_id`. Backend code repeats the
+same shared paid-product existence check when product feedback is submitted; a
+successful browser lookup is UI state, not authorization. The server normalizes
+the submitted email and requires at least one paid `Sale` containing a product
+`SaleItem`.
+
+The browser opens the protected feedback fields only when the response contains
+the literal boolean result `verified === true`. False, malformed, and request
+error responses fail closed.
 
 The accepted residual risk is that someone who knows a purchaser's email may
 submit feedback as that purchaser. This does not expose a downloadable product,
 payment information, or an internal purchase record; cannot modify a purchase;
 and is mitigated operationally through feedback moderation.
+
+SEC-003 does not establish which exact product is being reviewed and does not
+persist a product association on the feedback record. Exact product ownership
+remains unfinished under `CODE-002`, and persisted product association remains
+unfinished under `CODE-001`.
 
 ## Authoritative business rules
 

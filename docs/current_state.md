@@ -69,6 +69,18 @@ Consultations:
 Feedback:
 
 - Feedback administration is consolidated behind protected admin routes.
+- `SEC-003` is complete: `POST /v1/check-purchase` returns only a boolean
+  `verified` result and exposes no purchase history, internal identifiers,
+  product details, dates, or payment/provider metadata. The browser no longer
+  renders a purchase selector or submits `sale_id`.
+- Purchase lookup and product-feedback submission use the same service rule.
+  The server normalizes the submitted email and requires at least one paid
+  `Sale` containing a product `SaleItem`; the browser opens protected fields
+  only for the literal boolean result `verified === true` and otherwise fails
+  closed. Email remains a practical lookup key, not proof of identity or mailbox
+  ownership.
+- Exact reviewed-product ownership and persisted product association remain
+  unfinished under `CODE-002` and `CODE-001`, respectively.
 - The current implementation still publishes approved product feedback from
   `feedback_messages` via `is_published`.
 - The intended separation into private feedback and distinct curated public
@@ -110,10 +122,11 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full automated test result is 252 passing tests after
-  completion of `CONS-001`; the focused Calendly webhook route suite has 8
-  passing tests, including request-level durability validation through a fresh
-  independent SQLAlchemy session.
+- The latest confirmed full ordinary suite result is 253 passing tests after
+  completion of `SEC-003`; the focused SEC-003 API suites pass 26 tests and the
+  Feedback browser suite passes 7 tests. The focused Calendly webhook route
+  suite remains at 8 passing tests, including request-level durability
+  validation through a fresh independent SQLAlchemy session.
 
 ## Current launch constraint
 
@@ -129,10 +142,11 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `SEC-003` — limit public
-purchase lookup disclosure. Continue in the authoritative order defined in
-`release_readiness.md`; do not substitute roadmap work for the next incomplete
-remediation item.
+The first incomplete Official Release Backlog item is `CODE-002` — verify
+ownership of the reviewed product. It remains paired with `CODE-001`, which
+persists the verified product association. Continue in the authoritative order
+defined in `release_readiness.md`; do not substitute roadmap work for the next
+incomplete remediation item.
 
 ### 2. Smart Feedback support flow (later work)
 

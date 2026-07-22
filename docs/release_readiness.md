@@ -119,8 +119,8 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-003` — Limit public purchase lookup
-disclosure.**
+**Current first incomplete item: `CODE-002` — Verify ownership of the reviewed
+product.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -135,7 +135,7 @@ disclosure.**
 | 9 | Database | `DB-001` | Restore model and migration parity | `Completed` |
 | 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Completed` |
 | 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Completed` |
-| 12 | Public purchase API | `SEC-003` | Limit public purchase lookup disclosure | `Not started` |
+| 12 | Public purchase API | `SEC-003` | Limit public purchase lookup disclosure | `Completed` |
 | 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Not started` |
 | 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Not started` |
 | 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Not started` |
@@ -314,6 +314,19 @@ disclosure.**
   permits no purchase modification; and remains subject to feedback moderation.
   Email confirmation, magic links, one-time codes, and an additional browser
   verification roundtrip are not required for MVP.
+- **Implemented boundary:** `POST /v1/check-purchase` returns only
+  `{"verified": true}` or `{"verified": false}`. A shared purchase lookup
+  service normalizes the submitted email and uses a repository existence query
+  for at least one paid `Sale` containing a product `SaleItem`. Product-feedback
+  submission repeats the same check server-side. The browser has no purchase
+  selector, receives and submits no internal purchase identifier, and the public
+  product-feedback contract no longer accepts `sale_id`. Protected fields open
+  only for the literal boolean result `verified === true`; false, malformed,
+  and error responses fail closed. No authentication/session, model, or
+  migration change was introduced.
+- **Regression validation:** The focused API suites pass 26 tests, the Feedback
+  browser suite passes 7 tests, and the full ordinary suite passes 253 tests.
+  `git diff --check` also passes.
 - **Dependencies:** The public feedback boundaries in `SEC-001` and `SEC-002`
   should be stable first.
 - **References:** [Commerce public purchase lookup](architecture/commerce_and_delivery.md#public-purchase-lookup),

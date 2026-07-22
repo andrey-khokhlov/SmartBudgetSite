@@ -80,7 +80,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
-        expect(page.locator("script[src$='feedback.js?v=3']")).to_have_count(1)
+        expect(page.locator("script[src$='feedback.js?v=4']")).to_have_count(1)
         expect(page.locator("#email")).to_have_count(1)
         expect(page.locator("#contact_email")).to_have_count(0)
         expect(page.locator("#contactEmailGroup")).to_have_count(0)
@@ -123,7 +123,8 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
                 "#attachmentsGroup",
                 visible=expected_state["form_fields"],
             )
-            _assert_visibility(page, "#purchaseSelectorGroup", visible=False)
+            expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
+            expect(page.locator("#purchase_select")).to_have_count(0)
 
             submit = page.locator('button[type="submit"]')
             expect(submit).to_have_count(1)
@@ -136,6 +137,87 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
     assert page_errors == []
     assert console_errors == []
+
+
+@pytest.mark.browser
+def test_verified_product_purchase_opens_feedback_without_purchase_selector() -> None:
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        page = browser.new_page()
+        page.route(
+            "**/v1/check-purchase",
+            lambda route: route.fulfill(
+                status=200,
+                content_type="application/json",
+                body='{"verified": true}',
+            ),
+        )
+        page.goto(f"{base_url}/feedback", wait_until="networkidle")
+
+        page.locator("#message_type").select_option("product_feedback")
+        page.locator("#email").fill("buyer@example.com")
+        page.locator("#email").press("Enter")
+
+        expect(page.locator("#purchase-status")).to_have_class(
+            "feedback-purchase-status success"
+        )
+        expect(page.locator("#subjectGroup")).to_be_visible()
+        expect(page.locator("#messageGroup")).to_be_visible()
+        expect(page.locator("#attachmentsGroup")).to_be_visible()
+        expect(page.locator('button[type="submit"]')).to_be_enabled()
+        expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
+        expect(page.locator("#purchase_select")).to_have_count(0)
+        assert not page.evaluate(
+            "new FormData(document.querySelector('#feedback-form')).has('sale_id')"
+        )
+
+        browser.close()
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize(
+    ("response_status", "response_body"),
+    (
+        (200, '{"verified": false}'),
+        (200, '{"verified": "false"}'),
+        (500, '{"detail": "Purchase check failed"}'),
+    ),
+)
+def test_unverified_or_failed_product_purchase_keeps_feedback_closed(
+    response_status: int,
+    response_body: str,
+) -> None:
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        page = browser.new_page()
+        page.route(
+            "**/v1/check-purchase",
+            lambda route: route.fulfill(
+                status=response_status,
+                content_type="application/json",
+                body=response_body,
+            ),
+        )
+        page.goto(f"{base_url}/feedback", wait_until="networkidle")
+
+        page.locator("#message_type").select_option("product_feedback")
+        page.locator("#email").fill("buyer@example.com")
+        page.locator("#email").press("Enter")
+
+        expect(page.locator("#purchase-status")).to_have_class(
+            "feedback-purchase-status error"
+        )
+        expect(page.locator("#subjectGroup")).to_be_hidden()
+        expect(page.locator("#messageGroup")).to_be_hidden()
+        expect(page.locator("#attachmentsGroup")).to_be_hidden()
+        expect(page.locator('button[type="submit"]')).to_be_disabled()
+        expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
+        expect(page.locator("#purchase_select")).to_have_count(0)
+        assert not page.evaluate(
+            "new FormData(document.querySelector('#feedback-form')).has('sale_id')"
+        )
+
+        browser.close()
 
 
 def _download_prefill_context() -> DownloadFeedbackPrefillContext:
@@ -177,7 +259,7 @@ def test_download_prefill_survives_initialization_and_message_type_switches(
                 lambda route: route.fulfill(
                     status=200,
                     content_type="application/json",
-                    body='{"verified": false, "purchases": []}',
+                    body='{"verified": false}',
                 ),
             )
             page.goto(

@@ -17,10 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const subjectGroup = document.getElementById("subjectGroup");
     const messageGroup = document.getElementById("messageGroup");
 
-    const purchaseSelectorGroup = document.getElementById("purchaseSelectorGroup");
-    const purchaseSelect = document.getElementById("purchase_select");
-    const purchasePlaceholderText = purchaseSelect.options[0].text;
-
     const submitButton = form.querySelector('button[type="submit"]');
 
     const messageInput = document.getElementById("message");
@@ -78,9 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedFilesText.textContent = texts.noFiles || "No files selected";
         feedbackDropzone.classList.remove("is-dragover");
 
-        purchaseSelectorGroup.style.display = "none";
-        purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
-
         purchaseStatus.style.display = "none";
         purchaseStatus.textContent = "";
         purchaseStatus.className = "feedback-purchase-status";
@@ -118,8 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const hasVerifiedPurchase =
-            purchaseStatus.classList.contains("success") && !!purchaseSelect.value;
+        const hasVerifiedPurchase = purchaseStatus.classList.contains("success");
 
         submitButton.disabled = !hasVerifiedPurchase;
     }
@@ -143,8 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
         purchaseStatus.textContent = "";
         purchaseStatus.className = "feedback-purchase-status";
 
-        purchaseSelectorGroup.style.display = "none";
-
         const type = typeSelect.value;
         const email = emailInput.value.trim().toLowerCase();
 
@@ -152,9 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
             purchaseStatus.style.display = "none";
             purchaseStatus.textContent = "";
             purchaseStatus.className = "feedback-purchase-status";
-
-            purchaseSelectorGroup.style.display = "none";
-            purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
 
             updateFormVisibility(true);
             return;
@@ -164,9 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
             purchaseStatus.style.display = "none";
             purchaseStatus.textContent = "";
             purchaseStatus.className = "feedback-purchase-status";
-
-            purchaseSelectorGroup.style.display = "none";
-            purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
 
             updateFormVisibility(false);
             return;
@@ -193,44 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
 
-            if (result.verified) {
+            if (result.verified === true) {
                 purchaseStatus.style.display = "block";
                 purchaseStatus.className = "feedback-purchase-status success";
                 purchaseStatus.textContent = texts.purchaseConfirmed;
 
-                purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
-
-                result.purchases.forEach((p) => {
-                    const option = document.createElement("option");
-                    option.value = p.sale_id;
-
-                    const purchaseDate = p.created_at
-                        ? new Date(p.created_at).toLocaleDateString()
-                        : "";
-
-                    option.textContent =
-                        `${p.product_name || texts.productFallback}${p.edition ? " (" + p.edition + ")" : ""}` +
-                        `${purchaseDate ? " — " + purchaseDate : ""}`;
-
-                    purchaseSelect.appendChild(option);
-                });
-
-                purchaseSelectorGroup.style.display = "block";
-
-                if (result.purchases.length === 1) {
-                    purchaseSelect.value = String(result.purchases[0].sale_id);
-                    updateFormVisibility(true);
-                    subjectInput.focus();
-                } else {
-                    updateFormVisibility(false);
-                }
+                updateFormVisibility(true);
+                subjectInput.focus();
             } else {
                 purchaseStatus.style.display = "block";
                 purchaseStatus.className = "feedback-purchase-status error";
                 purchaseStatus.textContent = texts.noPurchaseFound;
-
-                purchaseSelectorGroup.style.display = "none";
-                purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
 
                 updateFormVisibility(false);
             }
@@ -240,9 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
             purchaseStatus.style.display = "block";
             purchaseStatus.className = "feedback-purchase-status error";
             purchaseStatus.textContent = texts.purchaseCheckFailed;
-
-            purchaseSelectorGroup.style.display = "none";
-            purchaseSelect.innerHTML = `<option value="">${purchasePlaceholderText}</option>`;
 
             updateFormVisibility(false);
         }
@@ -274,37 +228,14 @@ document.addEventListener("DOMContentLoaded", () => {
         updatePurchaseStatus();
     });
 
-    purchaseSelect.addEventListener("change", () => {
-        if (purchaseSelect.value) {
-            updateFormVisibility(true);
-            subjectInput.focus();
-        } else {
-            updateFormVisibility(false);
-        }
-    });
-
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         status.textContent = texts.sending;
         status.className = "feedback-form__status";
 
-        const payload = {
-            message_type: form.message_type.value,
-            name: form.name.value || null,
-            email: form.email.value || "",
-            subject: form.subject.value,
-            message: form.message.value,
-            page_url: form.page_url.value || window.location.pathname,
-            sale_id: form.purchase_select.value ? Number(form.purchase_select.value) : null,
-        };
-
         try {
             const formData = new FormData(form);
-
-            if (purchaseSelect && purchaseSelect.value) {
-                formData.set("sale_id", purchaseSelect.value);
-            }
 
             const response = await fetch("/v1/feedback", {
                 method: "POST",
