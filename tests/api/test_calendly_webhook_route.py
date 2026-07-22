@@ -4,9 +4,18 @@ import json
 import time
 from unittest.mock import patch
 
+from sqlalchemy.orm import sessionmaker
+
 from app.core.config import settings
+from app.models.consultation_entitlement import (
+    ConsultationEntitlement,
+    ConsultationEntitlementStatus,
+)
 from app.services.webhooks.signature_verification_service import (
     CALENDLY_SIGNATURE_TOLERANCE_SECONDS,
+)
+from tests.services.test_consultation_entitlement_service import (
+    create_test_consultation_entitlement,
 )
 
 
@@ -70,6 +79,82 @@ def test_calendly_webhook_endpoint_accepts_post_request(client, monkeypatch):
 
     assert response.status_code == 204
     assert response.content == b""
+
+
+def test_calendly_webhook_persists_booked_entitlement_after_request(
+    client,
+    db_session,
+    monkeypatch,
+):
+    """A successful webhook commits the lifecycle transition durably."""
+
+    provider_event_uri = (
+        "https://api.calendly.com/scheduled_events/DURABLE-BOOKING-1"
+    )
+    provider_invitee_uri = (
+        "https://api.calendly.com/invitees/DURABLE-INVITEE-1"
+    )
+    entitlement = create_test_consultation_entitlement(db_session)
+    entitlement.provider_event_uri = provider_event_uri
+    db_session.commit()
+    entitlement_id = entitlement.id
+
+    assert entitlement.status == ConsultationEntitlementStatus.AVAILABLE
+
+    payload = {
+        "event": "invitee.created",
+        "payload": {
+            "event": provider_event_uri,
+            "invitee": provider_invitee_uri,
+        },
+    }
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    signing_secret = "test-secret"
+    signature_header = _build_calendly_signature_header(
+        payload=payload_bytes,
+        signing_secret=signing_secret,
+        timestamp=str(int(time.time())),
+    )
+    monkeypatch.setattr(
+        settings,
+        "CALENDLY_WEBHOOK_SIGNING_SECRET",
+        signing_secret,
+    )
+
+    response = client.post(
+        "/v1/webhooks/calendly",
+        content=payload_bytes,
+        headers={
+            "Content-Type": "application/json",
+            "Calendly-Webhook-Signature": signature_header,
+        },
+    )
+
+    assert response.status_code == 204
+
+    fresh_session_factory = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=db_session.get_bind(),
+    )
+    with fresh_session_factory() as fresh_db:
+        persisted_entitlement = fresh_db.get(
+            ConsultationEntitlement,
+            entitlement_id,
+        )
+
+        assert persisted_entitlement is not None
+        assert (
+            persisted_entitlement.status
+            == ConsultationEntitlementStatus.BOOKED
+        )
+        assert persisted_entitlement.booking_provider == "calendly"
+        assert persisted_entitlement.provider_event_uri == provider_event_uri
+        assert (
+            persisted_entitlement.provider_invitee_uri
+            == provider_invitee_uri
+        )
+        assert persisted_entitlement.booked_at is not None
 
 
 def test_calendly_webhook_rejects_invalid_signature(client):

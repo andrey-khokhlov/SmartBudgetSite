@@ -80,5 +80,6 @@ async def calendly_webhook(
         db=db,
         payload=payload,
     )
+    db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

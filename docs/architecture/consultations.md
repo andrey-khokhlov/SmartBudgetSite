@@ -124,11 +124,15 @@ raw HTTP request
     -> reconciliation lookup
     -> idempotent entitlement lifecycle transition
     -> structured audit logging
+    -> successful request transaction commit
+    -> HTTP 204 response
 ```
 
 The route receives raw bytes and headers, verifies the signature, parses the
 request, and delegates. It does not contain lifecycle logic, repository access,
-or inline provider-payload parsing.
+or inline provider-payload parsing. The route owns the successful request
+transaction: it commits only after webhook processing succeeds and returns HTTP
+204 only after the commit completes.
 
 Provider payload shapes remain isolated in normalizers. Domain services consume
 normalized events. Verification fails closed for missing, malformed, invalid, or
@@ -139,6 +143,7 @@ transport-level tolerance are rejected before provider event processing.
 
 Webhook orchestration coordinates event routing and handoff; repositories perform
 lookup only; the consultation entitlement service owns state transitions.
+Lower-level lifecycle services flush their changes and do not own the commit.
 Unsupported events, malformed payloads, invalid signatures, and reconciliation
 mismatches remain safe and observable. Webhooks never create entitlements;
 entitlements originate from successful purchases.

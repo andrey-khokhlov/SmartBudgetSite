@@ -119,8 +119,8 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `CONS-001` — Persist webhook lifecycle
-transitions.**
+**Current first incomplete item: `SEC-003` — Require proof for purchase
+lookup.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -134,7 +134,7 @@ transitions.**
 | 8 | Accessibility | `A11Y-001` | Declare the active document language | `Completed` |
 | 9 | Database | `DB-001` | Restore model and migration parity | `Completed` |
 | 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Completed` |
-| 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Not started` |
+| 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Completed` |
 | 12 | Public purchase API | `SEC-003` | Require proof for purchase lookup | `Not started` |
 | 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Not started` |
 | 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Not started` |
@@ -282,6 +282,14 @@ transitions.**
   rolled back when the request session closes.
 - **Accepted end state:** Successful supported Calendly webhook processing leaves
   the entitlement in the intended durable committed lifecycle state.
+- **Completed behavior:** The Calendly webhook HTTP route owns the successful
+  request transaction. It commits only after webhook processing succeeds and
+  returns HTTP 204 only after the commit completes. Lower-level lifecycle
+  services continue to flush without owning the commit.
+- **Regression validation:** The focused webhook route suite passes 8 tests. Its
+  durability regression sends a signed request through the actual HTTP endpoint
+  and confirms the booked lifecycle state through a fresh independent SQLAlchemy
+  session after the request session closes. The full suite passes 252 tests.
 - **Dependencies:** `DB-001` and `CODE-003`; final validation also depends on
   `OPS-002` and `SEC-005`.
 - **References:** [Backend transaction boundaries](architecture/backend.md#transaction-boundaries),

@@ -55,6 +55,10 @@ Consultations:
 - Calendly webhook signatures enforce a symmetric, inclusive 180-second
   timestamp tolerance at the HTTP transport boundary. This is separate from the
   idempotent consultation lifecycle transitions applied after verification.
+- `CONS-001` is complete: the Calendly webhook HTTP route owns the successful
+  request transaction, commits only after webhook processing succeeds, and
+  returns HTTP 204 only after the commit completes. Lower-level consultation
+  lifecycle services continue to flush without owning the commit.
 - Manual Calendly booking, Google Meet, email, cancellation, Google Calendar,
   API, and PAT validation are complete.
 - No Calendly webhook subscription exists yet. A public HTTPS endpoint and real
@@ -106,8 +110,10 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full automated test result is 251 passing tests after
-  completion of `CODE-003`.
+- The latest confirmed full automated test result is 252 passing tests after
+  completion of `CONS-001`; the focused Calendly webhook route suite has 8
+  passing tests, including request-level durability validation through a fresh
+  independent SQLAlchemy session.
 
 ## Current launch constraint
 
@@ -123,8 +129,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `CONS-001` — persist
-webhook lifecycle transitions. Continue in the authoritative order defined in
+The first incomplete Official Release Backlog item is `SEC-003` — require proof
+for purchase lookup. Continue in the authoritative order defined in
 `release_readiness.md`; do not substitute roadmap work for the next incomplete
 remediation item.
 
