@@ -48,6 +48,36 @@ prices may change; purchased amounts must remain historically accurate.
 `sales.product_id` may remain temporarily for migration safety, but new business
 logic must resolve ownership through `Sale -> SaleItems`.
 
+## Public purchase lookup
+
+The approved SEC-003 MVP lookup supports the product-feedback flow without
+turning the public API into a purchase-history endpoint. The customer enters the
+purchase email, which is treated as a practical lookup key rather than strong
+proof of identity or mailbox ownership. No email confirmation, magic link,
+one-time code, or additional browser verification roundtrip is required for
+MVP.
+
+The request contains the entered email, and the public response contract is only
+`{"verified": true}` or `{"verified": false}` according to whether a
+qualifying paid product purchase exists. It must not contain:
+
+- purchase history or a list of purchases;
+- purchase dates;
+- internal `sale_id`, `sale_item_id`, or `product_id` values;
+- payment-provider or external transaction identifiers;
+- amounts, currencies, payment metadata, or other unnecessary purchase data.
+
+The API route delegates the lookup rule to a service, and the service uses a
+repository existence query against paid product `SaleItem` ownership. The
+browser does not select or submit an internal purchase record. Product-feedback
+submission repeats the ownership check on the backend; browser state is never
+treated as authorization.
+
+The accepted residual risk is that a person who knows the purchaser's email may
+submit feedback as that purchaser. The lookup does not expose downloadable
+products, payment information, or internal purchase records and cannot modify a
+purchase. Feedback moderation provides the operational mitigation for MVP.
+
 ## Payment preparation
 
 - Product payment preparation selects the exact active release before provider

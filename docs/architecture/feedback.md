@@ -154,6 +154,36 @@ Public display uses:
 - `/reviews/{slug}` for one product;
 - `/reviews` as a redirect to the configured default product review page.
 
+## Approved SEC-003 MVP target (not yet implemented)
+
+### Product-feedback purchase lookup
+
+The approved SEC-003 MVP flow preserves the current low-friction interaction:
+
+1. The customer selects product feedback and enters the purchase email.
+2. The browser performs the existing public purchase lookup roundtrip.
+3. If a qualifying paid product purchase exists, the feedback fields open
+   immediately.
+4. The customer reviews, edits, and submits the feedback normally.
+
+Email is a practical purchase lookup key for this flow. It is not strong proof
+of identity, mailbox ownership, or exclusive authority to act for the purchase.
+MVP does not add email confirmation, a magic link, a one-time code, or another
+browser verification roundtrip.
+
+The approved public response contract is only `{"verified": true}` or
+`{"verified": false}`. It does not return or render purchase history, purchase
+dates, internal `sale_id`, `sale_item_id`, or `product_id` values, provider
+identifiers, or other purchase metadata. The browser does not use an internal
+purchase selector and does not submit internal ownership identifiers. Backend
+code repeats the paid-product ownership check when product feedback is submitted;
+a successful browser lookup is UI state, not authorization.
+
+The accepted residual risk is that someone who knows a purchaser's email may
+submit feedback as that purchaser. This does not expose a downloadable product,
+payment information, or an internal purchase record; cannot modify a purchase;
+and is mitigated operationally through feedback moderation.
+
 ## Authoritative business rules
 
 - Raw feedback is private by default and must not be displayed publicly as-is.
@@ -162,7 +192,10 @@ Public display uses:
 - Public reviews belong to the exact product/SKU identified by `product_id`.
   Reviews are not global or shared across variants such as SmartBudget RU and
   SmartBudget INT.
-- When `sale_id` is present, its product must be consistent with `product_id`.
+- Public feedback lookup and submission contracts must not expose or accept
+  internal purchase identifiers as browser authority. Exact product ownership
+  and persisted product association remain backend-owned responsibilities under
+  `CODE-002` and `CODE-001`.
 - `site_issue` and `general_question` always remain private.
 - `purchase_or_download_issue` always remains private.
 - Support references must never contain access tokens, provider identifiers,
@@ -236,6 +269,14 @@ the success confirmation.
 The prefill DTO never contains download tokens, provider identifiers, signed
 URLs, storage keys, raw exceptions, database or ownership identifiers, or
 internal statuses. Payment support prefill remains unimplemented.
+
+## Post-MVP product enhancement
+
+Add a **Leave feedback** entry point directly inside the SmartBudget workbook so
+legitimate users can open the feedback form from the product itself without
+manually entering their purchase email. This is a future product enhancement,
+not part of the SEC-003 MVP security boundary and not currently implemented
+behavior.
 
 ## Intentionally deferred target architecture
 

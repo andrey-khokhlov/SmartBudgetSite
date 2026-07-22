@@ -119,8 +119,8 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-003` — Require proof for purchase
-lookup.**
+**Current first incomplete item: `SEC-003` — Limit public purchase lookup
+disclosure.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -135,7 +135,7 @@ lookup.**
 | 9 | Database | `DB-001` | Restore model and migration parity | `Completed` |
 | 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Completed` |
 | 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Completed` |
-| 12 | Public purchase API | `SEC-003` | Require proof for purchase lookup | `Not started` |
+| 12 | Public purchase API | `SEC-003` | Limit public purchase lookup disclosure | `Not started` |
 | 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Not started` |
 | 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Not started` |
 | 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Not started` |
@@ -295,20 +295,29 @@ lookup.**
 - **References:** [Backend transaction boundaries](architecture/backend.md#transaction-boundaries),
   [Calendly webhook boundary](architecture/consultations.md#webhook-boundary).
 
-#### 12. `SEC-003` — Require proof for purchase lookup
+#### 12. `SEC-003` — Limit public purchase lookup disclosure
 
 - **Source:** Confirmed Defect; architecture decision: Accepted with Design
   Change.
 - **Finding:** Customer email alone can retrieve purchase existence and detailed
   sale context through the public API.
-- **Accepted end state:** A customer receives only the minimum purchase context
-  belonging to them after sufficient proof of possession; the legitimate
-  customer-facing flow remains available without exposing unnecessary internal
-  identifiers.
+- **Accepted end state:** The public lookup treats the entered customer email as
+  a practical purchase lookup key, not as strong identity or mailbox proof. It
+  returns only whether a qualifying paid product purchase exists so the feedback
+  fields can open immediately. It exposes no purchase history, purchase dates,
+  internal sale or product identifiers, provider identifiers, or other purchase
+  metadata. Product-feedback ownership verification remains server-side, and
+  internal identifiers never become part of the public browser contract.
+- **Accepted residual risk:** Someone who knows a purchaser's email may submit
+  feedback as that purchaser. This MVP risk is accepted because the flow exposes
+  no downloadable product, payment information, or internal purchase record;
+  permits no purchase modification; and remains subject to feedback moderation.
+  Email confirmation, magic links, one-time codes, and an additional browser
+  verification roundtrip are not required for MVP.
 - **Dependencies:** The public feedback boundaries in `SEC-001` and `SEC-002`
   should be stable first.
-- **References:** [Commerce sales and sale items](architecture/commerce_and_delivery.md#sales-and-sale-items),
-  [feedback support references](architecture/feedback.md#support-references).
+- **References:** [Commerce public purchase lookup](architecture/commerce_and_delivery.md#public-purchase-lookup),
+  [feedback product-purchase lookup](architecture/feedback.md#product-feedback-purchase-lookup).
 
 #### 13. `CODE-002` — Verify ownership of the reviewed product
 
@@ -317,8 +326,8 @@ lookup.**
   does not prove that the reviewed product is one of that sale's items.
 - **Accepted end state:** Product feedback is accepted only when the exact
   reviewed product belongs to the verified paid purchase.
-- **Dependencies:** `SEC-003` establishes the purchase-proof boundary; delivered
-  together with `CODE-001`.
+- **Dependencies:** `SEC-003` establishes the public purchase-lookup boundary;
+  delivered together with `CODE-001`.
 - **References:** [Feedback authoritative rules](architecture/feedback.md#authoritative-business-rules),
   [SaleItem ownership](architecture/commerce_and_delivery.md#sales-and-sale-items).
 

@@ -129,8 +129,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `SEC-003` — require proof
-for purchase lookup. Continue in the authoritative order defined in
+The first incomplete Official Release Backlog item is `SEC-003` — limit public
+purchase lookup disclosure. Continue in the authoritative order defined in
 `release_readiness.md`; do not substitute roadmap work for the next incomplete
 remediation item.
 
