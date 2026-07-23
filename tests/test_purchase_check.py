@@ -8,7 +8,6 @@ from app.models.sale_item import SaleItem
 
 
 FORBIDDEN_PUBLIC_KEYS = {
-    "purchases",
     "sale_id",
     "sale_item_id",
     "product_id",
@@ -24,12 +23,15 @@ def _create_product_sale(
     email: str,
     payment_status: PaymentStatus,
     include_product_item: bool = True,
-) -> None:
+    slug: str | None = None,
+    product_name: str = "SmartBudget",
+    edition: str = "Standard",
+) -> tuple[Product, SaleItem | None]:
     product = Product(
         family_slug="smartbudget",
-        slug=f"smartbudget-{email.split('@')[0]}",
-        name="SmartBudget",
-        edition="Standard",
+        slug=slug or f"smartbudget-{email.split('@')[0]}",
+        name=product_name,
+        edition=edition,
         status="in_sale",
         archive_path="test/path.zip",
     )
@@ -47,20 +49,21 @@ def _create_product_sale(
     db_session.add(sale)
     db_session.flush()
 
+    item = None
     if include_product_item:
-        db_session.add(
-            SaleItem(
-                sale_id=sale.id,
-                item_type="product",
-                product_id=product.id,
-                item_name=product.name,
-                currency_code="EUR",
-                amount=Decimal("10.00"),
-                quantity=1,
-            )
+        item = SaleItem(
+            sale_id=sale.id,
+            item_type="product",
+            product_id=product.id,
+            item_name=product.name,
+            currency_code="EUR",
+            amount=Decimal("10.00"),
+            quantity=1,
         )
+        db_session.add(item)
 
     db_session.commit()
+    return product, item
 
 
 def test_check_purchase_not_found_returns_boolean_only(client):
@@ -74,7 +77,7 @@ def test_check_purchase_not_found_returns_boolean_only(client):
     assert FORBIDDEN_PUBLIC_KEYS.isdisjoint(response.json())
 
 
-def test_check_purchase_paid_product_returns_boolean_only(client, db_session):
+def test_check_purchase_paid_product_returns_one_safe_purchase(client, db_session):
     _create_product_sale(
         db_session,
         email="buyer@example.com",
@@ -87,8 +90,56 @@ def test_check_purchase_paid_product_returns_boolean_only(client, db_session):
     )
 
     assert response.status_code == 200
-    assert response.json() == {"verified": True}
-    assert FORBIDDEN_PUBLIC_KEYS.isdisjoint(response.json())
+    data = response.json()
+    assert data["verified"] is True
+    assert len(data["purchases"]) == 1
+    assert data["purchases"][0]["product_name"] == "SmartBudget"
+    assert data["purchases"][0]["edition"] == "Standard"
+    assert data["purchases"][0]["purchase_reference"].startswith("FP-")
+    assert FORBIDDEN_PUBLIC_KEYS.isdisjoint(data)
+    assert FORBIDDEN_PUBLIC_KEYS.isdisjoint(data["purchases"][0])
+
+
+def test_check_purchase_paid_products_returns_multiple_safe_purchases(
+    client,
+    db_session,
+):
+    _create_product_sale(
+        db_session,
+        email="multi@example.com",
+        payment_status=PaymentStatus.PAID,
+        slug="smartbudget-multi-standard",
+        edition="Standard",
+    )
+    _create_product_sale(
+        db_session,
+        email="multi@example.com",
+        payment_status=PaymentStatus.PAID,
+        slug="smartbudget-multi-pro",
+        edition="Pro",
+    )
+
+    response = client.post(
+        "/v1/check-purchase",
+        json={"email": "multi@example.com"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["verified"] is True
+    assert [purchase["edition"] for purchase in data["purchases"]] == [
+        "Standard",
+        "Pro",
+    ]
+    assert len(
+        {purchase["purchase_reference"] for purchase in data["purchases"]}
+    ) == 2
+    for purchase in data["purchases"]:
+        assert set(purchase) == {
+            "purchase_reference",
+            "product_name",
+            "edition",
+        }
 
 
 def test_check_purchase_empty_email(client):

@@ -50,6 +50,20 @@
 
         <div class="feedback-purchase-status" id="purchase-status" style="display: none;"></div>
 
+        <div id="purchaseSelectorGroup" style="display: none;">
+            <label class="feedback-form__label" for="purchase_select">
+                {{ t("feedback_purchase_label") }}
+            </label>
+            <select
+                class="feedback-form__control"
+                id="purchase_select"
+                name="purchase_reference"
+                disabled
+            >
+                <option value="">{{ t("feedback_purchase_placeholder") }}</option>
+            </select>
+        </div>
+
         <div id="subjectGroup" style="display: none;">
             <label class="feedback-form__label" for="subject">{{ t("feedback_subject_label") }}</label>
             <input class="feedback-form__control" type="text" id="subject" name="subject" maxlength="200" required value="{{ prefill_context.subject if prefill_context else '' }}">
@@ -110,8 +124,9 @@ window.feedbackTexts = {
     noFiles: "{{ t('feedback_dropzone_no_files') }}",
     productEmailHint: "{{ t('feedback_email_hint') }}",
     contactEmailHint: "{{ t('feedback_contact_email_hint') }}",
+    purchasePlaceholder: "{{ t('feedback_purchase_placeholder') }}",
 };
 </script>
-<script src="{{ url_for('static', path='js/feedback.js') }}?v=4"></script>
+<script src="{{ url_for('static', path='js/feedback.js') }}?v=5"></script>
 
 {% endblock %}

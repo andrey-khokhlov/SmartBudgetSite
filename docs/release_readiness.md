@@ -119,8 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `CODE-002` — Verify ownership of the reviewed
-product.**
+**Current first incomplete item: `ARCH-003` — Make feedback submission atomic.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -136,8 +135,8 @@ product.**
 | 10 | Consultations | `CODE-003` | Require paid consultation ownership | `Completed` |
 | 11 | Calendly persistence | `CONS-001` | Persist webhook lifecycle transitions | `Completed` |
 | 12 | Public purchase API | `SEC-003` | Limit public purchase lookup disclosure | `Completed` |
-| 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Not started` |
-| 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Not started` |
+| 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Completed` |
+| 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Completed` |
 | 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Not started` |
 | 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Not started` |
 | 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Not started` |
@@ -302,28 +301,29 @@ product.**
 - **Finding:** Customer email alone can retrieve purchase existence and detailed
   sale context through the public API.
 - **Accepted end state:** The public lookup treats the entered customer email as
-  a practical purchase lookup key, not as strong identity or mailbox proof. It
-  returns only whether a qualifying paid product purchase exists so the feedback
-  fields can open immediately. It exposes no purchase history, purchase dates,
-  internal sale or product identifiers, provider identifiers, or other purchase
-  metadata. Product-feedback ownership verification remains server-side, and
-  internal identifiers never become part of the public browser contract.
+  a practical purchase lookup key, not as strong identity or mailbox proof. Its
+  SEC-003 baseline returns only whether a qualifying paid product purchase
+  exists. The later paired `CODE-002` and `CODE-001` work may add only the safe
+  product context required to select the reviewed SKU. Purchase dates, internal
+  sale, sale-item, or product identifiers, provider identifiers, and payment
+  metadata remain excluded. Product-feedback ownership verification remains
+  server-side, and internal identifiers never become part of the public browser
+  contract.
 - **Accepted residual risk:** Someone who knows a purchaser's email may submit
   feedback as that purchaser. This MVP risk is accepted because the flow exposes
   no downloadable product, payment information, or internal purchase record;
   permits no purchase modification; and remains subject to feedback moderation.
   Email confirmation, magic links, one-time codes, and an additional browser
   verification roundtrip are not required for MVP.
-- **Implemented boundary:** `POST /v1/check-purchase` returns only
-  `{"verified": true}` or `{"verified": false}`. A shared purchase lookup
-  service normalizes the submitted email and uses a repository existence query
-  for at least one paid `Sale` containing a product `SaleItem`. Product-feedback
-  submission repeats the same check server-side. The browser has no purchase
-  selector, receives and submits no internal purchase identifier, and the public
-  product-feedback contract no longer accepts `sale_id`. Protected fields open
-  only for the literal boolean result `verified === true`; false, malformed,
-  and error responses fail closed. No authentication/session, model, or
-  migration change was introduced.
+- **Implemented boundary:** At SEC-003 completion,
+  `POST /v1/check-purchase` returned only `{"verified": true}` or
+  `{"verified": false}`. The paired `CODE-002` and `CODE-001` implementation
+  subsequently extended verified responses with an opaque purchase reference
+  and public product name and edition so the exact reviewed SKU can be selected.
+  Zero-purchase responses remain unchanged. The browser receives and submits no
+  internal purchase identifier, and the public product-feedback contract does
+  not accept `sale_id` or `product_id`. False, malformed, and error responses
+  fail closed.
 - **Regression validation:** The focused API suites pass 26 tests, the Feedback
   browser suite passes 7 tests, and the full ordinary suite passes 253 tests.
   `git diff --check` also passes.
@@ -339,6 +339,15 @@ product.**
   does not prove that the reviewed product is one of that sale's items.
 - **Accepted end state:** Product feedback is accepted only when the exact
   reviewed product belongs to the verified paid purchase.
+- **Completed behavior:** Paid product `SaleItem` rows for the normalized email
+  are represented publicly by an opaque `purchase_reference` plus product name
+  and edition. Submission resolves the reference only within paid product
+  purchases owned by the supplied email, so forged, unpaid, missing, and
+  cross-email references cannot select a product.
+- **Regression validation:** Zero-, one-, and multiple-purchase lookup cases,
+  forged-reference rejection, and wrong-email rejection are covered. The
+  focused purchase-check and feedback API suites pass 29 tests, the Feedback
+  browser suite passes 8 tests, and the full ordinary suite passes 256 tests.
 - **Dependencies:** `SEC-003` establishes the public purchase-lookup boundary;
   delivered together with `CODE-001`.
 - **References:** [Feedback authoritative rules](architecture/feedback.md#authoritative-business-rules),
@@ -352,6 +361,13 @@ product.**
   publication.
 - **Accepted end state:** Every accepted product feedback record retains its
   verified product association, consistent with any stored sale context.
+- **Completed behavior:** After ownership validation, feedback creation receives
+  only the internally resolved `product_id` and persists it on
+  `FeedbackMessage`. The browser never receives or submits that identifier.
+- **Regression validation:** The accepted product-feedback regression confirms
+  that the exact resolved product ID is stored. The paired focused API suites
+  pass 29 tests, the Feedback browser suite passes 8 tests, and the full
+  ordinary suite passes 256 tests.
 - **Dependencies:** Delivered together with and after the ownership rule in
   `CODE-002`.
 - **References:** [Feedback publication and product reviews](architecture/feedback.md#publication-and-product-reviews),

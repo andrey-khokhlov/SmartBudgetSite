@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailHint = document.getElementById("email-hint");
 
     const purchaseStatus = document.getElementById("purchase-status");
+    const purchaseSelectorGroup = document.getElementById("purchaseSelectorGroup");
+    const purchaseSelect = document.getElementById("purchase_select");
     const supportReferenceGroup = document.getElementById("supportReferenceGroup");
     const supportReferenceInput = document.getElementById("support_reference");
 
@@ -29,6 +31,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedFilesText = document.getElementById("selectedFilesText");
 
     const feedbackDropzone = document.getElementById("feedbackDropzone");
+
+    function clearPurchaseSelection() {
+        purchaseSelect.replaceChildren();
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = texts.purchasePlaceholder;
+        purchaseSelect.appendChild(placeholder);
+
+        purchaseSelect.value = "";
+        purchaseSelect.disabled = true;
+        purchaseSelect.required = false;
+        purchaseSelectorGroup.style.display = "none";
+    }
+
+    function setPurchaseSelection(purchases) {
+        clearPurchaseSelection();
+
+        purchases.forEach((purchase) => {
+            const option = document.createElement("option");
+            option.value = purchase.purchase_reference;
+            option.textContent = `${purchase.product_name} — ${purchase.edition}`;
+            purchaseSelect.appendChild(option);
+        });
+
+        purchaseSelect.disabled = false;
+
+        if (purchases.length === 1) {
+            purchaseSelect.value = purchases[0].purchase_reference;
+            return;
+        }
+
+        purchaseSelect.required = true;
+        purchaseSelectorGroup.style.display = "block";
+    }
 
     function updateSupportReferenceState() {
         if (!supportReferenceGroup || !supportReferenceInput) {
@@ -77,6 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         purchaseStatus.style.display = "none";
         purchaseStatus.textContent = "";
         purchaseStatus.className = "feedback-purchase-status";
+        clearPurchaseSelection();
 
         updateSupportReferenceState();
         updateFormVisibility(true);
@@ -111,7 +149,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const hasVerifiedPurchase = purchaseStatus.classList.contains("success");
+        const hasVerifiedPurchase =
+            purchaseStatus.classList.contains("success") &&
+            purchaseSelect.value !== "";
 
         submitButton.disabled = !hasVerifiedPurchase;
     }
@@ -134,6 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         purchaseStatus.style.display = "none";
         purchaseStatus.textContent = "";
         purchaseStatus.className = "feedback-purchase-status";
+        clearPurchaseSelection();
 
         const type = typeSelect.value;
         const email = emailInput.value.trim().toLowerCase();
@@ -177,13 +218,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
 
-            if (result.verified === true) {
+            if (
+                result.verified === true &&
+                Array.isArray(result.purchases) &&
+                result.purchases.length > 0 &&
+                result.purchases.every((purchase) =>
+                    typeof purchase.purchase_reference === "string" &&
+                    purchase.purchase_reference !== "" &&
+                    typeof purchase.product_name === "string" &&
+                    typeof purchase.edition === "string"
+                )
+            ) {
+                setPurchaseSelection(result.purchases);
                 purchaseStatus.style.display = "block";
                 purchaseStatus.className = "feedback-purchase-status success";
                 purchaseStatus.textContent = texts.purchaseConfirmed;
 
                 updateFormVisibility(true);
-                subjectInput.focus();
+                if (result.purchases.length === 1) {
+                    subjectInput.focus();
+                } else {
+                    purchaseSelect.focus();
+                }
             } else {
                 purchaseStatus.style.display = "block";
                 purchaseStatus.className = "feedback-purchase-status error";
@@ -227,6 +283,8 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSupportReferenceState();
         updatePurchaseStatus();
     });
+
+    purchaseSelect.addEventListener("change", updateSubmitState);
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();

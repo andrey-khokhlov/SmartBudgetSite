@@ -156,43 +156,49 @@ Public display uses:
 
 ### Product-feedback purchase lookup
 
-The implemented SEC-003 MVP flow preserves the low-friction interaction:
+The implemented SEC-003, CODE-002, and CODE-001 flow preserves the low-friction
+interaction while identifying the exact reviewed SKU:
 
 1. The customer selects product feedback and enters the purchase email.
 2. The browser performs the existing public purchase lookup roundtrip.
-3. If a qualifying paid product purchase exists, the feedback fields open
-   immediately.
-4. The customer reviews, edits, and submits the feedback normally.
+3. If one qualifying paid product purchase exists, the browser selects it
+   automatically without displaying a selector.
+4. If multiple qualifying paid product purchases exist, the browser displays a
+   product selector.
+5. The customer reviews, edits, and submits the feedback normally.
 
 Email is a practical purchase lookup key for this flow. It is not strong proof
 of identity, mailbox ownership, or exclusive authority to act for the purchase.
 MVP does not add email confirmation, a magic link, a one-time code, or another
 browser verification roundtrip.
 
-The public response contract is only `{"verified": true}` or
-`{"verified": false}`. It does not return or render purchase history, purchase
-dates, internal `sale_id`, `sale_item_id`, or `product_id` values, provider
-identifiers, or other purchase metadata. The browser does not use an internal
-purchase selector and does not submit internal ownership identifiers. The public
-product-feedback contract does not accept `sale_id`. Backend code repeats the
-same shared paid-product existence check when product feedback is submitted; a
-successful browser lookup is UI state, not authorization. The server normalizes
-the submitted email and requires at least one paid `Sale` containing a product
-`SaleItem`.
+When no qualifying purchase exists, the public response remains exactly
+`{"verified": false}`. Verified responses contain a safe purchase list with only
+an opaque `purchase_reference`, public product name, and public edition. They do
+not return purchase dates, internal `sale_id`, `sale_item_id`, or `product_id`
+values, provider identifiers, payment metadata, or other purchase details.
+
+Product-feedback submission sends the email and `purchase_reference`, not an
+internal ownership identifier. The public contract does not accept `sale_id`,
+`sale_item_id`, or `product_id`. A successful browser lookup is UI state, not
+authorization. The server normalizes the submitted email, resolves the opaque
+reference only among paid product `SaleItem` rows owned by that email, rejects
+forged and cross-email references, and persists the internally resolved
+`product_id`.
 
 The browser opens the protected feedback fields only when the response contains
-the literal boolean result `verified === true`. False, malformed, and request
-error responses fail closed.
+the literal boolean result `verified === true` and at least one structurally
+valid safe purchase. Multiple purchases require a selection before submission.
+False, malformed, and request-error responses fail closed.
 
 The accepted residual risk is that someone who knows a purchaser's email may
 submit feedback as that purchaser. This does not expose a downloadable product,
 payment information, or an internal purchase record; cannot modify a purchase;
 and is mitigated operationally through feedback moderation.
 
-SEC-003 does not establish which exact product is being reviewed and does not
-persist a product association on the feedback record. Exact product ownership
-remains unfinished under `CODE-002`, and persisted product association remains
-unfinished under `CODE-001`.
+CODE-002 establishes exact reviewed-product ownership through the opaque
+reference validation, and CODE-001 persists the resolved product association on
+the feedback record.
 
 ## Authoritative business rules
 
@@ -204,8 +210,8 @@ unfinished under `CODE-001`.
   SmartBudget INT.
 - Public feedback lookup and submission contracts must not expose or accept
   internal purchase identifiers as browser authority. Exact product ownership
-  and persisted product association remain backend-owned responsibilities under
-  `CODE-002` and `CODE-001`.
+  resolution and persisted product association remain backend-owned
+  responsibilities.
 - `site_issue` and `general_question` always remain private.
 - `purchase_or_download_issue` always remains private.
 - Support references must never contain access tokens, provider identifiers,

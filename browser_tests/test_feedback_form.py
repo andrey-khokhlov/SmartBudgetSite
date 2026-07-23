@@ -80,7 +80,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
-        expect(page.locator("script[src$='feedback.js?v=4']")).to_have_count(1)
+        expect(page.locator("script[src$='feedback.js?v=5']")).to_have_count(1)
         expect(page.locator("#email")).to_have_count(1)
         expect(page.locator("#contact_email")).to_have_count(0)
         expect(page.locator("#contactEmailGroup")).to_have_count(0)
@@ -123,8 +123,8 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
                 "#attachmentsGroup",
                 visible=expected_state["form_fields"],
             )
-            expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
-            expect(page.locator("#purchase_select")).to_have_count(0)
+            expect(page.locator("#purchaseSelectorGroup")).to_be_hidden()
+            expect(page.locator("#purchase_select")).to_be_disabled()
 
             submit = page.locator('button[type="submit"]')
             expect(submit).to_have_count(1)
@@ -140,7 +140,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
 
 @pytest.mark.browser
-def test_verified_product_purchase_opens_feedback_without_purchase_selector() -> None:
+def test_one_verified_product_purchase_is_selected_without_visible_selector() -> None:
     with _running_app() as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, channel="chromium")
         page = browser.new_page()
@@ -149,7 +149,13 @@ def test_verified_product_purchase_opens_feedback_without_purchase_selector() ->
             lambda route: route.fulfill(
                 status=200,
                 content_type="application/json",
-                body='{"verified": true}',
+                body=(
+                    '{"verified": true, "purchases": [{'
+                    '"purchase_reference": "FP-one",'
+                    '"product_name": "SmartBudget",'
+                    '"edition": "Standard"'
+                    "}]} "
+                ),
             ),
         )
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
@@ -165,10 +171,61 @@ def test_verified_product_purchase_opens_feedback_without_purchase_selector() ->
         expect(page.locator("#messageGroup")).to_be_visible()
         expect(page.locator("#attachmentsGroup")).to_be_visible()
         expect(page.locator('button[type="submit"]')).to_be_enabled()
-        expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
-        expect(page.locator("#purchase_select")).to_have_count(0)
+        expect(page.locator("#purchaseSelectorGroup")).to_be_hidden()
+        expect(page.locator("#purchase_select")).to_have_value("FP-one")
+        expect(page.locator("#purchase_select")).to_be_enabled()
+        assert page.evaluate(
+            "new FormData(document.querySelector('#feedback-form'))"
+            ".get('purchase_reference') === 'FP-one'"
+        )
         assert not page.evaluate(
             "new FormData(document.querySelector('#feedback-form')).has('sale_id')"
+        )
+
+        browser.close()
+
+
+@pytest.mark.browser
+def test_multiple_verified_product_purchases_display_required_selector() -> None:
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        page = browser.new_page()
+        page.route(
+            "**/v1/check-purchase",
+            lambda route: route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=(
+                    '{"verified": true, "purchases": ['
+                    '{"purchase_reference": "FP-standard",'
+                    '"product_name": "SmartBudget", "edition": "Standard"},'
+                    '{"purchase_reference": "FP-pro",'
+                    '"product_name": "SmartBudget", "edition": "Pro"}'
+                    "]}"
+                ),
+            ),
+        )
+        page.goto(f"{base_url}/feedback", wait_until="networkidle")
+
+        page.locator("#message_type").select_option("product_feedback")
+        page.locator("#email").fill("multi@example.com")
+        page.locator("#email").press("Enter")
+
+        expect(page.locator("#purchaseSelectorGroup")).to_be_visible()
+        expect(page.locator("#purchase_select")).to_be_enabled()
+        expect(page.locator("#purchase_select")).to_have_value("")
+        expect(page.locator("#purchase_select option")).to_have_count(3)
+        expect(page.locator('button[type="submit"]')).to_be_disabled()
+
+        page.locator("#purchase_select").select_option("FP-pro")
+
+        expect(page.locator('button[type="submit"]')).to_be_enabled()
+        assert page.evaluate(
+            "new FormData(document.querySelector('#feedback-form'))"
+            ".get('purchase_reference') === 'FP-pro'"
+        )
+        assert not page.evaluate(
+            "new FormData(document.querySelector('#feedback-form')).has('product_id')"
         )
 
         browser.close()
@@ -211,8 +268,12 @@ def test_unverified_or_failed_product_purchase_keeps_feedback_closed(
         expect(page.locator("#messageGroup")).to_be_hidden()
         expect(page.locator("#attachmentsGroup")).to_be_hidden()
         expect(page.locator('button[type="submit"]')).to_be_disabled()
-        expect(page.locator("#purchaseSelectorGroup")).to_have_count(0)
-        expect(page.locator("#purchase_select")).to_have_count(0)
+        expect(page.locator("#purchaseSelectorGroup")).to_be_hidden()
+        expect(page.locator("#purchase_select")).to_be_disabled()
+        assert not page.evaluate(
+            "new FormData(document.querySelector('#feedback-form'))"
+            ".has('purchase_reference')"
+        )
         assert not page.evaluate(
             "new FormData(document.querySelector('#feedback-form')).has('sale_id')"
         )

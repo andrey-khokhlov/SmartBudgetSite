@@ -18,6 +18,7 @@ class FeedbackRepository:
         page_url: str | None = None,
         user_agent: str | None = None,
         support_reference: str | None = None,
+        product_id: int | None = None,
     ) -> FeedbackMessage:
         feedback = FeedbackMessage(
             type=message_type,
@@ -28,6 +29,7 @@ class FeedbackRepository:
             page_url=page_url,
             user_agent=user_agent,
             support_reference=support_reference,
+            product_id=product_id,
         )
         self.db.add(feedback)
         self.db.commit()

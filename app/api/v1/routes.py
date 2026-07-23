@@ -10,7 +10,10 @@ from app.repositories.feedback_repository import FeedbackRepository
 from app.schemas.feedback import FeedbackCreateResponse, FeedbackListResponse, FeedbackMessageType
 from app.schemas.purchase_check import PurchaseLookupRequest, PurchaseLookupResponse
 from app.services.feedback_service import validate_feedback_support_reference
-from app.services.purchase_lookup_service import has_verified_product_purchase
+from app.services.purchase_lookup_service import (
+    list_verified_product_purchases,
+    resolve_verified_product_id,
+)
 
 import uuid
 import shutil
@@ -41,6 +44,7 @@ def create_feedback(
     name: str | None = Form(None),
     page_url: str | None = Form(None),
     support_reference: str | None = Form(None),
+    purchase_reference: str | None = Form(None),
     files: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ):
@@ -115,6 +119,7 @@ def create_feedback(
         file.file.seek(0)
 
     # 🔐 BACKEND VALIDATION
+    product_id = None
     if message_type == "product_feedback":
         if not email:
             raise HTTPException(
@@ -122,14 +127,11 @@ def create_feedback(
                 detail="Email is required for product feedback",
             )
 
-        if not has_verified_product_purchase(
+        product_id = resolve_verified_product_id(
             db=db,
             email=str(email),
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="No verified product purchase found",
-            )
+            purchase_reference=purchase_reference,
+        )
 
     normalized_support_reference = validate_feedback_support_reference(
         message_type=message_type.value,
@@ -145,6 +147,7 @@ def create_feedback(
         page_url=page_url,
         user_agent=user_agent,
         support_reference=normalized_support_reference,
+        product_id=product_id,
     )
 
     attachments = []
@@ -240,12 +243,24 @@ def resolve_feedback(
         "is_resolved": feedback.is_resolved,
     }
 
-@router.post("/check-purchase", response_model=PurchaseLookupResponse)
+@router.post(
+    "/check-purchase",
+    response_model=PurchaseLookupResponse,
+    response_model_exclude_none=True,
+)
 def check_purchase(
     payload: PurchaseLookupRequest,
     db: Session = Depends(get_db),
 ) -> PurchaseLookupResponse:
+    purchases = list_verified_product_purchases(
+        db=db,
+        email=str(payload.email),
+    )
+    if not purchases:
+        return PurchaseLookupResponse(verified=False)
+
     return PurchaseLookupResponse(
-        verified=has_verified_product_purchase(db=db, email=str(payload.email)),
+        verified=True,
+        purchases=purchases,
     )
 

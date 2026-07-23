@@ -1,27 +1,29 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.enums import PaymentStatus
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 
 
-def has_paid_product_purchase_for_email(
+def list_paid_product_purchases_for_email(
     db: Session,
     email: str,
-) -> bool:
+) -> list[SaleItem]:
     stmt = (
-        select(Sale.id)
-        .join(SaleItem, SaleItem.sale_id == Sale.id)
+        select(SaleItem)
+        .join(Sale, Sale.id == SaleItem.sale_id)
+        .options(joinedload(SaleItem.product))
         .where(
             Sale.customer_email == email,
             Sale.payment_status == PaymentStatus.PAID,
             SaleItem.item_type == "product",
+            SaleItem.product_id.is_not(None),
         )
-        .limit(1)
+        .order_by(Sale.created_at.asc(), SaleItem.id.asc())
     )
 
-    return db.execute(stmt).first() is not None
+    return list(db.execute(stmt).scalars().all())
 
 
 def list_admin_sales(

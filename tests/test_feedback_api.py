@@ -1,12 +1,65 @@
 # tests/test_feedback_api.py
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.core.config import settings
 from app.dependencies import ADMIN_COOKIE_NAME
 from app.models.feedback import FeedbackMessage
+from app.models.product import Product
+from app.models.sale import Sale
+from app.models.sale_item import SaleItem
 from app.services.product_service import set_product_price
 
 TEST_ADMIN_TOKEN = "test-feedback-admin-token"
+
+
+def _create_paid_product_purchase(
+    db_session,
+    *,
+    email: str,
+    slug: str,
+    edition: str = "Standard",
+) -> Product:
+    product = Product(
+        family_slug="smartbudget",
+        slug=slug,
+        name="SmartBudget",
+        edition=edition,
+        status="in_sale",
+        archive_path="test/path.zip",
+    )
+    db_session.add(product)
+    db_session.flush()
+
+    sale = Sale(
+        product_id=product.id,
+        customer_email=email,
+        amount=Decimal("10.00"),
+        currency="EUR",
+        payment_status="paid",
+        created_at=datetime.now(UTC),
+    )
+    db_session.add(sale)
+    db_session.flush()
+    db_session.add(
+        SaleItem(
+            sale_id=sale.id,
+            item_type="product",
+            product_id=product.id,
+            item_name=product.name,
+            currency_code="EUR",
+            amount=Decimal("10.00"),
+            quantity=1,
+        )
+    )
+    db_session.commit()
+    return product
+
+
+def _purchase_reference(client, email: str, index: int = 0) -> str:
+    response = client.post("/v1/check-purchase", json={"email": email})
+    assert response.status_code == 200
+    return response.json()["purchases"][index]["purchase_reference"]
 
 
 def test_admin_feedback_pages_reject_anonymous_access(client, monkeypatch):
@@ -119,31 +172,19 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
     Test case: create product feedback with verified purchase
 
     What we verify:
-    - Endpoint /v1/feedback accepts product_feedback without a sale_id
-      when a verified paid product SaleItem exists for the given email
+    - Endpoint /v1/feedback accepts product_feedback with an opaque purchase reference
+      when the paid product SaleItem belongs to the given email
     - Response is successful
-    - Feedback is stored in the database
+    - Feedback is stored with the verified product association
     """
 
-    from datetime import datetime, UTC
-
     from app.models.feedback import FeedbackMessage
-    from app.models.product import Product
-    from app.models.sale import Sale
-    from app.models.sale_item import SaleItem
 
-    product = Product(
-        family_slug="smartbudget",
+    product = _create_paid_product_purchase(
+        db_session,
+        email="buyer@example.com",
         slug="smartbudget",
-        name="SmartBudget",
-        edition="Standard",
-
-        status="in_sale",
-        archive_path="test/path.zip",
     )
-    db_session.add(product)
-    db_session.commit()
-    db_session.refresh(product)
 
     set_product_price(
         db=db_session,
@@ -152,28 +193,7 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
         amount=Decimal("49.00"),
     )
 
-    sale = Sale(
-        product_id=product.id,
-        customer_email="buyer@example.com",
-        amount=10.00,
-        currency="EUR",
-        payment_status="paid",
-        created_at=datetime.now(UTC),
-    )
-    db_session.add(sale)
-    db_session.flush()
-    db_session.add(
-        SaleItem(
-            sale_id=sale.id,
-            item_type="product",
-            product_id=product.id,
-            item_name=product.name,
-            currency_code="EUR",
-            amount=Decimal("10.00"),
-            quantity=1,
-        )
-    )
-    db_session.commit()
+    purchase_reference = _purchase_reference(client, "buyer@example.com")
 
     response = client.post(
         "/v1/feedback",
@@ -181,6 +201,7 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
             "message_type": "product_feedback",
             "name": "Andrey",
             "email": "buyer@example.com",
+            "purchase_reference": purchase_reference,
             "subject": "Product feedback",
             "message": "This is a valid product feedback message with enough length.",
             "page_url": "http://localhost/product-page",
@@ -199,6 +220,66 @@ def test_create_product_feedback_with_verified_purchase(client, db_session):
     assert saved_feedback is not None
     assert saved_feedback.email == "buyer@example.com"
     assert saved_feedback.subject == "Product feedback"
+    assert saved_feedback.product_id == product.id
+
+
+def test_create_product_feedback_rejects_forged_purchase_reference(
+    client,
+    db_session,
+):
+    _create_paid_product_purchase(
+        db_session,
+        email="buyer@example.com",
+        slug="smartbudget-forged-reference",
+    )
+
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "product_feedback",
+            "email": "buyer@example.com",
+            "purchase_reference": "FP-forged",
+            "subject": "Product feedback",
+            "message": "This forged product feedback must not be accepted.",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid purchase reference"
+    assert db_session.query(FeedbackMessage).count() == 0
+
+
+def test_create_product_feedback_rejects_reference_owned_by_another_email(
+    client,
+    db_session,
+):
+    _create_paid_product_purchase(
+        db_session,
+        email="owner@example.com",
+        slug="smartbudget-owner",
+    )
+    _create_paid_product_purchase(
+        db_session,
+        email="other@example.com",
+        slug="smartbudget-other",
+        edition="Pro",
+    )
+    owner_reference = _purchase_reference(client, "owner@example.com")
+
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "product_feedback",
+            "email": "other@example.com",
+            "purchase_reference": owner_reference,
+            "subject": "Product feedback",
+            "message": "This mismatched product feedback must not be accepted.",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid purchase reference"
+    assert db_session.query(FeedbackMessage).count() == 0
 
 def test_create_general_feedback_empty_message(client):
     """

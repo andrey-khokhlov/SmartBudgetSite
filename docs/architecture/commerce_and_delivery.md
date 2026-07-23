@@ -50,30 +50,34 @@ logic must resolve ownership through `Sale -> SaleItems`.
 
 ## Public purchase lookup
 
-The implemented SEC-003 MVP lookup supports the product-feedback flow without
-turning the public API into a purchase-history endpoint. The customer enters the
-purchase email, which is treated as a practical lookup key rather than strong
-proof of identity or mailbox ownership. No email confirmation, magic link,
-one-time code, or additional browser verification roundtrip is required for
-MVP.
+The public lookup supports the product-feedback flow without turning the API
+into a general purchase-history endpoint. The customer enters the purchase
+email, which is treated as a practical lookup key rather than strong proof of
+identity or mailbox ownership. No email confirmation, magic link, one-time
+code, or additional browser verification roundtrip is required for MVP.
 
-The request contains the entered email, and the public response contract is only
-`{"verified": true}` or `{"verified": false}` according to whether a
-qualifying paid product purchase exists. It does not contain:
+The request contains the entered email. When no qualifying paid product
+purchase exists, the response remains exactly `{"verified": false}`. When one
+or more qualifying purchases exist, each safe result contains only:
 
-- purchase history or a list of purchases;
-- purchase dates;
-- internal `sale_id`, `sale_item_id`, or `product_id` values;
-- payment-provider or external transaction identifiers;
-- amounts, currencies, payment metadata, or other unnecessary purchase data.
+- an opaque `purchase_reference`;
+- public product name;
+- public edition.
+
+The response does not contain purchase dates; internal `sale_id`,
+`sale_item_id`, or `product_id` values; payment-provider or external transaction
+identifiers; amounts, currencies, payment metadata, or other unnecessary
+purchase data.
 
 The API route delegates the lookup rule to a service, and the service uses a
-repository existence query against paid product `SaleItem` ownership. The
-browser does not select or submit an internal purchase record. Product-feedback
-submission repeats the ownership check on the backend; browser state is never
-treated as authorization. The browser opens protected feedback fields only for
-the literal boolean result `verified === true`; false, malformed, and request
-error responses fail closed.
+repository query against paid product `SaleItem` ownership. One purchase is
+selected automatically without displaying a selector. Multiple purchases
+display a selector using only the safe product context. Product-feedback
+submission sends the normalized email and opaque `purchase_reference`; the
+service resolves it only against paid product purchases for that email and
+persists the internally resolved product association. Browser state is never
+treated as authorization. False, malformed, and request-error responses fail
+closed.
 
 The accepted residual risk is that a person who knows the purchaser's email may
 submit feedback as that purchaser. The lookup does not expose downloadable

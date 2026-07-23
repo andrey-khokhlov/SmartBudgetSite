@@ -69,18 +69,20 @@ Consultations:
 Feedback:
 
 - Feedback administration is consolidated behind protected admin routes.
-- `SEC-003` is complete: `POST /v1/check-purchase` returns only a boolean
-  `verified` result and exposes no purchase history, internal identifiers,
-  product details, dates, or payment/provider metadata. The browser no longer
-  renders a purchase selector or submits `sale_id`.
-- Purchase lookup and product-feedback submission use the same service rule.
-  The server normalizes the submitted email and requires at least one paid
-  `Sale` containing a product `SaleItem`; the browser opens protected fields
-  only for the literal boolean result `verified === true` and otherwise fails
-  closed. Email remains a practical lookup key, not proof of identity or mailbox
+- `SEC-003`, `CODE-002`, and `CODE-001` are complete. A zero-purchase response
+  from `POST /v1/check-purchase` remains exactly `{"verified": false}`. A
+  qualifying email receives only opaque `purchase_reference` values plus public
+  product name and edition; internal sale, sale-item, product, payment, and
+  provider identifiers remain backend-only.
+- One paid product purchase is selected automatically without displaying a
+  selector. Multiple paid product purchases display a product selector. False,
+  malformed, and request-error responses fail closed.
+- Product-feedback submission sends the normalized email and opaque
+  `purchase_reference`. The service resolves the reference only against paid
+  product `SaleItem` ownership for that email, rejects forged or cross-email
+  references, and persists the verified `product_id` on the feedback record.
+  Email remains a practical lookup key, not proof of identity or mailbox
   ownership.
-- Exact reviewed-product ownership and persisted product association remain
-  unfinished under `CODE-002` and `CODE-001`, respectively.
 - The current implementation still publishes approved product feedback from
   `feedback_messages` via `is_published`.
 - The intended separation into private feedback and distinct curated public
@@ -122,9 +124,10 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 253 passing tests after
-  completion of `SEC-003`; the focused SEC-003 API suites pass 26 tests and the
-  Feedback browser suite passes 7 tests. The focused Calendly webhook route
+- The latest confirmed full ordinary suite result is 256 passing tests after
+  completion of `CODE-002` and `CODE-001`; the focused purchase-check and
+  feedback API suites pass 29 tests and the Feedback browser suite passes 8
+  tests. The focused Calendly webhook route
   suite remains at 8 passing tests, including request-level durability
   validation through a fresh independent SQLAlchemy session.
 
@@ -142,10 +145,10 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `CODE-002` — verify
-ownership of the reviewed product. It remains paired with `CODE-001`, which
-persists the verified product association. Continue in the authoritative order
-defined in `release_readiness.md`; do not substitute roadmap work for the next
+The first incomplete Official Release Backlog item is `ARCH-003` — make
+feedback submission atomic. It remains paired with `ARCH-001`, which establishes
+the feedback application boundary. Continue in the authoritative order defined
+in `release_readiness.md`; do not substitute roadmap work for the next
 incomplete remediation item.
 
 ### 2. Smart Feedback support flow (later work)
