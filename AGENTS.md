@@ -39,6 +39,8 @@ ChatGPT is responsible for:
 - architecture and design decisions;
 - repository analysis from information provided to the conversation;
 - implementation scoping;
+- detecting and recording significant out-of-scope findings in the external
+  `SmartBudgetSite — Working Queue` during the current sprint;
 - technical guidance;
 - independent review after implementation;
 - documentation consistency review;
@@ -54,6 +56,43 @@ Codex is responsible for:
 - executing local quality tools;
 - preparing commits when explicitly requested;
 - pushing only after explicit approval.
+
+## Sprint Working Queue
+
+The external Google Doc `SmartBudgetSite — Working Queue` is temporary
+operational memory for significant side tasks discovered during the current
+sprint. It is not a backlog, a long-term project document, or an extension of
+the current bounded task. ChatGPT owns discovery and operational recording of
+its items. Codex has no obligation to maintain the Google Doc during ordinary
+implementation.
+
+During Sprint Closeout, Codex may receive unresolved Working Queue items for
+transfer into the repository. For each supplied item, Codex must:
+
+1. Review the current `AGENTS.md`, `docs/README.md`, relevant authoritative
+   documents, and affected code or documentation when classification depends on
+   current implementation.
+2. Check whether the repository already records or implements the item.
+3. Determine the existing authoritative repository document from the current
+   documentation map. Do not create a new document when an existing document
+   owns the responsibility.
+4. Before editing, report the Working Queue identifier, proposed file and
+   section, and a concise rationale for that placement.
+5. Stop and report instead of editing when the item is already documented,
+   already implemented, conflicts with the current source of truth, or requires
+   a new architecture or business decision.
+6. After the proposed placement is agreed, make the smallest documentation
+   change that preserves only the durable obligation, accepted decision,
+   constraint, or deferred work. Do not transfer temporary discussion context
+   or sprint history.
+7. Show the resulting diff and changed-file list. Do not commit or push unless
+   separately instructed.
+
+An item may be removed from the Working Queue only after an independent review
+confirms the repository change and the transfer is explicitly confirmed. The
+queue should normally be empty after Sprint Closeout. Do not create a local
+`working_queue.md`, copy the queue into the repository, or use it as a parallel
+Official Release Backlog, Expected Release Gaps list, or permanent task list.
 
 ## Repository execution policy
 

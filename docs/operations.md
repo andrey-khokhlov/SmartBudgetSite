@@ -171,6 +171,14 @@ The review covers:
 - required updates to the relevant architecture documents;
 - preparation of the next sprint opening message.
 
+Review every unresolved item in the external
+`SmartBudgetSite — Working Queue`. Transfer only information that must survive
+the sprint, using the authoritative-document classification and review process
+defined in `../AGENTS.md`; do not promote the queue itself into repository
+documentation. Remove an item from the Working Queue only after an independent
+review confirms the repository change and the transfer is explicitly
+confirmed. The queue should normally be empty when Sprint Closeout is complete.
+
 Perform the Sprint Closing Review before the final commit of every sprint.
 
 ## Release Readiness Review
