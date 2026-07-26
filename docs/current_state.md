@@ -221,6 +221,11 @@ phase.
 - Feedback form UI polish: apply the project's primary button style to the
   submit control and bring the file-selection control into the site design;
   these are known non-blocking release-polish items
+- Landing consultation CTA refresh: replace the outdated direct Telegram contact
+  flow with the finalized consultation journey and rewrite the section headline,
+  supporting copy, CTA label, and destination to reflect the approved
+  Consultation → Checkout → Calendly flow; complete this during the final landing
+  page and release-polish pass
 - consultation cancellation synchronization
 - persisted webhook audit storage, delivery correlation, metrics, and replay
   diagnostics
