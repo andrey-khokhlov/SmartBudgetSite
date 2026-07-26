@@ -226,6 +226,11 @@ phase.
   supporting copy, CTA label, and destination to reflect the approved
   Consultation → Checkout → Calendly flow; complete this during the final landing
   page and release-polish pass
+- Administrative feedback deletion workflow: implement a protected admin-only
+  workflow for permanently deleting Feedback messages together with their
+  attachments. The implementation should preserve the approved attachment
+  lifecycle, safely clean up filesystem objects, and remain independently
+  reviewable after completion of the Official Release Backlog.
 - consultation cancellation synchronization
 - persisted webhook audit storage, delivery correlation, metrics, and replay
   diagnostics
