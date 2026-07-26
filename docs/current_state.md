@@ -121,6 +121,13 @@ Feedback:
 - The founder-operated reconciliation command reports missing files, orphan
   files, and unsafe keys without mutation by default. Its explicit deletion mode
   removes only validated generated orphan files below the feedback root.
+- `A11Y-002` is complete. Submission, purchase-verification, and attachment
+  changes use distinct localized live regions: progress and success are polite,
+  while failures are assertive. Purchase errors are associated with the email
+  control, the multiple-purchase selector is exposed as required, and hidden or
+  corrected controls clear obsolete required, invalid, and error associations.
+  Single-purchase verification no longer moves focus; an Enter-triggered
+  multiple-purchase check moves focus once to the required selector.
 
 Infrastructure and quality:
 
@@ -143,10 +150,9 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 290 passing tests after
-  completion of `SEC-011`; the focused feedback attachment, service, API,
-  admin-route, and reconciliation suites pass 71 tests and the Feedback browser
-  suite passes 8 tests. The
+- The latest confirmed full ordinary suite result is 292 passing tests after
+  completion of `A11Y-002`; the focused Feedback rendered-contract and API
+  suites pass 33 tests and the Feedback browser suite passes 12 tests. The
   focused Calendly webhook route
   suite remains at 8 passing tests, including request-level durability
   validation through a fresh independent SQLAlchemy session.
@@ -165,10 +171,10 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `A11Y-002` — expose
-dynamic form status accessibly. Continue in the authoritative order defined in
-`release_readiness.md`; do not substitute roadmap work for the next incomplete
-remediation item.
+The first incomplete Official Release Backlog item is `SEC-009` — protect
+capability URLs across boundaries. Continue in the authoritative order defined
+in `release_readiness.md`; do not substitute roadmap work for the next
+incomplete remediation item.
 
 ### 2. Smart Feedback support flow (later work)
 

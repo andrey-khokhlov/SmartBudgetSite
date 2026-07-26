@@ -321,6 +321,37 @@ errors, verify initialization, switch through every supported message type, and
 assert the expected visible and hidden fields. The general browser-validation
 and release rules are defined in `../operations.md`.
 
+### Accessible dynamic form state
+
+The Feedback form uses three non-competing status regions: one for submission,
+one for purchase verification, and one for attachment selection. Progress and
+successful completion use polite atomic status semantics. Submission,
+purchase-verification, and attachment errors change their owning region to an
+assertive alert so the same visible message is also announced promptly.
+Replacing the status-region text for every transition keeps repeated attempts
+announceable without duplicating messages in a second region.
+
+The purchase status is associated with the email control while verification is
+active or has produced a result, and with the purchase selector when multiple
+qualifying purchases make that selector visible and required. A no-purchase
+result marks the email invalid. Transport or validation failure remains
+associated with the email without claiming that a syntactically valid address
+is invalid. Editing the email, changing message type, or completing a successful
+check clears obsolete invalid and error state.
+
+Subject, message, attachment, support-reference, and purchase-selection controls
+are disabled and are not required while their groups are hidden. Hiding a group
+also clears stale invalid state. When subject and message become visible they
+return to native required validation; invalid events expose `aria-invalid`, and
+valid input clears it. Attachment changes use their dedicated status for no
+selection, safe filename summaries, and localized invalid-type errors without
+displaying client paths.
+
+Purchase confirmation does not move focus for a single automatically selected
+purchase. An Enter-triggered check with multiple purchases moves focus once to
+the newly displayed required selector; verification caused by ordinary blur
+does not steal focus.
+
 ## Download support-flow prefill
 
 The implemented download failure-to-Feedback flow minimizes repeated typing

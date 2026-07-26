@@ -189,10 +189,11 @@ def test_feedback_get_without_reference_preserves_normal_form(client):
     assert 'name="support_reference"' not in response.text
     assert 'id="email" name="email" value=""' in response.text
     assert (
-        'id="subject" name="subject" maxlength="200" required value=""' in response.text
+        'id="subject" name="subject" maxlength="200" disabled value=""'
+        in response.text
     )
     assert (
-        'id="message" name="message" required maxlength="2000"></textarea>'
+        'id="message" name="message" disabled maxlength="2000"></textarea>'
         in response.text
     )
 
@@ -247,3 +248,32 @@ def test_feedback_form_uses_one_email_field_for_private_feedback(client):
     assert response.status_code == 200
     assert 'id="email" name="email"' in response.text
     assert 'name="contact_email"' not in response.text
+
+
+@pytest.mark.parametrize(
+    ("lang", "invalid_file_message"),
+    [
+        ("en", "Invalid file type selected"),
+        ("ru", "Выбран недопустимый тип файла"),
+    ],
+)
+def test_feedback_form_renders_localized_accessible_status_contract(
+    client,
+    lang,
+    invalid_file_message,
+):
+    response = client.get("/feedback", params={"lang": lang})
+
+    assert response.status_code == 200
+    assert 'id="email"' in response.text
+    assert 'aria-describedby="email-hint"' in response.text
+    assert 'id="purchase-status"' in response.text
+    assert 'id="feedback-status"' in response.text
+    assert 'id="selectedFilesText"' in response.text
+    assert response.text.count('role="status"') == 3
+    assert response.text.count('aria-atomic="true"') == 3
+    assert "aria-live" not in response.text
+    assert 'role="alert"' not in response.text
+    assert 'aria-describedby="attachments-hint selectedFilesText"' in response.text
+    assert f'invalidFileType: "{invalid_file_message}"' in response.text
+    assert "feedback.js?v=6" in response.text

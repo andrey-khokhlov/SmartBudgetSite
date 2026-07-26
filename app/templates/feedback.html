@@ -30,7 +30,7 @@
             </span>
         </label>
 
-        <input class="feedback-form__control" type="email" id="email" name="email" value="{{ prefill_context.customer_email if prefill_context else '' }}">
+        <input class="feedback-form__control" type="email" id="email" name="email" value="{{ prefill_context.customer_email if prefill_context else '' }}" aria-describedby="email-hint">
 
         {% if prefill_context %}
         <div id="supportReferenceGroup">
@@ -48,9 +48,15 @@
         </div>
         {% endif %}
 
-        <div class="feedback-purchase-status" id="purchase-status" style="display: none;"></div>
+        <div
+            class="feedback-purchase-status"
+            id="purchase-status"
+            role="status"
+            aria-atomic="true"
+            hidden
+        ></div>
 
-        <div id="purchaseSelectorGroup" style="display: none;">
+        <div id="purchaseSelectorGroup" hidden>
             <label class="feedback-form__label" for="purchase_select">
                 {{ t("feedback_purchase_label") }}
             </label>
@@ -64,21 +70,21 @@
             </select>
         </div>
 
-        <div id="subjectGroup" style="display: none;">
+        <div id="subjectGroup" hidden>
             <label class="feedback-form__label" for="subject">{{ t("feedback_subject_label") }}</label>
-            <input class="feedback-form__control" type="text" id="subject" name="subject" maxlength="200" required value="{{ prefill_context.subject if prefill_context else '' }}">
+            <input class="feedback-form__control" type="text" id="subject" name="subject" maxlength="200" disabled value="{{ prefill_context.subject if prefill_context else '' }}">
         </div>
 
-        <div id="messageGroup" style="display: none;">
+        <div id="messageGroup" hidden>
             <label class="feedback-form__label" for="message">{{ t("feedback_message_label") }}</label>
-            <textarea class="feedback-form__control feedback-form__control--textarea" id="message" name="message" required maxlength="2000">{{ prefill_context.message if prefill_context else '' }}</textarea>
+            <textarea class="feedback-form__control feedback-form__control--textarea" id="message" name="message" disabled maxlength="2000">{{ prefill_context.message if prefill_context else '' }}</textarea>
             <div class="feedback-form__counter" id="messageCounter">0 / 2000</div>
         </div>
 
-        <div id="attachmentsGroup" style="display: none;">
+        <div id="attachmentsGroup" hidden>
             <label class="feedback-form__label" for="attachments">
                 {{ t("feedback_attachments_label") }}
-                <span class="feedback-form__hint">
+                <span class="feedback-form__hint" id="attachments-hint">
                     {{ t("feedback_attachments_hint") }}
                 </span>
             </label>
@@ -90,6 +96,8 @@
                     name="files"
                     multiple
                     accept=".png,.jpg,.jpeg,.webp,.pdf"
+                    aria-describedby="attachments-hint selectedFilesText"
+                    disabled
                 >
                 <div class="feedback-dropzone__content">
                     <div class="feedback-dropzone__title">{{ t("feedback_dropzone_title") }}</div>
@@ -97,7 +105,12 @@
                         {{ t("feedback_dropzone_button") }}
                     </button>
                     <div class="feedback-dropzone__hint">{{ t("feedback_dropzone_hint") }}</div>
-                    <div class="feedback-dropzone__files" id="selectedFilesText">
+                    <div
+                        class="feedback-dropzone__files"
+                        id="selectedFilesText"
+                        role="status"
+                        aria-atomic="true"
+                    >
                         {{ t("feedback_dropzone_no_files") }}
                     </div>
                 </div>
@@ -108,7 +121,12 @@
 
         <button class="btn btn-primary" type="submit">{{ t("feedback_submit") }}</button>
 
-        <p class="feedback-form__status" id="feedback-status"></p>
+        <p
+            class="feedback-form__status"
+            id="feedback-status"
+            role="status"
+            aria-atomic="true"
+        ></p>
     </form>
 </section>
 
@@ -122,11 +140,12 @@ window.feedbackTexts = {
     sentSuccessPrefix: "{{ t('feedback_sent_success_prefix') }}",
     sendFailed: "{{ t('feedback_send_failed') }}",
     noFiles: "{{ t('feedback_dropzone_no_files') }}",
+    invalidFileType: "{{ t('feedback_invalid_file_type') }}",
     productEmailHint: "{{ t('feedback_email_hint') }}",
     contactEmailHint: "{{ t('feedback_contact_email_hint') }}",
     purchasePlaceholder: "{{ t('feedback_purchase_placeholder') }}",
 };
 </script>
-<script src="{{ url_for('static', path='js/feedback.js') }}?v=5"></script>
+<script src="{{ url_for('static', path='js/feedback.js') }}?v=6"></script>
 
 {% endblock %}

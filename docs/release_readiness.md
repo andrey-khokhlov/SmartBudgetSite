@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `A11Y-002` — Expose dynamic form status accessibly.**
+**Current first incomplete item: `SEC-009` — Protect capability URLs across boundaries.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -140,7 +140,7 @@ together even though each finding retains its own identifier.
 | 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Completed` |
 | 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Completed` |
 | 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Completed` |
-| 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Not started` |
+| 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Completed` |
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Not started` |
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Not started` |
 | 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Not started` |
@@ -455,6 +455,20 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Essential validation errors, state changes, and
   completion messages are available through the semantic accessibility contract
   of the form.
+- **Completed behavior:** Submission, purchase-verification, and attachment
+  changes have separate localized atomic live regions. Progress and success use
+  polite status semantics; failures use assertive alert semantics. Purchase
+  outcomes are associated with the email and, when required, the
+  multiple-purchase selector. Hidden controls are disabled and lose stale
+  required or invalid state, while visible required controls continue to use
+  native browser validation. A single verified purchase does not move focus;
+  an Enter-triggered multiple-purchase check focuses the required selector once.
+- **Regression validation:** The focused rendered Feedback contract and API
+  suites pass 33 tests, including English and Russian markup. The Chromium
+  Feedback suite passes 12 tests covering progress, success, repeated failure,
+  purchase outcomes, error cleanup, required selection, hidden controls,
+  attachment announcements, keyboard operation, focus, and successful reset.
+  The full ordinary suite passes 292 tests.
 - **Dependencies:** The feedback response and error behavior from `ARCH-003` and
   `ARCH-001` should be stable first.
 - **References:** [Feedback browser validation](architecture/feedback.md#browser-and-multipart-validation),

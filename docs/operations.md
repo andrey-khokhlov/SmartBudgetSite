@@ -163,6 +163,10 @@ Manual browser checks validate the complete rendered experience, including:
 
 - field and control completeness;
 - conditional visibility and dynamic state transitions;
+- polite announcement of progress and successful completion, prompt
+  announcement and control association for errors, and cleanup of stale
+  invalid state in both supported public locales;
+- keyboard operation and focus behavior across asynchronous state changes;
 - JavaScript initialization and error-free execution;
 - the intended customer interaction from entry point through confirmation;
 - behavior after a normal refresh with previously cached static assets.

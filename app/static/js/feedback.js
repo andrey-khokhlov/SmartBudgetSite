@@ -31,6 +31,65 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedFilesText = document.getElementById("selectedFilesText");
 
     const feedbackDropzone = document.getElementById("feedbackDropzone");
+    let purchaseCheckSequence = 0;
+
+    function setLiveMessage(element, message, { isError = false } = {}) {
+        element.setAttribute("role", isError ? "alert" : "status");
+        element.setAttribute("aria-atomic", "true");
+        element.replaceChildren(document.createTextNode(message));
+    }
+
+    function resetLiveRegion(element) {
+        element.setAttribute("role", "status");
+        element.setAttribute("aria-atomic", "true");
+        element.replaceChildren();
+    }
+
+    function clearControlValidation(control) {
+        control.removeAttribute("aria-invalid");
+        control.setCustomValidity("");
+    }
+
+    function setControlGroupVisible(group, controls, isVisible) {
+        group.hidden = !isVisible;
+        controls.forEach((control) => {
+            control.disabled = !isVisible;
+            if (!isVisible) {
+                control.required = false;
+                clearControlValidation(control);
+            }
+        });
+    }
+
+    function clearPurchaseStatus() {
+        purchaseStatus.hidden = true;
+        purchaseStatus.style.display = "none";
+        purchaseStatus.className = "feedback-purchase-status";
+        resetLiveRegion(purchaseStatus);
+        emailInput.setAttribute("aria-describedby", "email-hint");
+        emailInput.removeAttribute("aria-busy");
+        clearControlValidation(emailInput);
+    }
+
+    function setPurchaseStatus(message, { isError = false, isBusy = false } = {}) {
+        purchaseStatus.hidden = false;
+        purchaseStatus.style.display = "block";
+        purchaseStatus.className = isError
+            ? "feedback-purchase-status error"
+            : "feedback-purchase-status";
+        setLiveMessage(purchaseStatus, message, { isError });
+        emailInput.setAttribute("aria-describedby", "email-hint purchase-status");
+        if (isBusy) {
+            emailInput.setAttribute("aria-busy", "true");
+        } else {
+            emailInput.removeAttribute("aria-busy");
+        }
+    }
+
+    function clearSubmissionStatus() {
+        status.className = "feedback-form__status";
+        resetLiveRegion(status);
+    }
 
     function clearPurchaseSelection() {
         purchaseSelect.replaceChildren();
@@ -43,7 +102,9 @@ document.addEventListener("DOMContentLoaded", () => {
         purchaseSelect.value = "";
         purchaseSelect.disabled = true;
         purchaseSelect.required = false;
-        purchaseSelectorGroup.style.display = "none";
+        purchaseSelect.removeAttribute("aria-describedby");
+        clearControlValidation(purchaseSelect);
+        purchaseSelectorGroup.hidden = true;
     }
 
     function setPurchaseSelection(purchases) {
@@ -64,7 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         purchaseSelect.required = true;
-        purchaseSelectorGroup.style.display = "block";
+        purchaseSelect.setAttribute("aria-describedby", "purchase-status");
+        purchaseSelectorGroup.hidden = false;
     }
 
     function updateSupportReferenceState() {
@@ -76,8 +138,11 @@ document.addEventListener("DOMContentLoaded", () => {
             typeSelect.value === "purchase_or_download_issue" &&
             supportReferenceInput.value !== "";
 
-        supportReferenceGroup.style.display = shouldIncludeReference ? "block" : "none";
-        supportReferenceInput.disabled = !shouldIncludeReference;
+        setControlGroupVisible(
+            supportReferenceGroup,
+            [supportReferenceInput],
+            shouldIncludeReference,
+        );
     }
 
     function updateMessageCounter() {
@@ -108,12 +173,11 @@ document.addEventListener("DOMContentLoaded", () => {
         attachmentsInput.value = "";
         form.page_url.value = window.location.pathname;
 
-        selectedFilesText.textContent = texts.noFiles || "No files selected";
+        setLiveMessage(selectedFilesText, texts.noFiles);
+        clearControlValidation(attachmentsInput);
         feedbackDropzone.classList.remove("is-dragover");
 
-        purchaseStatus.style.display = "none";
-        purchaseStatus.textContent = "";
-        purchaseStatus.className = "feedback-purchase-status";
+        clearPurchaseStatus();
         clearPurchaseSelection();
 
         updateSupportReferenceState();
@@ -157,49 +221,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateFormVisibility(isVisible) {
-        if (isVisible) {
-            subjectGroup.style.display = "block";
-            messageGroup.style.display = "block";
-            attachmentsGroup.style.display = "block";
-        } else {
-            subjectGroup.style.display = "none";
-            messageGroup.style.display = "none";
-            attachmentsGroup.style.display = "none";
+        const attachmentWasInvalid =
+            attachmentsInput.getAttribute("aria-invalid") === "true";
+        setControlGroupVisible(subjectGroup, [subjectInput], isVisible);
+        setControlGroupVisible(messageGroup, [messageInput], isVisible);
+        setControlGroupVisible(attachmentsGroup, [attachmentsInput], isVisible);
+
+        subjectInput.required = isVisible;
+        messageInput.required = isVisible;
+
+        if (!isVisible && attachmentWasInvalid) {
+            attachmentsInput.value = "";
+            setLiveMessage(selectedFilesText, texts.noFiles);
         }
 
         updateSubmitState();
     }
 
-    async function updatePurchaseStatus() {
-        purchaseStatus.style.display = "none";
-        purchaseStatus.textContent = "";
-        purchaseStatus.className = "feedback-purchase-status";
+    async function updatePurchaseStatus({ focusRequiredSelection = false } = {}) {
+        const checkSequence = ++purchaseCheckSequence;
+        clearPurchaseStatus();
         clearPurchaseSelection();
 
         const type = typeSelect.value;
         const email = emailInput.value.trim().toLowerCase();
 
         if (type !== "product_feedback") {
-            purchaseStatus.style.display = "none";
-            purchaseStatus.textContent = "";
-            purchaseStatus.className = "feedback-purchase-status";
-
             updateFormVisibility(true);
             return;
         }
 
         if (!email) {
-            purchaseStatus.style.display = "none";
-            purchaseStatus.textContent = "";
-            purchaseStatus.className = "feedback-purchase-status";
-
             updateFormVisibility(false);
             return;
         }
 
-        purchaseStatus.style.display = "block";
-        purchaseStatus.className = "feedback-purchase-status";
-        purchaseStatus.textContent = texts.checkingPurchase;
+        setPurchaseStatus(texts.checkingPurchase, { isBusy: true });
 
         try {
             const response = await fetch("/v1/check-purchase", {
@@ -217,6 +274,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const result = await response.json();
+            if (checkSequence !== purchaseCheckSequence) {
+                return;
+            }
 
             if (
                 result.verified === true &&
@@ -230,29 +290,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 )
             ) {
                 setPurchaseSelection(result.purchases);
-                purchaseStatus.style.display = "block";
+                setPurchaseStatus(texts.purchaseConfirmed);
                 purchaseStatus.className = "feedback-purchase-status success";
-                purchaseStatus.textContent = texts.purchaseConfirmed;
+                clearControlValidation(emailInput);
 
                 updateFormVisibility(true);
-                if (result.purchases.length === 1) {
-                    subjectInput.focus();
-                } else {
+                if (result.purchases.length > 1 && focusRequiredSelection) {
                     purchaseSelect.focus();
                 }
             } else {
-                purchaseStatus.style.display = "block";
-                purchaseStatus.className = "feedback-purchase-status error";
-                purchaseStatus.textContent = texts.noPurchaseFound;
+                setPurchaseStatus(texts.noPurchaseFound, { isError: true });
+                emailInput.setAttribute("aria-invalid", "true");
 
                 updateFormVisibility(false);
             }
         } catch (error) {
+            if (checkSequence !== purchaseCheckSequence) {
+                return;
+            }
             console.error("CHECK PURCHASE ERROR:", error);
 
-            purchaseStatus.style.display = "block";
-            purchaseStatus.className = "feedback-purchase-status error";
-            purchaseStatus.textContent = texts.purchaseCheckFailed;
+            setPurchaseStatus(texts.purchaseCheckFailed, { isError: true });
 
             updateFormVisibility(false);
         }
@@ -263,13 +321,28 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePurchaseStatus();
     updateSubmitState();
 
-    emailInput.addEventListener("blur", updatePurchaseStatus);
+    emailInput.addEventListener("blur", (event) => {
+        if (event.relatedTarget === purchaseSelect) {
+            return;
+        }
+        updatePurchaseStatus();
+    });
+
+    emailInput.addEventListener("input", () => {
+        if (typeSelect.value !== "product_feedback") {
+            return;
+        }
+
+        purchaseCheckSequence += 1;
+        clearPurchaseStatus();
+        clearPurchaseSelection();
+        updateFormVisibility(false);
+    });
 
     emailInput.addEventListener("keydown", async (event) => {
         if (event.key === "Enter") {
             event.preventDefault();
-            await updatePurchaseStatus();
-            emailInput.blur();
+            await updatePurchaseStatus({ focusRequiredSelection: true });
         }
     });
 
@@ -279,18 +352,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     typeSelect.addEventListener("change", () => {
+        clearSubmissionStatus();
         updateEmailVisibility();
         updateSupportReferenceState();
         updatePurchaseStatus();
     });
 
-    purchaseSelect.addEventListener("change", updateSubmitState);
+    purchaseSelect.addEventListener("change", () => {
+        if (purchaseSelect.validity.valid) {
+            clearControlValidation(purchaseSelect);
+        }
+        updateSubmitState();
+    });
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        status.textContent = texts.sending;
         status.className = "feedback-form__status";
+        setLiveMessage(status, texts.sending);
+        form.setAttribute("aria-busy", "true");
+        submitButton.disabled = true;
 
         try {
             const formData = new FormData(form);
@@ -306,13 +387,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
 
-            status.textContent = `${texts.sentSuccessPrefix} ${result.id}`;
             status.className = "feedback-form__status feedback-form__status--success";
+            setLiveMessage(status, `${texts.sentSuccessPrefix} ${result.id}`);
 
+            form.removeAttribute("aria-busy");
             resetAfterSuccessfulSubmission();
         } catch (error) {
-            status.textContent = texts.sendFailed;
             status.className = "feedback-form__status feedback-form__status--error";
+            setLiveMessage(status, texts.sendFailed, { isError: true });
+            form.removeAttribute("aria-busy");
+            updateSubmitState();
         }
     });
 
@@ -322,8 +406,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const files = Array.from(attachmentsInput.files || []);
 
         if (!files.length) {
-            selectedFilesText.textContent =
-                window.feedbackTexts.noFiles || "No files selected";
+            clearControlValidation(attachmentsInput);
+            setLiveMessage(selectedFilesText, texts.noFiles);
             return;
         }
 
@@ -334,14 +418,43 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (invalidFiles.length > 0) {
-            selectedFilesText.textContent =
-                window.feedbackTexts.invalidFileType || "Invalid file type selected";
             attachmentsInput.value = "";
+            attachmentsInput.setAttribute("aria-invalid", "true");
+            setLiveMessage(selectedFilesText, texts.invalidFileType, {
+                isError: true,
+            });
             return;
         }
 
-        const names = files.map((f) => f.name);
-        selectedFilesText.textContent = names.join(", ");
+        const names = files.map((file) => {
+            const pathParts = file.name.split(/[\\/]/);
+            return pathParts[pathParts.length - 1];
+        });
+        clearControlValidation(attachmentsInput);
+        setLiveMessage(selectedFilesText, names.join(", "));
+    });
+
+    form.addEventListener(
+        "invalid",
+        (event) => {
+            const control = event.target;
+            if (control instanceof HTMLInputElement ||
+                control instanceof HTMLSelectElement ||
+                control instanceof HTMLTextAreaElement) {
+                control.setAttribute("aria-invalid", "true");
+            }
+        },
+        true,
+    );
+
+    form.addEventListener("input", (event) => {
+        const control = event.target;
+        if ((control instanceof HTMLInputElement ||
+            control instanceof HTMLSelectElement ||
+            control instanceof HTMLTextAreaElement) &&
+            control.validity.valid) {
+            clearControlValidation(control);
+        }
     });
 
     if (feedbackDropzone && attachmentsInput) {

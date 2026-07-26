@@ -211,6 +211,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_dropzone_hint": "Supported: PNG, JPG, WEBP, PDF",
         "feedback_dropzone_no_files": "No files selected",
         "feedback_dropzone_button": "Choose files",
+        "feedback_invalid_file_type": "Invalid file type selected",
 
         "reviews_title": "Reviews",
         "reviews_subtitle": "Public product reviews will appear here.",
@@ -492,6 +493,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_dropzone_hint": "Поддерживаются PNG, JPG, WEBP и PDF",
         "feedback_dropzone_no_files": "Файлы не выбраны",
         "feedback_dropzone_button": "Выбрать файлы",
+        "feedback_invalid_file_type": "Выбран недопустимый тип файла",
 
         "reviews_title": "Отзывы",
         "reviews_subtitle": "Публичные отзывы о продукте будут отображаться здесь.",
