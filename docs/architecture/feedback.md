@@ -215,9 +215,41 @@ A successful service call commits one accepted result: the feedback record plus
 every accepted attachment row and local file. If validation, a file write,
 attachment persistence, or the final database commit fails, the service rolls
 back the database session and removes every local file written during that
-submission. This compensation is limited to failure of the current submission;
-the broader attachment capacity, retention, operational access, and later
-cleanup lifecycle remains deferred to `SEC-011`.
+submission. A cleanup failure is logged using only the generated stored filename
+and does not replace the original submission error.
+
+### Attachment lifecycle
+
+Feedback attachments remain in private local application/VPS storage; they are
+not stored in R2. Files live under `UPLOAD_DIR/feedback`, while
+`FeedbackAttachment.storage_key` contains only a validated relative key in the
+form `feedback/<random-name>.<extension>`. Absolute paths, traversal keys,
+unexpected nesting, and paths that resolve outside the feedback root fail
+closed.
+
+Every attachment belongs to exactly one `FeedbackMessage` through its non-null
+cascading foreign key. Resolution changes, publication, reply drafting, and
+reply sending do not remove attachments. Attachments are retained for the same
+lifetime as their owning feedback record. There is no automatic expiry or
+background retention job.
+
+One submission may contain at most five attachments, each no larger than 20 MiB,
+with a combined attachment limit of 25 MiB. Per-file and aggregate sizes are
+calculated from the existing upload streams without buffering complete files
+solely for capacity validation. All limits are checked before the feedback row
+or first attachment file is created.
+
+Attachment downloads are available only through the protected admin route
+`GET /admin/feedback/{feedback_id}/attachments/{attachment_id}`. The service
+verifies row ownership, validates and resolves the persisted key, and requires
+the physical file to exist. The response uses a sanitized original filename,
+sets `X-Content-Type-Options: nosniff`, and never exposes the storage key or
+physical path. There is no public or customer attachment endpoint.
+
+Founder-operated reconciliation is read-only by default and reports missing
+files, orphan files, and unsafe persisted keys. The explicit
+`--delete-orphans` mode may remove only validated generated orphan files below
+the feedback root. It never deletes database rows or files outside that root.
 
 ## Authoritative business rules
 
@@ -280,6 +312,9 @@ Regression coverage for optional attachments must include:
 - rejection of malformed upload states rather than treating them as absent.
 - transaction rollback and local-file compensation when attachment persistence
   or the final commit fails, including failure after an earlier file write.
+- the five-file, 20 MiB per-file, and 25 MiB aggregate limits;
+- relative-key validation and protected administrative download behavior;
+- read-only reconciliation and explicitly requested validated-orphan deletion.
 
 Browser coverage for the dynamic form should also capture page and console
 errors, verify initialization, switch through every supported message type, and

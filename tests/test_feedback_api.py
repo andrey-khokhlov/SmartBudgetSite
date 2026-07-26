@@ -1,6 +1,7 @@
 # tests/test_feedback_api.py
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 
 from app.core.config import settings
 from app.dependencies import ADMIN_COOKIE_NAME
@@ -459,6 +460,8 @@ def test_create_feedback_persists_valid_named_attachment(client, db_session):
     assert attachment.original_filename == "evidence.pdf"
     assert attachment.content_type == "application/pdf"
     assert attachment.file_size_bytes == len(file_content)
+    assert attachment.storage_key.startswith("feedback/")
+    assert not Path(attachment.storage_key).is_absolute()
 
 
 def test_create_feedback_route_delegates_submission_workflow(client, monkeypatch):

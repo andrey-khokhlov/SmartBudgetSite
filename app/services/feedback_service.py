@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import logging
 from pathlib import Path
 from shutil import copyfileobj
 from typing import BinaryIO
-from uuid import uuid4
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -13,6 +13,11 @@ from app.models.feedback import FeedbackMessage
 from app.repositories.feedback_admin_repository import FeedbackAdminRepository
 from app.repositories.feedback_repository import FeedbackRepository
 from app.services import mail_service
+from app.services.feedback_attachment_service import (
+    build_feedback_storage_key,
+    feedback_storage_root,
+    resolve_feedback_storage_path,
+)
 from app.services.purchase_lookup_service import resolve_verified_product_id
 from app.services.support_reference_service import (
     is_valid_download_support_reference,
@@ -21,6 +26,7 @@ from app.services.support_reference_service import (
 PURCHASE_OR_DOWNLOAD_ISSUE = "purchase_or_download_issue"
 PRODUCT_FEEDBACK = "product_feedback"
 MAX_FEEDBACK_ATTACHMENT_SIZE = 20 * 1024 * 1024
+MAX_FEEDBACK_ATTACHMENTS_SIZE = 25 * 1024 * 1024
 MAX_FEEDBACK_ATTACHMENTS = 5
 ALLOWED_FEEDBACK_ATTACHMENT_TYPES = {
     "image/png",
@@ -35,6 +41,7 @@ ALLOWED_FEEDBACK_ATTACHMENT_EXTENSIONS = {
     ".webp",
     ".pdf",
 }
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -54,6 +61,7 @@ def _validate_feedback_attachments(
         )
 
     validated = []
+    aggregate_size = 0
     for attachment in attachments:
         if not attachment.filename:
             raise HTTPException(status_code=400, detail="File must have a filename")
@@ -78,14 +86,27 @@ def _validate_feedback_attachments(
                 status_code=400,
                 detail=f"File too large: {attachment.filename}",
             )
+        aggregate_size += size
         validated.append((attachment, extension))
+
+    if aggregate_size > MAX_FEEDBACK_ATTACHMENTS_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Total attachment size is too large",
+        )
 
     return validated
 
 
 def _remove_submission_files(paths: list[Path]) -> None:
     for path in reversed(paths):
-        path.unlink(missing_ok=True)
+        try:
+            path.unlink(missing_ok=True)
+        except Exception:
+            logger.error(
+                "Could not remove failed feedback attachment file name=%r",
+                path.name,
+            )
 
 
 def submit_feedback(
@@ -140,11 +161,12 @@ def submit_feedback(
         )
 
         if validated_attachments:
-            upload_path = Path(settings.UPLOAD_DIR)
+            upload_path = feedback_storage_root()
             upload_path.mkdir(parents=True, exist_ok=True)
 
             for attachment, extension in validated_attachments:
-                file_path = upload_path / f"{uuid4().hex}{extension}"
+                storage_key = build_feedback_storage_key(extension)
+                file_path = resolve_feedback_storage_path(storage_key)
                 saved_paths.append(file_path)
                 with file_path.open("wb") as destination:
                     copyfileobj(attachment.file, destination)
@@ -152,7 +174,7 @@ def submit_feedback(
                 repository.create_attachment(
                     feedback_id=feedback.id,
                     original_filename=attachment.filename or file_path.name,
-                    storage_key=str(file_path),
+                    storage_key=storage_key,
                     content_type=attachment.content_type
                     or "application/octet-stream",
                     file_size_bytes=file_path.stat().st_size,

@@ -110,9 +110,17 @@ Feedback:
   service commits only after all accepted local attachment files and rows are
   ready; validation, persistence, file-write, or commit failure rolls back the
   database transaction and removes files written by that submission.
-- This submission-failure compensation does not complete the broader attachment
-  capacity, retention, operational-access, and cleanup lifecycle deferred to
-  `SEC-011`.
+- `SEC-011` is complete. Feedback attachments use private local storage under
+  `UPLOAD_DIR/feedback` and persist only validated relative
+  `feedback/<random-name>.<extension>` keys. Submissions allow at most five
+  files, 20 MiB per file, and 25 MiB combined.
+- Attachments share their owning feedback record's retained lifetime and are
+  downloadable only through the protected admin feedback detail workflow.
+  Cleanup failures are logged without customer content and without replacing
+  the original submission error.
+- The founder-operated reconciliation command reports missing files, orphan
+  files, and unsafe keys without mutation by default. Its explicit deletion mode
+  removes only validated generated orphan files below the feedback root.
 
 Infrastructure and quality:
 
@@ -135,9 +143,10 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 264 passing tests after
-  completion of `ARCH-003` and `ARCH-001`; the focused feedback API and service
-  suites pass 45 tests and the Feedback browser suite passes 8 tests. The
+- The latest confirmed full ordinary suite result is 290 passing tests after
+  completion of `SEC-011`; the focused feedback attachment, service, API,
+  admin-route, and reconciliation suites pass 71 tests and the Feedback browser
+  suite passes 8 tests. The
   focused Calendly webhook route
   suite remains at 8 passing tests, including request-level durability
   validation through a fresh independent SQLAlchemy session.
@@ -156,8 +165,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `SEC-011` — define the
-attachment lifecycle. Continue in the authoritative order defined in
+The first incomplete Official Release Backlog item is `A11Y-002` — expose
+dynamic form status accessibly. Continue in the authoritative order defined in
 `release_readiness.md`; do not substitute roadmap work for the next incomplete
 remediation item.
 

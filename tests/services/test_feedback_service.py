@@ -4,12 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from app.core.config import settings
 from app.models.feedback import FeedbackMessage
 from app.models.feedback_attachment import FeedbackAttachment
 from app.repositories.feedback_repository import FeedbackRepository
+from app.services.feedback_attachment_service import feedback_storage_root
 from app.services.feedback_service import (
     FeedbackAttachmentInput,
+    MAX_FEEDBACK_ATTACHMENTS,
+    MAX_FEEDBACK_ATTACHMENTS_SIZE,
+    MAX_FEEDBACK_ATTACHMENT_SIZE,
+    _validate_feedback_attachments,
     save_feedback_reply_draft,
     send_feedback_reply,
     submit_feedback,
@@ -569,6 +573,113 @@ def _attachment(filename: str, content: bytes) -> FeedbackAttachmentInput:
     )
 
 
+class _SizedStream:
+    def __init__(self, size: int):
+        self.size = size
+        self.position = 0
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        if whence == 2:
+            self.position = self.size + offset
+        elif whence == 1:
+            self.position += offset
+        else:
+            self.position = offset
+        return self.position
+
+    def tell(self) -> int:
+        return self.position
+
+    def read(self, size: int = -1) -> bytes:
+        return b""
+
+
+def _sized_attachment(filename: str, size: int) -> FeedbackAttachmentInput:
+    return FeedbackAttachmentInput(
+        filename=filename,
+        content_type="application/pdf",
+        file=_SizedStream(size),
+    )
+
+
+def test_attachment_aggregate_size_at_limit_is_accepted():
+    validated = _validate_feedback_attachments(
+        [
+            _sized_attachment("large.pdf", MAX_FEEDBACK_ATTACHMENT_SIZE),
+            _sized_attachment(
+                "remainder.pdf",
+                MAX_FEEDBACK_ATTACHMENTS_SIZE - MAX_FEEDBACK_ATTACHMENT_SIZE,
+            ),
+        ]
+    )
+
+    assert len(validated) == 2
+
+
+def test_attachment_aggregate_size_above_limit_is_rejected_before_persistence(
+    db_session,
+):
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[
+                    _sized_attachment(
+                        "large.pdf",
+                        MAX_FEEDBACK_ATTACHMENT_SIZE,
+                    ),
+                    _sized_attachment(
+                        "too-much.pdf",
+                        MAX_FEEDBACK_ATTACHMENTS_SIZE
+                        - MAX_FEEDBACK_ATTACHMENT_SIZE
+                        + 1,
+                    ),
+                ]
+            ),
+        )
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Total attachment size is too large"
+    assert db_session.query(FeedbackMessage).count() == 0
+    assert not feedback_storage_root().exists()
+
+
+def test_attachment_per_file_limit_remains_enforced(db_session):
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[
+                    _sized_attachment(
+                        "too-large.pdf",
+                        MAX_FEEDBACK_ATTACHMENT_SIZE + 1,
+                    )
+                ]
+            ),
+        )
+
+    assert exc.value.status_code == 400
+    assert "File too large" in exc.value.detail
+    assert db_session.query(FeedbackMessage).count() == 0
+
+
+def test_attachment_file_count_limit_remains_enforced(db_session):
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[
+                    _attachment(f"{index}.pdf", b"x")
+                    for index in range(MAX_FEEDBACK_ATTACHMENTS + 1)
+                ]
+            ),
+        )
+
+    assert exc.value.status_code == 400
+    assert "Too many files" in exc.value.detail
+    assert db_session.query(FeedbackMessage).count() == 0
+
+
 def test_submit_feedback_without_attachments_commits_complete_result(db_session):
     feedback = submit_feedback(db_session, **_submission_kwargs())
 
@@ -597,7 +708,12 @@ def test_submit_feedback_with_multiple_attachments_commits_complete_result(
         "first.pdf",
         "second.pdf",
     }
-    assert len(list(Path(settings.UPLOAD_DIR).iterdir())) == 2
+    assert len(list(feedback_storage_root().iterdir())) == 2
+    assert all(
+        attachment.storage_key.startswith("feedback/")
+        and not Path(attachment.storage_key).is_absolute()
+        for attachment in saved.attachments
+    )
 
 
 def test_submit_feedback_validation_failure_leaves_no_feedback(db_session):
@@ -639,7 +755,7 @@ def test_submit_feedback_attachment_persistence_failure_is_atomic(
     assert exc.value.status_code == 500
     assert db_session.query(FeedbackMessage).count() == 0
     assert db_session.query(FeedbackAttachment).count() == 0
-    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+    assert list(feedback_storage_root().iterdir()) == []
 
 
 def test_submit_feedback_later_attachment_failure_compensates_earlier_files(
@@ -675,7 +791,7 @@ def test_submit_feedback_later_attachment_failure_compensates_earlier_files(
 
     assert db_session.query(FeedbackMessage).count() == 0
     assert db_session.query(FeedbackAttachment).count() == 0
-    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+    assert list(feedback_storage_root().iterdir()) == []
 
 
 def test_submit_feedback_commit_failure_rolls_back_and_compensates_files(
@@ -698,7 +814,46 @@ def test_submit_feedback_commit_failure_rolls_back_and_compensates_files(
     assert exc.value.status_code == 500
     assert db_session.query(FeedbackMessage).count() == 0
     assert db_session.query(FeedbackAttachment).count() == 0
-    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+    assert list(feedback_storage_root().iterdir()) == []
+
+
+def test_submit_feedback_cleanup_failure_is_logged_without_replacing_error(
+    db_session,
+    monkeypatch,
+    caplog,
+):
+    def fail_attachment(*args, **kwargs):
+        raise RuntimeError("original persistence failure")
+
+    def fail_cleanup(self, missing_ok=False):
+        raise OSError("sensitive cleanup exception payload")
+
+    monkeypatch.setattr(FeedbackRepository, "create_attachment", fail_attachment)
+    monkeypatch.setattr(Path, "unlink", fail_cleanup)
+
+    with caplog.at_level("ERROR", logger="app.services.feedback_service"):
+        with pytest.raises(HTTPException) as exc:
+            submit_feedback(
+                db_session,
+                **_submission_kwargs(
+                    email="private@example.com",
+                    message="private feedback message content",
+                    attachments=[
+                        _attachment(
+                            "C:/private/client/evidence.pdf",
+                            b"%PDF failure",
+                        )
+                    ],
+                ),
+            )
+
+    assert exc.value.status_code == 500
+    assert exc.value.detail == "Failed to save feedback submission"
+    assert "Could not remove failed feedback attachment file" in caplog.text
+    assert "private@example.com" not in caplog.text
+    assert "private feedback message content" not in caplog.text
+    assert "C:/private/client/evidence.pdf" not in caplog.text
+    assert "sensitive cleanup exception payload" not in caplog.text
 
 
 def test_feedback_repository_create_flushes_without_committing(

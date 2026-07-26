@@ -81,6 +81,12 @@ after every accepted local attachment file and database row has been persisted;
 on any workflow or commit failure it rolls back the database session and removes
 the files written by that submission.
 
+Feedback attachments use private local storage below the configured
+`UPLOAD_DIR/feedback` directory. Database rows retain only validated relative
+`feedback/<random-name>.<extension>` keys. Physical paths are resolved by the
+feedback attachment service and must remain below that dedicated root; routes
+and repositories never accept or expose arbitrary filesystem paths.
+
 ## Design principles
 
 - Keep routes thin and move conditional validation or multi-step updates into

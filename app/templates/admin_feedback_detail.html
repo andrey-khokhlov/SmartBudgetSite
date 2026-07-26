@@ -130,6 +130,22 @@
         </div>
     </div>
 
+    {% if item.attachments %}
+    <div style="margin-top: 30px;">
+        <h3>Attachments</h3>
+        <ul>
+            {% for attachment in item.attachments %}
+            <li>
+                <a href="/admin/feedback/{{ item.id }}/attachments/{{ attachment.id }}">
+                    {{ attachment.original_filename }}
+                </a>
+                ({{ attachment.file_size_bytes }} bytes)
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <div style="margin-top: 30px;">
         <h3>Reply Draft</h3>
 

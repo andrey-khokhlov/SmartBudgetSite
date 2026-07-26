@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-011` — Define the attachment lifecycle.**
+**Current first incomplete item: `A11Y-002` — Expose dynamic form status accessibly.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -139,7 +139,7 @@ together even though each finding retains its own identifier.
 | 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Completed` |
 | 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Completed` |
 | 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Completed` |
-| 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Not started` |
+| 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Completed` |
 | 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Not started` |
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Not started` |
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Not started` |
@@ -428,6 +428,21 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Attachments have explicit ownership, capacity,
   retention, failure, cleanup, and operational handling semantics consistent
   with an atomic feedback submission.
+- **Completed behavior:** Attachments remain in private local storage under
+  `UPLOAD_DIR/feedback` and persist validated relative keys only. They share the
+  owning feedback lifetime, support admin-authenticated downloads, enforce five
+  files, 20 MiB per file, and 25 MiB combined, and log cleanup failures without
+  replacing the original error. Reconciliation is read-only by default; its
+  explicit deletion flag removes only validated generated orphan files below
+  the feedback root.
+- **Existing-data and schema validation:** The active PostgreSQL database was at
+  Alembic head `2f6a9d7c4e10` with zero attachment rows before implementation,
+  and the site has not yet been publicly deployed. No legacy key conversion or
+  schema migration was required. PostgreSQL `alembic check` reported no new
+  upgrade operations.
+- **Regression validation:** The focused attachment, service, API, admin-route,
+  and reconciliation suites pass 71 tests, the Feedback browser suite passes 8
+  tests, and the full ordinary suite passes 290 tests.
 - **Dependencies:** `ARCH-003` and `ARCH-001`.
 - **References:** [Feedback browser and multipart validation](architecture/feedback.md#browser-and-multipart-validation),
   [operations validation policy](operations.md#validation-policy).

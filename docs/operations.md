@@ -104,6 +104,34 @@ and temporarily spool the complete multipart body before the application-level
 release check runs, even though the route no longer buffers the complete archive
 in process memory.
 
+## Feedback attachment reconciliation
+
+Feedback attachments use private local storage below `UPLOAD_DIR/feedback`.
+Database rows contain relative `feedback/<random-name>.<extension>` keys, not
+physical filesystem paths.
+
+Run non-destructive reconciliation with:
+
+```bash
+python scripts/reconcile_feedback_attachments.py
+```
+
+This reports database rows whose files are missing, filesystem files without a
+matching attachment row, unsafe persisted keys, and unsafe filesystem entries.
+It does not mutate database rows or files.
+
+To delete only validated generated orphan files below the feedback storage root,
+run:
+
+```bash
+python scripts/reconcile_feedback_attachments.py --delete-orphans
+```
+
+The deletion flag never removes database rows, repairs missing rows, or deletes
+outside the validated feedback root. Review the read-only report before using
+the flag. Reconciliation is founder-operated and does not run at application
+startup.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,

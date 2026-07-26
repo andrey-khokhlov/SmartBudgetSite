@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.feedback import FeedbackMessage
@@ -56,6 +57,22 @@ class FeedbackRepository:
         self.db.add(attachment)
         self.db.flush()
         return attachment
+
+    def get_attachment_for_feedback(
+        self,
+        *,
+        feedback_id: int,
+        attachment_id: int,
+    ) -> FeedbackAttachment | None:
+        stmt = select(FeedbackAttachment).where(
+            FeedbackAttachment.id == attachment_id,
+            FeedbackAttachment.feedback_id == feedback_id,
+        )
+        return self.db.scalar(stmt)
+
+    def list_attachments(self) -> list[FeedbackAttachment]:
+        stmt = select(FeedbackAttachment).order_by(FeedbackAttachment.id)
+        return list(self.db.scalars(stmt).all())
 
     def get_recent(self, limit: int = 50):
         return (

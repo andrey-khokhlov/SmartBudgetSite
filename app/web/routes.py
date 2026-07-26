@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Depends, Form, Query, File, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.products_catalog import products_index, product_by_slug
@@ -17,6 +17,9 @@ from app.services.feedback_service import (
     toggle_feedback_resolved,
     save_feedback_reply_draft
     )
+from app.services.feedback_attachment_service import (
+    get_feedback_attachment_download,
+)
 from app.services.feedback_prefill_service import (
     get_download_feedback_prefill_context,
 )
@@ -420,6 +423,27 @@ async def admin_feedback_detail(
             "local_reply_sent_at": local_reply_sent_at,
         },
         document_lang="en",
+    )
+
+
+@admin_router.get(
+    "/admin/feedback/{feedback_id}/attachments/{attachment_id}",
+)
+def admin_feedback_attachment_download(
+    feedback_id: int,
+    attachment_id: int,
+    db: Session = Depends(get_db),
+):
+    attachment = get_feedback_attachment_download(
+        db,
+        feedback_id=feedback_id,
+        attachment_id=attachment_id,
+    )
+    return FileResponse(
+        path=attachment.path,
+        media_type=attachment.content_type,
+        filename=attachment.filename,
+        headers={"X-Content-Type-Options": "nosniff"},
     )
 
 
