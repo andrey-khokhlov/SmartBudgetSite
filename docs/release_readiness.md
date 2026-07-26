@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `ARCH-003` — Make feedback submission atomic.**
+**Current first incomplete item: `SEC-011` — Define the attachment lifecycle.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -137,8 +137,8 @@ together even though each finding retains its own identifier.
 | 12 | Public purchase API | `SEC-003` | Limit public purchase lookup disclosure | `Completed` |
 | 13 | Feedback integrity | `CODE-002` | Verify ownership of the reviewed product | `Completed` |
 | 14 | Feedback integrity | `CODE-001` | Persist the verified product association | `Completed` |
-| 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Not started` |
-| 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Not started` |
+| 15 | Feedback transactions | `ARCH-003` | Make feedback submission atomic | `Completed` |
+| 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Completed` |
 | 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Not started` |
 | 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Not started` |
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Not started` |
@@ -382,6 +382,16 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Feedback submission has one explicit transaction owner
   and completes with either the full accepted persistent result or no unintended
   partial state.
+- **Completed behavior:** The feedback application service is the explicit
+  transaction owner. Feedback and attachment repositories flush without
+  committing. The service commits only after every accepted attachment file and
+  database row is ready; failure rolls back the database session and removes
+  every local file written by the submission.
+- **Regression validation:** The focused feedback API and service suites pass 45
+  tests, including validation, persistence, later-file, commit-failure,
+  compensation, ownership, support-reference, and route-delegation cases. The
+  Feedback browser suite passes 8 tests and the full ordinary suite passes 264
+  tests.
 - **Dependencies:** `CODE-001` and `CODE-002`; delivered together with
   `ARCH-001`.
 - **References:** [Backend transaction boundaries](architecture/backend.md#transaction-boundaries),
@@ -395,6 +405,14 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** The route owns only the HTTP boundary, while the
   existing service and repository layers own the feedback workflow according to
   their approved responsibilities.
+- **Completed behavior:** The route translates the multipart HTTP request,
+  normalizes the browser empty-file sentinel, and serializes the response. The
+  application service owns business validation, ownership resolution, local
+  file workflow, persistence orchestration, compensation, and transaction
+  completion; repositories remain persistence-only.
+- **Regression validation:** Route delegation is covered directly, and the
+  focused feedback API and service suites pass 45 tests. The Feedback browser
+  suite passes 8 tests and the full ordinary suite passes 264 tests.
 - **Dependencies:** `CODE-001`, `CODE-002`, and `ARCH-003`; delivered together
   with `ARCH-003` after business behavior is stable.
 - **References:** [Backend request flow](architecture/backend.md#request-flow),

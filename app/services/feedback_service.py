@@ -1,31 +1,177 @@
-"""
-Feedback service layer
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from shutil import copyfileobj
+from typing import BinaryIO
+from uuid import uuid4
 
-Responsibility:
-- Contains ALL business logic for feedback handling
-- Validates rules (email, type, publish restrictions, etc.)
-- Works with repository
-- Raises HTTPException for invalid operations
-
-Important:
-- Routes must NOT contain business logic
-- Routes only call service functions and return responses
-"""
-
-
-from datetime import datetime, UTC
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.repositories.feedback_admin_repository import FeedbackAdminRepository
-from app.models.feedback import FeedbackMessage
-from app.services import mail_service
 from app.core.config import settings
+from app.models.feedback import FeedbackMessage
+from app.repositories.feedback_admin_repository import FeedbackAdminRepository
+from app.repositories.feedback_repository import FeedbackRepository
+from app.services import mail_service
+from app.services.purchase_lookup_service import resolve_verified_product_id
 from app.services.support_reference_service import (
     is_valid_download_support_reference,
 )
 
 PURCHASE_OR_DOWNLOAD_ISSUE = "purchase_or_download_issue"
+PRODUCT_FEEDBACK = "product_feedback"
+MAX_FEEDBACK_ATTACHMENT_SIZE = 20 * 1024 * 1024
+MAX_FEEDBACK_ATTACHMENTS = 5
+ALLOWED_FEEDBACK_ATTACHMENT_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "application/pdf",
+}
+ALLOWED_FEEDBACK_ATTACHMENT_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".pdf",
+}
+
+
+@dataclass(frozen=True)
+class FeedbackAttachmentInput:
+    filename: str | None
+    content_type: str | None
+    file: BinaryIO
+
+
+def _validate_feedback_attachments(
+    attachments: list[FeedbackAttachmentInput],
+) -> list[tuple[FeedbackAttachmentInput, str]]:
+    if len(attachments) > MAX_FEEDBACK_ATTACHMENTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Too many files. Maximum allowed: {MAX_FEEDBACK_ATTACHMENTS}",
+        )
+
+    validated = []
+    for attachment in attachments:
+        if not attachment.filename:
+            raise HTTPException(status_code=400, detail="File must have a filename")
+
+        extension = Path(attachment.filename).suffix.lower()
+        if extension not in ALLOWED_FEEDBACK_ATTACHMENT_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file extension: {extension or 'unknown'}",
+            )
+        if attachment.content_type not in ALLOWED_FEEDBACK_ATTACHMENT_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {attachment.content_type}",
+            )
+
+        attachment.file.seek(0, 2)
+        size = attachment.file.tell()
+        attachment.file.seek(0)
+        if size > MAX_FEEDBACK_ATTACHMENT_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large: {attachment.filename}",
+            )
+        validated.append((attachment, extension))
+
+    return validated
+
+
+def _remove_submission_files(paths: list[Path]) -> None:
+    for path in reversed(paths):
+        path.unlink(missing_ok=True)
+
+
+def submit_feedback(
+    db: Session,
+    *,
+    message_type: str,
+    email: str,
+    subject: str,
+    message: str,
+    name: str | None,
+    page_url: str | None,
+    user_agent: str | None,
+    support_reference: str | None,
+    purchase_reference: str | None,
+    attachments: list[FeedbackAttachmentInput],
+) -> FeedbackMessage:
+    """Persist one complete feedback submission and own its transaction."""
+    saved_paths: list[Path] = []
+
+    try:
+        validated_attachments = _validate_feedback_attachments(attachments)
+
+        product_id = None
+        if message_type == PRODUCT_FEEDBACK:
+            if not email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email is required for product feedback",
+                )
+            product_id = resolve_verified_product_id(
+                db=db,
+                email=email,
+                purchase_reference=purchase_reference,
+            )
+
+        normalized_support_reference = validate_feedback_support_reference(
+            message_type=message_type,
+            support_reference=support_reference,
+        )
+
+        repository = FeedbackRepository(db)
+        feedback = repository.create(
+            message_type=message_type,
+            email=email,
+            subject=subject,
+            message=message,
+            name=name,
+            page_url=page_url,
+            user_agent=user_agent,
+            support_reference=normalized_support_reference,
+            product_id=product_id,
+        )
+
+        if validated_attachments:
+            upload_path = Path(settings.UPLOAD_DIR)
+            upload_path.mkdir(parents=True, exist_ok=True)
+
+            for attachment, extension in validated_attachments:
+                file_path = upload_path / f"{uuid4().hex}{extension}"
+                saved_paths.append(file_path)
+                with file_path.open("wb") as destination:
+                    copyfileobj(attachment.file, destination)
+
+                repository.create_attachment(
+                    feedback_id=feedback.id,
+                    original_filename=attachment.filename or file_path.name,
+                    storage_key=str(file_path),
+                    content_type=attachment.content_type
+                    or "application/octet-stream",
+                    file_size_bytes=file_path.stat().st_size,
+                )
+
+        db.commit()
+        db.refresh(feedback)
+        return feedback
+    except HTTPException:
+        db.rollback()
+        _remove_submission_files(saved_paths)
+        raise
+    except Exception as exc:
+        db.rollback()
+        _remove_submission_files(saved_paths)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save feedback submission",
+        ) from exc
 
 
 def validate_feedback_support_reference(

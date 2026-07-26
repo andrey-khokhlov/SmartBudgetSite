@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.feedback import FeedbackMessage
+from app.models.feedback_attachment import FeedbackAttachment
 
 
 class FeedbackRepository:
@@ -32,9 +33,29 @@ class FeedbackRepository:
             product_id=product_id,
         )
         self.db.add(feedback)
-        self.db.commit()
-        self.db.refresh(feedback)
+        self.db.flush()
         return feedback
+
+    def create_attachment(
+        self,
+        *,
+        feedback_id: int,
+        original_filename: str,
+        storage_key: str,
+        content_type: str,
+        file_size_bytes: int,
+    ) -> FeedbackAttachment:
+        attachment = FeedbackAttachment(
+            feedback_id=feedback_id,
+            original_filename=original_filename,
+            storage_type="local",
+            storage_key=storage_key,
+            content_type=content_type,
+            file_size_bytes=file_size_bytes,
+        )
+        self.db.add(attachment)
+        self.db.flush()
+        return attachment
 
     def get_recent(self, limit: int = 50):
         return (

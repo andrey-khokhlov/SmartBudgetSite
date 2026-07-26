@@ -1,13 +1,21 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from io import BytesIO
+from pathlib import Path
+
 import pytest
 
+from app.core.config import settings
+from app.models.feedback import FeedbackMessage
+from app.models.feedback_attachment import FeedbackAttachment
+from app.repositories.feedback_repository import FeedbackRepository
 from app.services.feedback_service import (
+    FeedbackAttachmentInput,
+    save_feedback_reply_draft,
     send_feedback_reply,
+    submit_feedback,
     toggle_feedback_publish,
     toggle_feedback_resolved,
-    save_feedback_reply_draft
-    )
-from app.models.feedback import FeedbackMessage
+)
 from fastapi import HTTPException
 
 
@@ -534,6 +542,185 @@ def test_purchase_or_download_issue_supports_one_time_email_reply(db_session):
         send_feedback_reply(db=db_session, feedback_id=feedback.id)
     assert exc.value.status_code == 400
     assert exc.value.detail == "Email already sent"
+
+
+def _submission_kwargs(**overrides):
+    values = {
+        "message_type": "general_question",
+        "email": "service@example.com",
+        "subject": "Service submission",
+        "message": "This submission has enough content for service validation.",
+        "name": "Service User",
+        "page_url": "/feedback",
+        "user_agent": "service-test-agent",
+        "support_reference": None,
+        "purchase_reference": None,
+        "attachments": [],
+    }
+    values.update(overrides)
+    return values
+
+
+def _attachment(filename: str, content: bytes) -> FeedbackAttachmentInput:
+    return FeedbackAttachmentInput(
+        filename=filename,
+        content_type="application/pdf",
+        file=BytesIO(content),
+    )
+
+
+def test_submit_feedback_without_attachments_commits_complete_result(db_session):
+    feedback = submit_feedback(db_session, **_submission_kwargs())
+
+    db_session.expire_all()
+    saved = db_session.get(FeedbackMessage, feedback.id)
+    assert saved is not None
+    assert saved.attachments == []
+
+
+def test_submit_feedback_with_multiple_attachments_commits_complete_result(
+    db_session,
+):
+    feedback = submit_feedback(
+        db_session,
+        **_submission_kwargs(
+            attachments=[
+                _attachment("first.pdf", b"%PDF first"),
+                _attachment("second.pdf", b"%PDF second"),
+            ]
+        ),
+    )
+
+    saved = db_session.get(FeedbackMessage, feedback.id)
+    assert saved is not None
+    assert {item.original_filename for item in saved.attachments} == {
+        "first.pdf",
+        "second.pdf",
+    }
+    assert len(list(Path(settings.UPLOAD_DIR).iterdir())) == 2
+
+
+def test_submit_feedback_validation_failure_leaves_no_feedback(db_session):
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[
+                    FeedbackAttachmentInput(
+                        filename="malware.exe",
+                        content_type="application/octet-stream",
+                        file=BytesIO(b"not allowed"),
+                    )
+                ]
+            ),
+        )
+
+    assert exc.value.status_code == 400
+    assert db_session.query(FeedbackMessage).count() == 0
+
+
+def test_submit_feedback_attachment_persistence_failure_is_atomic(
+    db_session,
+    monkeypatch,
+):
+    def fail_attachment(*args, **kwargs):
+        raise RuntimeError("simulated attachment persistence failure")
+
+    monkeypatch.setattr(FeedbackRepository, "create_attachment", fail_attachment)
+
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[_attachment("failure.pdf", b"%PDF failure")]
+            ),
+        )
+
+    assert exc.value.status_code == 500
+    assert db_session.query(FeedbackMessage).count() == 0
+    assert db_session.query(FeedbackAttachment).count() == 0
+    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+
+
+def test_submit_feedback_later_attachment_failure_compensates_earlier_files(
+    db_session,
+    monkeypatch,
+):
+    original = FeedbackRepository.create_attachment
+    calls = 0
+
+    def fail_second_attachment(self, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("simulated second attachment failure")
+        return original(self, **kwargs)
+
+    monkeypatch.setattr(
+        FeedbackRepository,
+        "create_attachment",
+        fail_second_attachment,
+    )
+
+    with pytest.raises(HTTPException):
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[
+                    _attachment("first.pdf", b"%PDF first"),
+                    _attachment("second.pdf", b"%PDF second"),
+                ]
+            ),
+        )
+
+    assert db_session.query(FeedbackMessage).count() == 0
+    assert db_session.query(FeedbackAttachment).count() == 0
+    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+
+
+def test_submit_feedback_commit_failure_rolls_back_and_compensates_files(
+    db_session,
+    monkeypatch,
+):
+    def fail_commit():
+        raise RuntimeError("simulated commit failure")
+
+    monkeypatch.setattr(db_session, "commit", fail_commit)
+
+    with pytest.raises(HTTPException) as exc:
+        submit_feedback(
+            db_session,
+            **_submission_kwargs(
+                attachments=[_attachment("commit-failure.pdf", b"%PDF failure")]
+            ),
+        )
+
+    assert exc.value.status_code == 500
+    assert db_session.query(FeedbackMessage).count() == 0
+    assert db_session.query(FeedbackAttachment).count() == 0
+    assert list(Path(settings.UPLOAD_DIR).iterdir()) == []
+
+
+def test_feedback_repository_create_flushes_without_committing(
+    db_session,
+    monkeypatch,
+):
+    commit_calls = 0
+
+    def record_commit():
+        nonlocal commit_calls
+        commit_calls += 1
+
+    monkeypatch.setattr(db_session, "commit", record_commit)
+    created = FeedbackRepository(db_session).create(
+        message_type="general_question",
+        email="repository@example.com",
+        subject="Repository transaction",
+        message="The repository must leave commit ownership to its caller.",
+    )
+
+    assert created.id is not None
+    assert commit_calls == 0
 
 
 def test_purchase_or_download_issue_cannot_be_published(db_session):

@@ -200,6 +200,25 @@ CODE-002 establishes exact reviewed-product ownership through the opaque
 reference validation, and CODE-001 persists the resolved product association on
 the feedback record.
 
+### Submission application boundary and atomicity
+
+The feedback HTTP route owns multipart/form translation, browser empty-file
+sentinel normalization, user-agent extraction, and response serialization. It
+delegates the complete application workflow to the feedback service.
+
+The feedback submission service owns attachment validation, purchase-ownership
+resolution, support-reference validation, feedback and attachment persistence,
+local file writes, and final transaction completion. Feedback repository
+operations add and flush rows but do not commit.
+
+A successful service call commits one accepted result: the feedback record plus
+every accepted attachment row and local file. If validation, a file write,
+attachment persistence, or the final database commit fails, the service rolls
+back the database session and removes every local file written during that
+submission. This compensation is limited to failure of the current submission;
+the broader attachment capacity, retention, operational access, and later
+cleanup lifecycle remains deferred to `SEC-011`.
+
 ## Authoritative business rules
 
 - Raw feedback is private by default and must not be displayed publicly as-is.
@@ -259,6 +278,8 @@ Regression coverage for optional attachments must include:
 - the browser-equivalent zero-byte empty-file sentinel;
 - one or more valid named attachments;
 - rejection of malformed upload states rather than treating them as absent.
+- transaction rollback and local-file compensation when attachment persistence
+  or the final commit fails, including failure after an earlier file write.
 
 Browser coverage for the dynamic form should also capture page and console
 errors, verify initialization, switch through every supported message type, and

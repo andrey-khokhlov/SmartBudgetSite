@@ -74,6 +74,13 @@ They must not commit. Higher-level orchestration owns transaction completion.
 Payment preparation services also must not communicate directly with payment
 providers; provider adapters/orchestration own that integration boundary.
 
+Feedback submission is one complete application workflow. Its application
+service owns the database transaction, while feedback repositories create and
+flush message and attachment rows without committing. The service commits only
+after every accepted local attachment file and database row has been persisted;
+on any workflow or commit failure it rolls back the database session and removes
+the files written by that submission.
+
 ## Design principles
 
 - Keep routes thin and move conditional validation or multi-step updates into

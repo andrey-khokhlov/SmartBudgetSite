@@ -461,6 +461,37 @@ def test_create_feedback_persists_valid_named_attachment(client, db_session):
     assert attachment.file_size_bytes == len(file_content)
 
 
+def test_create_feedback_route_delegates_submission_workflow(client, monkeypatch):
+    from types import SimpleNamespace
+
+    captured = {}
+
+    def fake_submit_feedback(db, **kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(id=731)
+
+    monkeypatch.setattr(
+        "app.api.v1.routes.submit_feedback",
+        fake_submit_feedback,
+    )
+
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "general_question",
+            "email": "delegation@example.com",
+            "subject": "Delegation check",
+            "message": "The route should delegate this complete workflow.",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "id": 731}
+    assert captured["message_type"] == "general_question"
+    assert captured["email"] == "delegation@example.com"
+    assert captured["attachments"] == []
+
+
 def test_create_feedback_rejects_empty_filename_with_nonzero_content(
     client,
     db_session,

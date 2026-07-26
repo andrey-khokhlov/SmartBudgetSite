@@ -102,6 +102,17 @@ Feedback:
   tokens and provider/storage details are not exposed through this workflow.
 - The generic field is compatible with future `PAY-*` references, but payment
   support-reference generation is not implemented.
+- `ARCH-003` and `ARCH-001` are complete. The Feedback HTTP route now translates
+  the multipart request and delegates the full submission workflow to the
+  feedback application service.
+- The feedback submission service is the explicit transaction owner.
+  Repositories flush feedback and attachment rows without committing. The
+  service commits only after all accepted local attachment files and rows are
+  ready; validation, persistence, file-write, or commit failure rolls back the
+  database transaction and removes files written by that submission.
+- This submission-failure compensation does not complete the broader attachment
+  capacity, retention, operational-access, and cleanup lifecycle deferred to
+  `SEC-011`.
 
 Infrastructure and quality:
 
@@ -124,10 +135,10 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 256 passing tests after
-  completion of `CODE-002` and `CODE-001`; the focused purchase-check and
-  feedback API suites pass 29 tests and the Feedback browser suite passes 8
-  tests. The focused Calendly webhook route
+- The latest confirmed full ordinary suite result is 264 passing tests after
+  completion of `ARCH-003` and `ARCH-001`; the focused feedback API and service
+  suites pass 45 tests and the Feedback browser suite passes 8 tests. The
+  focused Calendly webhook route
   suite remains at 8 passing tests, including request-level durability
   validation through a fresh independent SQLAlchemy session.
 
@@ -145,11 +156,10 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `ARCH-003` — make
-feedback submission atomic. It remains paired with `ARCH-001`, which establishes
-the feedback application boundary. Continue in the authoritative order defined
-in `release_readiness.md`; do not substitute roadmap work for the next
-incomplete remediation item.
+The first incomplete Official Release Backlog item is `SEC-011` — define the
+attachment lifecycle. Continue in the authoritative order defined in
+`release_readiness.md`; do not substitute roadmap work for the next incomplete
+remediation item.
 
 ### 2. Smart Feedback support flow (later work)
 
