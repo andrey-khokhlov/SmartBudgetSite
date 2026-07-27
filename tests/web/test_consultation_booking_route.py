@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+import pytest
+from fastapi import HTTPException
+
 from app.models.enums import PaymentStatus
 from app.models.service_addon import ServiceAddon
 from app.services.consultation_entitlement_service import (
@@ -7,8 +10,22 @@ from app.services.consultation_entitlement_service import (
 )
 from app.services.sale_service import create_standalone_service_sale
 
+CAPABILITY_RESPONSE_HEADERS = {
+    "cache-control": "private, no-store, max-age=0",
+    "pragma": "no-cache",
+    "expires": "0",
+    "referrer-policy": "no-referrer",
+}
 
-def test_consultation_booking_page_opens_with_valid_token(client, db_session, monkeypatch):
+
+def assert_capability_response_headers(response):
+    for name, expected_value in CAPABILITY_RESPONSE_HEADERS.items():
+        assert response.headers[name] == expected_value
+
+
+def test_consultation_booking_page_opens_with_valid_token(
+    client, db_session, monkeypatch
+):
     """
     Test case: open consultation booking page with valid token.
 
@@ -56,11 +73,10 @@ def test_consultation_booking_page_opens_with_valid_token(client, db_session, mo
         "https://calendly.com/test/smartbudget-consultation",
     )
 
-    response = client.get(
-        f"/consultation/book/{entitlement.booking_token}"
-    )
+    response = client.get(f"/consultation/book/{entitlement.booking_token}")
 
     assert response.status_code == 200
+    assert_capability_response_headers(response)
     assert "Your consultation access is active." in response.text
     assert "Please use the button below to schedule your session." in response.text
     assert entitlement.status in response.text
@@ -73,3 +89,41 @@ def test_consultation_booking_page_opens_with_valid_token(client, db_session, mo
     assert entitlement.booking_token not in response.text
 
 
+@pytest.mark.parametrize(
+    ("status_code", "detail"),
+    [
+        (404, "Consultation booking link was not found."),
+        (403, "This consultation has already been booked."),
+        (403, "Consultation booking link has expired."),
+        (403, "Consultation booking link is no longer available."),
+    ],
+)
+def test_consultation_booking_errors_receive_capability_protection_headers(
+    client,
+    monkeypatch,
+    status_code,
+    detail,
+):
+    def reject(*args, **kwargs):
+        raise HTTPException(status_code=status_code, detail=detail)
+
+    monkeypatch.setattr(
+        "app.web.routes.get_valid_consultation_entitlement_by_token",
+        reject,
+    )
+
+    response = client.get("/consultation/book/booking-secret")
+
+    assert response.status_code == status_code
+    assert_capability_response_headers(response)
+    assert "booking-secret" not in response.text
+
+
+def test_consultation_unsupported_method_receives_capability_protection_headers(
+    client,
+):
+    response = client.post("/consultation/book/unsupported-method-secret")
+
+    assert response.status_code == 405
+    assert_capability_response_headers(response)
+    assert "unsupported-method-secret" not in response.text

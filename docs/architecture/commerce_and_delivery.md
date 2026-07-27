@@ -206,6 +206,10 @@ MVP rules:
 - current default token lifetime is 12 hours;
 - every GET/POST access is validated before storage access is exposed;
 - signed URLs are short-lived; the current default is 900 seconds;
+- capability responses use `Cache-Control: private, no-store, max-age=0`,
+  `Pragma: no-cache`, `Expires: 0`, and `Referrer-Policy: no-referrer`;
+- signed R2 GET responses override cache behavior to the same private no-store
+  policy and use an already expired response date;
 - signed-URL issuance records an attempt and updates attempt timestamps;
 - current maximum attempts is three;
 - issuance is not proof that the browser completed the transfer;
@@ -214,6 +218,15 @@ MVP rules:
 Lifecycle statuses are `available`, `completed`, `expired`, and `cancelled`.
 Expiration may be derived dynamically without immediately mutating stored
 status. Support-facing pages expose only a masked reference, never the token.
+
+Download capability paths, query strings, signed R2 URLs, and redirect
+`Location` values must not be written to application or operational logs.
+Uvicorn access logging retains ordinary request diagnostics while removing
+query strings and replacing the token path segment with `[REDACTED]`. The
+production reverse proxy must disable access logging and caching for download
+capability routes. A customer purchase email may contain the capability because
+delivery requires it, but click tracking or provider link rewriting must remain
+disabled for capability links.
 
 Strict one-time completion, automatic completion detection, IP/user-agent audit
 records, and backend file proxying are deferred until reliable completion

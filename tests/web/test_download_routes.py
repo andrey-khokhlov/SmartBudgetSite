@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -12,6 +12,18 @@ from app.models.product_release import ProductRelease
 from app.services.download_entitlement_service import create_download_entitlement
 from app.services.sale_service import create_product_sale
 from app.services.storage.r2_storage_service import R2SignedUrlError
+
+CAPABILITY_RESPONSE_HEADERS = {
+    "cache-control": "private, no-store, max-age=0",
+    "pragma": "no-cache",
+    "expires": "0",
+    "referrer-policy": "no-referrer",
+}
+
+
+def assert_capability_response_headers(response):
+    for name, expected_value in CAPABILITY_RESPONSE_HEADERS.items():
+        assert response.headers[name] == expected_value
 
 
 def create_download(db_session):
@@ -65,6 +77,7 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     response = client.get(f"/download/{token}")
 
     assert response.status_code == 200
+    assert_capability_response_headers(response)
     assert "SmartBudget Route Edition" in response.text
     assert release.version in response.text
     assert release.original_filename in response.text
@@ -107,6 +120,7 @@ def test_download_get_localizes_entitlement_errors(
     response = client.get("/download/hidden-token?lang=ru")
 
     assert response.status_code == 403
+    assert_capability_response_headers(response)
     assert expected in response.text
     assert "hidden-token" not in response.text
 
@@ -133,6 +147,7 @@ def test_download_post_records_attempt_and_redirects_to_signed_url(
     )
 
     assert response.status_code == 303
+    assert_capability_response_headers(response)
     assert response.headers["location"] == "https://r2.example/temporary-download"
     assert requested_downloads == [(release.storage_key, release.original_filename)]
     db_session.expire_all()
@@ -162,6 +177,7 @@ def test_download_post_blocks_attempt_limit_without_generating_url(
     response = client.post(f"/download/{entitlement.download_token}")
 
     assert response.status_code == 403
+    assert_capability_response_headers(response)
     assert "maximum number of download attempts" in response.text
     db_session.expire_all()
     assert db_session.get(type(entitlement), entitlement.id).attempt_count == 3
@@ -184,6 +200,7 @@ def test_download_post_storage_failure_is_localized_and_still_counts_attempt(
     response = client.post(f"/download/{entitlement.download_token}?lang=ru")
 
     assert response.status_code == 503
+    assert_capability_response_headers(response)
     assert "Сервис скачивания временно недоступен" in response.text
     assert "provider detail" not in response.text
     db_session.expire_all()
@@ -196,3 +213,11 @@ def test_download_post_storage_failure_is_localized_and_still_counts_attempt(
     assert entitlement.download_token not in response.text
     assert "provider detail" not in response.text
     assert entitlement.release.storage_key not in response.text
+
+
+def test_download_unsupported_method_receives_capability_protection_headers(client):
+    response = client.put("/download/unsupported-method-secret")
+
+    assert response.status_code == 405
+    assert_capability_response_headers(response)
+    assert "unsupported-method-secret" not in response.text

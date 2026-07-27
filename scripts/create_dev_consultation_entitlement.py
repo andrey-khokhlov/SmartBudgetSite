@@ -1,21 +1,62 @@
+import argparse
+from collections.abc import Sequence
+from decimal import Decimal
 from pathlib import Path
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decimal import Decimal
-
-from app.core.db import SessionLocal
-from app.models.enums import PaymentStatus
-from app.models.service_addon import ServiceAddon
-from app.services.sale_service import create_standalone_service_sale
-from app.services.consultation_entitlement_service import (
+from app.core.db import SessionLocal  # noqa: E402
+from app.models.enums import PaymentStatus  # noqa: E402
+from app.models.service_addon import ServiceAddon  # noqa: E402
+from app.services.sale_service import create_standalone_service_sale  # noqa: E402
+from app.services.consultation_entitlement_service import (  # noqa: E402
     create_consultation_entitlement,
 )
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Create one local development consultation entitlement.",
+    )
+    parser.add_argument(
+        "--show-full-capability",
+        action="store_true",
+        help=(
+            "Print the full sensitive booking token and URL. "
+            "Use only when immediately opening the local development capability."
+        ),
+    )
+    return parser
+
+
+def mask_booking_token(booking_token: str) -> str:
+    """Return a diagnostic-safe representation of a booking token."""
+    return f"{booking_token[:8]}..." if booking_token else "[unavailable]"
+
+
+def print_booking_access(
+    booking_token: str,
+    *,
+    show_full_capability: bool,
+) -> None:
+    """Print masked access by default and the sensitive capability only by opt-in."""
+    print("Created dev consultation entitlement")
+    if show_full_capability:
+        print("Sensitive booking capability (do not copy into logs or support text):")
+        print(f"Booking token: {booking_token}")
+        print(f"Booking URL: /consultation/book/{booking_token}")
+        return
+
+    print(f"Masked booking reference: {mask_booking_token(booking_token)}")
+    print(
+        "Full booking capability hidden. "
+        "Re-run with --show-full-capability only when it is required."
+    )
+
+
+def main(argv: Sequence[str] | None = None) -> None:
     """
     Create one development consultation entitlement.
 
@@ -30,6 +71,7 @@ def main() -> None:
     - Commits the transaction.
     """
 
+    args = build_parser().parse_args(argv)
     db = SessionLocal()
 
     try:
@@ -72,9 +114,10 @@ def main() -> None:
 
         db.commit()
 
-        print("Created dev consultation entitlement")
-        print(f"Booking token: {entitlement.booking_token}")
-        print(f"Booking URL: /consultation/book/{entitlement.booking_token}")
+        print_booking_access(
+            entitlement.booking_token,
+            show_full_capability=args.show_full_capability,
+        )
 
     finally:
         db.close()

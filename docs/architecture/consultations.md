@@ -106,9 +106,18 @@ Missing provider configuration produces a deterministic fallback message.
 Support diagnostics use a masked token reference and never reveal the full
 token.
 
+Every booking capability response, including framework-generated errors, uses
+`Cache-Control: private, no-store, max-age=0`, `Pragma: no-cache`, `Expires: 0`,
+and `Referrer-Policy: no-referrer`. Uvicorn access logging removes query strings
+and replaces the booking-token path segment with `[REDACTED]`. Application,
+exception, and operational logs must never contain the full booking capability,
+and the production reverse proxy must disable access logging and caching for
+booking capability routes.
+
 The intended paid flow shows the same protected booking access immediately on
 the success page and in the confirmation email so the customer can return later.
-Booking remains the customer's responsibility for MVP.
+Booking remains the customer's responsibility for MVP. Future capability-bearing
+emails must disable click tracking and provider link rewriting.
 
 ## Webhook boundary
 

@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from datetime import UTC, datetime
 
 import pytest
 from botocore.exceptions import ClientError
@@ -22,7 +23,10 @@ def test_generate_signed_get_url_uses_configured_bucket_and_ttl(monkeypatch):
     monkeypatch.setattr(settings, "DOWNLOAD_SIGNED_URL_TTL_SECONDS", 321)
     client = Mock()
     client.generate_presigned_url.return_value = "https://r2.example/signed"
-    monkeypatch.setattr("app.services.storage.r2_storage_service.boto3.client", lambda *args, **kwargs: client)
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
 
     result = R2StorageService().generate_signed_get_url(
         storage_key="product-releases/smartbudget/1.0.zip",
@@ -39,6 +43,8 @@ def test_generate_signed_get_url_uses_configured_bucket_and_ttl(monkeypatch):
                 'attachment; filename="SmartBudget 1.0.zip"; '
                 "filename*=UTF-8''SmartBudget%201.0.zip"
             ),
+            "ResponseCacheControl": "private, no-store, max-age=0",
+            "ResponseExpires": datetime(1970, 1, 1, tzinfo=UTC),
         },
         ExpiresIn=321,
     )
@@ -88,6 +94,8 @@ def test_generate_signed_get_url_builds_safe_content_disposition(
 
     params = client.generate_presigned_url.call_args.kwargs["Params"]
     assert params["ResponseContentDisposition"] == expected
+    assert params["ResponseCacheControl"] == "private, no-store, max-age=0"
+    assert params["ResponseExpires"] == datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def test_generate_signed_get_url_hides_provider_failure(monkeypatch):
@@ -97,7 +105,10 @@ def test_generate_signed_get_url_hides_provider_failure(monkeypatch):
         {"Error": {"Code": "AccessDenied", "Message": "provider secret detail"}},
         "GetObject",
     )
-    monkeypatch.setattr("app.services.storage.r2_storage_service.boto3.client", lambda *args, **kwargs: client)
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
 
     with pytest.raises(R2SignedUrlError) as exc_info:
         R2StorageService().generate_signed_get_url(

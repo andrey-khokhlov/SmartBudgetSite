@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .core.config import settings
+from .core.capability_protection import CapabilityResponseProtectionMiddleware
 from .core.logging import setup_logging
 from .api.v1.routes import router as v1_router
 from app.web.routes import router as web_router
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    application.add_middleware(CapabilityResponseProtectionMiddleware)
 
     application.mount("/static", StaticFiles(directory="app/static"), name="static")
 

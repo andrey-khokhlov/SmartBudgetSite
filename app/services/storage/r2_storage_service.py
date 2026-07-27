@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import BinaryIO
 from urllib.parse import quote
 
@@ -17,6 +18,8 @@ from app.core.config import settings
 
 DEFAULT_DOWNLOAD_FILENAME = "download"
 ASCII_FILENAME_UNSAFE_PATTERN = re.compile(r"[^A-Za-z0-9._ -]+")
+PRIVATE_NO_STORE_CACHE_CONTROL = "private, no-store, max-age=0"
+EXPIRED_RESPONSE_DATE = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 @dataclass(frozen=True)
@@ -39,9 +42,7 @@ class R2StorageService:
     def __init__(self) -> None:
         self._validate_settings()
 
-        endpoint_url = (
-            f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-        )
+        endpoint_url = f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
         self.client = boto3.client(
             "s3",
@@ -107,6 +108,8 @@ class R2StorageService:
                     "ResponseContentDisposition": _build_content_disposition(
                         download_filename
                     ),
+                    "ResponseCacheControl": PRIVATE_NO_STORE_CACHE_CONTROL,
+                    "ResponseExpires": EXPIRED_RESPONSE_DATE,
                 },
                 ExpiresIn=settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS,
             )
@@ -130,8 +133,8 @@ class R2StorageService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=(
-                        "R2 storage is not configured. Missing settings: "
-                        + ", ".join(missing_settings)
+                    "R2 storage is not configured. Missing settings: "
+                    + ", ".join(missing_settings)
                 ),
             )
 

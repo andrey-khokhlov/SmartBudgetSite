@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-009` — Protect capability URLs across boundaries.**
+**Current first incomplete item: `SEC-007` — Establish coherent rate limits.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -141,7 +141,7 @@ together even though each finding retains its own identifier.
 | 16 | Feedback layering | `ARCH-001` | Establish a feedback application boundary | `Completed` |
 | 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Completed` |
 | 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Completed` |
-| 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Not started` |
+| 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Completed` |
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Not started` |
 | 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Not started` |
 | 22 | Release workflow | `REL-005` | Complete administrative publication | `Not started` |
@@ -483,6 +483,21 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Capability URLs are not retained in unsafe caches or
   operational logs and do not propagate beyond the request contexts that require
   them.
+- **Completed behavior:** Download and consultation booking path families apply
+  private no-store cache headers and `Referrer-Policy: no-referrer` to successful
+  pages, handled errors, unsupported methods, POST responses, and signed-R2
+  redirects. Uvicorn access logging remains enabled but removes query strings
+  and redacts literal or percent-encoded capability paths. SQLAlchemy hides
+  bound parameters globally. Signed R2 responses carry private no-store and
+  expired-date overrides without changing their TTL or attachment disposition.
+  The development consultation helper masks its output unless the sensitive
+  full-capability flag is explicitly supplied.
+- **Regression validation:** The focused capability, access-log, SQL,
+  signed-R2, helper-script, and support-isolation suite passes 50 tests. The
+  full ordinary suite passes 312 tests. Changed-file Ruff and Black checks pass.
+  Browser behavior and the not-yet-created production reverse-proxy/CDN
+  configuration were not claimed as validated; the release environment must
+  confirm access-log suppression, cache bypass, and provider telemetry behavior.
 - **Dependencies:** `SEC-003` should establish the related public data-access
   boundary first.
 - **References:** [Commerce download entitlement](architecture/commerce_and_delivery.md#download-entitlement),

@@ -131,6 +131,17 @@ Feedback:
 
 Infrastructure and quality:
 
+- `SEC-009` is complete. Download and consultation booking capability responses
+  use private no-store cache headers and `Referrer-Policy: no-referrer`,
+  including handled errors, unsupported methods, and the signed-R2 redirect.
+  Uvicorn access records omit query strings and redact literal or percent-encoded
+  capability paths while retaining ordinary request diagnostics. SQLAlchemy
+  hides bound parameters globally, signed R2 responses override cache behavior,
+  and the development consultation helper reveals the full capability only
+  through an explicit sensitive-output flag.
+- Production reverse-proxy access-log suppression, CDN cache bypass, and
+  provider telemetry behavior remain release-environment validation obligations;
+  no proxy technology or deployment configuration was introduced by `SEC-009`.
 - Serverspace account and Netherlands region availability are verified.
 - Cloudflare Registrar ownership and DNS operation for `neocitrix.com` are
   verified; SmartBudgetSite has not yet been publicly deployed.
@@ -150,8 +161,10 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 292 passing tests after
-  completion of `A11Y-002`; the focused Feedback rendered-contract and API
+- The latest confirmed full ordinary suite result is 312 passing tests after
+  completion of `SEC-009`; the focused SEC-009 capability, logging, SQL,
+  storage, helper-script, and support-isolation suite passes 50 tests. The
+  focused Feedback rendered-contract and API
   suites pass 33 tests and the Feedback browser suite passes 12 tests. The
   focused Calendly webhook route
   suite remains at 8 passing tests, including request-level durability
@@ -171,8 +184,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `SEC-009` — protect
-capability URLs across boundaries. Continue in the authoritative order defined
+The first incomplete Official Release Backlog item is `SEC-007` — establish
+coherent rate limits. Continue in the authoritative order defined
 in `release_readiness.md`; do not substitute roadmap work for the next
 incomplete remediation item.
 

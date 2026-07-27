@@ -104,6 +104,50 @@ and temporarily spool the complete multipart body before the application-level
 release check runs, even though the route no longer buffers the complete archive
 in process memory.
 
+## Capability URL protection
+
+The public download and consultation booking paths contain bearer capabilities:
+
+```text
+/download/{token}
+/consultation/book/{token}
+```
+
+Every response for these path families, including errors and redirects, uses:
+
+```text
+Cache-Control: private, no-store, max-age=0
+Pragma: no-cache
+Expires: 0
+Referrer-Policy: no-referrer
+```
+
+Uvicorn access logging remains enabled, but its configured filter removes every
+query string and replaces download and booking token segments with
+`[REDACTED]`, including capability paths embedded literally or percent-encoded
+inside another request target. Application code must not log raw capability
+tokens, full capability URLs, raw request targets, signed R2 URLs, or redirect
+`Location` values. SQLAlchemy hides bound parameters globally so database
+exceptions do not disclose token lookup values.
+
+Signed R2 GET responses specify `private, no-store, max-age=0` and an already
+expired response date while retaining the configured short TTL and attachment
+content disposition.
+
+The production reverse proxy and CDN are not configured in this repository.
+Their release configuration must:
+
+- disable access logging for both capability route families;
+- avoid request-line, URI, query-string, and Referer values in related error
+  logging;
+- bypass all proxy and CDN caching for capability routes;
+- avoid exporting signed R2 query strings into general operational logs.
+
+Release-environment validation must confirm those perimeter rules and actual
+provider behavior. Future customer emails may contain capability links only as
+the required delivery context; email click tracking and provider link rewriting
+must be disabled for them.
+
 ## Feedback attachment reconciliation
 
 Feedback attachments use private local storage below `UPLOAD_DIR/feedback`.

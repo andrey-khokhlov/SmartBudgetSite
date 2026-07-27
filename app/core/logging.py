@@ -1,5 +1,40 @@
 import logging
+import re
 from logging.config import dictConfig
+
+REDACTED_CAPABILITY = "[REDACTED]"
+CAPABILITY_TARGET_PATTERNS = (
+    re.compile(r"(?i)(/download/)([^/?#\s]+)"),
+    re.compile(r"(?i)(/consultation/book/)([^/?#\s]+)"),
+    re.compile(r"(?i)(%2fdownload%2f)([^/?&#\s]+?)(?=%2f|[/?&#\s]|$)"),
+    re.compile(r"(?i)(%2fconsultation%2fbook%2f)([^/?&#\s]+?)(?=%2f|[/?&#\s]|$)"),
+)
+
+
+def sanitize_access_log_target(target: str) -> str:
+    """Remove query data and redact capability segments from an access target."""
+    sanitized = target.split("?", 1)[0]
+    for pattern in CAPABILITY_TARGET_PATTERNS:
+        sanitized = pattern.sub(
+            lambda match: f"{match.group(1)}{REDACTED_CAPABILITY}",
+            sanitized,
+        )
+    return sanitized
+
+
+class SanitizeUvicornAccessFilter(logging.Filter):
+    """Sanitize Uvicorn's request-target argument before formatting."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.name != "uvicorn.access":
+            return True
+
+        if isinstance(record.args, tuple) and len(record.args) >= 3:
+            arguments = list(record.args)
+            arguments[2] = sanitize_access_log_target(str(arguments[2]))
+            record.args = tuple(arguments)
+
+        return True
 
 
 class StructuredWebhookFormatter(logging.Formatter):
@@ -13,8 +48,7 @@ class StructuredWebhookFormatter(logging.Formatter):
             return formatted_record
 
         audit_fields = " ".join(
-            f"{field}={str(getattr(record, field))!r}"
-            for field in self.webhook_fields
+            f"{field}={str(getattr(record, field))!r}" for field in self.webhook_fields
         )
         return f"{formatted_record} {audit_fields}"
 
@@ -30,10 +64,28 @@ def setup_logging() -> None:
                     "format": "%(asctime)s %(levelname)s [%(name)s] %(message)s",
                 }
             },
+            "filters": {
+                "sanitize_uvicorn_access": {
+                    "()": SanitizeUvicornAccessFilter,
+                }
+            },
             "handlers": {
                 "console": {
                     "class": "logging.StreamHandler",
                     "formatter": "default",
+                },
+                "uvicorn_access_console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "default",
+                    "filters": ["sanitize_uvicorn_access"],
+                    "stream": "ext://sys.stdout",
+                },
+            },
+            "loggers": {
+                "uvicorn.access": {
+                    "handlers": ["uvicorn_access_console"],
+                    "level": "INFO",
+                    "propagate": False,
                 }
             },
             "root": {"level": "INFO", "handlers": ["console"]},
