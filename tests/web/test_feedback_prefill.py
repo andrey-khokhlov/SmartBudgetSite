@@ -13,7 +13,6 @@ from app.models.product_release import ProductRelease
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 
-
 PRODUCT_ID_SENTINEL = 910001
 RELEASE_ID_SENTINEL = 910002
 SALE_ID_SENTINEL = 910003
@@ -189,8 +188,7 @@ def test_feedback_get_without_reference_preserves_normal_form(client):
     assert 'name="support_reference"' not in response.text
     assert 'id="email" name="email" value=""' in response.text
     assert (
-        'id="subject" name="subject" maxlength="200" disabled value=""'
-        in response.text
+        'id="subject" name="subject" maxlength="200" disabled value=""' in response.text
     )
     assert (
         'id="message" name="message" disabled maxlength="2000"></textarea>'
@@ -276,4 +274,4 @@ def test_feedback_form_renders_localized_accessible_status_contract(
     assert 'role="alert"' not in response.text
     assert 'aria-describedby="attachments-hint selectedFilesText"' in response.text
     assert f'invalidFileType: "{invalid_file_message}"' in response.text
-    assert "feedback.js?v=6" in response.text
+    assert "feedback.js?v=7" in response.text

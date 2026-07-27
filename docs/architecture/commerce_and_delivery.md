@@ -84,6 +84,13 @@ submit feedback as that purchaser. The lookup does not expose downloadable
 products, payment information, or internal purchase records and cannot modify a
 purchase. Feedback moderation provides the operational mitigation for MVP.
 
+`POST /v1/check-purchase` is limited to 12 requests per 10 minutes per client
+IP and 10 requests per 60 minutes per keyed HMAC of the syntactically valid,
+normalized email. The IP rule is applied before body processing; the email rule
+is applied before the lookup service. Positive and negative lookup results
+consume the same quota. A rejected request returns JSON HTTP 429 with an integer
+`Retry-After` header.
+
 ## Payment preparation
 
 - Product payment preparation selects the exact active release before provider
@@ -227,6 +234,14 @@ production reverse proxy must disable access logging and caching for download
 capability routes. A customer purchase email may contain the capability because
 delivery requires it, but click tracking or provider link rewriting must remain
 disabled for capability links.
+
+Rate limiting is separate from the three-attempt entitlement rule. Download GET
+uses 60 requests per 15 minutes per client IP and 30 per 15 minutes per keyed
+capability identity. Download POST uses 10 per 15 minutes per IP and 5 per 15
+minutes per capability. Unsupported methods use the same 10/5 limits and remain
+HTTP 405 until exhausted. A rate-limited POST performs no entitlement update,
+storage-client creation, or R2 signing. Every download 429 retains the complete
+capability response-header policy and contains no token or raw URL.
 
 Strict one-time completion, automatic completion detection, IP/user-agent audit
 records, and backend file proxying are deferred until reliable completion

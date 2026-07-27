@@ -1,31 +1,38 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, Form
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_admin
 from app.repositories.feedback_repository import FeedbackRepository
-from app.schemas.feedback import FeedbackCreateResponse, FeedbackListResponse, FeedbackMessageType
+from app.schemas.feedback import (
+    FeedbackCreateResponse,
+    FeedbackListResponse,
+    FeedbackMessageType,
+)
 from app.schemas.purchase_check import PurchaseLookupRequest, PurchaseLookupResponse
 from app.services.feedback_service import FeedbackAttachmentInput, submit_feedback
 from app.services.purchase_lookup_service import (
     list_verified_product_purchases,
 )
+from app.core.rate_limiting import enforce_purchase_email_limit
 
 from app.api.v1.webhooks import router as webhook_router
-
 
 router = APIRouter(prefix="/v1", tags=["v1"])
 
 router.include_router(webhook_router)
 
+
 @router.get("/health")
 def health() -> dict:
     return {"status": "ok"}
 
+
 @router.get("/version")
 def version() -> dict:
     return {"version": "v1"}
+
 
 @router.post("/feedback", response_model=FeedbackCreateResponse)
 def create_feedback(
@@ -41,11 +48,7 @@ def create_feedback(
     files: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ):
-    files = [
-        file
-        for file in files
-        if not (file.filename == "" and file.size == 0)
-    ]
+    files = [file for file in files if not (file.filename == "" and file.size == 0)]
     feedback = submit_feedback(
         db=db,
         message_type=message_type.value,
@@ -111,15 +114,18 @@ def resolve_feedback(
         "is_resolved": feedback.is_resolved,
     }
 
+
 @router.post(
     "/check-purchase",
     response_model=PurchaseLookupResponse,
     response_model_exclude_none=True,
 )
 def check_purchase(
+    request: Request,
     payload: PurchaseLookupRequest,
     db: Session = Depends(get_db),
 ) -> PurchaseLookupResponse:
+    enforce_purchase_email_limit(request, str(payload.email))
     purchases = list_verified_product_purchases(
         db=db,
         email=str(payload.email),
@@ -131,4 +137,3 @@ def check_purchase(
         verified=True,
         purchases=purchases,
     )
-

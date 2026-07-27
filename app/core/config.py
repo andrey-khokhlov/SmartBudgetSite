@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,7 +11,7 @@ ENV_FILE = os.getenv("ENV_FILE", ".env")
 
 class Settings(BaseSettings):
     APP_NAME: str = "SmartBudget API"
-    APP_ENV: str = "dev"
+    APP_ENV: Literal["dev", "test", "prod"] = "dev"
     APP_VERSION: str = "0.1.0"
     APP_HOST: str = "127.0.0.1"
     APP_PORT: int = 8000
@@ -24,6 +25,8 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = ""
     UPLOAD_DIR: str = "uploads"
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_MAX_IDENTITIES: int = Field(default=10_000, gt=0)
 
     MAIL_FROM_EMAIL: str = ""
     MAIL_FROM_NAME: str = "SmartBudget"
@@ -70,6 +73,9 @@ class Settings(BaseSettings):
                 raise ValueError(
                     f"{field_name} must be non-empty when APP_ENV is 'prod'"
                 )
+
+        if not self.RATE_LIMIT_ENABLED:
+            raise ValueError("RATE_LIMIT_ENABLED must be true when APP_ENV is 'prod'")
 
         return self
 

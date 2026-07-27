@@ -114,6 +114,13 @@ exception, and operational logs must never contain the full booking capability,
 and the production reverse proxy must disable access logging and caching for
 booking capability routes.
 
+Booking GET uses 60 requests per 15 minutes per client IP and 30 per 15 minutes
+per keyed capability identity. Unsupported methods use 10 per 15 minutes per IP
+and 5 per 15 minutes per capability, remain HTTP 405 before exhaustion, and do
+not introduce a booking POST mutation. Rate-limit responses are localized,
+include integer `Retry-After`, preserve every capability protection header, and
+never echo the token.
+
 The intended paid flow shows the same protected booking access immediately on
 the success page and in the confirmation email so the customer can return later.
 Booking remains the customer's responsibility for MVP. Future capability-bearing
@@ -149,6 +156,13 @@ unknown-provider signatures and uses raw payload bytes with HMAC SHA-256.
 Calendly signed timestamps must be non-negative ASCII Unix seconds within an
 inclusive 180-second window on either side of server time; requests outside this
 transport-level tolerance are rejected before provider event processing.
+
+Before signature verification, the webhook is limited to 120 requests per
+minute per client IP. After verification it uses a fixed Calendly provider
+bucket of 300 per 5 minutes and a keyed signature-digest bucket of 10 per 3
+minutes. A denied request returns JSON HTTP 429 with `Retry-After` and never
+enters payload normalization, reconciliation, entitlement mutation, or commit.
+Raw payloads and signatures remain excluded from limiter state and logs.
 
 Webhook orchestration coordinates event routing and handoff; repositories perform
 lookup only; the consultation entitlement service owns state transitions.

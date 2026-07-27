@@ -6,14 +6,15 @@ from app.services.webhooks.calendly_webhook_service import (
     process_calendly_webhook,
 )
 from app.services.webhooks.signature_verification_service import (
+    CALENDLY_SIGNATURE_HEADER,
     verify_webhook_signature,
 )
+from app.core.rate_limiting import enforce_calendly_verified_limits
 from app.services.webhooks.webhook_audit_logger import log_webhook_event
 from app.services.webhooks.webhook_audit_statuses import (
     WEBHOOK_STATUS_MALFORMED_PAYLOAD,
     WEBHOOK_STATUS_REJECTED,
 )
-
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -61,6 +62,11 @@ async def calendly_webhook(
             status_code=401,
             detail="Invalid webhook signature",
         )
+
+    enforce_calendly_verified_limits(
+        request,
+        request.headers[CALENDLY_SIGNATURE_HEADER],
+    )
 
     try:
         payload = await request.json()

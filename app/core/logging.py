@@ -38,12 +38,32 @@ class SanitizeUvicornAccessFilter(logging.Filter):
 
 
 class StructuredWebhookFormatter(logging.Formatter):
-    """Append single-line webhook audit fields when present on a log record."""
+    """Append approved structured audit fields when present on a log record."""
 
     webhook_fields = ("provider", "event_type", "status")
+    rate_limit_fields = (
+        "policy_name",
+        "method",
+        "route_template",
+        "identity_kind",
+        "status",
+    )
+    optional_rate_limit_fields = ("retry_after", "provider")
 
     def format(self, record: logging.LogRecord) -> str:
         formatted_record = super().format(record)
+        if all(hasattr(record, field) for field in self.rate_limit_fields):
+            fields = list(self.rate_limit_fields)
+            fields.extend(
+                field
+                for field in self.optional_rate_limit_fields
+                if hasattr(record, field)
+            )
+            audit_fields = " ".join(
+                f"{field}={str(getattr(record, field))!r}" for field in fields
+            )
+            return f"{formatted_record} {audit_fields}"
+
         if not all(hasattr(record, field) for field in self.webhook_fields):
             return formatted_record
 

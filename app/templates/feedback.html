@@ -139,6 +139,8 @@ window.feedbackTexts = {
     sending: "{{ t('feedback_sending') }}",
     sentSuccessPrefix: "{{ t('feedback_sent_success_prefix') }}",
     sendFailed: "{{ t('feedback_send_failed') }}",
+    rateLimited: "{{ t('feedback_rate_limited') }}",
+    rateLimitedRetry: "{{ t('feedback_rate_limited_retry') }}",
     noFiles: "{{ t('feedback_dropzone_no_files') }}",
     invalidFileType: "{{ t('feedback_invalid_file_type') }}",
     productEmailHint: "{{ t('feedback_email_hint') }}",
@@ -146,6 +148,6 @@ window.feedbackTexts = {
     purchasePlaceholder: "{{ t('feedback_purchase_placeholder') }}",
 };
 </script>
-<script src="{{ url_for('static', path='js/feedback.js') }}?v=6"></script>
+<script src="{{ url_for('static', path='js/feedback.js') }}?v=7"></script>
 
 {% endblock %}

@@ -45,6 +45,17 @@ document.addEventListener("DOMContentLoaded", () => {
         element.replaceChildren();
     }
 
+    function rateLimitMessage(response) {
+        const retryAfter = Number.parseInt(
+            response.headers.get("Retry-After") || "",
+            10
+        );
+        if (Number.isInteger(retryAfter) && retryAfter > 0) {
+            return texts.rateLimitedRetry.replace("{seconds}", String(retryAfter));
+        }
+        return texts.rateLimited;
+    }
+
     function clearControlValidation(control) {
         control.removeAttribute("aria-invalid");
         control.setCustomValidity("");
@@ -269,14 +280,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 }),
             });
 
+            if (checkSequence !== purchaseCheckSequence) {
+                return;
+            }
+
+            if (response.status === 429) {
+                setPurchaseStatus(rateLimitMessage(response), { isError: true });
+                updateFormVisibility(false);
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error("Purchase check failed");
             }
 
             const result = await response.json();
-            if (checkSequence !== purchaseCheckSequence) {
-                return;
-            }
 
             if (
                 result.verified === true &&
@@ -380,6 +398,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 method: "POST",
                 body: formData,
             });
+
+            if (response.status === 429) {
+                status.className = "feedback-form__status feedback-form__status--error";
+                setLiveMessage(status, rateLimitMessage(response), { isError: true });
+                form.removeAttribute("aria-busy");
+                updateSubmitState();
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error("Request failed");

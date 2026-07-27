@@ -148,6 +148,79 @@ provider behavior. Future customer emails may contain capability links only as
 the required delivery context; email click tracking and provider link rewriting
 must be disabled for them.
 
+## Rate limiting and trusted client identity
+
+`RATE_LIMIT_ENABLED` defaults to `true` and cannot be `false` in production.
+`RATE_LIMIT_MAX_IDENTITIES` defaults to 10,000 and must be positive. Thresholds
+remain version-controlled application policy rather than environment strings.
+The limiter is process-local and non-persistent.
+
+Initial production must run exactly one application worker. Multi-worker
+production is unsupported until a shared atomic limiter backend is approved.
+Restarting the process resets application counters; this is an accepted bounded
+residual risk only while the required production perimeter remains active.
+
+Application policies:
+
+| Boundary | Application policy |
+|---|---|
+| `POST /v1/feedback` | 5/15 min and 20/24 h per client IP |
+| `POST /v1/check-purchase` | 12/10 min per IP and 10/60 min per normalized-email HMAC |
+| download GET | 60/15 min per IP and 30/15 min per capability HMAC |
+| download POST | 10/15 min per IP and 5/15 min per capability HMAC |
+| unsupported download methods | 10/15 min per IP and 5/15 min per capability HMAC |
+| consultation booking GET | 60/15 min per IP and 30/15 min per capability HMAC |
+| unsupported booking methods | 10/15 min per IP and 5/15 min per capability HMAC |
+| admin authentication | shared 5/15 min per IP across login and invalid-cookie access |
+| Calendly pre-verification | 120/min per IP |
+| Calendly post-verification | 300/5 min provider-wide and 10/3 min per signature HMAC |
+
+The production perimeter must provide:
+
+| Boundary | Perimeter policy |
+|---|---|
+| feedback | 10/min, burst 5 |
+| purchase lookup | 30/min, burst 10 |
+| download GET family | 120/min, burst 20 |
+| download POST | 30/min, burst 10 |
+| consultation booking family | 120/min, burst 20 |
+| admin login | 20/min, burst 5 |
+| generic admin safety ceiling | 120/min |
+| Calendly webhook | 300/min, burst 100 |
+
+No proxy technology is selected in this repository. Production configuration
+must return HTTP 429 rather than a technology-default 503 for quota rejection
+and must supply an integer `Retry-After`.
+
+Application code uses only the validated ASGI `request.client.host`; it never
+parses `Forwarded` or `X-Forwarded-For`. IPv4 is canonicalized normally and
+IPv6 is grouped by `/64`, then the identity is HMAC-protected before storage.
+Local `python run.py` explicitly disables proxy-header interpretation.
+Production must:
+
+- trust forwarded headers only from exact proxy peers or controlled sockets;
+- never use a wildcard trusted-proxy setting;
+- overwrite or remove incoming `Forwarded` and `X-Forwarded-*` values;
+- prevent public traffic from reaching Uvicorn directly;
+- keep the application worker count at exactly one.
+
+Application and webhook 429 responses use
+`{"detail":"Too many requests. Please try again later."}`. HTML routes use a
+localized non-redirecting page. All 429 responses include integer
+`Retry-After`; capability responses additionally retain the SEC-009 cache and
+referrer headers.
+
+Rate-limit logs contain only policy name, method, route template, identity kind,
+retry duration, safe status, and provider name when applicable. Only the first
+rejection for a policy/key/window is logged. Raw IPs, capability tokens,
+purchase references, emails, credentials, cookies, webhook signatures, signed
+URLs, request targets, queries, and HMAC keys are forbidden.
+
+The production perimeter is not configured or validated in this repository.
+Release-environment validation must confirm the stated rates, bursts, 429 and
+`Retry-After` behavior, trusted-header handling, one-worker process model, and
+continued SEC-009 logging/cache behavior.
+
 ## Feedback attachment reconciliation
 
 Feedback attachments use private local storage below `UPLOAD_DIR/feedback`.

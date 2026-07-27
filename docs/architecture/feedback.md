@@ -191,6 +191,12 @@ the literal boolean result `verified === true` and at least one structurally
 valid safe purchase. Multiple purchases require a selection before submission.
 False, malformed, and request-error responses fail closed.
 
+The lookup boundary applies 12 requests per 10 minutes per client IP before
+request processing and 10 requests per 60 minutes per keyed HMAC of a validated,
+normalized email before the service query. All positive and negative outcomes
+consume quota. HTTP 429 uses the stable JSON error contract and `Retry-After`;
+the browser keeps product feedback closed and announces the localized failure.
+
 The accepted residual risk is that someone who knows a purchaser's email may
 submit feedback as that purchaser. This does not expose a downloadable product,
 payment information, or an internal purchase record; cannot modify a purchase;
@@ -217,6 +223,14 @@ attachment persistence, or the final database commit fails, the service rolls
 back the database session and removes every local file written during that
 submission. A cleanup failure is logged using only the generated stored filename
 and does not replace the original submission error.
+
+The multipart submission boundary applies 5 requests per 15 minutes and 20 per
+24 hours per client IP before body parsing. This ensures a denied request does
+not enter the feedback service, create a database session or row, create a
+directory, copy an attachment, or begin transaction work. The browser does not
+automatically retry HTTP 429, retains selected attachments, treats
+`Retry-After` as authoritative, and uses the existing localized assertive live
+region for the failure.
 
 ### Attachment lifecycle
 

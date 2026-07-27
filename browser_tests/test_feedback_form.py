@@ -80,7 +80,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
 
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
-        expect(page.locator("script[src$='feedback.js?v=6']")).to_have_count(1)
+        expect(page.locator("script[src$='feedback.js?v=7']")).to_have_count(1)
         expect(page.locator("#email")).to_have_count(1)
         expect(page.locator("#contact_email")).to_have_count(0)
         expect(page.locator("#contactEmailGroup")).to_have_count(0)
@@ -94,9 +94,7 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
         expect(page.locator("#purchase-status")).to_have_attribute(
             "aria-atomic", "true"
         )
-        expect(page.locator("#selectedFilesText")).to_have_attribute(
-            "role", "status"
-        )
+        expect(page.locator("#selectedFilesText")).to_have_attribute("role", "status")
         expect(page.locator("#selectedFilesText")).to_have_attribute(
             "aria-atomic", "true"
         )
@@ -309,9 +307,7 @@ def test_unverified_or_failed_product_purchase_keeps_feedback_closed(
         if email_is_invalid:
             expect(page.locator("#email")).to_have_attribute("aria-invalid", "true")
         else:
-            expect(page.locator("#email")).not_to_have_attribute(
-                "aria-invalid", "true"
-            )
+            expect(page.locator("#email")).not_to_have_attribute("aria-invalid", "true")
         expect(page.locator("#subjectGroup")).to_be_hidden()
         expect(page.locator("#messageGroup")).to_be_hidden()
         expect(page.locator("#attachmentsGroup")).to_be_hidden()
@@ -325,6 +321,86 @@ def test_unverified_or_failed_product_purchase_keeps_feedback_closed(
         assert not page.evaluate(
             "new FormData(document.querySelector('#feedback-form')).has('sale_id')"
         )
+
+        browser.close()
+
+
+@pytest.mark.browser
+def test_purchase_rate_limit_uses_localized_live_region_message() -> None:
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        page = browser.new_page()
+        page.route(
+            "**/v1/check-purchase",
+            lambda route: route.fulfill(
+                status=429,
+                headers={
+                    "Content-Type": "application/json",
+                    "Retry-After": "37",
+                },
+                body='{"detail":"Too many requests. Please try again later."}',
+            ),
+        )
+        page.goto(f"{base_url}/feedback?lang=ru", wait_until="networkidle")
+
+        page.locator("#message_type").select_option("product_feedback")
+        page.locator("#email").fill("buyer@example.com")
+        page.locator("#email").press("Enter")
+
+        expect(page.locator("#purchase-status")).to_have_attribute("role", "alert")
+        expect(page.locator("#purchase-status")).to_contain_text(
+            "Повторите попытку через 37 сек."
+        )
+        expect(page.locator("#email")).not_to_have_attribute("aria-invalid", "true")
+        expect(page.locator("#subjectGroup")).to_be_hidden()
+        expect(page.locator('button[type="submit"]')).to_be_disabled()
+
+        browser.close()
+
+
+@pytest.mark.browser
+def test_submission_rate_limit_does_not_retry_or_clear_attachments() -> None:
+    request_count = 0
+
+    def reject_submission(route) -> None:
+        nonlocal request_count
+        request_count += 1
+        route.fulfill(
+            status=429,
+            headers={
+                "Content-Type": "application/json",
+                "Retry-After": "41",
+            },
+            body='{"detail":"Too many requests. Please try again later."}',
+        )
+
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        page = browser.new_page()
+        page.route("**/v1/feedback", reject_submission)
+        page.goto(f"{base_url}/feedback", wait_until="networkidle")
+
+        page.locator("#subject").fill("Rate limited submission")
+        page.locator("#message").fill("A complete browser rate-limit message.")
+        page.locator("#attachments").set_input_files(
+            {
+                "name": "evidence.pdf",
+                "mimeType": "application/pdf",
+                "buffer": b"private browser evidence",
+            }
+        )
+        page.locator('button[type="submit"]').click()
+
+        expect(page.locator("#feedback-status")).to_have_attribute("role", "alert")
+        expect(page.locator("#feedback-status")).to_contain_text(
+            "Please try again in 41 seconds."
+        )
+        assert (
+            page.locator("#attachments").evaluate("element => element.files.length")
+            == 1
+        )
+        expect(page.locator('button[type="submit"]')).to_be_enabled()
+        assert request_count == 1
 
         browser.close()
 
@@ -460,9 +536,7 @@ def test_successful_download_prefill_submission_clears_active_context(
             expect(page.locator("#feedback-status")).to_contain_text(
                 "Sent successfully. Message ID: 42"
             )
-            expect(page.locator("#feedback-status")).to_have_attribute(
-                "role", "status"
-            )
+            expect(page.locator("#feedback-status")).to_have_attribute("role", "status")
             expect(page.locator("#feedback-status")).to_have_attribute(
                 "aria-atomic", "true"
             )
@@ -481,9 +555,7 @@ def test_successful_download_prefill_submission_clears_active_context(
             expect(page.locator("#subjectGroup")).to_be_visible()
             expect(page.locator("#messageGroup")).to_be_visible()
             expect(page.locator('button[type="submit"]')).to_be_enabled()
-            expect(page.locator("#email")).not_to_have_attribute(
-                "aria-invalid", "true"
-            )
+            expect(page.locator("#email")).not_to_have_attribute("aria-invalid", "true")
             expect(page.locator("#subject")).not_to_have_attribute(
                 "aria-invalid", "true"
             )
@@ -587,16 +659,14 @@ def test_submission_progress_success_and_repeated_failure_are_announced() -> Non
         page.route("**/v1/feedback", lambda route: pending_routes.append(route))
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
-        page.evaluate(
-            """
+        page.evaluate("""
             window.feedbackStatusMutations = 0;
             new MutationObserver(() => {
                 window.feedbackStatusMutations += 1;
             }).observe(document.querySelector("#feedback-status"), {
                 childList: true
             });
-            """
-        )
+            """)
         page.locator("#subject").fill("Accessible status")
         page.locator("#message").fill("A complete feedback message")
         page.locator('button[type="submit"]').click()
@@ -723,9 +793,7 @@ def test_hidden_controls_and_type_changes_clear_obsolete_invalid_state() -> None
 
         for selector in ("#subject", "#message", "#attachments"):
             expect(page.locator(selector)).to_be_disabled()
-            expect(page.locator(selector)).not_to_have_attribute(
-                "aria-invalid", "true"
-            )
+            expect(page.locator(selector)).not_to_have_attribute("aria-invalid", "true")
         for selector in ("#subject", "#message"):
             expect(page.locator(selector)).not_to_have_attribute("required", "")
 

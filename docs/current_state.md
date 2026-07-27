@@ -131,6 +131,18 @@ Feedback:
 
 Infrastructure and quality:
 
+- `SEC-007` is complete at the application boundary. Abuse-sensitive feedback,
+  purchase lookup, download, consultation, admin-authentication, and Calendly
+  webhook requests use a thread-safe process-local rolling-window limiter with
+  bounded HMAC identities, deterministic 429/`Retry-After` behavior, localized
+  browser handling, privacy-safe coalesced logs, and fail-closed capacity
+  behavior.
+- Initial production is restricted to one application worker. Counter reset on
+  restart is an accepted bounded residual risk because the documented
+  production perimeter is mandatory. Multi-worker production remains
+  unsupported until a shared atomic backend is approved.
+- The production perimeter and trusted-proxy behavior are not configured in
+  this repository and remain release-environment validation obligations.
 - `SEC-009` is complete. Download and consultation booking capability responses
   use private no-store cache headers and `Referrer-Policy: no-referrer`,
   including handled errors, unsupported methods, and the signed-R2 redirect.
@@ -184,8 +196,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `SEC-007` — establish
-coherent rate limits. Continue in the authoritative order defined
+The first incomplete Official Release Backlog item is `REL-004` — reconcile R2
+and database side effects. Continue in the authoritative order defined
 in `release_readiness.md`; do not substitute roadmap work for the next
 incomplete remediation item.
 

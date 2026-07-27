@@ -5,8 +5,15 @@ from fastapi.staticfiles import StaticFiles
 from .core.config import settings
 from .core.capability_protection import CapabilityResponseProtectionMiddleware
 from .core.logging import setup_logging
+from .core.rate_limiting import (
+    RateLimitExceeded,
+    RateLimiterUnavailable,
+    RateLimitMiddleware,
+    RollingWindowRateLimiter,
+)
 from .api.v1.routes import router as v1_router
 from app.web.routes import router as web_router
+from app.web.rate_limit_responses import build_rate_limit_response
 
 
 def create_app() -> FastAPI:
@@ -19,11 +26,26 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json",
     )
+    application.state.rate_limiter = RollingWindowRateLimiter(
+        max_identities=settings.RATE_LIMIT_MAX_IDENTITIES,
+    )
+    application.add_exception_handler(
+        RateLimitExceeded,
+        build_rate_limit_response,
+    )
+    application.add_exception_handler(
+        RateLimiterUnavailable,
+        build_rate_limit_response,
+    )
 
     origins = [o.strip() for o in settings.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
     if settings.APP_ENV == "dev" and not origins:
         origins = ["*"]
 
+    application.add_middleware(
+        RateLimitMiddleware,
+        response_factory=build_rate_limit_response,
+    )
     application.add_middleware(
         CORSMiddleware,
         allow_origins=origins,

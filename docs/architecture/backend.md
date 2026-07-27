@@ -116,6 +116,26 @@ credentials are server-owned configuration and must never come from request
 headers or user input. Operational rules for `.env`, `.env.example`, deployment
 configuration, and secret handling are in `../operations.md`.
 
+## Abuse-sensitive request boundary
+
+Rate limiting is application infrastructure in `app/core`. A narrowly scoped
+ASGI middleware applies the approved IP and capability rules before request
+body parsing, while route/dependency boundaries add normalized-email,
+verified-webhook, and invalid-admin-authentication rules when those identities
+become trustworthy. Services and repositories contain no rate-limit decisions.
+
+The limiter uses thread-safe process-local rolling windows, monotonic time,
+bounded identity storage, expired-entry cleanup, and keyed HMAC identities.
+Raw client addresses, emails, capability tokens, credentials, cookies, and
+webhook signatures are not retained as limiter keys. Capacity exhaustion or an
+unavailable limiter fails closed. Tests replace time with an injected clock and
+never wait for real windows.
+
+Initial production supports exactly one application worker. Process restart
+resets application counters; this is an accepted bounded risk only because the
+production perimeter is mandatory. Multi-worker production is prohibited until
+a shared atomic limiter backend is separately approved.
+
 ## Browser-facing static compatibility
 
 Templates and their JavaScript and CSS assets form one browser-facing contract.

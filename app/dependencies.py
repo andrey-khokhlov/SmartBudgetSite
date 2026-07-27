@@ -6,13 +6,13 @@ Important:
 - Do not duplicate get_db in other modules
 """
 
-
 from collections.abc import Generator
 from sqlalchemy.orm import Session
-from fastapi import Request, HTTPException, Depends
+from fastapi import HTTPException, Request
 
 from app.core.config import settings
 from app.core.db import SessionLocal
+from app.core.rate_limiting import enforce_admin_auth_failure_limit
 
 ADMIN_COOKIE_NAME = "admin_token"
 
@@ -41,4 +41,5 @@ def require_admin(request: Request) -> None:
     """
 
     if request.cookies.get(ADMIN_COOKIE_NAME) != settings.ADMIN_TOKEN:
+        enforce_admin_auth_failure_limit(request)
         raise HTTPException(status_code=403, detail="Admin access denied")

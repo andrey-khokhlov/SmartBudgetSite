@@ -10,6 +10,26 @@ def build_settings(**values: Any) -> Settings:
     return Settings(_env_file=None, **values)  # type: ignore[call-arg]
 
 
+@pytest.mark.parametrize("app_env", ["dev", "test", "prod"])
+def test_app_env_accepts_supported_values(app_env: str) -> None:
+    configured_settings = build_settings(
+        APP_ENV=app_env,
+        ADMIN_TOKEN="production-admin-token",
+        SECRET_KEY="production-secret-key",
+    )
+
+    assert configured_settings.APP_ENV == app_env
+
+
+@pytest.mark.parametrize(
+    "app_env",
+    ["production", "development", "prd", "", "unknown-environment"],
+)
+def test_app_env_rejects_unsupported_values(app_env: str) -> None:
+    with pytest.raises(ValidationError):
+        build_settings(APP_ENV=app_env)
+
+
 @pytest.mark.parametrize("invalid_value", ["", "   \t"])
 def test_production_rejects_invalid_admin_token(invalid_value: str) -> None:
     with pytest.raises(ValidationError, match="ADMIN_TOKEN must be non-empty"):
@@ -99,3 +119,29 @@ def test_release_upload_limit_has_safe_default() -> None:
 def test_release_upload_limit_must_be_positive(invalid_limit: int) -> None:
     with pytest.raises(ValidationError, match="greater than 0"):
         build_settings(PRODUCT_RELEASE_MAX_UPLOAD_BYTES=invalid_limit)
+
+
+def test_rate_limit_configuration_has_safe_defaults() -> None:
+    configured_settings = build_settings()
+
+    assert configured_settings.RATE_LIMIT_ENABLED is True
+    assert configured_settings.RATE_LIMIT_MAX_IDENTITIES == 10_000
+
+
+@pytest.mark.parametrize("invalid_capacity", [0, -1])
+def test_rate_limit_capacity_must_be_positive(invalid_capacity: int) -> None:
+    with pytest.raises(ValidationError, match="greater than 0"):
+        build_settings(RATE_LIMIT_MAX_IDENTITIES=invalid_capacity)
+
+
+def test_production_rejects_disabled_rate_limiting() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="RATE_LIMIT_ENABLED must be true",
+    ):
+        build_settings(
+            APP_ENV="prod",
+            ADMIN_TOKEN="production-admin-token",
+            SECRET_KEY="production-secret-key",
+            RATE_LIMIT_ENABLED=False,
+        )

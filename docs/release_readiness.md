@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `SEC-007` — Establish coherent rate limits.**
+**Current first incomplete item: `REL-004` — Reconcile R2 and database side effects.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -142,7 +142,7 @@ together even though each finding retains its own identifier.
 | 17 | Feedback storage | `SEC-011` | Define the attachment lifecycle | `Completed` |
 | 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Completed` |
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Completed` |
-| 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Not started` |
+| 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Completed` |
 | 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Not started` |
 | 22 | Release workflow | `REL-005` | Complete administrative publication | `Not started` |
 | 23 | Documentation | `DOC-002` | Define the port configuration contract | `Not started` |
@@ -512,6 +512,25 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Every abuse-sensitive entry point has an explicit,
   consistent limit and predictable failure behavior across the application and
   production perimeter.
+- **Completed behavior:** A project-owned, thread-safe process-local
+  rolling-window limiter protects feedback before multipart parsing, purchase
+  lookup by IP and normalized-email HMAC, download and consultation route
+  families by IP and capability HMAC, shared admin authentication failures, and
+  Calendly before and after signature verification. Responses use deterministic
+  HTTP 429, integer `Retry-After`, stable JSON or localized HTML, while
+  capability responses retain SEC-009 headers. Bounded state fails closed,
+  rejection logging is coalesced and privacy-safe, and direct development
+  disables proxy-header interpretation.
+- **Production boundary:** Initial production supports exactly one application
+  worker. Restart counter reset is an accepted bounded residual risk because
+  the documented production perimeter is mandatory. Multi-worker production is
+  prohibited until a shared atomic backend is approved. No proxy technology is
+  selected or configured here; trusted-proxy and perimeter behavior remain
+  release-environment validation obligations.
+- **Regression validation:** The focused SEC-007 and affected-boundary suites
+  pass 115 tests, the full ordinary suite passes 343 tests, and the Chromium
+  Feedback suite passes 14 tests. Changed-file Ruff and Black checks and
+  `git diff --check` pass.
 - **Dependencies:** `SEC-001`, `SEC-002`, `SEC-003`, and `SEC-009` must establish
   the final protected endpoint contracts first.
 - **References:** [Operations validation policy](operations.md#validation-policy),

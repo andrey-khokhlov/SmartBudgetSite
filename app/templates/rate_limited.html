@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("rate_limit_title") }}{% endblock %}
+
+{% block content %}
+<section class="container">
+    <h1>{{ t("rate_limit_title") }}</h1>
+    <p>{{ rate_limit_message }}</p>
+    {% if retry_message %}
+    <p>{{ retry_message }}</p>
+    {% endif %}
+</section>
+{% endblock %}

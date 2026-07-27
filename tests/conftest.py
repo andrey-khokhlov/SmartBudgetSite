@@ -41,7 +41,6 @@ from app.core.config import settings
 
 from app.services import mail_service
 
-
 TEST_DB_FILE = Path(tempfile.gettempdir()) / "smartbudget_test_feedback.db"
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_FILE}"
 
@@ -111,16 +110,20 @@ def clean_database() -> Generator[None, None, None]:
 
 
 @pytest.fixture(autouse=True)
-def override_dependencies(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
+def override_dependencies(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Generator[None, None, None]:
     # Use a temporary uploads folder for each test
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(settings, "UPLOAD_DIR", str(upload_dir), raising=False)
 
+    app.state.rate_limiter.reset()
     app.dependency_overrides[get_db] = override_get_db
     yield
     app.dependency_overrides.clear()
+    app.state.rate_limiter.reset()
 
 
 @pytest.fixture()
@@ -159,5 +162,3 @@ def disable_real_email_sending(monkeypatch):
     monkeypatch.setattr(mail_service, "send_email", fake_send_email)
 
     return sent_emails
-
-
