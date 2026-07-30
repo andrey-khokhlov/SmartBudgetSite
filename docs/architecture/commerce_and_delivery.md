@@ -16,6 +16,11 @@ releases, download entitlements, and protected product delivery.
   the selected product, not the current interface language.
 - Product and add-on prices come from the database, never query parameters or UI
   input.
+- The product catalog is the source of truth for price and currency. Business
+  logic must not hardcode currencies.
+- The approved MVP commercial model uses RUB product prices for Russian
+  customers and EUR product prices for international customers. The selected
+  product price determines the checkout currency.
 - Currency mixing is forbidden at runtime; locale-aware formatting belongs in
   templates.
 - Consultation add-on pricing must be visible before checkout. Checkout confirms
@@ -26,9 +31,9 @@ purchase history.
 
 ## Sales and sale items
 
-`Sale` is the order header. It owns customer identity, payment status, provider
-transaction identifiers, total amount, currency, timestamps, and payment
-metadata.
+`Sale` is the order header. It owns customer identity, payment status, payment
+provider and provider-specific external payment identifiers, total amount,
+currency, timestamps, and payment metadata.
 
 `SaleItem` is the immutable snapshot of each purchased business item. Initial
 item types are `product` and `service`. Each item preserves item type, ownership
@@ -91,6 +96,76 @@ is applied before the lookup service. Positive and negative lookup results
 consume the same quota. A rejected request returns JSON HTTP 429 with an integer
 `Retry-After` header.
 
+## Payment architecture
+
+SmartBudgetSite uses a provider-independent payment architecture. Lava.top is
+the approved first production provider for MVP. It is the first provider
+implementation within this architecture, not temporary code or technical debt.
+Stripe remains the strategic long-term target, but migration will occur only
+after legitimate long-term Stripe infrastructure has been obtained. Purchased,
+rented, nominee, borrowed, or third-party-owned Stripe accounts are not an
+acceptable foundation.
+
+Lava.ru is not part of MVP. It may be evaluated later if commercial or
+operational reasons justify another provider option.
+
+Provider-specific integrations own only:
+
+- checkout or session creation;
+- invoice creation;
+- webhook verification;
+- webhook payload parsing;
+- normalization into internal payment events;
+- provider-specific identifiers;
+- provider API communication.
+
+Business services must not depend directly on Lava.top, Stripe, or another
+provider's payloads. They operate only on normalized internal payment events.
+`Sale`, `SaleItem`, fulfillment, download and consultation entitlements,
+purchase emails, and delivery workflows must contain no provider-specific
+business logic.
+
+Historical sales remain associated with their originating provider and must
+remain supported when the active provider changes. A future Stripe migration
+must preserve and continue to support historical Lava.top transactions. The
+architectural goal is to isolate provider differences so migration has bounded
+impact. It is not guaranteed to be an adapter-only replacement: checkout
+behavior, refunds, disputes, supported currencies, webhook semantics, and
+operational procedures may differ between providers.
+
+## Checkout and payment confirmation
+
+Provider-hosted checkout is the approved MVP user experience. Embedded card
+forms are not an MVP requirement.
+
+The approved customer journey is:
+
+```text
+Product page
+    -> Buy page
+    -> Backend prepares pending Sale and SaleItems
+    -> Backend creates Lava.top payment
+    -> Hosted Lava.top checkout
+    -> Payment
+    -> SmartBudgetSite payment result page
+```
+
+The customer returns to a dedicated SmartBudgetSite payment result page, such as
+`/payment/success`, rather than directly to the product page. The browser
+redirect is not proof of payment. Browser navigation serves only the customer
+experience; authoritative payment state is maintained by backend verification.
+Payment completion is confirmed only by an authenticated provider webhook or
+explicit server-to-server payment verification.
+
+While backend confirmation is pending, the payment result page may display a
+payment-confirmation state. Only confirmed payment may:
+
+- mark a `Sale` as paid;
+- create download entitlements;
+- create consultation entitlements;
+- trigger purchase emails;
+- unlock customer content.
+
 ## Payment preparation
 
 - Product payment preparation selects the exact active release before provider
@@ -107,13 +182,27 @@ consume the same quota. A rejected request returns JSON HTTP 429 with an integer
 - Retrying after such a failure creates a new `Sale`.
 - Payment identity is unique by `(payment_provider, external_payment_id)` when
   the external identifier is present.
-- For Stripe, `Sale.external_payment_id` is intended to store the Checkout
-  Session ID.
+- `Sale.external_payment_id` stores the originating provider's external payment
+  identifier. A Stripe Checkout Session ID is one possible provider-specific
+  example, not the field's universal meaning.
 
 Provider webhooks must validate signatures from server-owned secrets, normalize
 provider data at the integration boundary, and delegate business transitions to
 services. Successful payment is the normal origin of delivery and service
 entitlements.
+
+## Payout operations
+
+Payout routing is an operational concern and must not be encoded in business
+logic or hardcoded into application architecture. The current operational
+intention is to route RUB balances to a Russian payout destination and EUR
+balances to a foreign EUR payout destination, avoiding unnecessary currency
+conversion whenever same-currency payout is available.
+
+Solo Bank is the currently planned foreign EUR payout destination, subject to
+production validation. Solo payout compatibility must be validated before
+release; this intention does not make a specific payout destination an
+application-level dependency.
 
 ## Product and release ownership
 

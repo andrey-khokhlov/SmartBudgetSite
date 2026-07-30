@@ -612,10 +612,13 @@ defects.
 
 ### Commerce and fulfillment (`REL-001`)
 
-- real Stripe Checkout Session creation;
-- payment webhook processing;
+- real Lava.top hosted checkout and the SmartBudgetSite payment result page;
+- authenticated Lava.top webhook processing or explicit server-to-server
+  payment verification;
 - payment-success entitlement creation;
 - customer purchase email and delivery links.
+- production validation of the RUB and EUR payment flow, including Solo Bank
+  compatibility for the currently planned foreign EUR payout destination.
 
 ### Production deployment (`REL-002`)
 

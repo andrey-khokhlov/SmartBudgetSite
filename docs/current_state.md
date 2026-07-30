@@ -46,10 +46,23 @@ Commerce and delivery:
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
 - Payment preparation is provider-independent and creates pending records, but
-  real Stripe Checkout Session creation and payment webhook processing are not
-  implemented.
+  real Lava.top checkout, production webhook integration, and the end-to-end
+  payment flow are not implemented.
+- Lava.top is the approved first production payment provider within the
+  provider-independent architecture. Stripe remains the strategic long-term
+  target after legitimate long-term Stripe infrastructure becomes available;
+  it is not the next MVP implementation target.
 - Payment-success orchestration does not yet create download entitlements or
   send purchase emails containing download links.
+- The approved MVP checkout uses hosted Lava.top checkout and returns to a
+  SmartBudgetSite payment result page. Browser return is not proof of payment;
+  paid state, entitlements, customer content, and purchase emails require an
+  authenticated webhook or explicit server-to-server verification.
+- The catalog-defined selected price determines currency: RUB for Russian
+  customers and EUR for international customers. Payout routing remains
+  operational rather than application business logic. The planned foreign EUR
+  destination is Solo Bank, whose compatibility still requires production
+  validation.
 
 Consultations:
 
@@ -201,13 +214,19 @@ Infrastructure and quality:
 
 ## Current launch constraint
 
-The primary deployment blocker is international payment infrastructure. Hosting
-availability, domain ownership, DNS infrastructure, Calendly account setup, and
-backend implementation readiness are not the current blockers.
+The payment release blocker is completing and validating the approved Lava.top
+integration: hosted checkout, authenticated webhook or server-to-server
+verification, the SmartBudgetSite result page, fulfillment, and delivery.
+Availability of Stripe is not an MVP release dependency. Hosting availability,
+domain ownership, DNS infrastructure, and Calendly account setup are not the
+current blockers.
 
-The project decision remains to continue development while banking and payment
-infrastructure are arranged rather than block product work on that external
-timeline.
+RUB payout routing is intended for a Russian destination. EUR payout routing is
+intended for a foreign EUR destination, currently planned as Solo Bank, and
+requires production compatibility validation before release. The project
+decision remains to continue development while the approved payment and payout
+operations are validated rather than block product work on future Stripe
+infrastructure.
 
 ## Next sprint priorities
 
