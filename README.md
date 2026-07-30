@@ -13,7 +13,7 @@ Backend for SmartBudget application built with FastAPI, PostgreSQL and Docker.
 ## 🔍 Health Check
 
 ```bash
-curl http://127.0.0.1:8000/v1/health
+curl http://127.0.0.1:8800/v1/health
 ```
 
 Response:
@@ -98,6 +98,8 @@ Environment variables are configured via:
 ## Key variables:
 ```text
 DATABASE_URL=
+APP_HOST=127.0.0.1
+APP_PORT=8800
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 POSTGRES_DB=
@@ -131,7 +133,7 @@ copy .env.example .env
 
 ### 5. Run application
 ```bash
-uvicorn app.main:app --reload --app-dir .
+python run.py
 ```
 
 
@@ -186,7 +188,7 @@ File handling is isolated and ready for migration to cloud storage
 ### Create feedback with attachments
 
 ```bash
-curl -X POST "http://localhost:8000/v1/feedback" \
+curl -X POST "http://127.0.0.1:8800/v1/feedback" \
   -F "message_type=site_issue" \
   -F "subject=Test message" \
   -F "message=Something is broken" \
@@ -194,7 +196,7 @@ curl -X POST "http://localhost:8000/v1/feedback" \
 ```
 ### Check purchase
 ```bash
-curl -X POST "http://localhost:8000/v1/check-purchase" \
+curl -X POST "http://127.0.0.1:8800/v1/check-purchase" \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com"}'
 ```

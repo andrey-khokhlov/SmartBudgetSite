@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `DOC-002` — Define the port configuration contract.**
+**Official Release Backlog status: all items completed.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -145,8 +145,8 @@ together even though each finding retains its own identifier.
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Completed` |
 | 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Completed` |
 | 22 | Release workflow | `REL-005` | Complete administrative publication | `Completed` |
-| 23 | Documentation | `DOC-002` | Define the port configuration contract | `Not started` |
-| 24 | Documentation | `DOC-003` | Align Calendly lifecycle claims | `Not started` |
+| 23 | Documentation | `DOC-002` | Define the port configuration contract | `Completed` |
+| 24 | Documentation | `DOC-003` | Align Calendly lifecycle claims | `Completed` |
 
 ### Authoritative item descriptions
 
@@ -602,6 +602,16 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Every documented port has an explicit purpose,
   environment scope, and precedence, and startup instructions agree with that
   contract rather than forcing all environments to use one value.
+- **Completed behavior:** Operations documentation defines process environment,
+  selected environment file, and `Settings` default precedence. It distinguishes
+  the `8000` fallback application port, normal local `8800` application port,
+  production-internal `4000` application port, PostgreSQL `5433 -> 5432`
+  host/container mapping, and frontend development origin `5173`. The example
+  environment and README commands now use the normal local workflow without
+  changing Python defaults or deployment architecture.
+- **Validation:** Active repository port references were reviewed against the
+  contract, README commands use the configured local listener, and
+  `git diff --check` passes.
 - **Dependencies:** `SEC-004` and `SEC-006` should stabilize the production
   configuration boundary first.
 - **References:** [Operations development commands](operations.md#development-commands),
@@ -610,12 +620,20 @@ together even though each finding retains its own identifier.
 #### 24. `DOC-003` — Align Calendly lifecycle claims
 
 - **Source:** Confirmed Defect; architecture decision: Accepted.
-- **Finding:** Active documentation describes Calendly lifecycle synchronization
-  as implemented even though the HTTP webhook transition is not durably
-  committed.
+- **Historical finding:** Active documentation described Calendly lifecycle
+  synchronization as implemented before the HTTP webhook transition had
+  request-level durability validation.
 - **Accepted end state:** Active documentation describes only the Calendly
   lifecycle behavior that has been confirmed through persistent request-level
   validation.
+- **Completed behavior:** The Calendly webhook HTTP route owns the successful
+  request transaction, commits after processing succeeds, and returns HTTP 204
+  only after the commit. Lower-level lifecycle services remain flush-only. A
+  request-level regression confirms the booked entitlement through a fresh
+  independent database session after the request session closes.
+- **Remaining external validation:** No real Calendly webhook subscription
+  exists yet. A real provider payload and the initial entitlement
+  reconciliation strategy remain unvalidated release-environment work.
 - **Dependencies:** `CONS-001` and `SEC-005`.
 - **References:** [Current consultation state](current_state.md#current-project-state),
   [Calendly webhook architecture](architecture/consultations.md#webhook-boundary).

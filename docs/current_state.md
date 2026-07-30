@@ -173,6 +173,12 @@ Infrastructure and quality:
   unsupported until a shared atomic backend is approved.
 - The production perimeter and trusted-proxy behavior are not configured in
   this repository and remain release-environment validation obligations.
+- `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
+  The port contract now distinguishes fallback, local, production-internal,
+  Docker host/container, frontend-origin, and external-provider ports while
+  preserving environment precedence. Active Calendly documentation reflects
+  the confirmed request-level durable webhook commit and separately retains
+  real-provider reconciliation as release-environment validation.
 - `SEC-009` is complete. Download and consultation booking capability responses
   use private no-store cache headers and `Referrer-Policy: no-referrer`,
   including handled errors, unsupported methods, and the signed-R2 redirect.
@@ -232,12 +238,12 @@ infrastructure.
 
 ## Next sprint priorities
 
-### 1. Continue the Official Release Backlog
+### 1. Complete the Expected Release Gaps
 
-The first incomplete Official Release Backlog item is `DOC-002` — define the
-port configuration contract. Continue in the authoritative order defined
-in `release_readiness.md`; do not substitute roadmap work for the next
-incomplete remediation item.
+The Official Release Backlog is complete. Continue release preparation through
+the authoritative Expected Release Gaps in `release_readiness.md`; select each
+bounded implementation scope through the established architecture discussion
+and review workflow rather than creating a parallel backlog.
 
 ### 2. Smart Feedback support flow (later work)
 

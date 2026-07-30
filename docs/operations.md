@@ -11,9 +11,39 @@ configuration rules, deployment preparation, and operational validation.
 python run.py
 ```
 
-The application is available at `http://127.0.0.1:8800` by default. This is the
-authoritative local development startup method; avoid documenting or running
-parallel startup commands that can create duplicate application processes.
+With the normal local `.env` configuration, the application is available at
+`http://127.0.0.1:8800`. This is the authoritative local development startup
+method; avoid documenting or running parallel startup commands that can create
+duplicate application processes.
+
+`run.py` binds Uvicorn to `APP_HOST` and `APP_PORT`. Settings precedence is:
+
+```text
+process environment
+    -> selected environment file
+        -> Settings default
+```
+
+`ENV_FILE` selects the environment file and defaults to `.env`. A process
+environment value overrides the selected file, and `Settings.APP_PORT = 8000`
+is only the fallback when neither source supplies `APP_PORT`.
+
+## Port contract
+
+| Port | Purpose | Environment scope | Port role |
+|---:|---|---|---|
+| `8000` | Fallback `APP_PORT` from `Settings` | Any environment without an `APP_PORT` override | Application bind port |
+| `8800` | Normal configured local SmartBudgetSite listener | Local development through `.env`, initially copied from `.env.example` | Application bind port |
+| `4000` | Internal SmartBudgetSite listener in the production environment | Production through `.env.prod` when that file is selected | Application bind port; not a public reverse-proxy port |
+| `5433` | Local host access to the development PostgreSQL container | Local Docker development | Host-side database port mapping |
+| `5432` | PostgreSQL listener inside the container | Local Docker network/container | Container port |
+| `5173` | Allowed origin for a separately run frontend development server | Local frontend development only | Frontend development origin; not a SmartBudgetSite bind port |
+| `587` | Configured outbound SMTP submission endpoint | Environments using the example SMTP configuration | External provider port; not a local bind port |
+
+Docker Compose maps host port `5433` to PostgreSQL container port `5432`.
+Production reverse-proxy, public HTTPS, and host-port selection remain part of
+`REL-002`; the internal application port `4000` does not define that deployment
+architecture.
 
 ## Codex pytest validation environment
 
