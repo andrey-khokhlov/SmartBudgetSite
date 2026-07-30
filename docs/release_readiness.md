@@ -645,6 +645,47 @@ defects.
 - robots and sitemap behavior;
 - social metadata and no-index rules for protected or administrative pages.
 
+### Public contact and social-link boundary (`UX-001`)
+
+Before the first public commercial release, the final public-site and
+release-polish phase must include an explicit architecture and UX review of the
+footer and every other public contact or social link. The resulting policy must
+be approved, implemented, and validated across public pages before this release
+gap is complete. It must define:
+
+- how founder identity and informational professional-profile links are
+  presented;
+- whether official product social accounts exist and what role they serve;
+- the official customer-support and paid-consultation entry points;
+- whether any personal messaging account may be exposed by the product;
+- how inactive, empty, or abandoned product social channels are excluded;
+- ownership, configuration, localization, and future replacement of every
+  public link.
+
+The current direction for that review is provisional rather than final
+architecture:
+
+- customer support continues through the official Feedback/support process;
+- paid consultation requests continue through the approved Consultation →
+  Checkout → Calendly journey;
+- personal Telegram and WhatsApp links should not remain public product contact
+  channels unless a later explicit architecture decision justifies them;
+- LinkedIn may remain as an informational founder professional-profile link only
+  if the architecture and page wording make clear that it is not a support
+  channel;
+- Facebook requires review because a personal profile may provide insufficient
+  trust value relative to the weaker professional boundary it creates;
+- a Telegram product channel must not be created or linked merely to fill a
+  social-media slot; an empty or abandoned channel is worse than no channel;
+- the final link set is intentionally minimal and does not imply real-time
+  personal support.
+
+SmartBudgetSite is not release-ready while personal contact channels remain
+public without this explicit approved architecture and its corresponding
+implementation. This gap is final public-site and release-polish work; it does
+not change the order or current first incomplete item in the Official Release
+Backlog.
+
 ## 6. Completion Definition
 
 SmartBudgetSite is ready for its first public commercial release only when all

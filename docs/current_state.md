@@ -287,6 +287,13 @@ phase.
   supporting copy, CTA label, and destination to reflect the approved
   Consultation → Checkout → Calendly flow; complete this during the final landing
   page and release-polish pass
+- Public contact and social-link boundary: the current footer still exposes
+  personal contact and profile links, and no final public-link architecture has
+  been approved or implemented. Complete the mandatory architecture and UX
+  review during the final public-site and release-polish phase without changing
+  the current Official Release Backlog order; the authoritative release
+  requirement is in
+  [release readiness](release_readiness.md#public-contact-and-social-link-boundary-ux-001).
 - Administrative feedback deletion workflow: implement a protected admin-only
   workflow for permanently deleting Feedback messages together with their
   attachments. The implementation should preserve the approved attachment
