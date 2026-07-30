@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC, datetime
 from io import BytesIO
 
 import pytest
-from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
 from app.models.product import Product
@@ -13,6 +13,7 @@ from app.services.product_release_service import (
     ProductReleaseService,
     ReleaseArchiveTooLargeError,
     ReleaseConflictError,
+    ReleaseNotFoundError,
     ReleasePersistenceError,
     ReleaseReconciliationRequiredError,
     ReleaseStorageUnavailableError,
@@ -31,6 +32,7 @@ class FakeReleaseStorage:
         self.upload_error: Exception | None = None
         self.upload_error_after_store = False
         self.verification_override: bool | None = None
+        self.verification_calls: list[dict[str, object]] = []
         self.delete_error: Exception | None = None
 
     def upload_product_release_file(
@@ -67,6 +69,13 @@ class FakeReleaseStorage:
         expected_file_size,
         expected_sha256_hash,
     ) -> bool:
+        self.verification_calls.append(
+            {
+                "storage_key": storage_key,
+                "expected_file_size": expected_file_size,
+                "expected_sha256_hash": expected_sha256_hash,
+            }
+        )
         if self.verification_override is not None:
             return self.verification_override
         return self.objects.get(storage_key) == (
@@ -631,29 +640,49 @@ def test_publish_release_verifies_object_and_deactivates_previous(db_session):
     )
     db_session.add(new_release)
     db_session.flush()
-    storage.objects[new_release.storage_key] = (len(new_content), new_digest)
+    new_release_id = new_release.id
+    new_release_storage_key = new_release.storage_key
+    db_session.commit()
+    storage.objects[new_release_storage_key] = (len(new_content), new_digest)
     service = build_service(db_session, storage)
 
-    published = service.publish_release(new_release.id)
+    published = service.publish_release(new_release_id)
 
-    assert published.id == new_release.id
+    assert published.id == new_release_id
     assert new_release.is_active is True
     assert old_release.is_active is False
     assert new_release.released_at is not None
+    db_session.close()
+    persisted = db_session.get(ProductRelease, new_release_id)
+    assert persisted is not None
+    assert persisted.is_active is True
 
 
-@pytest.mark.parametrize("verification_result", [False, None])
+@pytest.mark.parametrize("storage_state", ["missing", "size_mismatch", "sha_mismatch"])
 def test_publish_release_rejects_missing_or_mismatched_object(
     db_session,
-    verification_result,
+    storage_state,
 ) -> None:
     product = create_test_product(db_session)
     storage = FakeReleaseStorage()
     release = create_existing_release(db_session, product, storage)
-    if verification_result is False:
-        storage.verification_override = False
-    else:
+    release_id = release.id
+    release_storage_key = release.storage_key
+    release_file_size = release.file_size
+    release_sha256_hash = release.sha256_hash
+    if storage_state == "missing":
         storage.objects.clear()
+    elif storage_state == "size_mismatch":
+        storage.objects[release_storage_key] = (
+            release_file_size + 1,
+            release_sha256_hash,
+        )
+    else:
+        storage.objects[release_storage_key] = (
+            release_file_size,
+            "b" * 64,
+        )
+    db_session.commit()
     service = build_service(
         db_session,
         storage,
@@ -661,9 +690,58 @@ def test_publish_release_rejects_missing_or_mismatched_object(
     )
 
     with pytest.raises(ReleaseReconciliationRequiredError):
-        service.publish_release(release.id)
+        service.publish_release(release_id)
 
-    assert release.is_active is False
+    db_session.expire_all()
+    persisted = db_session.get(ProductRelease, release_id)
+    assert persisted is not None
+    assert persisted.is_active is False
+
+
+def test_republishing_active_release_is_idempotent_and_preserves_timestamp(db_session):
+    product = create_test_product(db_session)
+    storage = FakeReleaseStorage()
+    release = create_existing_release(db_session, product, storage)
+    original_released_at = datetime(2026, 7, 1, tzinfo=UTC)
+    release.is_active = True
+    release.released_at = original_released_at
+    release_id = release.id
+    db_session.commit()
+
+    published = build_service(db_session, storage).publish_release(release_id)
+
+    assert published.id == release_id
+    assert published.is_active is True
+    assert published.released_at.replace(tzinfo=UTC) == original_released_at
+    assert len(storage.verification_calls) == 1
+
+
+def test_publish_rejects_release_from_different_product_before_storage(db_session):
+    product = create_test_product(db_session)
+    other_product = Product(
+        family_slug="smartbudget",
+        slug="smartbudget-test-other",
+        name="SmartBudget",
+        archive_path="legacy/path.zip",
+        edition="Pro",
+        status="in_sale",
+    )
+    db_session.add(other_product)
+    db_session.flush()
+    other_product_id = other_product.id
+    db_session.commit()
+    storage = FakeReleaseStorage()
+    release = create_existing_release(db_session, product, storage)
+    release_id = release.id
+    db_session.commit()
+
+    with pytest.raises(ReleaseNotFoundError):
+        build_service(db_session, storage).publish_release(
+            release_id,
+            product_id=other_product_id,
+        )
+
+    assert storage.verification_calls == []
 
 
 def test_database_rejects_two_active_releases_for_same_product(db_session):
@@ -687,10 +765,8 @@ def test_database_rejects_two_active_releases_for_same_product(db_session):
         db_session.flush()
 
 
-def test_publish_release_raises_404_for_unknown_release(db_session):
+def test_publish_release_raises_not_found_for_unknown_release(db_session):
     service = build_service(db_session, FakeReleaseStorage())
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(ReleaseNotFoundError):
         service.publish_release(999999)
-
-    assert exc.value.status_code == status.HTTP_404_NOT_FOUND

@@ -40,9 +40,11 @@ Commerce and delivery:
   and retains the object for founder-operated reconciliation. The reconciliation
   command is read-only by default and its explicit delete mode is age-gated,
   current-key-only, and protected by an immediate database ownership recheck.
-- Publishing verifies R2 size and SHA-256 before activation. Wiring the visible
-  Publish control and serializing future concurrent publication remain
-  `REL-005`.
+- `REL-005` is complete. The administrative Publish control delegates to a
+  service-owned transaction that locks the owning product row, verifies the
+  persisted R2 object's size and SHA-256, deactivates the previous release, and
+  activates the selected release. Re-publishing the active release safely
+  re-verifies storage and preserves its original release timestamp.
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
 - Payment preparation is provider-independent and creates pending records, but
@@ -232,8 +234,8 @@ infrastructure.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `REL-005` — complete
-administrative publication. Continue in the authoritative order defined
+The first incomplete Official Release Backlog item is `DOC-002` — define the
+port configuration contract. Continue in the authoritative order defined
 in `release_readiness.md`; do not substitute roadmap work for the next
 incomplete remediation item.
 

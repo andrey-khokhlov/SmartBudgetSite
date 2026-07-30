@@ -33,6 +33,24 @@
         </a>
     </div>
 
+    {% if publication_succeeded %}
+        <p class="product-releases-notice product-releases-notice-success" role="status">
+            Release published successfully.
+        </p>
+    {% elif publication_error == "storage_unavailable" %}
+        <p class="product-releases-notice product-releases-notice-error" role="alert">
+            Release storage is temporarily unavailable. No publication changes were made.
+        </p>
+    {% elif publication_error == "verification_failed" %}
+        <p class="product-releases-notice product-releases-notice-error" role="alert">
+            The stored release could not be verified. No publication changes were made.
+        </p>
+    {% elif publication_error == "publication_conflict" %}
+        <p class="product-releases-notice product-releases-notice-error" role="alert">
+            The release could not be published safely. Please refresh and try again.
+        </p>
+    {% endif %}
+
     <p>Shown: {{ releases|length }}</p>
 
     <div class="admin-table-wrapper">
@@ -81,7 +99,14 @@
                         {% if release.is_active %}
                             <span class="product-releases-current-label">Current</span>
                         {% else %}
-                            <a href="#">Publish</a>
+                            <form
+                                method="post"
+                                action="/products/{{ product_id }}/releases/{{ release.id }}/publish"
+                            >
+                                <button type="submit" class="product-releases-publish-button">
+                                    Publish
+                                </button>
+                            </form>
                         {% endif %}
                     </td>
                 </tr>

@@ -49,6 +49,31 @@
     color: #2e7d32;
 }
 
+.product-releases-publish-button {
+    border: 0;
+    padding: 0;
+    background: none;
+    color: #0b57d0;
+    cursor: pointer;
+    font: inherit;
+    text-decoration: underline;
+}
+
+.product-releases-notice {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+}
+
+.product-releases-notice-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.product-releases-notice-error {
+    background: #ffebee;
+    color: #b71c1c;
+}
+
 @media (max-width: 768px) {
     .product-releases-header {
         flex-direction: column;

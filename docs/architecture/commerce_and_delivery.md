@@ -250,6 +250,14 @@ selected release, sets `released_at` when needed, and guarantees one active
 public release per SKU. Templates and admin controls must not implement this
 lifecycle themselves.
 
+Publication owns one explicit database transaction. It locks the selected
+release's owning `Product` row with PostgreSQL `SELECT ... FOR UPDATE` before
+loading and changing the product's releases. All publication attempts for one
+SKU therefore serialize on the same durable row, while different products may
+publish independently. The existing partial unique active-release index remains
+the final invariant. Re-publishing the active release is idempotent: storage is
+verified again and the existing `released_at` value is preserved.
+
 Administrative release archives have an inclusive application-level size limit
 of 50 MiB (52,428,800 bytes). Archive size and SHA-256 metadata are calculated
 in one bounded pass using chunks no larger than 1 MiB; the route does not read
@@ -288,10 +296,10 @@ be stored permanently on application VPS instances. R2 objects remain private;
 the backend owns authorization and issues short-lived signed access only after
 entitlement validation.
 
-Publishing verifies the persisted object's size and SHA-256 against R2 before
-activating a release. Publication still uses the existing database lifecycle;
-the administrative Publish control and future per-product concurrency control
-belong to `REL-005`, not this upload workflow.
+Publishing verifies the persisted object's size and SHA-256 against R2 inside
+the product-locked publication transaction and before changing publication
+state. Missing objects, metadata mismatches, and storage inspection failures
+roll back the transaction and leave the active release unchanged.
 
 Founder-operated reconciliation compares database rows with paginated R2
 listing plus per-row `HEAD` metadata. It is read-only by default. Explicit
@@ -300,10 +308,6 @@ opaque managed-key format, after an immediate database ownership recheck.
 Reconciliation never repairs or deletes database rows and never runs at startup.
 Objects owned by active or historical inactive database releases are retained,
 including releases referenced by sale items or download entitlements.
-
-`REL-005` must place per-product database locking and storage verification
-inside the publication transaction; the existing unique active-release index
-remains the final invariant.
 
 The application-level release limit is evaluated after Starlette has parsed the
 multipart request. It bounds application processing and route memory, but does

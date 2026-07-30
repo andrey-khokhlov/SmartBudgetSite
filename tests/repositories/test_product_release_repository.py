@@ -1,6 +1,11 @@
-from app.models.product_release import ProductRelease
+from sqlalchemy.dialects import postgresql
+
 from app.models.product import Product
-from app.repositories.product_release_repository import ProductReleaseRepository
+from app.models.product_release import ProductRelease
+from app.repositories.product_release_repository import (
+    ProductReleaseRepository,
+    product_lock_for_release_statement,
+)
 
 
 def create_test_product(db_session, slug: str = "smartbudget-test-standard") -> Product:
@@ -167,3 +172,18 @@ def test_list_all_product_releases(db_session):
     )
 
     assert repository.list_all() == [first, second]
+
+
+def test_product_publication_lock_targets_owning_product_row():
+    statement = product_lock_for_release_statement(42)
+
+    compiled = str(
+        statement.compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        )
+    )
+
+    assert "JOIN product_releases" in compiled
+    assert "product_releases.id = 42" in compiled
+    assert "FOR UPDATE OF products" in compiled

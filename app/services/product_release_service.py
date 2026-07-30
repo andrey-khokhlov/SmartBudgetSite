@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from typing import BinaryIO, Protocol
 from uuid import uuid4
 
-from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.product import Product
@@ -62,6 +62,14 @@ class ReleaseReconciliationRequiredError(Exception):
     def __init__(self, operation_id: str) -> None:
         super().__init__("Product release reconciliation is required.")
         self.operation_id = operation_id
+
+
+class ReleaseNotFoundError(Exception):
+    """Raised when a publication target does not exist."""
+
+
+class ReleasePublicationConflictError(Exception):
+    """Raised when publication cannot preserve the active-release invariant."""
 
 
 @dataclass(frozen=True)
@@ -392,39 +400,63 @@ class ProductReleaseService:
         )
         return ReleaseUploadResult(release_id=release_id, created=True)
 
-    def publish_release(self, release_id: int) -> ProductRelease:
-        release = self.product_release_repository.get_by_id(release_id)
-
-        if release is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product release not found.",
-            )
-
+    def publish_release(
+        self,
+        release_id: int,
+        *,
+        product_id: int | None = None,
+    ) -> ProductRelease:
         operation_id = self._operation_id_factory()
-        storage = self._create_storage_for_existing_release(
-            operation_id=operation_id,
-            product_id=release.product_id,
-        )
-        if (
-            release.file_size is None
-            or release.sha256_hash is None
-            or not self._verify_release_object(storage, release)
-        ):
-            raise ReleaseReconciliationRequiredError(operation_id)
+        try:
+            with self.db.begin():
+                product = self.product_release_repository.lock_product_for_release(
+                    release_id
+                )
+                if product is None:
+                    raise ReleaseNotFoundError
+                if product_id is not None and product.id != product_id:
+                    raise ReleaseNotFoundError
 
-        releases = self.product_release_repository.list_by_product_id(
-            release.product_id
-        )
-        now = datetime.now(UTC)
+                releases = (
+                    self.product_release_repository.list_by_product_id_for_update(
+                        product.id
+                    )
+                )
+                release = next(
+                    (
+                        product_release
+                        for product_release in releases
+                        if product_release.id == release_id
+                    ),
+                    None,
+                )
+                if release is None:
+                    raise ReleaseNotFoundError
 
-        for product_release in releases:
-            product_release.is_active = product_release.id == release.id
+                storage = self._create_storage_for_existing_release(
+                    operation_id=operation_id,
+                    product_id=product.id,
+                )
+                if (
+                    release.file_size is None
+                    or release.sha256_hash is None
+                    or not self._verify_release_object(storage, release)
+                ):
+                    raise ReleaseReconciliationRequiredError(operation_id)
 
-            if product_release.id == release.id and product_release.released_at is None:
-                product_release.released_at = now
+                now = datetime.now(UTC)
+                for product_release in releases:
+                    product_release.is_active = product_release.id == release.id
+                    if (
+                        product_release.id == release.id
+                        and product_release.released_at is None
+                    ):
+                        product_release.released_at = now
 
-        self.db.flush()
+                self.db.flush()
+        except IntegrityError as exc:
+            raise ReleasePublicationConflictError from exc
+
         return release
 
     def list_releases_by_product_id(

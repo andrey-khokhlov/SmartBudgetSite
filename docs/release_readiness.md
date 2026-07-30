@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `REL-005` — Complete administrative publication.**
+**Current first incomplete item: `DOC-002` — Define the port configuration contract.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -144,7 +144,7 @@ together even though each finding retains its own identifier.
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Completed` |
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Completed` |
 | 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Completed` |
-| 22 | Release workflow | `REL-005` | Complete administrative publication | `Not started` |
+| 22 | Release workflow | `REL-005` | Complete administrative publication | `Completed` |
 | 23 | Documentation | `DOC-002` | Define the port configuration contract | `Not started` |
 | 24 | Documentation | `DOC-003` | Align Calendly lifecycle claims | `Not started` |
 
@@ -573,6 +573,22 @@ together even though each finding retains its own identifier.
 - **Required implementation boundary:** Acquire per-product database locking
   inside the publication transaction, verify storage before activation, and
   retain the existing unique active-release index as the final invariant.
+- **Completed behavior:** The protected administrative Publish form invokes a
+  thin route that delegates publication to `ProductReleaseService`. One
+  service-owned transaction locks the release's owning `Product` row with
+  PostgreSQL `SELECT ... FOR UPDATE`, loads the product's releases, verifies
+  persisted R2 size and SHA-256 metadata, deactivates the prior active release,
+  activates the selected release, and initializes `released_at` only when it is
+  absent. Re-publishing the current release re-verifies storage and preserves
+  the existing timestamp. Expected failures render safe administrative
+  messages and leave publication state unchanged.
+- **Regression validation:** The focused release publication and upload suites
+  pass 55 tests, the broader release/admin regression set passes 64 tests, and
+  the full ordinary suite passes 412 tests. PostgreSQL SQL compilation confirms
+  `FOR UPDATE OF products`; the partial unique active-release index remains the
+  final invariant. Changed-file Ruff and Black checks and `git diff --check`
+  pass. Live PostgreSQL blocking and live R2 metadata behavior remain
+  release-environment validation.
 - **Dependencies:** `REL-004`.
 - **References:** [Release administration](architecture/commerce_and_delivery.md#release-administration).
 

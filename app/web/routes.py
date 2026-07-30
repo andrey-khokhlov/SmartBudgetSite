@@ -45,8 +45,10 @@ from app.services.product_release_service import (
     ProductReleaseService,
     ReleaseArchiveTooLargeError,
     ReleaseConflictError,
+    ReleaseNotFoundError,
     ReleasePersistenceError,
     ReleaseProductNotFoundError,
+    ReleasePublicationConflictError,
     ReleaseReconciliationRequiredError,
     ReleaseStorageUnavailableError,
     ReleaseUploadValidationError,
@@ -203,6 +205,35 @@ def _render_product_release_upload_error(
             "latest_release": releases[0] if releases else None,
             "upload_error": error_code,
             "operation_id": operation_id,
+        },
+        status_code=status_code,
+        document_lang="en",
+    )
+
+
+def _render_product_release_publication_error(
+    *,
+    request: Request,
+    db: Session,
+    product_id: int,
+    error_code: str,
+    status_code: int,
+):
+    db.rollback()
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    releases = ProductReleaseService(db).list_releases_by_product_id(product_id)
+    return render(
+        request,
+        "admin_product_releases.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "releases": releases,
+            "package": get_product_package(str(product.slug)),
+            "publication_error": error_code,
         },
         status_code=status_code,
         document_lang="en",
@@ -734,6 +765,7 @@ async def admin_products_edit(
     """
 
     from sqlalchemy import select
+
     from app.models.product_price import ProductPrice
 
     product = db.get(Product, product_id)
@@ -798,6 +830,7 @@ async def admin_products_update(
     """
 
     from sqlalchemy import select
+
     from app.models.product_price import ProductPrice
 
     product = db.get(Product, product_id)
@@ -1356,8 +1389,52 @@ def admin_product_releases(
             "product_id": product_id,
             "releases": releases,
             "package": package,
+            "publication_succeeded": request.query_params.get("published") == "1",
         },
         document_lang="en",
+    )
+
+
+@admin_router.post("/products/{product_id}/releases/{release_id}/publish")
+def admin_product_release_publish(
+    request: Request,
+    product_id: int,
+    release_id: int,
+    db: Session = Depends(get_db),
+):
+    release_service = ProductReleaseService(db)
+    try:
+        release_service.publish_release(release_id, product_id=product_id)
+    except ReleaseNotFoundError:
+        raise HTTPException(status_code=404, detail="Product release not found")
+    except ReleaseStorageUnavailableError:
+        return _render_product_release_publication_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="storage_unavailable",
+            status_code=503,
+        )
+    except ReleaseReconciliationRequiredError:
+        return _render_product_release_publication_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="verification_failed",
+            status_code=409,
+        )
+    except ReleasePublicationConflictError:
+        return _render_product_release_publication_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="publication_conflict",
+            status_code=409,
+        )
+
+    return RedirectResponse(
+        url=f"/products/{product_id}/releases?published=1",
+        status_code=303,
     )
 
 
