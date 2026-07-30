@@ -15,6 +15,29 @@ The application is available at `http://127.0.0.1:8800` by default. This is the
 authoritative local development startup method; avoid documenting or running
 parallel startup commands that can create duplicate application processes.
 
+## Codex pytest validation environment
+
+Codex pytest runs must keep temporary and cache data outside the repository.
+Use these locations:
+
+```text
+C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-temp\<task-name>
+C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-cache
+```
+
+Replace `<task-name>` with a short task-specific name. Every focused or full
+Codex validation command must specify both locations:
+
+```powershell
+python -m pytest [test paths] `
+  --basetemp="C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-temp\<task-name>" `
+  -o cache_dir="C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-cache"
+```
+
+The task-specific basetemp directory may be removed after validation. The shared
+external pytest cache may be retained between runs. Repository-local
+`.codex-pytest-*` directories are a configuration error and must not be created.
+
 ## Alembic (database migrations)
 ```
 # Show current applied migration (version in DB)
@@ -322,7 +345,8 @@ Chromium as the supported browser, and should capture page errors and console
 errors while exercising dynamic behavior and critical journeys. The single
 source for local Playwright setup and browser-test commands is
 `../browser_tests/README.md`; do not duplicate those installation instructions
-here. The ordinary non-browser suite continues to run with `python -m pytest`.
+here. The ordinary non-browser suite uses the Codex pytest validation
+environment and command options documented above.
 
 Migration-sensitive behavior must also be validated against PostgreSQL through
 Alembic. SQLite schemas created from SQLAlchemy metadata are useful for tests but

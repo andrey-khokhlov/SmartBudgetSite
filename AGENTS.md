@@ -253,9 +253,16 @@ Always execute tests through the project's configured Python interpreter.
 
 Preferred command:
 
-```bash
-python -m pytest
+```powershell
+python -m pytest `
+  --basetemp="C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-temp\<task-name>" `
+  -o cache_dir="C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-cache"
 ```
+
+Replace `<task-name>` with a short task-specific directory name. Every focused
+or full Codex pytest command must specify both the external `--basetemp` and
+external `cache_dir`. Repository-local `.codex-pytest-*` directories are a
+configuration error and must not be created.
 
 Do not assume that a standalone `pytest` executable is available on the system PATH.
 
