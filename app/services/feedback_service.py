@@ -51,6 +51,35 @@ class FeedbackAttachmentInput:
     file: BinaryIO
 
 
+@dataclass(frozen=True)
+class PublicReview:
+    subject: str
+    message: str
+    author_name: str | None
+    admin_reply: str | None
+    published_at: datetime | None
+
+
+def list_public_reviews(
+    db: Session,
+    *,
+    product_id: int,
+) -> list[PublicReview]:
+    """Return only fields approved for public review display."""
+    repository = FeedbackAdminRepository(db)
+    published_feedback = repository.list_published_product_feedback(product_id)
+    return [
+        PublicReview(
+            subject=feedback.subject,
+            message=feedback.message,
+            author_name=feedback.name,
+            admin_reply=feedback.admin_reply,
+            published_at=feedback.published_at,
+        )
+        for feedback in published_feedback
+    ]
+
+
 def _validate_feedback_attachments(
     attachments: list[FeedbackAttachmentInput],
 ) -> list[tuple[FeedbackAttachmentInput, str]]:
@@ -175,8 +204,7 @@ def submit_feedback(
                     feedback_id=feedback.id,
                     original_filename=attachment.filename or file_path.name,
                     storage_key=storage_key,
-                    content_type=attachment.content_type
-                    or "application/octet-stream",
+                    content_type=attachment.content_type or "application/octet-stream",
                     file_size_bytes=file_path.stat().st_size,
                 )
 
@@ -283,6 +311,7 @@ def send_feedback_reply(db: Session, feedback_id: int) -> None:
 
     db.commit()
 
+
 def toggle_feedback_publish(db: Session, feedback_id: int) -> FeedbackMessage:
     """
     Toggle public review publication for product feedback.
@@ -325,6 +354,7 @@ def toggle_feedback_publish(db: Session, feedback_id: int) -> FeedbackMessage:
 
     return item
 
+
 def toggle_feedback_resolved(db: Session, feedback_id: int):
     """
     Toggle resolved status for a feedback message.
@@ -342,6 +372,7 @@ def toggle_feedback_resolved(db: Session, feedback_id: int):
 
     return item
 
+
 def save_feedback_reply_draft(db: Session, feedback_id: int, admin_reply: str):
     """
     Save or update admin reply draft.
@@ -357,4 +388,3 @@ def save_feedback_reply_draft(db: Session, feedback_id: int, admin_reply: str):
     db.refresh(item)
 
     return item
-

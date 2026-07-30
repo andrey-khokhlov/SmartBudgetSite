@@ -1,19 +1,22 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/reviews.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/reviews.css') }}?v=2">
 {% endblock %}
 
-{% block title %}{{ t("reviews_title") }}{% endblock %}
+{% block title %}{{ t("reviews_page_title") }}{% endblock %}
 
 {% block content %}
-<section class="reviews-page">
-    <h1>{{ t("reviews_title") }}</h1>
+<section class="reviews-page" aria-labelledby="reviews-heading">
+    <header class="reviews-page__header">
+        <h1 id="reviews-heading">{{ t("reviews_title") }}</h1>
+        <p class="reviews-page__intro">{{ t("reviews_subtitle") }}</p>
+    </header>
 
     {% if reviews %}
-        <div class="reviews-list">
+        <div class="reviews-list" role="list">
             {% for review in reviews %}
-                <article class="review-card">
+                <article class="review-card" role="listitem">
                     <h2>{{ review.subject or t("reviews_no_subject") }}</h2>
 
                     {% if review.published_at %}
@@ -23,24 +26,33 @@
                         </p>
                     {% endif %}
 
-                    <p>
+                    <p class="review-author">
                         <strong>{{ t("reviews_from_label") }}:</strong>
-                        {{ review.name or t("reviews_anonymous") }}
+                        {{ review.author_name or t("reviews_anonymous") }}
                     </p>
 
-                    <p>{{ review.message }}</p>
+                    <p class="review-message">{{ review.message }}</p>
 
                     {% if review.admin_reply %}
-                        <div class="review-admin-reply">
-                            <strong>{{ t("reviews_reply_label") }}:</strong>
+                        <section
+                            class="review-admin-reply"
+                            aria-label="{{ t('reviews_reply_label') }}"
+                        >
+                            <h3>{{ t("reviews_reply_label") }}</h3>
                             <p>{{ review.admin_reply }}</p>
-                        </div>
+                        </section>
                     {% endif %}
                 </article>
             {% endfor %}
         </div>
     {% else %}
-        <p>{{ t("reviews_empty") }}</p>
+        <section class="reviews-empty" aria-labelledby="reviews-empty-heading">
+            <h2 id="reviews-empty-heading">{{ t("reviews_empty_title") }}</h2>
+            <p>{{ t("reviews_empty") }}</p>
+            <a class="reviews-action" href="/products/{{ product.slug }}">
+                {{ t("reviews_back_to_product") }}
+            </a>
+        </section>
     {% endif %}
 </section>
 {% endblock %}

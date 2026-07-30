@@ -154,6 +154,18 @@ Public display uses:
 - `/reviews/{slug}` for one product;
 - `/reviews` as a redirect to the configured default product review page.
 
+Both URLs lead to the localized public HTML experience rather than an API-style
+representation. The product page renders one semantic review article per
+published item and a complete HTTP 200 empty state when none are available.
+The existing public layout supplies the site header, footer, document language,
+and language switching without a JavaScript dependency.
+
+The review application boundary projects eligible feedback into public-only
+display values: subject, message, optional author name, optional admin reply,
+and publication timestamp. Templates do not receive customer email, purchase
+or support references, internal identifiers, moderation state, administrative
+metadata, page context, or user-agent data.
+
 ### Product-feedback purchase lookup
 
 The implemented SEC-003, CODE-002, and CODE-001 flow preserves the low-friction

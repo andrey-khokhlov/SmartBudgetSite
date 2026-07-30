@@ -817,3 +817,62 @@ def test_hidden_controls_and_type_changes_clear_obsolete_invalid_state() -> None
             expect(page.locator(selector)).to_have_attribute("required", "")
 
         browser.close()
+
+
+@pytest.mark.browser
+def test_public_reviews_empty_state_is_localized_semantic_html(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class ProductResult:
+        @staticmethod
+        def scalar_one_or_none():
+            return type("PublicProduct", (), {"id": 1, "slug": "smartbudget"})()
+
+    class ReviewDatabase:
+        @staticmethod
+        def execute(statement):
+            return ProductResult()
+
+    monkeypatch.setattr(
+        "app.web.routes.list_public_reviews",
+        lambda db, product_id: [],
+    )
+    app.dependency_overrides[get_db] = lambda: ReviewDatabase()
+
+    try:
+        with _running_app() as base_url, sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, channel="chromium")
+            page = browser.new_page()
+            page.route(
+                "**/favicon.ico",
+                lambda route: route.fulfill(status=204, body=""),
+            )
+
+            page.goto(f"{base_url}/reviews/smartbudget", wait_until="networkidle")
+
+            expect(page.locator("html")).to_have_attribute("lang", "en")
+            expect(page).to_have_title("User reviews — SmartBudget")
+            expect(page.locator("h1")).to_have_count(1)
+            expect(page.locator("#reviews-empty-heading")).to_have_text(
+                "No published reviews yet"
+            )
+            expect(page.locator(".site-header")).to_be_visible()
+            expect(page.locator(".site-footer")).to_be_visible()
+            expect(page.locator(".reviews-action")).to_have_attribute(
+                "href", "/products/smartbudget"
+            )
+
+            page.goto(
+                f"{base_url}/reviews/smartbudget?lang=ru",
+                wait_until="networkidle",
+            )
+
+            expect(page.locator("html")).to_have_attribute("lang", "ru")
+            expect(page).to_have_title("Отзывы пользователей — SmartBudget")
+            expect(page.locator("#reviews-empty-heading")).to_have_text(
+                "Опубликованных отзывов пока нет"
+            )
+
+            browser.close()
+    finally:
+        app.dependency_overrides.clear()

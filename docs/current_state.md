@@ -96,6 +96,10 @@ Feedback:
   ownership.
 - The current implementation still publishes approved product feedback from
   `feedback_messages` via `is_published`.
+- Public review navigation now renders a localized semantic HTML page at
+  `/reviews/{slug}`, with complete empty and populated states. A service-level
+  public projection limits template data to approved review content and excludes
+  customer, purchase, support, moderation, and administrative metadata.
 - The intended separation into private feedback and distinct curated public
   review/Q&A entities remains future work.
 - Protected download pages link to Feedback with `purchase_or_download_issue`;
@@ -184,16 +188,16 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 398 passing tests after
-  completion of `REL-004`; its focused upload, storage, logging, repository,
-  reconciliation, route, and download suite passes 77 tests. The focused
-  SEC-009 capability, logging, SQL, storage, helper-script, and
-  support-isolation suite passes 50 tests. The
-  focused Feedback rendered-contract and API
-  suites pass 33 tests and the Feedback browser suite passes 12 tests. The
-  focused Calendly webhook route
-  suite remains at 8 passing tests, including request-level durability
-  validation through a fresh independent SQLAlchemy session.
+- The latest confirmed full ordinary suite result is 404 passing tests after
+  the public reviews page implementation. The focused `REL-004` upload, storage,
+  logging, repository, reconciliation, route, and download suite passes 77
+  tests. The focused SEC-009 capability, logging, SQL, storage, helper-script,
+  and support-isolation suite passes 50 tests. The focused Feedback
+  rendered-contract and API suites pass 33 tests, and the browser suite passes
+  15 tests. The focused public review route and repository suite passes 9
+  tests. The focused Calendly webhook route suite remains at 8 passing tests,
+  including request-level durability validation through a fresh independent
+  SQLAlchemy session.
 
 ## Current launch constraint
 

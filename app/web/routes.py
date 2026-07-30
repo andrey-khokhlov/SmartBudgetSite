@@ -21,6 +21,7 @@ from app.repositories.service_addon_repository import ServiceAddonRepository
 from app.repositories.sales_repository import list_admin_sales
 from app.services.admin_consultation_service import get_consultation_entitlements
 from app.services.feedback_service import (
+    list_public_reviews,
     send_feedback_reply,
     toggle_feedback_publish,
     toggle_feedback_resolved,
@@ -577,8 +578,6 @@ async def reviews_page(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    feedback_repo = FeedbackAdminRepository(db)
-
     product = db.execute(
         select(Product).where(Product.slug == slug)
     ).scalar_one_or_none()
@@ -586,7 +585,7 @@ async def reviews_page(
     if not product:
         raise HTTPException(status_code=404)
 
-    reviews = feedback_repo.list_published_product_feedback(product_id=product.id)
+    reviews = list_public_reviews(db, product_id=product.id)
 
     return render(
         request,

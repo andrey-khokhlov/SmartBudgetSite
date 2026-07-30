@@ -15,7 +15,7 @@ Install the Chromium browser once:
 .\.venv\Scripts\python.exe -m playwright install chromium
 ```
 
-Run the Feedback browser regression test:
+Run the browser regression suite:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest browser_tests -m browser
