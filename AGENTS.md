@@ -32,6 +32,24 @@ If these documents conflict with the requested implementation, stop and report t
 - Keep each Codex task narrowly scoped and prefer ChatGPT discussion for exploratory work.
 - After an A-approved review, avoid additional implementation or review cycles unless a new concrete finding appears.
 
+## Review Evidence Policy
+
+- The default implementation report should remain concise.
+- After completing a bounded task, Codex should normally report only:
+  - implementation summary;
+  - changed files;
+  - tests and validation performed;
+  - documentation updates;
+  - remaining risks or unverified behavior.
+- Codex should not include complete multi-file diffs or large code listings by default.
+- ChatGPT performs the initial independent review from this summary.
+- If additional evidence is required, ChatGPT requests only the specific functions, methods, files, or focused diffs needed to verify a particular concern.
+- Repository-wide or multi-file diffs should be produced only when:
+  - ChatGPT explicitly requests them;
+  - an architecture review genuinely requires them; or
+  - a focused review cannot reliably establish correctness.
+- The objective is to minimize unnecessary review output while preserving independent verification quality.
+
 ## ChatGPT and Codex responsibilities
 
 ChatGPT is responsible for:
