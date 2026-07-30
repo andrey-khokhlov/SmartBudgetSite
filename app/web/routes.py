@@ -1,4 +1,13 @@
-from fastapi import APIRouter, Request, HTTPException, Depends, Form, Query, File, UploadFile
+from fastapi import (
+    APIRouter,
+    Request,
+    HTTPException,
+    Depends,
+    Form,
+    Query,
+    File,
+    UploadFile,
+)
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -15,8 +24,8 @@ from app.services.feedback_service import (
     send_feedback_reply,
     toggle_feedback_publish,
     toggle_feedback_resolved,
-    save_feedback_reply_draft
-    )
+    save_feedback_reply_draft,
+)
 from app.services.feedback_attachment_service import (
     get_feedback_attachment_download,
 )
@@ -34,7 +43,12 @@ from app.services.download_entitlement_service import (
 from app.services.product_release_service import (
     ProductReleaseService,
     ReleaseArchiveTooLargeError,
-    inspect_release_archive,
+    ReleaseConflictError,
+    ReleasePersistenceError,
+    ReleaseProductNotFoundError,
+    ReleaseReconciliationRequiredError,
+    ReleaseStorageUnavailableError,
+    ReleaseUploadValidationError,
 )
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
@@ -46,8 +60,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from datetime import UTC, datetime, timezone, timedelta
 from decimal import Decimal
-from botocore.exceptions import BotoCoreError, ClientError
-
 
 moscow_tz = timezone(timedelta(hours=3))
 
@@ -57,9 +69,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 ADMIN_COOKIE_NAME = "admin_token"
 
-admin_router = APIRouter(
-    dependencies=[Depends(require_admin)]
-)
+admin_router = APIRouter(dependencies=[Depends(require_admin)])
 
 
 def render(
@@ -159,6 +169,45 @@ def _format_release_upload_limit(max_bytes: int) -> str:
     return f"{max_bytes} bytes"
 
 
+def _render_product_release_upload_error(
+    *,
+    request: Request,
+    db: Session,
+    product_id: int,
+    error_code: str,
+    status_code: int,
+    operation_id: str | None = None,
+):
+    try:
+        product = db.get(Product, product_id)
+        releases = (
+            ProductReleaseService(db).list_releases_by_product_id(product_id)
+            if product is not None
+            else []
+        )
+    except Exception:
+        db.rollback()
+        product = None
+        releases = []
+
+    return render(
+        request,
+        "admin_product_release_form.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "package": (
+                get_product_package(str(product.slug)) if product is not None else None
+            ),
+            "latest_release": releases[0] if releases else None,
+            "upload_error": error_code,
+            "operation_id": operation_id,
+        },
+        status_code=status_code,
+        document_lang="en",
+    )
+
+
 def format_money(value, lang: str = "ru"):
     """
     Format numeric value according to UI language.
@@ -194,9 +243,13 @@ async def index(request: Request):
 
 @router.get("/products", response_class=HTMLResponse)
 async def products(request: Request):
-    return render(request, "products.html", {
-        "products": products_index(),
-    })
+    return render(
+        request,
+        "products.html",
+        {
+            "products": products_index(),
+        },
+    )
 
 
 @router.get("/faq", response_class=HTMLResponse)
@@ -222,8 +275,7 @@ async def feedback_page(
             support_reference,
             get_lang(request),
         )
-        if preselected_type is not None
-        and support_reference is not None
+        if preselected_type is not None and support_reference is not None
         else None
     )
     return render(
@@ -307,9 +359,7 @@ def download_page(
                 request,
                 entitlement.support_reference,
             ),
-            "signed_url_ttl_minutes": (
-                settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS + 59
-            )
+            "signed_url_ttl_minutes": (settings.DOWNLOAD_SIGNED_URL_TTL_SECONDS + 59)
             // 60,
         },
     )
@@ -361,11 +411,17 @@ async def product_detail(request: Request, slug: str):
     if not product:
         raise HTTPException(status_code=404)
 
-    template_name = "sm_landing.html" if slug == "smartbudget" else "product_detail.html"
+    template_name = (
+        "sm_landing.html" if slug == "smartbudget" else "product_detail.html"
+    )
 
-    return render(request, template_name, {
-        "product": product,
-    })
+    return render(
+        request,
+        template_name,
+        {
+            "product": product,
+        },
+    )
 
 
 @admin_router.get("/admin/feedback", response_class=HTMLResponse)
@@ -397,6 +453,7 @@ async def admin_feedback_list(
         },
         document_lang="en",
     )
+
 
 @admin_router.get("/admin/feedback/{feedback_id}", response_class=HTMLResponse)
 async def admin_feedback_detail(
@@ -529,14 +586,16 @@ async def reviews_page(
     if not product:
         raise HTTPException(status_code=404)
 
-    reviews = feedback_repo.list_published_product_feedback(
-        product_id=product.id
-    )
+    reviews = feedback_repo.list_published_product_feedback(product_id=product.id)
 
-    return render(request, "reviews.html", {
-        "reviews": reviews,
-        "product": product,
-    })
+    return render(
+        request,
+        "reviews.html",
+        {
+            "reviews": reviews,
+            "product": product,
+        },
+    )
 
 
 @router.get("/reviews")
@@ -686,7 +745,7 @@ async def admin_products_edit(
     active_price = db.execute(
         select(ProductPrice).where(
             ProductPrice.product_id == product_id,
-            ProductPrice.is_active == True  # noqa: E712
+            ProductPrice.is_active == True,  # noqa: E712
         )
     ).scalar_one_or_none()
 
@@ -1150,17 +1209,17 @@ def admin_product_release_new(
     db: Session = Depends(get_db),
 ):
     """
-        Render the upload release form.
-        Business rules:
-        - Product release upload is a separate admin workflow.
-        - New releases are created as inactive release candidates.
-        Side effects:
-        - None.
-        Invariants/restrictions:
-        - Does not upload files.
-        - Does not create ProductRelease records.
-        - Does not publish releases.
-        """
+    Render the upload release form.
+    Business rules:
+    - Product release upload is a separate admin workflow.
+    - New releases are created as inactive release candidates.
+    Side effects:
+    - None.
+    Invariants/restrictions:
+    - Does not upload files.
+    - Does not create ProductRelease records.
+    - Does not publish releases.
+    """
     product = db.get(Product, product_id)
 
     if product is None:
@@ -1189,6 +1248,7 @@ def admin_product_release_new(
 
 @admin_router.post("/products/{product_id}/releases/new")
 def admin_product_release_create(
+    request: Request,
     product_id: int,
     version: str = Form(...),
     release_notes: str = Form(""),
@@ -1211,65 +1271,61 @@ def admin_product_release_create(
     - Release version format is validated by ProductReleaseService.
     """
 
-    product = db.get(Product, product_id)
-
-    if product is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Product not found",
-        )
-
-    original_filename = release_file.filename
-
-    if not original_filename:
-        raise HTTPException(
-            status_code=400,
-            detail="Release file must have a filename.",
-        )
-
-    max_upload_bytes = settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES
-
+    release_service = ProductReleaseService(db)
     try:
-        archive_metadata = inspect_release_archive(
-            release_file.file,
-            max_bytes=max_upload_bytes,
+        release_service.upload_release(
+            product_id=product_id,
+            version=version,
+            release_notes=release_notes,
+            original_filename=release_file.filename,
+            file_obj=release_file.file,
+            max_bytes=settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES,
         )
     except ReleaseArchiveTooLargeError:
-        display_limit = _format_release_upload_limit(max_upload_bytes)
+        display_limit = _format_release_upload_limit(
+            settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES
+        )
         raise HTTPException(
             status_code=413,
             detail=f"Release archive exceeds the {display_limit} limit.",
         )
-
-    storage_service = R2StorageService()
-
-    try:
-        uploaded_object = storage_service.upload_product_release_file(
-            product_slug=str(product.slug),
-            version=version.strip(),
-            filename=original_filename,
-            file_obj=release_file.file,
+    except ReleaseProductNotFoundError:
+        raise HTTPException(status_code=404, detail="Product not found")
+    except ReleaseUploadValidationError as exc:
+        raise HTTPException(status_code=400, detail=exc.detail)
+    except ReleaseConflictError:
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="release_conflict",
+            status_code=409,
         )
-    except (BotoCoreError, ClientError):
-        return RedirectResponse(
-            url=f"/products/{product_id}/releases/new?error=r2_upload_failed",
-            status_code=303,
+    except ReleaseStorageUnavailableError:
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="storage_unavailable",
+            status_code=503,
         )
-
-    release_service = ProductReleaseService(db)
-
-    release_service.create_release(
-        product_id=product_id,
-        version=version,
-        release_notes=release_notes.strip() or None,
-        storage_provider=uploaded_object.storage_provider,
-        storage_key=uploaded_object.storage_key,
-        original_filename=original_filename,
-        file_size=archive_metadata.file_size,
-        sha256_hash=archive_metadata.sha256_hash,
-    )
-
-    db.commit()
+    except ReleasePersistenceError:
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="persistence_failed",
+            status_code=500,
+        )
+    except ReleaseReconciliationRequiredError as exc:
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="reconciliation_required",
+            status_code=500,
+            operation_id=exc.operation_id,
+        )
 
     return RedirectResponse(
         url=f"/products/{product_id}/releases",

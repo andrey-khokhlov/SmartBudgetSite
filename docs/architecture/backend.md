@@ -81,6 +81,14 @@ after every accepted local attachment file and database row has been persisted;
 on any workflow or commit failure it rolls back the database session and removes
 the files written by that submission.
 
+Release upload is also a complete application workflow because it crosses the
+database and R2 boundary. The product-release service owns validation, upload,
+storage verification, database flush and commit, rollback, and compensation.
+Repositories remain database-only and the admin route only translates service
+outcomes into HTTP responses. An uploaded object is deleted only when a fresh
+database ownership check proves that no `ProductRelease` owns its unique key;
+uncertain ownership is retained for manual reconciliation.
+
 Feedback attachments use private local storage below the configured
 `UPLOAD_DIR/feedback` directory. Database rows retain only validated relative
 `feedback/<random-name>.<extension>` keys. Physical paths are resolved by the

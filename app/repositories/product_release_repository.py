@@ -37,6 +37,28 @@ class ProductReleaseRepository:
             .first()
         )
 
+    def get_by_product_id_and_version(
+        self,
+        product_id: int,
+        version: str,
+    ) -> ProductRelease | None:
+        return (
+            self.db.query(ProductRelease)
+            .filter(ProductRelease.product_id == product_id)
+            .filter(ProductRelease.version == version)
+            .first()
+        )
+
+    def get_by_storage_key(self, storage_key: str) -> ProductRelease | None:
+        return (
+            self.db.query(ProductRelease)
+            .filter(ProductRelease.storage_key == storage_key)
+            .first()
+        )
+
+    def list_all(self) -> list[ProductRelease]:
+        return self.db.query(ProductRelease).order_by(ProductRelease.id.asc()).all()
+
     def create(self, release: ProductRelease) -> ProductRelease:
         self.db.add(release)
         self.db.flush()

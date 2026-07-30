@@ -49,9 +49,24 @@ class StructuredWebhookFormatter(logging.Formatter):
         "status",
     )
     optional_rate_limit_fields = ("retry_after", "provider")
+    release_workflow_fields = (
+        "operation_id",
+        "product_id",
+        "workflow_phase",
+        "storage_provider",
+        "outcome",
+        "storage_key_digest",
+    )
 
     def format(self, record: logging.LogRecord) -> str:
         formatted_record = super().format(record)
+        if all(hasattr(record, field) for field in self.release_workflow_fields):
+            audit_fields = " ".join(
+                f"{field}={str(getattr(record, field))!r}"
+                for field in self.release_workflow_fields
+            )
+            return f"{formatted_record} {audit_fields}"
+
         if all(hasattr(record, field) for field in self.rate_limit_fields):
             fields = list(self.rate_limit_fields)
             fields.extend(

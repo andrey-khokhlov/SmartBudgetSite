@@ -119,7 +119,7 @@ task is the first row whose status is not `Completed`. When related consecutive
 items are marked as one task below, they should be delivered and validated
 together even though each finding retains its own identifier.
 
-**Current first incomplete item: `REL-004` — Reconcile R2 and database side effects.**
+**Current first incomplete item: `REL-005` — Complete administrative publication.**
 
 | Order | Group | Identifier | Short title | Status |
 |---:|---|---|---|---|
@@ -143,7 +143,7 @@ together even though each finding retains its own identifier.
 | 18 | Accessibility | `A11Y-002` | Expose dynamic form status accessibly | `Completed` |
 | 19 | Download security | `SEC-009` | Protect capability URLs across boundaries | `Completed` |
 | 20 | Abuse protection | `SEC-007` | Establish coherent rate limits | `Completed` |
-| 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Not started` |
+| 21 | Release storage | `REL-004` | Reconcile R2 and database side effects | `Completed` |
 | 22 | Release workflow | `REL-005` | Complete administrative publication | `Not started` |
 | 23 | Documentation | `DOC-002` | Define the port configuration contract | `Not started` |
 | 24 | Documentation | `DOC-003` | Align Calendly lifecycle claims | `Not started` |
@@ -546,6 +546,19 @@ together even though each finding retains its own identifier.
 - **Accepted end state:** Release upload has explicit conflict, retry, cleanup,
   and recovery semantics; a failed database operation cannot silently damage an
   existing object or leave an unowned object without a recoverable outcome.
+- **Completed behavior:** Uploads use unique opaque managed keys, verify R2
+  metadata before persistence, return an existing verified release for exact
+  retries, reject material conflicts without storage changes, and classify
+  concurrent constraint races. Compensation deletes only a proven-unowned
+  attempt object after a fresh database ownership check; uncertainty or cleanup
+  failure retains the object with an opaque operation reference.
+- **Recovery:** The founder-operated reconciliation command reports missing,
+  mismatched, unexpected, and orphaned objects without mutation by default.
+  Explicit deletion is restricted to sufficiently old current-format orphan
+  keys and repeats the database ownership check immediately before deletion.
+- **Regression validation:** The focused REL-004 suite passes 77 tests and the
+  full ordinary suite passes 398 tests. Changed-file Ruff and Black checks and
+  `git diff --check` pass. Live R2 behavior remains VPS-only validation.
 - **Dependencies:** `REL-003`.
 - **References:** [Release administration](architecture/commerce_and_delivery.md#release-administration),
   [file storage](architecture/commerce_and_delivery.md#file-storage).
@@ -557,6 +570,9 @@ together even though each finding retains its own identifier.
   does not execute the existing release publication lifecycle.
 - **Accepted end state:** The administrative control performs the approved
   publication domain action and preserves the one-active-release invariant.
+- **Required implementation boundary:** Acquire per-product database locking
+  inside the publication transaction, verify storage before activation, and
+  retain the existing unique active-release index as the final invariant.
 - **Dependencies:** `REL-004`.
 - **References:** [Release administration](architecture/commerce_and_delivery.md#release-administration).
 

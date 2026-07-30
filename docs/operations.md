@@ -249,6 +249,32 @@ outside the validated feedback root. Review the read-only report before using
 the flag. Reconciliation is founder-operated and does not run at application
 startup.
 
+## Product release reconciliation
+
+Run the founder-operated, non-destructive R2/database comparison with:
+
+```bash
+python scripts/reconcile_product_releases.py
+```
+
+The report covers database rows with missing objects, object size or SHA-256
+mismatches, orphaned objects under the managed release prefix, unexpected
+legacy keys, and inspection failures. Output uses short key digests rather than
+raw object keys. It does not mutate R2 or the database.
+
+After reviewing the report, deletion of eligible stale orphans may be requested:
+
+```bash
+python scripts/reconcile_product_releases.py --delete-orphans
+```
+
+Deletion applies only to current-format opaque release keys older than the
+configured minimum age (24 hours by default). The command rolls back any
+ambient database transaction and rechecks ownership immediately before every
+delete. It never deletes database-owned objects, repairs or deletes rows, or
+runs automatically at application startup. A failed or uncertain delete remains
+reported for manual follow-up.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,
@@ -261,7 +287,9 @@ implementation before prompting architecture changes:
    `invitee.created` payload, confirm initial reconciliation, and verify replay
    and cancellation edge cases.
 2. Validate Cloudflare R2 S3 connectivity, authenticated bucket access, real
-   release upload, stored object metadata, and `ProductRelease` persistence.
+   release upload, stored object metadata, `ProductRelease` persistence,
+   identical retry behavior, compensation after a forced database failure, and
+   read-only reconciliation against paginated production-like listings.
 
 Use `current_state.md` to identify completed external validation and current
 blockers. Test the existing implementation from the deployed environment before

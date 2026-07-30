@@ -10,19 +10,37 @@
 
     <h1 class="admin-form-title">Upload Product Release</h1>
 
-    {% if request.query_params.get("error") == "r2_upload_failed" %}
+    {% if upload_error == "release_conflict" %}
         <div class="admin-error">
-            R2 upload failed. Check network access or storage configuration.
+            This product version already exists with different release details.
+        </div>
+    {% elif upload_error == "storage_unavailable" %}
+        <div class="admin-error">
+            Release storage is temporarily unavailable. No release was created.
+        </div>
+    {% elif upload_error == "persistence_failed" %}
+        <div class="admin-error">
+            The release could not be saved. The uploaded object was cleaned up.
+        </div>
+    {% elif upload_error == "reconciliation_required" %}
+        <div class="admin-error">
+            The upload outcome could not be confirmed. Inspect the release list
+            or run release reconciliation before retrying.
+            {% if operation_id %}
+                Operation reference: {{ operation_id }}
+            {% endif %}
         </div>
     {% endif %}
 
-    <p>
-        <strong>Product:</strong>
-        {{ product.name }}
-        / {{ package }}
-        / {{ product.edition }}
-        / {{ product.slug }}
-    </p>
+    {% if product %}
+        <p>
+            <strong>Product:</strong>
+            {{ product.name }}
+            / {{ package }}
+            / {{ product.edition }}
+            / {{ product.slug }}
+        </p>
+    {% endif %}
 
     <p>
         <strong>Product ID:</strong> {{ product.id }}

@@ -10,7 +10,6 @@ def create_test_product(db_session, slug: str = "smartbudget-test-standard") -> 
         name="SmartBudget",
         archive_path="legacy/path.zip",
         edition="Standard",
-
         status="in_sale",
     )
 
@@ -119,3 +118,52 @@ def test_get_product_release_by_id(db_session):
 
     assert found_release is not None
     assert found_release.id == created_release.id
+
+
+def test_get_release_by_logical_identity_and_storage_key(db_session):
+    product = create_test_product(db_session)
+    repository = ProductReleaseRepository(db_session)
+    release = repository.create(
+        ProductRelease(
+            product_id=product.id,
+            version="1.2",
+            storage_provider="cloudflare_r2",
+            storage_key="product-releases/1/1.2/opaque",
+            original_filename="SmartBudget_v1.2.zip",
+        )
+    )
+
+    by_identity = repository.get_by_product_id_and_version(product.id, "1.2")
+    by_storage_key = repository.get_by_storage_key(release.storage_key)
+
+    assert by_identity is release
+    assert by_storage_key is release
+
+
+def test_list_all_product_releases(db_session):
+    first_product = create_test_product(db_session)
+    second_product = create_test_product(
+        db_session,
+        slug="smartbudget-test-second",
+    )
+    repository = ProductReleaseRepository(db_session)
+    first = repository.create(
+        ProductRelease(
+            product_id=first_product.id,
+            version="1.0",
+            storage_provider="cloudflare_r2",
+            storage_key="first",
+            original_filename="first.zip",
+        )
+    )
+    second = repository.create(
+        ProductRelease(
+            product_id=second_product.id,
+            version="1.0",
+            storage_provider="cloudflare_r2",
+            storage_key="second",
+            original_filename="second.zip",
+        )
+    )
+
+    assert repository.list_all() == [first, second]

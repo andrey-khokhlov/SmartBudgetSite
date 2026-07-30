@@ -32,6 +32,17 @@ Commerce and delivery:
   and SHA-256 metadata are calculated in bounded 1 MiB chunks without buffering
   the complete archive in route memory; larger archives receive HTTP 413 before
   R2 upload or `ProductRelease` persistence.
+- `REL-004` is complete. Release upload now uses unique opaque R2 keys, verifies
+  object metadata before persistence, treats identical retries idempotently,
+  rejects conflicting retries without storage changes, and compensates only
+  after a fresh ownership check proves an attempt object is unowned.
+- Uncertain ownership or cleanup failure returns an opaque operation reference
+  and retains the object for founder-operated reconciliation. The reconciliation
+  command is read-only by default and its explicit delete mode is age-gated,
+  current-key-only, and protected by an immediate database ownership recheck.
+- Publishing verifies R2 size and SHA-256 before activation. Wiring the visible
+  Publish control and serializing future concurrent publication remain
+  `REL-005`.
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
 - Payment preparation is provider-independent and creates pending records, but
@@ -173,9 +184,11 @@ Infrastructure and quality:
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
   upgrade operations.
-- The latest confirmed full ordinary suite result is 312 passing tests after
-  completion of `SEC-009`; the focused SEC-009 capability, logging, SQL,
-  storage, helper-script, and support-isolation suite passes 50 tests. The
+- The latest confirmed full ordinary suite result is 398 passing tests after
+  completion of `REL-004`; its focused upload, storage, logging, repository,
+  reconciliation, route, and download suite passes 77 tests. The focused
+  SEC-009 capability, logging, SQL, storage, helper-script, and
+  support-isolation suite passes 50 tests. The
   focused Feedback rendered-contract and API
   suites pass 33 tests and the Feedback browser suite passes 12 tests. The
   focused Calendly webhook route
@@ -196,8 +209,8 @@ timeline.
 
 ### 1. Continue the Official Release Backlog
 
-The first incomplete Official Release Backlog item is `REL-004` — reconcile R2
-and database side effects. Continue in the authoritative order defined
+The first incomplete Official Release Backlog item is `REL-005` — complete
+administrative publication. Continue in the authoritative order defined
 in `release_readiness.md`; do not substitute roadmap work for the next
 incomplete remediation item.
 

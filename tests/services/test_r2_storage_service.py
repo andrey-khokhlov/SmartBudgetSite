@@ -6,8 +6,11 @@ from botocore.exceptions import ClientError
 
 from app.core.config import settings
 from app.services.storage.r2_storage_service import (
+    R2StorageOperationError,
     R2SignedUrlError,
     R2StorageService,
+    build_product_release_storage_key,
+    is_managed_product_release_key,
 )
 
 
@@ -117,3 +120,162 @@ def test_generate_signed_get_url_hides_provider_failure(monkeypatch):
         )
 
     assert "provider secret detail" not in str(exc_info.value)
+
+
+def test_build_product_release_storage_key_is_opaque_and_managed(monkeypatch):
+    monkeypatch.setattr(
+        settings,
+        "R2_PRODUCT_RELEASES_PREFIX",
+        "product-releases",
+    )
+
+    first = build_product_release_storage_key(
+        product_id=7,
+        version="1.2",
+        token="a" * 32,
+    )
+    second = build_product_release_storage_key(
+        product_id=7,
+        version="1.2",
+        token="b" * 32,
+    )
+
+    assert first == f"product-releases/7/1.2/{'a' * 32}"
+    assert second != first
+    assert is_managed_product_release_key(first)
+    assert "customer-file.zip" not in first
+
+
+def test_upload_supplies_integrity_metadata(monkeypatch):
+    configure_r2(monkeypatch)
+    client = Mock()
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
+    storage_key = f"product-releases/7/1.2/{'a' * 32}"
+    file_obj = Mock()
+
+    uploaded = R2StorageService().upload_product_release_file(
+        storage_key=storage_key,
+        file_obj=file_obj,
+        file_size=123,
+        sha256_hash="f" * 64,
+    )
+
+    assert uploaded.storage_key == storage_key
+    file_obj.seek.assert_called_once_with(0)
+    call = client.upload_fileobj.call_args
+    assert call.kwargs["Key"] == storage_key
+    assert call.kwargs["ExtraArgs"] == {
+        "Metadata": {
+            "sha256": "f" * 64,
+            "file-size": "123",
+        }
+    }
+
+
+def test_head_and_verify_release_object(monkeypatch):
+    configure_r2(monkeypatch)
+    client = Mock()
+    client.head_object.return_value = {
+        "ContentLength": 123,
+        "Metadata": {"sha256": "f" * 64, "file-size": "123"},
+        "LastModified": datetime(2026, 7, 1, tzinfo=UTC),
+    }
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
+    storage = R2StorageService()
+
+    stored = storage.head_product_release_object(storage_key="historical/key.zip")
+
+    assert stored is not None
+    assert stored.content_length == 123
+    assert stored.sha256_hash == "f" * 64
+    assert storage.verify_product_release_object(
+        storage_key="historical/key.zip",
+        expected_file_size=123,
+        expected_sha256_hash="f" * 64,
+    )
+    assert not storage.verify_product_release_object(
+        storage_key="historical/key.zip",
+        expected_file_size=124,
+        expected_sha256_hash="f" * 64,
+    )
+
+
+def test_head_missing_object_returns_none(monkeypatch):
+    configure_r2(monkeypatch)
+    client = Mock()
+    client.head_object.side_effect = ClientError(
+        {"Error": {"Code": "NoSuchKey", "Message": "missing"}},
+        "HeadObject",
+    )
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
+
+    assert R2StorageService().head_product_release_object(storage_key="missing") is None
+
+
+def test_delete_hides_provider_failure(monkeypatch):
+    configure_r2(monkeypatch)
+    client = Mock()
+    client.delete_object.side_effect = ClientError(
+        {"Error": {"Code": "AccessDenied", "Message": "provider secret detail"}},
+        "DeleteObject",
+    )
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
+
+    with pytest.raises(R2StorageOperationError) as exc_info:
+        R2StorageService().delete_product_release_object(storage_key="key")
+
+    assert "provider secret detail" not in str(exc_info.value)
+
+
+def test_list_product_release_objects_paginates(monkeypatch):
+    configure_r2(monkeypatch)
+    client = Mock()
+    client.list_objects_v2.side_effect = [
+        {
+            "Contents": [
+                {
+                    "Key": "product-releases/1/1.0/one",
+                    "Size": 10,
+                    "LastModified": datetime(2026, 7, 1, tzinfo=UTC),
+                }
+            ],
+            "IsTruncated": True,
+            "NextContinuationToken": "next-page",
+        },
+        {
+            "Contents": [
+                {
+                    "Key": "product-releases/1/1.0/two",
+                    "Size": 20,
+                    "LastModified": datetime(2026, 7, 2, tzinfo=UTC),
+                }
+            ],
+            "IsTruncated": False,
+        },
+    ]
+    monkeypatch.setattr(
+        "app.services.storage.r2_storage_service.boto3.client",
+        lambda *args, **kwargs: client,
+    )
+
+    objects = R2StorageService().list_product_release_objects()
+
+    assert [item.storage_key for item in objects] == [
+        "product-releases/1/1.0/one",
+        "product-releases/1/1.0/two",
+    ]
+    assert client.list_objects_v2.call_args_list[1].kwargs["ContinuationToken"] == (
+        "next-page"
+    )

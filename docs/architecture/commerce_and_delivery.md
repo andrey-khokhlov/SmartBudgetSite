@@ -168,6 +168,26 @@ the complete archive into a process-memory bytes object. An archive larger than
 the limit is rejected with HTTP 413 before R2 upload or `ProductRelease`
 persistence.
 
+The upload service validates the product, version, filename, size, and archive
+before creating an object. Each attempt receives a new opaque key under the
+managed product-release prefix; keys do not contain the customer filename and
+are never reused for a retry. R2 metadata records the expected SHA-256 and file
+size, and a successful upload is confirmed with `HEAD` before database
+persistence.
+
+`(product_id, version)` is the idempotency identity. An identical retry returns
+the existing release only after its R2 object is verified. A retry whose
+filename, size, SHA-256, or normalized release notes differ returns a conflict
+without touching storage. Database constraints remain the final concurrency
+authority. A losing concurrent attempt removes only its own unique object after
+the winning row is classified.
+
+After an R2 side effect, database failure triggers rollback and a fresh-session
+ownership check. A proven-unowned attempt object is removed. If ownership cannot
+be established, or cleanup fails, the object is retained and the response
+supplies an opaque operation reference for manual reconciliation. Existing
+objects are never overwritten or deleted as compensation.
+
 ```text
 Release candidate -> Published (active) -> Archived
 ```
@@ -178,6 +198,23 @@ Cloudflare R2 is the primary binary storage provider. Product archives must not
 be stored permanently on application VPS instances. R2 objects remain private;
 the backend owns authorization and issues short-lived signed access only after
 entitlement validation.
+
+Publishing verifies the persisted object's size and SHA-256 against R2 before
+activating a release. Publication still uses the existing database lifecycle;
+the administrative Publish control and future per-product concurrency control
+belong to `REL-005`, not this upload workflow.
+
+Founder-operated reconciliation compares database rows with paginated R2
+listing plus per-row `HEAD` metadata. It is read-only by default. Explicit
+orphan deletion is limited to sufficiently old objects matching the current
+opaque managed-key format, after an immediate database ownership recheck.
+Reconciliation never repairs or deletes database rows and never runs at startup.
+Objects owned by active or historical inactive database releases are retained,
+including releases referenced by sale items or download entitlements.
+
+`REL-005` must place per-product database locking and storage verification
+inside the publication transaction; the existing unique active-release index
+remains the final invariant.
 
 The application-level release limit is evaluated after Starlette has parsed the
 multipart request. It bounds application processing and route memory, but does
