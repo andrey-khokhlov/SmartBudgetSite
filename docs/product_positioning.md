@@ -16,12 +16,15 @@ Use `docs/README.md` as the documentation index.
 
 SmartBudget is a personal financial decision-support product built around forward-looking planning.
 
+Beyond building a forecast, SmartBudget helps users maintain confidence that their plan reflects their real financial position. It also helps them recognize when that plan needs to change.
+
 Its purpose is not merely to record where money has already gone.
 
 Its purpose is to help a person understand:
 
 * what is likely to happen to their finances
 * whether current plans are financially sustainable
+* whether changing reality means the current plan is still realistic or should be revised
 * how future decisions may affect cash flow and savings
 * when planned expenses become affordable
 * where financial pressure is likely to appear before it becomes a problem
@@ -30,24 +33,9 @@ SmartBudget should help users move from reactive expense observation to proactiv
 
 The long-term vision is:
 
-> SmartBudget helps people make better financial decisions before the money is spent.
+> SmartBudget helps people make financial decisions and maintain trust in their own financial plan.
 
-A complementary expression of the product value is:
-
-> SmartBudget is a system that helps people make financial decisions and maintain trust in their own plan.
-
-Trust in the plan is not assumed permanently. It is renewed through regular comparison between the model and financial reality.
-
-At the end of a period, the user should be able to answer:
-
-* Are my plans still realistic?
-* Does the forecast still reflect my actual financial position?
-* Have material assumptions changed?
-* Is it time to revise the plan before making further decisions?
-
-The periodic review and month-close process therefore has a decision-support purpose. It establishes reliable balance checkpoints, reconciles the plan with actual account balances, and restores confidence that the forecast remains usable.
-
-SmartBudget should not present this process as accounting discipline for its own sake. The user performs a small amount of necessary reconciliation in exchange for a forecast they can continue to trust.
+That includes making better decisions before money is spent and recognizing when new evidence means an existing plan should change.
 
 ---
 
@@ -57,7 +45,9 @@ SmartBudget is forecasting-first.
 
 Historical data matters because it improves understanding of the future, not because historical reporting is the final goal.
 
-The core product loop is:
+A forecast remains useful only while the financial model is sufficiently aligned with reality. A projection does not remain reliable simply because it was once carefully prepared.
+
+The decision-support loop is:
 
 ```text
 Current financial position
@@ -66,12 +56,12 @@ Expected income and expenses
         ↓
 Future cash-flow forecast
         ↓
-Decision or plan adjustment
+Decision
         ↓
 Updated forecast
 ```
 
-A recurring validation loop supports the forecast:
+Forecast validation supports that loop by confirming that its starting point still reflects reality:
 
 ```text
 Actual account balances
@@ -80,10 +70,14 @@ Month-end reconciliation
         ↓
 Validated financial checkpoint
         ↓
-Review of assumptions and plans
+Review assumptions
         ↓
-Trusted or revised forecast
+Continue or revise forecast
 ```
+
+At month end, actual account balances provide the source of truth for a financial checkpoint. A material difference may indicate missing or incorrect transactions. It may also show that the assumptions behind the plan no longer hold.
+
+Reconciliation restores alignment before the user relies on the next forecast. This requires a small amount of necessary discipline in exchange for confidence in the forecast. SmartBudget should connect that effort directly to decision value, not to bookkeeping for its own sake.
 
 The product should prioritize:
 
@@ -92,7 +86,6 @@ The product should prioritize:
 * future consequences over historical categorization
 * practical financial control over financial entertainment
 * explainable logic over opaque automation
-* minimum necessary user discipline in exchange for a trustworthy forecast
 
 SmartBudget should not try to impress users with the amount of data collected.
 
@@ -193,7 +186,8 @@ SmartBudget should solve practical planning problems such as:
 * "What happens if my income changes?"
 * "Which planned expenses create the biggest future pressure?"
 * "Am I making a decision based on available cash today while ignoring obligations next month?"
-* "Can I still trust the plan I made, or has reality changed enough that I should revise it?"
+* "Does my forecast still match my actual financial position?"
+* "Are my plans still realistic, or is it time to revise them?"
 
 A common personal finance problem is false affordability.
 
@@ -203,11 +197,9 @@ But part of that balance may already be economically committed to future expense
 
 SmartBudget should make these future commitments visible.
 
-A second problem is forecast drift.
+Another common problem is false confidence in an outdated plan.
 
-Even a well-designed plan becomes unreliable when actual balances, omitted transactions, changed income, or revised obligations are not reconciled with the model.
-
-SmartBudget should make this drift visible and provide a practical month-end process for restoring alignment between the plan and reality.
+Missed transactions, incorrect entries, or changed circumstances can cause the model to drift from actual account balances. SmartBudget should help the user detect and reconcile that drift. The user can then decide whether the existing plan remains valid instead of relying on an outdated forecast.
 
 ---
 
@@ -239,8 +231,6 @@ The strategic product advantage is not better categorization of yesterday.
 
 It is earlier visibility of tomorrow.
 
-That visibility remains valuable only while the forecast is anchored to actual financial checkpoints. Periodic reconciliation is therefore part of forecasting quality, not a secondary bookkeeping feature.
-
 ---
 
 ## 6. Decision Support vs Historical Reporting
@@ -251,15 +241,20 @@ Historical reporting presents facts.
 
 Decision support connects facts, assumptions, plans, and consequences.
 
+Actual account balances are especially important because they validate the user's financial position at a point in time. Comparing them with the model at month end is not historical reporting for its own sake.
+
+The comparison creates a checkpoint. From there, the user can review deviations, reassess assumptions, and decide whether to keep or revise the plan.
+
 The product should increasingly help users:
 
 * compare planned and actual financial behavior
+* reconcile the model with actual account balances
 * identify forecast deviations
 * understand why a forecast changed
+* recognize when an existing plan is no longer realistic
 * test alternative decisions
 * recognize future financial constraints
 * identify decisions that require attention
-* determine whether an existing plan remains trustworthy or should be revised
 
 A dashboard is useful only when it improves understanding or supports an action.
 
@@ -268,6 +263,8 @@ Charts and KPIs should not exist merely because financial software is expected t
 The product question should always be:
 
 > What decision does this information help the user make?
+
+SmartBudget should help the user answer both what is likely to happen and whether current evidence still supports the plan behind that forecast.
 
 ---
 
@@ -278,8 +275,9 @@ SmartBudget should differentiate itself through the combination of:
 * forecasting-first financial planning
 * explicit future cash-flow visibility
 * planned vs actual comparison
+* validated financial checkpoints based on actual account balances
+* a clear path from forecast deviation to a reliable or revised plan
 * decision-oriented interpretation
-* periodic reconciliation that preserves trust in the forecast
 * spreadsheet transparency and user control
 * familiar Excel interaction patterns strengthened by financial logic and automation
 * local-first handling of sensitive personal financial data
@@ -297,7 +295,7 @@ The product should hide technical Excel infrastructure where it creates friction
 
 Local-first handling of personal financial data is a product advantage. SmartBudget should not assume that moving the financial model to the cloud is inherently a product improvement.
 
-The product differentiator is the financial planning logic and the way SmartBudget helps users reason about future consequences while maintaining a verifiable connection between the forecast and financial reality.
+The product differentiator is the financial planning logic and the way SmartBudget helps users reason about future consequences. The forecast is not a one-time output. It remains part of a continuing cycle of planning, validation, and revision.
 
 ---
 
@@ -380,7 +378,7 @@ The long-term product goal is to reduce repetitive consultation needs through be
 
 ## 10. Landing Page Positioning
 
-The landing page should position SmartBudget around future financial clarity, better decisions, and confidence that the current plan still reflects reality.
+The landing page should position SmartBudget around future financial clarity and better decisions.
 
 It should not lead with:
 
@@ -397,9 +395,7 @@ Primary positioning direction:
 
 > See the financial consequences of your plans before you spend the money.
 
-Complementary positioning direction:
-
-> Make financial decisions with a plan you can continue to trust.
+The supporting promise is that SmartBudget also helps the user see when changing reality means those plans need to be reconsidered.
 
 The landing page should show the contrast between:
 
@@ -408,10 +404,12 @@ Expense tracker:
 What happened?
 
 SmartBudget:
-What is likely to happen, is my plan still realistic, and what should I reconsider?
+What is likely to happen, and are my plans still realistic?
 ```
 
 Product mechanics should support the positioning, but technical implementation should remain secondary.
+
+Landing-page language should focus on outcomes: confidence that the plan is still realistic and clarity about when it needs revision. Month close and reconciliation should not become headline promises. The page should avoid accounting terminology, guilt-based messaging, and any suggestion that a materially outdated plan remains reliable.
 
 Excel should normally answer the question "How does SmartBudget work?", not "What is SmartBudget?" The landing page should lead with the financial problem and decision-support value, then explain that the product runs locally on the familiar Excel platform.
 
@@ -419,17 +417,17 @@ Excel should normally answer the question "How does SmartBudget work?", not "Wha
 
 ## 11. Marketing Messages
 
-Core message:
+Core positioning statement:
 
-> Plan your money forward, not only backward.
+> SmartBudget helps people make financial decisions and maintain trust in their own financial plan.
 
 Supporting messages:
 
+* Plan your money forward, not only backward.
 * See future cash-flow pressure before it becomes a problem.
 * Understand whether today's purchase is still affordable after tomorrow's obligations.
-* Compare your plan with reality and adjust before the gap grows.
-* Know whether your financial plans are still realistic or need to change.
-* Reconcile actual balances so you can continue to trust your forecast.
+* Make financial decisions with confidence that your plan is still realistic.
+* Know when changing reality means your plan needs revision.
 * Turn personal budgeting into a financial decision process.
 * Use your financial history to improve your forecast, not only to classify the past.
 * See what your current decisions may mean for the next several months.
@@ -443,13 +441,13 @@ Avoid exaggerated promises such as:
 * "AI will manage your money"
 * "Never worry about money again"
 
-SmartBudget should build trust through practical value and realistic claims.
+SmartBudget should earn confidence through practical value and realistic claims.
 
 ---
 
 ## 12. Features That Support the Positioning
 
-Features should be evaluated by whether they support forecasting, decisions, operational clarity, forecast trust, or sustainable product use.
+Features should be evaluated by whether they support forecasting, decisions, operational clarity, or sustainable product use.
 
 Strategically aligned features include:
 
@@ -457,8 +455,10 @@ Strategically aligned features include:
 * planned income and expense scheduling
 * irregular expense planning
 * plan vs actual comparison
-* month-end balance checkpoints and reconciliation
+* month-end account-balance reconciliation
+* clear financial-checkpoint status and material deviation visibility
 * forecast deviation analysis
+* assumption and plan review after material deviations
 * scenario comparison
 * savings-goal impact analysis
 * decision-oriented alerts
@@ -472,7 +472,7 @@ A feature may be technically interesting but still be strategically weak.
 
 Before adding a major feature, ask:
 
-> Does this improve the user's ability to understand or influence their future financial position, or to maintain trust that the forecast still reflects reality?
+> Does this improve the user's ability to understand or influence their future financial position, or to judge whether the current plan remains realistic?
 
 ---
 
@@ -483,12 +483,13 @@ SmartBudget should never become:
 * a generic expense tracker with forecasting added as a secondary tab
 * a clone of banking-app spending analytics
 * a feature-heavy financial dashboard with no clear decision purpose
+* a product that presents an unreconciled or materially outdated forecast as reliable
+* a bookkeeping regime that uses guilt or accounting formality to make users complete month close
 * an opaque AI financial adviser that invents conclusions without deterministic calculations
 * a trading or investment speculation product
 * a tax or accounting system
 * an enterprise finance platform disguised as a personal budgeting tool
 * a product that requires permanent founder consultation to remain useful
-* a product that hides forecast drift or implies that an unreconciled plan remains reliable
 * a collection of technically impressive features without a coherent financial philosophy
 
 The product should also avoid premature platform complexity.
@@ -509,6 +510,7 @@ Long-term evolution may include:
 
 * stronger automated data import
 * improved forecast diagnostics
+* easier reconciliation and clearer financial-checkpoint guidance
 * scenario modeling
 * decision-oriented notifications
 * GPT-assisted interpretation
@@ -527,10 +529,13 @@ toward:
 
 ```text
 Personal financial forecasting and decision-support system
+that remains grounded in validated financial reality
 ```
 
 The financial model and product philosophy should survive changes in delivery technology.
 
+Automation should reduce the effort required to keep the model aligned with reality. It should not hide material discrepancies or bypass the user's judgment about whether assumptions and plans remain valid.
+
 Excel should remain the primary product platform while its familiar interaction model, local-first privacy, and immediate scenario modeling provide meaningful user value. Web or other future interfaces are optional product directions, not an assumed destination.
 
-The long-term product identity is forecasting-first personal financial decision support that remains anchored to real financial checkpoints and helps users decide when to keep a plan and when to revise it.
+The long-term product identity is forecasting-first personal financial decision support. SmartBudget should help users understand what is likely to happen and maintain a plan they can rely on or revise when reality changes.
