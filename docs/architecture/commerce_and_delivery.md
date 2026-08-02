@@ -133,6 +133,58 @@ impact. It is not guaranteed to be an adapter-only replacement: checkout
 behavior, refunds, disputes, supported currencies, webhook semantics, and
 operational procedures may differ between providers.
 
+### Confirmed Lava.top account capabilities
+
+A real Lava.top creator account and creator profile now exist for SmartBudget.
+The following facts were confirmed directly through that account's UI:
+
+- the creator profile is named SmartBudget and uses the public slug
+  `smartbudget`;
+- `contact@neocitrix.com` is the Lava.top account contact;
+- `support@neocitrix.com` is the public customer-support address, currently
+  implemented as an inbound public-domain alias forwarded through Cloudflare
+  Email Routing to a verified private destination mailbox; this forwarding does
+  not establish a standalone hosted mailbox or configured transactional or
+  outbound sending from the public address;
+- Lava.top supports a digital `Product` content type with a cover image, product
+  name, rich-text description, configured price, after-payment buyer message,
+  and attached files up to the limit displayed by the platform;
+- the product form exposes fixed prices in other currencies, price by request
+  through API, multiple plans, and sales limits;
+- Lava.top exposes a website payment-widget configuration flow; and
+- Lava.top provides its own attached-file delivery capability.
+
+These are account/UI-level observations, not proof of an implemented
+SmartBudgetSite integration or of provider API and production behavior. In
+particular, the price-by-request option indicates potential support for
+SmartBudgetSite-controlled price initiation, but its exact API contract and
+end-to-end behavior still require implementation and provider testing. Webhook
+authentication, retry semantics, API request fields, payout-country
+compatibility, and complete production payment behavior remain unvalidated
+unless separately established through implementation and production testing.
+
+The account observations do not change the approved responsibility boundary.
+Lava.top owns only the provider boundary, including hosted checkout, payment
+collection, and provider-specific payment integration. SmartBudgetSite owns
+`Sale`, `SaleItem`, payment-state orchestration, `ProductRelease`,
+`DownloadEntitlement`, consultation entitlements, customer purchase emails,
+protected customer access, and private Cloudflare R2 delivery. The primary
+product delivery path remains:
+
+```text
+Sale
+    -> SaleItem
+        -> DownloadEntitlement
+            -> ProductRelease
+                -> private Cloudflare R2 object
+```
+
+Lava.top attached-file delivery is therefore a confirmed but intentionally
+unused provider capability, not the primary SmartBudget product-delivery
+mechanism. The payment-widget configuration flow is likewise confirmed as
+available, but has not been approved as the final SmartBudgetSite checkout
+implementation.
+
 ## Checkout and payment confirmation
 
 Provider-hosted checkout is the approved MVP user experience. Embedded card

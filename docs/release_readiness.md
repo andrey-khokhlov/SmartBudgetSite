@@ -646,11 +646,13 @@ defects.
 
 ### Commerce and fulfillment (`REL-001`)
 
-- real Lava.top hosted checkout and the SmartBudgetSite payment result page;
+- actual Lava.top integration using hosted checkout and the SmartBudgetSite
+  payment result page;
 - authenticated Lava.top webhook processing or explicit server-to-server
   payment verification;
-- payment-success entitlement creation;
-- customer purchase email and delivery links.
+- SmartBudgetSite-owned payment-success fulfillment, including entitlement
+  creation;
+- customer purchase email and delivery links;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.
 

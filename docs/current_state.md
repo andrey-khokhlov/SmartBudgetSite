@@ -54,6 +54,20 @@ Commerce and delivery:
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
   it is not the next MVP implementation target.
+- A real Lava.top creator account and SmartBudget creator profile now exist at
+  the public slug `smartbudget`. `contact@neocitrix.com` is the Lava.top account
+  contact, while `support@neocitrix.com` is the public customer-support address.
+  The account UI confirms support for digital products, configurable pricing
+  options including price by request through API, a payment-widget configuration
+  flow, and provider-hosted file attachments. These observations reflect
+  confirmed account/UI capabilities only and do not imply that the corresponding
+  API behavior, payment workflows, or production integrations have been
+  implemented or validated.
+- Those observations confirm account/UI capabilities only. The exact API
+  contract and end-to-end behavior remain unvalidated, and Lava.top attachments
+  are intentionally not the SmartBudget delivery path; SmartBudgetSite-owned
+  entitlements, protected access, purchase emails, and private R2 delivery
+  remain required.
 - Payment-success orchestration does not yet create download entitlements or
   send purchase emails containing download links.
 - The approved MVP checkout uses hosted Lava.top checkout and returns to a
