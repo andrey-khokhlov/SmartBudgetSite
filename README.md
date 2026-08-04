@@ -80,6 +80,40 @@ required to present, distribute, and support SmartBudget.
 - explicit handling of unavailable storage, invalid entitlements, and expired
   download access.
 
+  ## Product and engineering principles
+
+### Forecasting before recording
+
+SmartBudget is designed primarily to support forward-looking decisions rather
+than only document past transactions.
+
+### Deterministic calculations
+
+Core financial results should be derived from explicit, reproducible rules.
+The same inputs should produce the same outputs, and important calculations
+should remain inspectable.
+
+### User control
+
+The system should help users understand consequences and alternatives without
+taking control of the financial plan away from them.
+
+### Maintainable architecture
+
+Business rules, data access, application services, and presentation concerns are
+kept separate so that the system can be tested, reviewed, and changed safely.
+
+### Progressive automation
+
+Repetitive operational work should be automated where this improves reliability,
+but automation should not hide important decisions or weaken accountability.
+
+### Responsible use of AI
+
+Future AI capabilities may support explanation, navigation, and interpretation.
+They should not replace deterministic financial logic or present uncertain
+outputs as authoritative financial advice.
+
 ## 🛠 Tech Stack
 
 - FastAPI
