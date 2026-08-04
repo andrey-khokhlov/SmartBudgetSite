@@ -114,6 +114,52 @@ Future AI capabilities may support explanation, navigation, and interpretation.
 They should not replace deterministic financial logic or present uncertain
 outputs as authoritative financial advice.
 
+## Architecture
+
+SmartBudgetSite is structured as a layered web application rather than a
+collection of independent endpoints.
+
+### Presentation layer
+
+Server-rendered Jinja2 pages provide the public website, product catalogue,
+product landing pages, feedback flows, download pages, and administrative
+interfaces. English and Russian content is resolved through the application
+localisation layer.
+
+### Web and API routing
+
+Public web routes, administrative routes, and versioned API endpoints are kept
+separate. Administrative routes require explicit authentication, while
+sensitive public workflows are protected by request validation and rate
+limiting.
+
+### Application services
+
+Business workflows are implemented in dedicated services rather than directly
+inside route handlers. These services coordinate feedback processing, purchase
+verification, consultation entitlements, product releases, and controlled
+downloads.
+
+### Data access and persistence
+
+SQLAlchemy models represent the application data, while repositories isolate
+database access from business logic. Alembic migrations provide controlled
+schema evolution for PostgreSQL.
+
+### Product delivery
+
+Product releases are associated with eligible purchases and exposed through
+time-limited download entitlements. Release files are stored in S3-compatible
+object storage and delivered through signed URLs rather than directly from the
+application server.
+
+### Quality and operational controls
+
+Automated tests cover application behaviour and evolving workflows. Validation,
+rate limiting, protected administrative access, explicit error handling, and
+configuration checks support safer operation across development and production
+environments.
+
 ## Technology
 
 **Application:** Python, FastAPI, Uvicorn  
