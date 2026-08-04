@@ -170,6 +170,27 @@ environments.
 **Testing:** pytest, pytest-asyncio, HTTPX  
 **Packaging and local development:** Docker, Docker Compose
 
+## Scope and limitations
+
+This repository contains SmartBudgetSite: the public web application and the
+operational infrastructure used to present, distribute, and support
+SmartBudget.
+
+It does not contain the complete SmartBudget financial model or the
+distributable product files themselves.
+
+The application is still under active development and should not be treated as
+a completed commercial release or as a production deployment template.
+
+Some workflows depend on external services and valid credentials, including
+mail delivery, Calendly integration, PostgreSQL, and S3-compatible object
+storage. A basic local application instance can be started without exercising
+all external integrations, but the corresponding workflows will remain
+unavailable until they are configured.
+
+Security, deployment, backup, monitoring, and operational procedures must be
+reviewed for the target environment before production use.
+
 ## Development setup
 
 ### 1. Clone the repository
