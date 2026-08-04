@@ -1,14 +1,28 @@
-# SmartBudget API
+# SmartBudget
 
-![Python](https://img.shields.io/badge/python-3.11-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.1-green)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-blue)
-![Docker](https://img.shields.io/badge/Docker-enabled-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+SmartBudget is a forecasting-first personal financial decision-support product
+that helps people understand likely financial outcomes before making decisions.
 
-Backend for SmartBudget application built with FastAPI, PostgreSQL and Docker.
+It combines forward-looking financial planning, deterministic calculations,
+business intelligence, automation, and application engineering in one evolving
+system.
 
----
+## Purpose
+
+Personal finance tools often focus on recording what has already happened.
+SmartBudget is designed around a different question:
+
+> What is likely to happen next, and what does that mean for the decision I am
+> considering now?
+
+The product is intended to help users evaluate affordability, sustainability,
+future cash-flow pressure, and the consequences of changing a plan as new
+financial information becomes available.
+
+SmartBudget is not positioned as merely an expense tracker, an accounting
+system, or an opaque AI adviser. Its purpose is to provide a structured,
+inspectable basis for personal financial decisions while keeping the user in
+control of the plan.
 
 ## 🔍 Health Check
 
