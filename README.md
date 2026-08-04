@@ -37,32 +37,48 @@ The product is not yet presented here as a completed commercial release.
 Functionality, architecture, and documentation continue to evolve as the system
 moves toward a production-ready public version.
 
-## 🚀 Features
+## What the system supports
 
-### Feedback system
-- Multiple message types:
-  - Site issue
-  - General question
-  - Product feedback
-- Purchase verification for product feedback
-- Dynamic form behavior on frontend
+The current application provides the public and operational infrastructure
+required to present, distribute, and support SmartBudget.
 
-### Attachments
-- Multiple file upload (max 5 files)
-- Drag & drop support
-- File picker fallback
-- Client-side validation (file type)
-- Server-side validation:
-  - file type
-  - file size (max 20 MB)
-  - max files count
-- Files stored locally with unique names
-- Metadata stored in database
+### Product presentation
 
-### Internationalization
-- English / Russian UI support
+- bilingual English and Russian web interface;
+- public product catalogue and product-specific landing pages;
+- FAQ and supporting product information;
+- structured product, edition, price, and availability data.
 
----
+### Purchase and delivery workflows
+
+- purchase verification;
+- product releases linked to eligible purchases;
+- controlled download entitlements;
+- expiring download links and attempt limits;
+- signed delivery URLs backed by external object storage;
+- support references for purchase and download issues.
+
+### Feedback and customer support
+
+- structured feedback for site, product, purchase, and download issues;
+- optional supporting attachments with validation;
+- administrative review, resolution, reply, and publication workflows;
+- public product reviews where publication has been explicitly approved.
+
+### Product operations
+
+- administrative management of products, prices, releases, and sales;
+- release upload and publication workflows;
+- consultation entitlement handling;
+- database migrations and automated tests supporting continued evolution.
+
+### Operational safeguards
+
+- protected administrative routes;
+- rate limiting for sensitive workflows;
+- validation of uploaded files and product archives;
+- explicit handling of unavailable storage, invalid entitlements, and expired
+  download access.
 
 ## 🛠 Tech Stack
 
@@ -72,8 +88,6 @@ moves toward a production-ready public version.
 - Alembic
 - Docker
 - Vanilla JS (frontend)
-
----
 
 ## ⚙️ Environment
 
