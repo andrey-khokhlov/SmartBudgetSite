@@ -124,117 +124,121 @@ outputs as authoritative financial advice.
 **Testing:** pytest, pytest-asyncio, HTTPX  
 **Packaging and local development:** Docker, Docker Compose
 
-## ⚙️ Environment
+## Development setup
 
-Environment variables are configured via:
+### 1. Clone the repository
 
-- `.env`
-- `.env.dev`
-- `.env.prod`
-- `.env.example`
-
-## Key variables:
-```text
-DATABASE_URL=
-APP_HOST=127.0.0.1
-APP_PORT=8800
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
-SECRET_KEY=
-UPLOAD_DIR=uploads
-```
-
-## ⚡ Quick Start
-
-### 1. Clone repository
 ```bash
-git clone https://github.com/<your-username>/SmartBudgetSite.git
+git clone https://github.com/andrey-khokhlov/SmartBudgetSite.git
 cd SmartBudgetSite
 ```
 
-### 2. Create virtual environment
+### 2. Create and activate a virtual environment
+
 ```bash
 python -m venv .venv
-.\.venv\Scripts\activate
+```
+
+Windows:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Linux or macOS:
+
+```bash
+source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment
-```bash
-copy .env.example .env
+### 4. Configure the environment
+
+Copy the example configuration.
+
+Windows:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-### 5. Run application
+Linux or macOS:
+
+```bash
+cp .env.example .env
+```
+
+Then replace the example values with local development credentials.
+
+The application reads `.env` by default. A different configuration file can
+be selected through the `ENV_FILE` environment variable.
+
+Configuration covers:
+
+- application environment, host, port, and CORS;
+- PostgreSQL connection and credentials;
+- application secrets and administrative access;
+- mail delivery and administrator notifications;
+- Calendly consultation integration;
+- Cloudflare R2 product-release storage;
+- download token lifetime, signed URL lifetime, and attempt limits;
+- upload and rate-limiting safeguards.
+
+Do not commit real credentials or production secrets.
+
+### 5. Start PostgreSQL
+
+Docker Compose currently provisions the local PostgreSQL service:
+
+```bash
+docker compose up -d
+```
+
+To stop it:
+
+```bash
+docker compose down
+```
+
+The Compose configuration does not start the FastAPI application itself.
+
+### 6. Apply database migrations
+
+```bash
+alembic upgrade head
+```
+
+### 7. Run the application
+
 ```bash
 python run.py
 ```
 
+The default example configuration exposes the application at:
 
-## ▶️ Run locally
-
-```bash
-docker-compose up -d
-```
-```bash
-docker-compose down
-```
-
-🔐 Validation rules
 ```text
-Files Allowed:
-.png
-.jpg
-.jpeg
-.webp
-.pdf
-Max size: 20 MB per file
-Max files: 5
+http://127.0.0.1:8800
 ```
 
-📁 Storage
-
-Current implementation:
-
-Local disk (/uploads)
-Unique filenames (UUID)
-
-Future improvement:
-
-S3-compatible storage (scalable & production-ready)
-🧪 API
-Create feedback
-
-POST /v1/feedback
-
-multipart/form-data
-supports attachments
-Check purchase
-
-POST /v1/check-purchase
-
-💡 Notes
-Backend is designed with layered architecture (router → service → repository)
-File handling is isolated and ready for migration to cloud storage
-
-## 🔌 Example API usage
-
-### Create feedback with attachments
+### 8. Verify the local instance
 
 ```bash
-curl -X POST "http://127.0.0.1:8800/v1/feedback" \
-  -F "message_type=site_issue" \
-  -F "subject=Test message" \
-  -F "message=Something is broken" \
-  -F "files=@screenshot.png"
+curl http://127.0.0.1:8800/v1/health
 ```
-### Check purchase
+
+Expected response:
+
+```json
+{"status": "ok"}
+```
+
+### 9. Run the test suite
+
 ```bash
-curl -X POST "http://127.0.0.1:8800/v1/check-purchase" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}'
+pytest
 ```
