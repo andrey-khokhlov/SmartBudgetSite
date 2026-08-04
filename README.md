@@ -309,3 +309,11 @@ Expected response:
 ```bash
 pytest
 ```
+
+## License
+
+Copyright © Andrey Khokhlov.
+
+No license is granted to use, copy, modify, distribute, or create derivative
+works from this source code unless explicit written permission is provided.
+
