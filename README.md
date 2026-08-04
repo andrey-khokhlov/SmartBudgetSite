@@ -80,7 +80,7 @@ required to present, distribute, and support SmartBudget.
 - explicit handling of unavailable storage, invalid entitlements, and expired
   download access.
 
-  ## Product and engineering principles
+## Product and engineering principles
 
 ### Forecasting before recording
 
@@ -114,14 +114,15 @@ Future AI capabilities may support explanation, navigation, and interpretation.
 They should not replace deterministic financial logic or present uncertain
 outputs as authoritative financial advice.
 
-## 🛠 Tech Stack
+## Technology
 
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Alembic
-- Docker
-- Vanilla JS (frontend)
+**Application:** Python, FastAPI, Uvicorn  
+**Data and persistence:** PostgreSQL, SQLAlchemy, Alembic  
+**Validation and configuration:** Pydantic, pydantic-settings  
+**Web interface:** Jinja2, HTML, CSS, Vanilla JavaScript  
+**Storage and delivery:** S3-compatible object storage, boto3  
+**Testing:** pytest, pytest-asyncio, HTTPX  
+**Packaging and local development:** Docker, Docker Compose
 
 ## ⚙️ Environment
 
