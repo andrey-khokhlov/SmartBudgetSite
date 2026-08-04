@@ -24,44 +24,6 @@ system, or an opaque AI adviser. Its purpose is to provide a structured,
 inspectable basis for personal financial decisions while keeping the user in
 control of the plan.
 
-## 🔍 Health Check
-
-```bash
-curl http://127.0.0.1:8800/v1/health
-```
-
-Response:
-```json
-{"status": "ok"}
-```
-
-## 📦 Project Structure
-
-```text
-app/
-  api/             # API endpoints (routers)
-  core/            # Config, logging, i18n, dependencies
-  db/              # Database setup
-  models/          # SQLAlchemy models
-  repositories/    # Data access layer
-  schemas/         # Pydantic schemas
-  static/          # CSS, JS
-  templates/       # HTML (Jinja2)
-  web/             # Web routes (HTML pages)
-  main.py          # FastAPI entrypoint
-
-alembic/           # Migrations
-tests/             # Tests
-uploads/           # Stored files (local storage)
-docs/              # Dev notes
-
-.env*
-docker-compose.yml
-requirements.txt
-alembic.ini
-pytest.ini
-```
-
 ## 🚀 Features
 
 ### Feedback system
