@@ -24,6 +24,19 @@ system, or an opaque AI adviser. Its purpose is to provide a structured,
 inspectable basis for personal financial decisions while keeping the user in
 control of the plan.
 
+## Current status
+
+SmartBudget is in active development.
+
+The repository currently represents the public application and supporting
+infrastructure around the product. It includes the web application, API,
+database layer, migrations, tests, localisation, feedback workflows, purchase
+verification, and operational safeguards.
+
+The product is not yet presented here as a completed commercial release.
+Functionality, architecture, and documentation continue to evolve as the system
+moves toward a production-ready public version.
+
 ## 🚀 Features
 
 ### Feedback system
