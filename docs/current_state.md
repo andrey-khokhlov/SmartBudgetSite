@@ -204,12 +204,20 @@ Infrastructure and quality:
 - Production reverse-proxy access-log suppression, CDN cache bypass, and
   provider telemetry behavior remain release-environment validation obligations;
   no proxy technology or deployment configuration was introduced by `SEC-009`.
-- Serverspace account and Netherlands region availability are verified.
+- A Vultr VPS in Amsterdam is provisioned and operational for secure external
+  connectivity and future production-like integration validation.
+- The Windows workstation uses Hiddify with XRay/VLESS Reality as the primary
+  censorship-resistant connection and AmneziaVPN with AmneziaWG2 as the
+  fallback. The XRay server configuration was independently validated through
+  Hiddify; the XRay mode of the AmneziaVPN Windows client is not used because
+  its TUN/tun2socks path produced incomplete browser traffic. Russian and
+  international sites, ChatGPT voice mode, and localhost access were manually
+  validated through Hiddify.
 - Cloudflare Registrar ownership and DNS operation for `neocitrix.com` are
   verified; SmartBudgetSite has not yet been publicly deployed.
-- Cloudflare R2 integration is implemented, but live R2 upload validation is
-  deferred to the future VPS because the current local network cannot complete
-  the TLS connection to the R2 S3 API.
+- Cloudflare R2 integration is implemented. Live R2 upload validation is no
+  longer blocked by the absence of a VPS or a working external connection, but
+  the production-like R2 validation itself has not yet been performed.
 - A separate Playwright/Chromium browser regression layer protects critical
   client-side behavior without changing ordinary pytest discovery. Playwright
   remains a development/test-only dependency.
