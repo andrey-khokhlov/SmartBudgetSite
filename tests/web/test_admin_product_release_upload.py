@@ -69,7 +69,8 @@ def test_oversized_release_is_rejected_before_storage_or_persistence(
     )
 
     assert response.status_code == 413
-    assert response.json() == {"detail": "Release archive exceeds the 8 bytes limit."}
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Release archive exceeds the 8 bytes limit." in response.text
     db_session.expire_all()
     assert db_session.query(ProductRelease).count() == 0
 
@@ -94,13 +95,18 @@ def test_invalid_version_returns_400_without_storage_initialization(
         auth_client,
         product_id=product.id,
         content=b"valid release",
-        version="../invalid",
+        version="0.0.1-test",
+        release_notes="Keep these safe notes",
     )
 
     assert response.status_code == 400
-    assert response.json() == {
-        "detail": "Release version must use format like 1.0 or 1.1."
-    }
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Release version must use format like 1.0 or 1.1." in response.text
+    assert product.name in response.text
+    assert product.slug in response.text
+    assert 'value="0.0.1-test"' in response.text
+    assert "Keep these safe notes" in response.text
+    assert "release.zip" not in response.text
     assert db_session.query(ProductRelease).count() == 0
 
 
@@ -139,7 +145,8 @@ def test_default_release_limit_preserves_50_mib_error_contract(
     )
 
     assert response.status_code == 413
-    assert response.json() == {"detail": "Release archive exceeds the 50 MiB limit."}
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Release archive exceeds the 50 MiB limit." in response.text
     db_session.expire_all()
     assert db_session.query(ProductRelease).count() == 0
 

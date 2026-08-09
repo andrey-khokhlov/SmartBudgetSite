@@ -10,7 +10,11 @@
 
     <h1 class="admin-form-title">Upload Product Release</h1>
 
-    {% if upload_error == "release_conflict" %}
+    {% if upload_error == "validation_failed" %}
+        <div class="admin-error">
+            {{ validation_message }}
+        </div>
+    {% elif upload_error == "release_conflict" %}
         <div class="admin-error">
             This product version already exists with different release details.
         </div>
@@ -68,6 +72,7 @@
                 id="version"
                 name="version"
                 type="text"
+                value="{{ submitted_version or '' }}"
                 placeholder="example: 1.0"
                 required
             >
@@ -84,7 +89,7 @@
                 id="release_notes"
                 name="release_notes"
                 rows="6"
-            ></textarea>
+            >{{ submitted_release_notes or '' }}</textarea>
         </div>
 
         <div class="form-group">

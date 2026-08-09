@@ -180,6 +180,9 @@ def _render_product_release_upload_error(
     error_code: str,
     status_code: int,
     operation_id: str | None = None,
+    validation_message: str | None = None,
+    submitted_version: str | None = None,
+    submitted_release_notes: str | None = None,
 ):
     try:
         product = db.get(Product, product_id)
@@ -205,6 +208,9 @@ def _render_product_release_upload_error(
             "latest_release": releases[0] if releases else None,
             "upload_error": error_code,
             "operation_id": operation_id,
+            "validation_message": validation_message,
+            "submitted_version": submitted_version,
+            "submitted_release_notes": submitted_release_notes,
         },
         status_code=status_code,
         document_lang="en",
@@ -1334,14 +1340,31 @@ def admin_product_release_create(
         display_limit = _format_release_upload_limit(
             settings.PRODUCT_RELEASE_MAX_UPLOAD_BYTES
         )
-        raise HTTPException(
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="validation_failed",
             status_code=413,
-            detail=f"Release archive exceeds the {display_limit} limit.",
+            validation_message=(
+                f"Release archive exceeds the {display_limit} limit."
+            ),
+            submitted_version=version,
+            submitted_release_notes=release_notes,
         )
     except ReleaseProductNotFoundError:
         raise HTTPException(status_code=404, detail="Product not found")
     except ReleaseUploadValidationError as exc:
-        raise HTTPException(status_code=400, detail=exc.detail)
+        return _render_product_release_upload_error(
+            request=request,
+            db=db,
+            product_id=product_id,
+            error_code="validation_failed",
+            status_code=400,
+            validation_message=exc.detail,
+            submitted_version=version,
+            submitted_release_notes=release_notes,
+        )
     except ReleaseConflictError:
         return _render_product_release_upload_error(
             request=request,
