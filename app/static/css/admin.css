@@ -69,6 +69,13 @@
     justify-content: flex-start;
 }
 
+.form-actions--split {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 /* =========================
    Admin: Buttons
    ========================= */
@@ -91,6 +98,29 @@
 }
 
 .btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+}
+
+.btn-secondary:active {
     transform: translateY(1px);
 }
 

@@ -52,7 +52,7 @@ def test_admin_products_list_page_renders_products(
 def _assert_product_form_cancel_action(response) -> None:
     assert response.status_code == 200
     assert re.search(
-        r'<a href="/admin/products"[^>]*>Cancel</a>',
+        r'<a href="/admin/products" class="btn-secondary">Cancel</a>',
         response.text,
     )
     assert not re.search(r'<button[^>]*>\s*Cancel\s*</button>', response.text)
