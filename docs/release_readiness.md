@@ -558,7 +558,10 @@ together even though each finding retains its own identifier.
   keys and repeats the database ownership check immediately before deletion.
 - **Regression validation:** The focused REL-004 suite passes 77 tests and the
   full ordinary suite passes 398 tests. Changed-file Ruff and Black checks and
-  `git diff --check` pass. Live R2 behavior remains VPS-only validation.
+  `git diff --check` pass. A normal admin upload has now been validated against
+  live R2 through `ProductRelease` persistence using a test artifact; live
+  failure, retry, compensation, and reconciliation behavior remains
+  release-environment validation.
 - **Dependencies:** `REL-003`.
 - **References:** [Release administration](architecture/commerce_and_delivery.md#release-administration),
   [file storage](architecture/commerce_and_delivery.md#file-storage).
@@ -587,7 +590,9 @@ together even though each finding retains its own identifier.
   the full ordinary suite passes 412 tests. PostgreSQL SQL compilation confirms
   `FOR UPDATE OF products`; the partial unique active-release index remains the
   final invariant. Changed-file Ruff and Black checks and `git diff --check`
-  pass. Live PostgreSQL blocking and live R2 metadata behavior remain
+  pass. The normal admin Publish action has now been manually validated for the
+  live-R2 test release, including its active/current UI state and release
+  timestamp. Live PostgreSQL blocking and failure-path behavior remain
   release-environment validation.
 - **Dependencies:** `REL-004`.
 - **References:** [Release administration](architecture/commerce_and_delivery.md#release-administration).
@@ -646,8 +651,22 @@ defects.
 
 ### Commerce and fulfillment (`REL-001`)
 
-- connect the implemented Lava.top invoice/provider-orchestration boundary to
-  the customer checkout flow and add the SmartBudgetSite payment result page;
+Partial integration validation is complete: the normal admin upload and Publish
+path reached live R2, persisted a test `ProductRelease`, and activated it. A
+manual live Lava.top smoke run through SmartBudgetSite services then resolved
+the current catalog price, active release, and provider offer; created a pending
+`Sale`/`SaleItem`; called the real invoice API; and persisted the returned
+invoice ID in `Sale.external_payment_id`. The hosted payment URL was not printed.
+The test release and current catalog amount are not final commercial release or
+pricing claims.
+
+`REL-001` remains incomplete. Invoice creation is not payment confirmation, a
+successful payment, or fulfillment. Remaining work is:
+
+- connect public checkout POST/initiation to the implemented provider
+  orchestration, redirect to Lava.top hosted checkout, and add the
+  SmartBudgetSite payment result page;
+- execute and validate a real payment and the pending-to-paid transition;
 - authenticated Lava.top webhook processing or explicit server-to-server
   payment verification;
 - SmartBudgetSite-owned payment-success fulfillment, including entitlement

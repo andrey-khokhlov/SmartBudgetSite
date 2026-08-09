@@ -45,6 +45,12 @@ Commerce and delivery:
   persisted R2 object's size and SHA-256, deactivates the previous release, and
   activates the selected release. Re-publishing the active release safely
   re-verifies storage and preserves its original release timestamp.
+- The normal administrative release path has now been validated against live
+  Cloudflare R2 for `smartbudget-int-standard`: the test artifact
+  `SmartBudget_UserGuide.zip` was persisted as `ProductRelease` version `0.1`,
+  published, and shown as active/current with a release timestamp and
+  `cloudflare_r2` storage. This is integration-validation evidence only; the
+  artifact and version are not the final commercial SmartBudget release.
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
 - Payment preparation is provider-independent and creates pending records. The
@@ -53,13 +59,22 @@ Commerce and delivery:
   the hosted invoice API, persists the returned invoice ID on the still-pending
   `Sale`, and returns the hosted payment URL. Provider failures preserve and
   mark the sale failed without creating entitlements.
+- A manual live Lava.top smoke run through the existing SmartBudgetSite services
+  validated the path from the current EUR catalog price and active
+  `ProductRelease` through pending `Sale`/`SaleItem` preparation,
+  `PaymentProviderOffer` resolution, real invoice creation, and persistence of
+  the provider invoice ID in `Sale.external_payment_id`. The sale remained
+  `pending`, and the hosted payment URL was deliberately not printed. This
+  validates invoice creation, not payment confirmation or fulfillment; the
+  current catalog amount is not asserted as final commercial pricing.
 - Public product checkout now requires an explicit currency query parameter and
   resolves the active catalog price strictly by exact product slug and currency;
   buy-page links carry the currency of their displayed catalog price.
-- Lava.top initiation from the public checkout page/button, the payment result
-  page, production webhook or server-to-server confirmation, paid transition,
-  fulfillment, purchase email, and end-to-end payment flow are not implemented
-  by this slice.
+- Lava.top POST initiation and hosted-checkout redirect from the public checkout
+  page, real payment execution, the payment result page, authenticated webhook
+  or server-to-server confirmation, the pending-to-paid transition,
+  fulfillment, purchase email, delivery links, and end-to-end RUB/EUR payment
+  and payout validation remain incomplete.
 - Lava.top is the approved first production payment provider within the
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
@@ -230,9 +245,11 @@ Infrastructure and quality:
   validated through Hiddify.
 - Cloudflare Registrar ownership and DNS operation for `neocitrix.com` are
   verified; SmartBudgetSite has not yet been publicly deployed.
-- Cloudflare R2 integration is implemented. Live R2 upload validation is no
-  longer blocked by the absence of a VPS or a working external connection, but
-  the production-like R2 validation itself has not yet been performed.
+- Cloudflare R2 integration is implemented, and the normal live administrative
+  upload, `ProductRelease` persistence, and publication path has been validated
+  with a test artifact. Final commercial-release validation and live
+  failure/retry/reconciliation exercises remain separate release-environment
+  work.
 - A separate Playwright/Chromium browser regression layer protects critical
   client-side behavior without changing ordinary pytest discovery. Playwright
   remains a development/test-only dependency.
@@ -328,6 +345,11 @@ phase.
 
 - strict one-time download completion and automatic completion detection
 - richer download-attempt audit data and backend file proxying
+- Admin operational workspace width: data-heavy pages such as Product Releases
+  should use more available horizontal space on ordinary desktop screens and
+  avoid unnecessary horizontal scrolling. This non-blocking admin-only UX work
+  may be completed independently; it must not change the public-site container,
+  whose layout belongs to the later public UX and release-polish review.
 - Feedback form UI polish: apply the project's primary button style to the
   submit control and bring the file-selection control into the site design;
   these are known non-blocking release-polish items
