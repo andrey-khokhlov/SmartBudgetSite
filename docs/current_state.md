@@ -345,11 +345,6 @@ phase.
 
 - strict one-time download completion and automatic completion detection
 - richer download-attempt audit data and backend file proxying
-- Admin operational workspace width: data-heavy pages such as Product Releases
-  should use more available horizontal space on ordinary desktop screens and
-  avoid unnecessary horizontal scrolling. This non-blocking admin-only UX work
-  may be completed independently; it must not change the public-site container,
-  whose layout belongs to the later public UX and release-polish review.
 - Feedback form UI polish: apply the project's primary button style to the
   submit control and bring the file-selection control into the site design;
   these are known non-blocking release-polish items

@@ -2,6 +2,11 @@
    Admin: Common Layout
    ========================= */
 
+main.container {
+    width: min(1440px, calc(100% - (var(--gutter) * 2)));
+    max-width: 1440px;
+}
+
 .admin-form {
     max-width: 720px;
     margin: 32px auto;
@@ -10,6 +15,12 @@
     border: 1px solid #e6e8ec;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+
+.admin-workspace {
+    width: 100%;
+    max-width: 1200px;
+    margin: 32px auto;
 }
 
 .admin-form-title {
