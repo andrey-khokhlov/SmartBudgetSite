@@ -966,6 +966,7 @@ def checkout_page(
     slug: str,
     request: Request,
     db: Session = Depends(get_db),
+    currency: str | None = Query(default=None),
     consultation: int | None = Query(default=None),
 ):
     """
@@ -973,22 +974,38 @@ def checkout_page(
 
     Business rules:
     - Checkout is product-specific.
-    - Product is resolved by slug.
-    - Active price must exist before checkout can be shown.
+    - Product is resolved by exact slug.
+    - Currency is required, normalized, and selects the matching active price.
     - Consultation in checkout is treated as add-on usage only.
 
     Side effects:
     - None. Read-only page rendering.
 
     Invariants / restrictions:
+    - Price and amount come only from the selected ProductPrice.
+    - Checkout does not infer or fall back to another currency.
     - Payment provider is not selected here.
     - User manually selects payment method on the page.
     """
 
-    product, price = ProductsRepository(db).get_product_with_active_price_by_slug(slug)
+    normalized_currency = (currency or "").strip().upper()
+    if not normalized_currency:
+        raise HTTPException(status_code=400, detail="Currency is required")
 
-    if product is None or price is None:
+    products_repository = ProductsRepository(db)
+    product = products_repository.get_by_slug(slug)
+    if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
+
+    price = products_repository.get_active_price_by_product_and_currency(
+        product_id=product.id,
+        currency_code=normalized_currency,
+    )
+    if price is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Active price not found for requested currency",
+        )
 
     package = get_product_package(product.slug)
 
@@ -1003,16 +1020,16 @@ def checkout_page(
             usage_type="addon",
         )
 
-    total_amount = price.amount
-
-    if addon is not None:
-        total_amount += addon.amount
-
     if addon is not None and addon.currency_code != price.currency_code:
         raise HTTPException(
             status_code=500,
             detail="Currency mismatch between product and addon",
         )
+
+    total_amount = price.amount
+
+    if addon is not None:
+        total_amount += addon.amount
 
     return render(
         request,

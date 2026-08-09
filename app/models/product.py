@@ -8,6 +8,7 @@ from app.core.db import Base
 from app.models.product_price import ProductPrice
 
 if TYPE_CHECKING:
+    from app.models.payment_provider_offer import PaymentProviderOffer
     from app.models.product_release import ProductRelease
 
 ALLOWED_EDITIONS = {"Standard", "Pro"}
@@ -52,6 +53,12 @@ class Product(Base):
     # Related product release records.
     releases: Mapped[list["ProductRelease"]] = relationship(
         "ProductRelease",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
+
+    payment_provider_offers: Mapped[list["PaymentProviderOffer"]] = relationship(
+        "PaymentProviderOffer",
         back_populates="product",
         cascade="all, delete-orphan",
     )

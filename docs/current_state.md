@@ -47,9 +47,19 @@ Commerce and delivery:
   re-verifies storage and preserves its original release timestamp.
 - `DownloadEntitlement` provides backend-controlled, tokenized access with a
   configurable expiry and retry limit.
-- Payment preparation is provider-independent and creates pending records, but
-  real Lava.top checkout, production webhook integration, and the end-to-end
-  payment flow are not implemented.
+- Payment preparation is provider-independent and creates pending records. The
+  first bounded Lava.top checkout slice now adds provider-independent
+  `PaymentProviderOffer` mappings, resolves the product/provider offer, calls
+  the hosted invoice API, persists the returned invoice ID on the still-pending
+  `Sale`, and returns the hosted payment URL. Provider failures preserve and
+  mark the sale failed without creating entitlements.
+- Public product checkout now requires an explicit currency query parameter and
+  resolves the active catalog price strictly by exact product slug and currency;
+  buy-page links carry the currency of their displayed catalog price.
+- Lava.top initiation from the public checkout page/button, the payment result
+  page, production webhook or server-to-server confirmation, paid transition,
+  fulfillment, purchase email, and end-to-end payment flow are not implemented
+  by this slice.
 - Lava.top is the approved first production payment provider within the
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
@@ -59,12 +69,17 @@ Commerce and delivery:
   contact, while `support@neocitrix.com` is the public customer-support address.
   The account UI confirms support for digital products, configurable pricing
   options including price by request through API, a payment-widget configuration
-  flow, and provider-hosted file attachments. These observations reflect
-  confirmed account/UI capabilities only and do not imply that the corresponding
-  API behavior, payment workflows, or production integrations have been
-  implemented or validated.
-- Those observations confirm account/UI capabilities only. The exact API
-  contract and end-to-end behavior remain unvalidated, and Lava.top attachments
+  flow, and provider-hosted file attachments. These observations remain
+  account/UI evidence only; they are distinct from the separately confirmed
+  invoice API contract and do not establish complete payment workflows or
+  production validation.
+- The Lava.top invoice contract is now confirmed: `POST /api/v3/invoice` uses
+  server-owned `X-Api-Key` authentication and the `email`, `offerId`, `currency`,
+  and `amount` fields; the response invoice `id` is the external payment identity
+  and `paymentUrl` is the hosted checkout destination. RUB, USD, and EUR are
+  supported for this flow, and the observed RUB minimum is 50 RUB. The provider
+  Product ID and Offer ID are distinct; invoice creation uses the Offer ID.
+- End-to-end production behavior remains unvalidated, and Lava.top attachments
   are intentionally not the SmartBudget delivery path; SmartBudgetSite-owned
   entitlements, protected access, purchase emails, and private R2 delivery
   remain required.
@@ -230,14 +245,18 @@ Infrastructure and quality:
   Alembic chain to `2f6a9d7c4e10`; the three consultation entitlement
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
-  upgrade operations.
+  upgrade operations. The `PaymentProviderOffer` migration was subsequently
+  upgraded, downgraded, and re-upgraded against PostgreSQL to head
+  `7b91c5e2a4f0`, where `alembic check` again reports no new operations.
 - The latest confirmed full ordinary suite result is 404 passing tests after
   the public reviews page implementation. The focused `REL-004` upload, storage,
   logging, repository, reconciliation, route, and download suite passes 77
   tests. The focused SEC-009 capability, logging, SQL, storage, helper-script,
   and support-isolation suite passes 50 tests. The focused Feedback
   rendered-contract and API suites pass 33 tests, and the browser suite passes
-  15 tests. The focused public review route and repository suite passes 9
+  15 tests. The focused Lava.top checkout, provider-offer repository, client,
+  and configuration suite passes 38 tests. The focused public review route and
+  repository suite passes 9
   tests. The focused Calendly webhook route suite remains at 8 passing tests,
   including request-level durability validation through a fresh independent
   SQLAlchemy session.

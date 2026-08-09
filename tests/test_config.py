@@ -128,6 +128,13 @@ def test_rate_limit_configuration_has_safe_defaults() -> None:
     assert configured_settings.RATE_LIMIT_MAX_IDENTITIES == 10_000
 
 
+def test_lava_top_configuration_has_safe_defaults() -> None:
+    configured_settings = build_settings()
+
+    assert configured_settings.LAVA_TOP_API_KEY is None
+    assert configured_settings.LAVA_TOP_API_BASE_URL == "https://gate.lava.top"
+
+
 @pytest.mark.parametrize("invalid_capacity", [0, -1])
 def test_rate_limit_capacity_must_be_positive(invalid_capacity: int) -> None:
     with pytest.raises(ValidationError, match="greater than 0"):

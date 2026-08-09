@@ -61,7 +61,7 @@
                             type="checkbox"
                             name="consultation"
                             value="1"
-                            {% if not consultation_addon %}disabled{% endif %}
+                            {% if not consultation_addon or not price %}disabled{% endif %}
                         >
                         <span class="product-addon__text">
                             {{ t("product_buy_add_consultation") }}
@@ -82,13 +82,15 @@
                     </label>
                 </div>
 
-                <a
-                    href="/checkout/{{ product.slug }}"
-                    data-base-url="/checkout/{{ product.slug }}"
-                    class="btn checkout-link"
-                >
-                    {{ t("product_buy_cta") }}
-                </a>
+                {% if price %}
+                    <a
+                        href="/checkout/{{ product.slug }}?currency={{ price.currency_code }}"
+                        data-base-url="/checkout/{{ product.slug }}?currency={{ price.currency_code }}"
+                        class="btn checkout-link"
+                    >
+                        {{ t("product_buy_cta") }}
+                    </a>
+                {% endif %}
             </div>
         {% endfor %}
     </div>
@@ -106,8 +108,9 @@
         const baseUrl = checkoutLink.dataset.baseUrl;
 
         checkbox.addEventListener("change", () => {
+            const querySeparator = baseUrl.includes("?") ? "&" : "?";
             checkoutLink.href = checkbox.checked
-                ? `${baseUrl}?consultation=1`
+                ? `${baseUrl}${querySeparator}consultation=1`
                 : baseUrl;
         });
     });

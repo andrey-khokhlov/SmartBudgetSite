@@ -328,6 +328,29 @@ delete. It never deletes database-owned objects, repairs or deletes rows, or
 runs automatically at application startup. A failed or uncertain delete remains
 reported for manual follow-up.
 
+## Manual Lava.top checkout smoke test
+
+The Lava.top checkout smoke command is a deliberate live-provider operation.
+Running it creates a real Lava.top invoice and a corresponding SmartBudgetSite
+`Sale`; it must be invoked manually and must not be included in automated test
+or deployment startup commands.
+
+Use an existing product, active release, active currency-specific catalog price,
+and `PaymentProviderOffer` mapping:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\smoke_lava_top_checkout.py `
+  --product-slug smartbudget-int-standard `
+  --customer-email <customer-email> `
+  --currency EUR
+```
+
+The command does not accept an amount. It selects the exact active
+`ProductPrice` for the requested currency, uses the existing payment services,
+and prints only non-secret sale and invoice diagnostics. It never prints the
+customer email, API key, hosted payment URL, request headers, or full provider
+response.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,

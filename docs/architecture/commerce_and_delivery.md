@@ -18,6 +18,10 @@ releases, download entitlements, and protected product delivery.
   input.
 - The product catalog is the source of truth for price and currency. Business
   logic must not hardcode currencies.
+- A product may have simultaneous active prices in different currencies. Public
+  checkout requires an explicit currency, normalizes it by trimming surrounding
+  whitespace and uppercasing, and resolves the active price strictly by product
+  and currency. Checkout does not infer currency or fall back to another price.
 - The approved MVP commercial model uses RUB product prices for Russian
   customers and EUR product prices for international customers. The selected
   product price determines the checkout currency.
@@ -106,6 +110,21 @@ after legitimate long-term Stripe infrastructure has been obtained. Purchased,
 rented, nominee, borrowed, or third-party-owned Stripe accounts are not an
 acceptable foundation.
 
+Provider offer identifiers do not belong to the product catalog. The mapping is
+persisted separately so one internal product can resolve the offer used by each
+payment provider:
+
+```text
+Product
+    -> PaymentProviderOffer
+        -> provider
+        -> external_offer_id
+```
+
+There may be at most one mapping for a product/provider pair, and a provider's
+external offer identifier may map to at most one internal product. For the
+first integration the canonical provider value is `lava_top`.
+
 Lava.ru is not part of MVP. It may be evaluated later if commercial or
 operational reasons justify another provider option.
 
@@ -154,14 +173,28 @@ The following facts were confirmed directly through that account's UI:
 - Lava.top exposes a website payment-widget configuration flow; and
 - Lava.top provides its own attached-file delivery capability.
 
-These are account/UI-level observations, not proof of an implemented
-SmartBudgetSite integration or of provider API and production behavior. In
-particular, the price-by-request option indicates potential support for
-SmartBudgetSite-controlled price initiation, but its exact API contract and
-end-to-end behavior still require implementation and provider testing. Webhook
-authentication, retry semantics, API request fields, payout-country
-compatibility, and complete production payment behavior remain unvalidated
-unless separately established through implementation and production testing.
+The invoice-creation contract has now been confirmed separately from those UI
+observations. SmartBudgetSite creates an invoice with
+`POST https://gate.lava.top/api/v3/invoice`, authenticates with the server-owned
+`X-Api-Key` header, and sends `email`, `offerId`, `currency`, and `amount`.
+Supported invoice currencies confirmed for this flow are RUB, USD, and EUR.
+The response includes `id`, `status`, `amountTotal`, and `paymentUrl`; the `id`
+is persisted as `Sale.external_payment_id`, while `paymentUrl` is returned to
+the caller without being logged. SmartBudgetSite remains the amount and
+currency source of truth. Price-by-request is enabled, and the observed minimum
+RUB invoice amount is 50 RUB.
+
+The confirmed SmartBudget Lava.top Product ID is
+`1fa401ab-a8bd-4704-b591-60fc7ff8fe8a`, while its Offer ID is
+`cc1137ac-f8dd-4d51-bd37-738431d6461d`. Invoice creation uses the Offer ID, not
+the Product ID. The real mapping is operational data and is not hardcoded or
+seeded until a repository convention for provider mapping population is
+approved.
+
+The first bounded provider client and invoice orchestration slice is
+implemented with mocked provider tests. Webhook authentication, retry
+semantics, payout-country compatibility, route integration, and complete
+production payment behavior remain unvalidated.
 
 The account observations do not change the approved responsibility boundary.
 Lava.top owns only the provider boundary, including hosted checkout, payment
@@ -229,6 +262,15 @@ payment-confirmation state. Only confirmed payment may:
 - Payment preparation remains provider-independent and does not call provider
   APIs directly.
 - Higher-level orchestration owns provider calls and transaction completion.
+- Checkout orchestration resolves `PaymentProviderOffer` for the prepared
+  sale's product and provider. A missing mapping or provider configuration fails
+  closed.
+- Successful Lava.top invoice creation stores the returned invoice `id` in
+  `Sale.external_payment_id`, commits the still-pending sale, and returns the
+  hosted `paymentUrl`.
+- If that identity commit fails after invoice creation, orchestration rolls back
+  the database transaction and raises a reconciliation-required error carrying
+  only the provider invoice ID. It does not retry provider invoice creation.
 - If payment-session creation fails, preserve the `Sale`, mark it `failed`, keep
   `external_payment_id` null, and create no entitlements.
 - Retrying after such a failure creates a new `Sale`.

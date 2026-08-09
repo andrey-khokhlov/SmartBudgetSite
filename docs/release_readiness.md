@@ -646,8 +646,8 @@ defects.
 
 ### Commerce and fulfillment (`REL-001`)
 
-- actual Lava.top integration using hosted checkout and the SmartBudgetSite
-  payment result page;
+- connect the implemented Lava.top invoice/provider-orchestration boundary to
+  the customer checkout flow and add the SmartBudgetSite payment result page;
 - authenticated Lava.top webhook processing or explicit server-to-server
   payment verification;
 - SmartBudgetSite-owned payment-success fulfillment, including entitlement
