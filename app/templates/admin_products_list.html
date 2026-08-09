@@ -94,7 +94,8 @@
                 </td>
                 <td>{{ p.status }}</td>
                 <td>
-                    <a href="/admin/products/{{ p.id }}/edit">Edit</a>
+                    <a href="/admin/products/{{ p.id }}/edit">Edit</a> |
+                    <a href="/products/{{ p.id }}/releases">Releases</a>
                 </td>
             </tr>
             {% endfor %}
