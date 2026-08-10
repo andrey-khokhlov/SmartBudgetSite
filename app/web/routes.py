@@ -53,6 +53,13 @@ from app.services.product_release_service import (
     ReleaseStorageUnavailableError,
     ReleaseUploadValidationError,
 )
+from app.services.payment_service import (
+    CheckoutValidationError,
+    PaymentCheckoutError,
+    PaymentReconciliationRequiredError,
+    ProductReleaseUnavailableError,
+    initiate_lava_top_product_checkout,
+)
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -1049,6 +1056,66 @@ def checkout_page(
             "package": package,
             "lang": get_lang(request),
         },
+    )
+
+
+@router.post("/checkout/{slug}", response_class=HTMLResponse)
+def initiate_checkout(
+    slug: str,
+    request: Request,
+    customer_email: str = Form(default=""),
+    currency: str = Form(default=""),
+    consultation: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    """Initiate provider-hosted checkout from server-owned commerce data."""
+
+    if consultation not in {"0", "1"}:
+        return render(
+            request,
+            "payment_result.html",
+            {"result_state": "error"},
+            status_code=400,
+        )
+
+    try:
+        payment_url = initiate_lava_top_product_checkout(
+            db,
+            product_slug=slug,
+            customer_email=customer_email,
+            currency=currency,
+            include_consultation=consultation == "1",
+        )
+    except CheckoutValidationError:
+        return render(
+            request,
+            "payment_result.html",
+            {"result_state": "error"},
+            status_code=400,
+        )
+    except (
+        PaymentCheckoutError,
+        PaymentReconciliationRequiredError,
+        ProductReleaseUnavailableError,
+    ):
+        return render(
+            request,
+            "payment_result.html",
+            {"result_state": "error"},
+            status_code=503,
+        )
+
+    return RedirectResponse(url=payment_url, status_code=303)
+
+
+@router.get("/payment/result", response_class=HTMLResponse)
+def payment_result_page(request: Request):
+    """Render the non-authoritative browser return state for a payment."""
+
+    return render(
+        request,
+        "payment_result.html",
+        {"result_state": "pending"},
     )
 
 

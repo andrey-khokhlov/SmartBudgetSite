@@ -61,6 +61,34 @@
     gap: 10px;
 }
 
+.checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkout-form label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.checkout-form input[type="email"] {
+    border: 1px solid #dcdfe4;
+    border-radius: 8px;
+    font: inherit;
+    padding: 12px;
+}
+
+.checkout-hint {
+    color: #4b5563;
+    font-size: 13px;
+    margin: 0 0 6px;
+}
+
+.payment-result p {
+    line-height: 1.6;
+}
+
 .payment-button {
     display: block;
     text-align: center;
@@ -73,6 +101,7 @@
     background: #ffffff;
     color: #1f2937;
     transition: all 0.15s ease;
+    cursor: pointer;
 }
 
 .payment-button:hover {

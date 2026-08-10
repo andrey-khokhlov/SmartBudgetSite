@@ -198,6 +198,23 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.consultation": "Personal consultation",
         "checkout.included": "Added",
         "checkout.price_product": "Product price",
+        "checkout.email": "Email for your purchase",
+        "checkout.email_hint": "Use the address where you want to receive purchase information.",
+        "checkout.continue_payment": "Continue to secure payment",
+        "payment_result.title": "Payment status",
+        "payment_result.pending_title": "Payment confirmation is pending",
+        "payment_result.pending_message": (
+            "Your return to SmartBudgetSite does not by itself confirm payment."
+        ),
+        "payment_result.pending_note": (
+            "Access and delivery will become available only after SmartBudgetSite "
+            "receives authoritative payment confirmation."
+        ),
+        "payment_result.error_title": "Checkout is temporarily unavailable",
+        "payment_result.error_message": (
+            "We could not start payment for this selection. Please review the "
+            "checkout details or try again later."
+        ),
         "product_buy_title": "Select your SmartBudget version",
         "product_buy_subtitle": "Compare available options and continue to checkout.",
         "product_buy_edition": "Edition",
@@ -439,6 +456,23 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.consultation": "Личная консультация",
         "checkout.included": "Добавлена",
         "checkout.price_product": "Стоимость продукта",
+        "checkout.email": "Email для покупки",
+        "checkout.email_hint": "Укажите адрес, на который вы хотите получать информацию о покупке.",
+        "checkout.continue_payment": "Перейти к безопасной оплате",
+        "payment_result.title": "Статус оплаты",
+        "payment_result.pending_title": "Ожидается подтверждение оплаты",
+        "payment_result.pending_message": (
+            "Возврат на SmartBudgetSite сам по себе не подтверждает оплату."
+        ),
+        "payment_result.pending_note": (
+            "Доступ и доставка станут доступны только после получения "
+            "SmartBudgetSite достоверного подтверждения оплаты."
+        ),
+        "payment_result.error_title": "Оплата временно недоступна",
+        "payment_result.error_message": (
+            "Не удалось начать оплату для выбранной конфигурации. Проверьте "
+            "параметры заказа или повторите попытку позже."
+        ),
         "product_buy_title": "Выберите версию SmartBudget",
         "product_buy_subtitle": "Сравните доступные варианты и перейдите к оплате подходящей версии.",
         "product_buy_edition": "Версия",

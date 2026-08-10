@@ -514,13 +514,14 @@ together even though each finding retains its own identifier.
   production perimeter.
 - **Completed behavior:** A project-owned, thread-safe process-local
   rolling-window limiter protects feedback before multipart parsing, purchase
-  lookup by IP and normalized-email HMAC, download and consultation route
-  families by IP and capability HMAC, shared admin authentication failures, and
-  Calendly before and after signature verification. Responses use deterministic
-  HTTP 429, integer `Retry-After`, stable JSON or localized HTML, while
-  capability responses retain SEC-009 headers. Bounded state fails closed,
-  rejection logging is coalesced and privacy-safe, and direct development
-  disables proxy-header interpretation.
+  lookup by IP and normalized-email HMAC, public checkout initiation at 8
+  attempts per 10 minutes per client IP before commerce or provider work,
+  download and consultation route families by IP and capability HMAC, shared
+  admin authentication failures, and Calendly before and after signature
+  verification. Responses use deterministic HTTP 429, integer `Retry-After`,
+  stable JSON or localized HTML, while capability responses retain SEC-009
+  headers. Bounded state fails closed, rejection logging is coalesced and
+  privacy-safe, and direct development disables proxy-header interpretation.
 - **Production boundary:** Initial production supports exactly one application
   worker. Restart counter reset is an accepted bounded residual risk because
   the documented production perimeter is mandatory. Multi-worker production is
@@ -660,12 +661,17 @@ invoice ID in `Sale.external_payment_id`. The hosted payment URL was not printed
 The test release and current catalog amount are not final commercial release or
 pricing claims.
 
+The public checkout now posts customer email, explicit currency, and the
+selected consultation state to SmartBudgetSite. Server-side orchestration
+re-resolves every authoritative commerce value, persists separate product and
+optional consultation snapshots, derives the sale total from those items, and
+returns HTTP 303 to the hosted Lava.top checkout. `/payment/result` provides
+only a neutral pending state, and expected initiation failures render an opaque
+customer-facing result without creating paid or fulfillment state.
+
 `REL-001` remains incomplete. Invoice creation is not payment confirmation, a
 successful payment, or fulfillment. Remaining work is:
 
-- connect public checkout POST/initiation to the implemented provider
-  orchestration, redirect to Lava.top hosted checkout, and add the
-  SmartBudgetSite payment result page;
 - execute and validate a real payment and the pending-to-paid transition;
 - authenticated Lava.top webhook processing or explicit server-to-server
   payment verification;

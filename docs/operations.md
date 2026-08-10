@@ -219,6 +219,7 @@ Application policies:
 |---|---|
 | `POST /v1/feedback` | 5/15 min and 20/24 h per client IP |
 | `POST /v1/check-purchase` | 12/10 min per IP and 10/60 min per normalized-email HMAC |
+| `POST /checkout/{slug}` | 8/10 min per client IP |
 | download GET | 60/15 min per IP and 30/15 min per capability HMAC |
 | download POST | 10/15 min per IP and 5/15 min per capability HMAC |
 | unsupported download methods | 10/15 min per IP and 5/15 min per capability HMAC |

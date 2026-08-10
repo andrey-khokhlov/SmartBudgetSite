@@ -191,10 +191,11 @@ the Product ID. The real mapping is operational data and is not hardcoded or
 seeded until a repository convention for provider mapping population is
 approved.
 
-The first bounded provider client and invoice orchestration slice is
-implemented with mocked provider tests. Webhook authentication, retry
-semantics, payout-country compatibility, route integration, and complete
-production payment behavior remain unvalidated.
+The provider client, invoice orchestration, public checkout initiation route,
+and neutral payment result page are implemented with mocked provider tests.
+Webhook authentication, retry semantics, payout-country compatibility, real
+hosted-checkout browser behavior, and complete production payment behavior
+remain unvalidated.
 
 The account observations do not change the approved responsibility boundary.
 Lava.top owns only the provider boundary, including hosted checkout, payment
@@ -235,8 +236,8 @@ Product page
     -> SmartBudgetSite payment result page
 ```
 
-The customer returns to a dedicated SmartBudgetSite payment result page, such as
-`/payment/success`, rather than directly to the product page. The browser
+The customer returns to the dedicated SmartBudgetSite payment result page at
+`/payment/result`, rather than directly to the product page. The browser
 redirect is not proof of payment. Browser navigation serves only the customer
 experience; authoritative payment state is maintained by backend verification.
 Payment completion is confirmed only by an authenticated provider webhook or
@@ -262,6 +263,13 @@ payment-confirmation state. Only confirmed payment may:
 - Payment preparation remains provider-independent and does not call provider
   APIs directly.
 - Higher-level orchestration owns provider calls and transaction completion.
+- Public initiation accepts only customer email and the selected checkout
+  configuration as browser inputs. It re-resolves the exact product and active
+  currency-specific price, active release, optional consultation add-on, and
+  provider offer server-side. Consultation selection resolves only
+  `service_type = consultation` with `usage_type = addon`, requires the product
+  currency, and creates a separate service `SaleItem`; the sale total is then
+  derived from the persisted item snapshots.
 - Checkout orchestration resolves `PaymentProviderOffer` for the prepared
   sale's product and provider. A missing mapping or provider configuration fails
   closed.

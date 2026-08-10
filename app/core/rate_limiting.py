@@ -28,6 +28,7 @@ CALENDLY_WEBHOOK_PATH = "/v1/webhooks/calendly"
 
 DOWNLOAD_PATH_PATTERN = re.compile(r"^/download/([^/]+)(/.*)?$")
 CONSULTATION_PATH_PATTERN = re.compile(r"^/consultation/book/([^/]+)(/.*)?$")
+CHECKOUT_PATH_PATTERN = re.compile(r"^/checkout/[^/]+$")
 
 logger = logging.getLogger(__name__)
 
@@ -525,6 +526,23 @@ class RateLimitMiddleware:
                 ),
                 route_template=PURCHASE_LOOKUP_PATH,
                 response_kind="api",
+            )
+            return
+
+        if CHECKOUT_PATH_PATTERN.match(normalized_path) and method == "POST":
+            _enforce(
+                request,
+                rules=(
+                    _rule(
+                        policy_name="checkout_ip_10m",
+                        limit=8,
+                        window_seconds=10 * 60,
+                        identity_kind="client_ip",
+                        identity_key=ip_identity,
+                    ),
+                ),
+                route_template="/checkout/{slug}",
+                response_kind="html",
             )
             return
 

@@ -58,6 +58,14 @@ def test_checkout_with_consultation_shows_product_addon_and_total(client, db_ses
     assert "3,900.00 RUB" in response.text
     assert "3,500.00 RUB" in response.text
     assert "7,400.00 RUB" in response.text
+    assert 'method="post"' in response.text
+    assert (
+        'action="/checkout/smartbudget-ru-standard-checkout-addon-test"'
+        in response.text
+    )
+    assert 'name="customer_email"' in response.text
+    assert 'name="currency" value="RUB"' in response.text
+    assert 'name="consultation" value="1"' in response.text
 
 
 def test_checkout_with_consultation_rejects_currency_mismatch(client, db_session):

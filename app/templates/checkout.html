@@ -47,23 +47,25 @@
             </div>
         </div>
 
-        <div class="payment-options">
-            <a class="payment-button" href="#">
-                {{ t("checkout.pay_sbp") }}
-            </a>
+        <form class="checkout-form" method="post" action="/checkout/{{ product.slug }}">
+            <input type="hidden" name="currency" value="{{ price.currency_code }}">
+            <input type="hidden" name="consultation" value="{{ 1 if consultation else 0 }}">
 
-            <a class="payment-button" href="#">
-                {{ t("checkout.pay_ru_card") }}
-            </a>
+            <label for="checkout-email">{{ t("checkout.email") }}</label>
+            <input
+                id="checkout-email"
+                name="customer_email"
+                type="email"
+                autocomplete="email"
+                maxlength="200"
+                required
+            >
+            <p class="checkout-hint">{{ t("checkout.email_hint") }}</p>
 
-            <a class="payment-button" href="#">
-                {{ t("checkout.pay_international_card") }}
-            </a>
-
-            <a class="payment-button" href="#">
-                {{ t("checkout.pay_crypto") }}
-            </a>
-        </div>
+            <button class="payment-button payment-button-primary" type="submit">
+                {{ t("checkout.continue_payment") }}
+            </button>
+        </form>
     </div>
 </section>
 {% endblock %}

@@ -70,11 +70,20 @@ Commerce and delivery:
 - Public product checkout now requires an explicit currency query parameter and
   resolves the active catalog price strictly by exact product slug and currency;
   buy-page links carry the currency of their displayed catalog price.
-- Lava.top POST initiation and hosted-checkout redirect from the public checkout
-  page, real payment execution, the payment result page, authenticated webhook
-  or server-to-server confirmation, the pending-to-paid transition,
-  fulfillment, purchase email, delivery links, and end-to-end RUB/EUR payment
-  and payout validation remain incomplete.
+- Public checkout POST initiation now re-resolves the exact product, normalized
+  currency, active catalog price, active release, provider offer, and optional
+  consultation add-on server-side. Product and service snapshots are persisted
+  as separate `SaleItem` rows, the `Sale` total is derived from those snapshots,
+  and successful Lava.top invoice creation returns an HTTP 303 redirect to the
+  hosted checkout URL.
+- `/payment/result` now provides a neutral browser-return state and controlled
+  initiation-error state. It does not treat browser return as payment proof,
+  mark sales paid, create entitlements, expose delivery or booking access, or
+  send purchase email.
+- Real payment execution, authenticated webhook or server-to-server
+  confirmation, the pending-to-paid transition, fulfillment, purchase email,
+  delivery links, and end-to-end RUB/EUR payment and payout validation remain
+  incomplete.
 - Lava.top is the approved first production payment provider within the
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
@@ -206,11 +215,13 @@ Feedback:
 Infrastructure and quality:
 
 - `SEC-007` is complete at the application boundary. Abuse-sensitive feedback,
-  purchase lookup, download, consultation, admin-authentication, and Calendly
-  webhook requests use a thread-safe process-local rolling-window limiter with
-  bounded HMAC identities, deterministic 429/`Retry-After` behavior, localized
-  browser handling, privacy-safe coalesced logs, and fail-closed capacity
-  behavior.
+  purchase lookup, public checkout initiation, download, consultation,
+  admin-authentication, and Calendly webhook requests use a thread-safe
+  process-local rolling-window limiter with bounded HMAC identities,
+  deterministic 429/`Retry-After` behavior, localized browser handling,
+  privacy-safe coalesced logs, and fail-closed capacity behavior. Checkout
+  initiation uses an IP-based limit of 8 attempts per 10 minutes before any
+  catalog, sale, release, provider-offer, or Lava.top work.
 - Initial production is restricted to one application worker. Counter reset on
   restart is an accepted bounded residual risk because the documented
   production perimeter is mandatory. Multi-worker production remains
@@ -272,7 +283,9 @@ Infrastructure and quality:
   and support-isolation suite passes 50 tests. The focused Feedback
   rendered-contract and API suites pass 33 tests, and the browser suite passes
   15 tests. The focused Lava.top checkout, provider-offer repository, client,
-  and configuration suite passes 38 tests. The focused public review route and
+  and configuration suite passes 38 tests. The public checkout initiation and
+  result-page regression suite passes 13 tests; the focused checkout and
+  SEC-007 rate-limit run passes 40 tests. The focused public review route and
   repository suite passes 9
   tests. The focused Calendly webhook route suite remains at 8 passing tests,
   including request-level durability validation through a fresh independent
