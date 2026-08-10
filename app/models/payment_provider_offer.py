@@ -42,9 +42,4 @@ class PaymentProviderOffer(Base):
             "provider",
             name="uq_payment_provider_offers_product_provider",
         ),
-        UniqueConstraint(
-            "provider",
-            "external_offer_id",
-            name="uq_payment_provider_offers_provider_external_offer_id",
-        ),
     )

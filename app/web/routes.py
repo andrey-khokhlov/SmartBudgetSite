@@ -60,6 +60,13 @@ from app.services.payment_service import (
     ProductReleaseUnavailableError,
     initiate_lava_top_product_checkout,
 )
+from app.services.payment_provider_offer_service import (
+    PaymentProviderOfferInputError,
+    PaymentProviderOfferPersistenceError,
+    PaymentProviderOfferProductNotFoundError,
+    get_lava_top_product_configuration,
+    set_lava_top_product_offer,
+)
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -792,6 +799,10 @@ async def admin_products_edit(
             ProductPrice.is_active == True,  # noqa: E712
         )
     ).scalar_one_or_none()
+    lava_top_configuration = get_lava_top_product_configuration(
+        db,
+        product=product,
+    )
 
     lang = get_lang(request)
 
@@ -803,6 +814,7 @@ async def admin_products_edit(
             "document_lang": "en",
             "product": product,
             "active_price": active_price,
+            "lava_top_configuration": lava_top_configuration,
             "allowed_editions": sorted(ALLOWED_EDITIONS),
             "allowed_statuses": sorted(ALLOWED_PRODUCT_STATUSES),
             "form_action": f"/admin/products/{product_id}/edit",
@@ -887,6 +899,40 @@ async def admin_products_update(
 
     return RedirectResponse(
         url="/admin/products",
+        status_code=303,
+    )
+
+
+@admin_router.post("/admin/products/{product_id}/payment-provider-offers/lava-top")
+async def admin_product_lava_top_offer_update(
+    product_id: int,
+    db: Session = Depends(get_db),
+    external_offer_id: str = Form(...),
+):
+    try:
+        change = set_lava_top_product_offer(
+            db,
+            product_id=product_id,
+            external_offer_id=external_offer_id,
+        )
+    except PaymentProviderOfferInputError:
+        return RedirectResponse(
+            url=(
+                f"/admin/products/{product_id}/edit"
+                "?provider_error=invalid_external_offer_id"
+            ),
+            status_code=303,
+        )
+    except PaymentProviderOfferProductNotFoundError:
+        raise HTTPException(status_code=404) from None
+    except PaymentProviderOfferPersistenceError:
+        return RedirectResponse(
+            url=(f"/admin/products/{product_id}/edit" "?provider_error=persistence"),
+            status_code=303,
+        )
+
+    return RedirectResponse(
+        url=f"/admin/products/{product_id}/edit?provider_saved={change}",
         status_code=303,
     )
 

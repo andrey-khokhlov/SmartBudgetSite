@@ -329,6 +329,39 @@ delete. It never deletes database-owned objects, repairs or deletes rows, or
 runs automatically at application startup. A failed or uncertain delete remains
 reported for manual follow-up.
 
+## Product checkout configuration
+
+Use the protected product Admin workflow for normal Lava.top checkout setup:
+
+1. Create the Product with its initial active price, normally using
+   `in_development` until its remaining commerce configuration is complete.
+2. Upload and publish an active `ProductRelease` through the release Admin
+   workflow.
+3. Open the Product's Edit page and create or update its explicit `lava_top`
+   external Offer ID. Price-by-request Offer IDs may be shared by multiple
+   Products.
+4. Review the informational missing-prerequisite list. When price, release, and
+   provider mapping are present, set the Product to `in_sale` through the normal
+   product form.
+5. Return to the Edit page and verify `Checkout ready: Yes` before exercising
+   public checkout.
+
+The Admin provider form does not call Lava.top or validate the Offer ID
+remotely. It does not create mappings automatically during Product creation and
+does not change Product status. The existing founder-operated CLI remains a
+fallback when the Admin UI is unavailable:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\set_payment_provider_offer.py `
+  --product-slug <exact-product-slug> `
+  --provider lava_top `
+  --external-offer-id <lava-offer-id>
+```
+
+Public checkout continues to resolve the exact active price, active release,
+and Product/provider mapping server-side and fails closed when configuration is
+missing.
+
 ## Manual Lava.top checkout smoke test
 
 The Lava.top checkout smoke command is a deliberate live-provider operation.

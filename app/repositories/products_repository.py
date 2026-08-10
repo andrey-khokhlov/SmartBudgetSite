@@ -1,7 +1,7 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session
 from app.models.product import Product
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from app.models.product_price import ProductPrice
 
 
@@ -22,7 +22,7 @@ class ProductsRepository:
                 ProductPrice,
                 and_(
                     ProductPrice.product_id == Product.id,
-                    ProductPrice.is_active == True,
+                    ProductPrice.is_active.is_(True),
                     ProductPrice.currency_code.in_(["RUB", "EUR"]),
                 ),
             )
@@ -35,6 +35,22 @@ class ProductsRepository:
     def get_by_slug(self, slug: str) -> Product | None:
         """Return the product whose unique slug exactly matches the input."""
         return self.db.query(Product).filter(Product.slug == slug).one_or_none()
+
+    def get_by_id(self, product_id: int) -> Product | None:
+        """Return one product by its internal identifier."""
+        return self.db.get(Product, product_id)
+
+    def has_active_price(self, product_id: int) -> bool:
+        """Return whether a product has at least one active catalog price."""
+        return (
+            self.db.query(ProductPrice.id)
+            .filter(
+                ProductPrice.product_id == product_id,
+                ProductPrice.is_active.is_(True),
+            )
+            .first()
+            is not None
+        )
 
     def get_active_price_by_product_and_currency(
         self,

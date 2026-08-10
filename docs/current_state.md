@@ -59,6 +59,19 @@ Commerce and delivery:
   the hosted invoice API, persists the returned invoice ID on the still-pending
   `Sale`, and returns the hosted payment URL. Provider failures preserve and
   mark the sale failed without creating entitlements.
+- Lava.top Price-by-request mappings may share one external Offer ID across
+  multiple internal SmartBudget products while remaining explicit per-product
+  mappings. SmartBudgetSite remains authoritative for SKU identity, catalog
+  currency and amount, Sale/SaleItem snapshots, releases, entitlements, and
+  fulfillment. Provider offer identity is not sufficient by itself for payment
+  fulfillment or reconciliation.
+- The protected product Admin edit page now shows the Product's Lava.top mapping
+  or a clear unconfigured state and supports creating or updating the external
+  Offer ID through a service-owned transaction. It also reports informational
+  checkout readiness and names any missing `in_sale` status, active price,
+  active release, or Lava.top mapping prerequisite. Mapping changes do not call
+  Lava.top, validate an Offer ID remotely, or mutate Product lifecycle state;
+  the CLI mapping script remains available as fallback tooling.
 - A manual live Lava.top smoke run through the existing SmartBudgetSite services
   validated the path from the current EUR catalog price and active
   `ProductRelease` through pending `Sale`/`SaleItem` preparation,
@@ -273,11 +286,17 @@ Infrastructure and quality:
   Alembic chain to `2f6a9d7c4e10`; the three consultation entitlement
   timestamps use `timestamp with time zone`, the existing active-price partial
   unique index matches SQLAlchemy metadata, and `alembic check` reported no new
-  upgrade operations. The `PaymentProviderOffer` migration was subsequently
-  upgraded, downgraded, and re-upgraded against PostgreSQL to head
-  `7b91c5e2a4f0`, where `alembic check` again reports no new operations.
-- The latest confirmed full ordinary suite result is 404 passing tests after
-  the public reviews page implementation. The focused `REL-004` upload, storage,
+  upgrade operations. The `PaymentProviderOffer` foundation migration was
+  subsequently upgraded, downgraded, and re-upgraded against PostgreSQL at
+  revision `7b91c5e2a4f0`, where `alembic check` again reported no new
+  operations. Revision `3e91b7c2a6d4` removes only the provider/external Offer
+  ID uniqueness constraint for shared Price-by-request mappings and has been
+  applied successfully to the configured PostgreSQL development database. Its
+  downgrade remains separate environment validation.
+- The latest confirmed full ordinary suite result is 480 passing tests after
+  the PaymentProviderOffer Admin and checkout-readiness implementation. The
+  focused Admin, provider repository/script, payment, and checkout suite passes
+  62 tests. The focused `REL-004` upload, storage,
   logging, repository, reconciliation, route, and download suite passes 77
   tests. The focused SEC-009 capability, logging, SQL, storage, helper-script,
   and support-isolation suite passes 50 tests. The focused Feedback

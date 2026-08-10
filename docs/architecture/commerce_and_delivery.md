@@ -121,9 +121,25 @@ Product
         -> external_offer_id
 ```
 
-There may be at most one mapping for a product/provider pair, and a provider's
-external offer identifier may map to at most one internal product. For the
-first integration the canonical provider value is `lava_top`.
+There may be at most one mapping for a product/provider pair. Lava.top
+Price-by-request offers may be explicitly shared by multiple internal products:
+each product retains its own mapping even when the mappings use the same
+`external_offer_id`. Internal SKU identity, catalog price, currency, purchased
+item snapshots, releases, entitlements, and fulfillment remain owned by
+SmartBudgetSite. A provider offer identifier is routing configuration and must
+not be used as the sole identifier for payment fulfillment or reconciliation.
+For the first integration the canonical provider value is `lava_top`.
+
+Product lifecycle and payment-provider configuration remain independent. The
+normal operator path creates or updates a Product's explicit Lava.top mapping
+through the protected product Admin UI; the CLI mapping script remains fallback
+tooling. Creating a Product does not create a provider mapping, changing a
+mapping does not change Product status, and the Admin UI does not call Lava.top
+or validate an Offer ID remotely. The product Admin surface reports checkout
+readiness from the existing prerequisites: `in_sale` status, at least one active
+`ProductPrice`, an active `ProductRelease`, and a Lava.top mapping. This status
+is informational and does not replace checkout's fail-closed server-side
+resolution.
 
 Lava.ru is not part of MVP. It may be evaluated later if commercial or
 operational reasons justify another provider option.

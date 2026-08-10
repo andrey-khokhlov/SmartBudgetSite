@@ -60,6 +60,35 @@ def test_creates_mapping_for_existing_product_and_normalizes_values(db_session):
     ]
 
 
+def test_creates_shared_offer_mappings_for_different_products(db_session):
+    products = [
+        create_product(db_session, "mapping-script-shared-offer-int"),
+        create_product(db_session, "mapping-script-shared-offer-ru"),
+    ]
+
+    changes = [
+        set_payment_provider_offer(
+            db_session,
+            product_slug=product.slug,
+            provider="lava_top",
+            external_offer_id="shared-dynamic-price-offer",
+            output=lambda message: None,
+        )
+        for product in products
+    ]
+
+    mappings = db_session.query(PaymentProviderOffer).order_by(
+        PaymentProviderOffer.product_id
+    )
+    assert changes == ["created", "created"]
+    assert [mapping.product_id for mapping in mappings] == [
+        product.id for product in products
+    ]
+    assert {mapping.external_offer_id for mapping in mappings} == {
+        "shared-dynamic-price-offer"
+    }
+
+
 def test_updates_existing_mapping(db_session):
     product = create_product(db_session, "mapping-script-update-test")
     db_session.add(

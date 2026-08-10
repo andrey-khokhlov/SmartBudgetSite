@@ -50,15 +50,21 @@ def create_active_release(db_session, product: Product) -> ProductRelease:
     return release
 
 
-def create_pending_lava_sale(db_session, slug: str = "lava-checkout-test") -> Sale:
+def create_pending_lava_sale(
+    db_session,
+    slug: str = "lava-checkout-test",
+    *,
+    amount: Decimal = Decimal("50.00"),
+    currency: str = "RUB",
+) -> Sale:
     product = create_product(db_session, slug)
     create_active_release(db_session, product)
     return prepare_product_payment(
         db_session,
         product=product,
         customer_email="buyer@example.com",
-        amount=Decimal("50.00"),
-        currency="RUB",
+        amount=amount,
+        currency=currency,
         payment_provider=LAVA_TOP_PROVIDER,
     )
 
@@ -181,6 +187,57 @@ def test_create_lava_top_checkout_persists_invoice_and_returns_url(
     assert sale.payment_status == "pending"
     assert db_session.query(DownloadEntitlement).count() == 0
     assert db_session.query(ConsultationEntitlement).count() == 0
+
+
+def test_shared_lava_offer_uses_each_sale_currency_and_amount(
+    db_session,
+    monkeypatch,
+):
+    rub_sale = create_pending_lava_sale(
+        db_session,
+        "lava-shared-offer-rub-test",
+        amount=Decimal("50.00"),
+        currency="RUB",
+    )
+    eur_sale = create_pending_lava_sale(
+        db_session,
+        "lava-shared-offer-eur-test",
+        amount=Decimal("39.00"),
+        currency="EUR",
+    )
+    add_lava_offer(db_session, rub_sale)
+    add_lava_offer(db_session, eur_sale)
+    captured_requests = []
+
+    def fake_create_invoice(**kwargs):
+        captured_requests.append(kwargs)
+        return LavaTopInvoice(
+            invoice_id=f"lava-shared-invoice-{len(captured_requests)}",
+            payment_url=f"https://pay.example/shared/{len(captured_requests)}",
+        )
+
+    monkeypatch.setattr(
+        "app.services.payment_service.create_invoice",
+        fake_create_invoice,
+    )
+
+    create_lava_top_checkout(db_session, sale=rub_sale)
+    create_lava_top_checkout(db_session, sale=eur_sale)
+
+    assert captured_requests == [
+        {
+            "email": "buyer@example.com",
+            "offer_id": "database-offer-id",
+            "currency": "RUB",
+            "amount": Decimal("50.00"),
+        },
+        {
+            "email": "buyer@example.com",
+            "offer_id": "database-offer-id",
+            "currency": "EUR",
+            "amount": Decimal("39.00"),
+        },
+    ]
 
 
 def test_create_lava_top_checkout_missing_mapping_marks_sale_failed(db_session):
