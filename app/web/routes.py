@@ -18,7 +18,10 @@ from app.dependencies import get_db, require_admin
 from app.repositories.feedback_admin_repository import FeedbackAdminRepository
 from app.repositories.products_repository import ProductsRepository
 from app.repositories.service_addon_repository import ServiceAddonRepository
-from app.repositories.sales_repository import list_admin_sales
+from app.repositories.sales_repository import (
+    list_admin_sales,
+    stale_pending_sale_ids,
+)
 from app.services.admin_consultation_service import get_consultation_entitlements
 from app.services.feedback_service import (
     list_public_reviews,
@@ -1350,12 +1353,14 @@ async def admin_sales_list(
 
     has_next = len(sales_page) > page_size
     sales = sales_page[:page_size]
+    stale_pending_ids = stale_pending_sale_ids(sales)
 
     return render(
         request,
         "admin_sales_list.html",
         {
             "sales": sales,
+            "stale_pending_ids": stale_pending_ids,
             "selected_status": status,
             "selected_customer_email": customer_email,
             "selected_item_type": item_type,

@@ -6,10 +6,10 @@ from collections.abc import Mapping
 
 from app.core.config import settings
 
-
 CALENDLY_SIGNATURE_HEADER = "Calendly-Webhook-Signature"
 CALENDLY_SIGNING_SECRET_HEADER = "Calendly-Webhook-Signing-Secret"
 CALENDLY_SIGNATURE_TOLERANCE_SECONDS = 180
+LAVA_TOP_API_KEY_HEADER = "X-Api-Key"
 
 
 def verify_webhook_signature(
@@ -28,6 +28,13 @@ def verify_webhook_signature(
             headers=headers,
             current_timestamp=current_timestamp,
         )
+
+    if provider == "lava_top":
+        provided_secret = headers.get(LAVA_TOP_API_KEY_HEADER)
+        configured_secret = settings.LAVA_TOP_WEBHOOK_SECRET
+        if not provided_secret or not configured_secret:
+            return False
+        return hmac.compare_digest(configured_secret, provided_secret)
 
     return False
 

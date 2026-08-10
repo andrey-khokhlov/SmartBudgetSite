@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import StrEnum
 
 import httpx
 
@@ -26,6 +27,21 @@ class LavaTopResponseError(LavaTopProviderError):
 class LavaTopInvoice:
     invoice_id: str
     payment_url: str
+
+
+class LavaTopInvoiceStatus(StrEnum):
+    NEW = "NEW"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+@dataclass(frozen=True)
+class LavaTopInvoiceDetails:
+    invoice_id: str
+    status: LavaTopInvoiceStatus
+    amount: Decimal | None = None
+    currency: str | None = None
 
 
 def create_invoice(
@@ -72,3 +88,61 @@ def create_invoice(
         raise LavaTopResponseError("Lava.top returned an invalid payment URL.")
 
     return LavaTopInvoice(invoice_id=invoice_id, payment_url=payment_url)
+
+
+def get_invoice(invoice_id: str) -> LavaTopInvoiceDetails:
+    """Retrieve one Lava.top invoice by its exact provider identity."""
+
+    normalized_invoice_id = invoice_id.strip()
+    if not normalized_invoice_id:
+        raise ValueError("Lava.top invoice id must not be empty.")
+
+    api_key = (settings.LAVA_TOP_API_KEY or "").strip()
+    if not api_key:
+        raise LavaTopConfigurationError("Lava.top API key is not configured.")
+
+    url = (
+        f"{settings.LAVA_TOP_API_BASE_URL.rstrip('/')}"
+        f"/api/v2/invoices/{normalized_invoice_id}"
+    )
+    try:
+        response = httpx.get(
+            url,
+            headers={"X-Api-Key": api_key},
+            timeout=httpx.Timeout(10.0, connect=5.0),
+        )
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise LavaTopRequestError("Lava.top invoice lookup failed.") from exc
+
+    try:
+        payload = response.json()
+        returned_id = payload["id"]
+        invoice_status = LavaTopInvoiceStatus(str(payload["status"]).upper())
+        receipt = payload.get("receipt")
+        amount = (
+            Decimal(str(receipt["amount"]))
+            if isinstance(receipt, dict) and receipt.get("amount") is not None
+            else None
+        )
+        currency = (
+            str(receipt["currency"]).upper()
+            if isinstance(receipt, dict) and receipt.get("currency") is not None
+            else None
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        raise LavaTopResponseError(
+            "Lava.top returned an invalid invoice lookup response."
+        ) from exc
+
+    if returned_id != normalized_invoice_id:
+        raise LavaTopResponseError("Lava.top returned a different invoice identity.")
+    if currency is not None and len(currency) != 3:
+        raise LavaTopResponseError("Lava.top returned an invalid currency.")
+
+    return LavaTopInvoiceDetails(
+        invoice_id=returned_id,
+        status=invoice_status,
+        amount=amount,
+        currency=currency,
+    )

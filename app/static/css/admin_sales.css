@@ -4,12 +4,18 @@
 */
 
 .admin-form.sales-page {
-    max-width: 1200px;
+    max-width: 1500px;
+}
+
+@media (min-width: 769px) {
+    .admin-form.sales-page {
+        margin-top: -8px;
+    }
 }
 
 .sales-table {
     table-layout: fixed;
-    min-width: 1180px;
+    min-width: 1240px;
 }
 
 .sales-col-id {
@@ -31,6 +37,14 @@
     width: 110px;
 }
 
+.sales-stale-pending {
+    display: block;
+    margin-top: 4px;
+    color: #b54708;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
 .sales-col-total {
     width: 130px;
     white-space: nowrap;
@@ -45,11 +59,12 @@
 }
 
 .sales-col-external {
-    width: 160px;
-    overflow-wrap: anywhere;
+    width: 220px;
+    overflow: hidden;
 }
 
-.sales-email {
+.sales-email,
+.sales-external-id {
     display: block;
     width: 100%;
     overflow: hidden;
@@ -58,7 +73,17 @@
     cursor: pointer;
 }
 
-.sales-email:hover {
+.sales-external-id {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+}
+
+.sales-email:hover,
+.sales-external-id:hover {
     text-decoration: underline;
 }
 

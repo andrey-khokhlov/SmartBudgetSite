@@ -309,6 +309,42 @@ provider data at the integration boundary, and delegate business transitions to
 services. Successful payment is the normal origin of delivery and service
 entitlements.
 
+For Lava.top, `contractId` is the provider invoice identity and is reconciled
+exactly against `(payment_provider, external_payment_id)`. An Offer ID identifies
+provider configuration, not a payment, and must not be used as the sole
+fulfillment or reconciliation key. The Payment-result webhook accepts only
+`payment.success` and `payment.failed` after constant-time verification of the
+dedicated inbound `X-Api-Key`. The inbound webhook secret is separate from the
+outbound Lava.top API key. Explicit server-to-server invoice verification uses
+the same normalized payment event and domain reconciliation path.
+
+The implemented Sale transitions are `pending -> paid` and
+`pending -> failed`. Re-delivery of the already-applied terminal result is a
+safe no-op. A conflicting terminal result, an unknown invoice, or a provider
+amount/currency mismatch is observable as reconciliation-required and does not
+rewrite history. Reconciliation locks the Sale row before applying a result.
+
+On success, the paid transition and all `SaleItem` fulfillment are one database
+transaction: every product item receives its exact-release
+`DownloadEntitlement`, and every consultation service item receives one
+`ConsultationEntitlement`. Bundles create both atomically. Existing correct
+entitlements make replay idempotent; unsupported items, inconsistent existing
+entitlements, or any creation failure roll back both the paid transition and all
+new fulfillment. A pending Sale older than 24 hours is shown as stale in Admin
+for operator reconciliation; stale is an operational condition, not a new
+payment status.
+
+Live server-to-server validation on 2026-08-10 reconciled the provider-successful
+50 RUB Sale #6 from pending to paid and created exactly one
+`DownloadEntitlement` for its sole product item. It created no
+`ConsultationEntitlement` because the Sale contained no consultation item. A
+repeat reconciliation returned idempotent and did not duplicate fulfillment.
+The earlier 50 RUB Sale #5 remained pending because Lava.top reported its
+invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent); no status was forced
+manually. This validates manual invoice reconciliation for a product-only Sale,
+not webhook delivery, bundle payment, purchase email, or payment-result delivery
+UX.
+
 ## Payout operations
 
 Payout routing is an operational concern and must not be encoded in business

@@ -132,7 +132,44 @@ def test_lava_top_configuration_has_safe_defaults() -> None:
     configured_settings = build_settings()
 
     assert configured_settings.LAVA_TOP_API_KEY is None
+    assert configured_settings.LAVA_TOP_WEBHOOK_SECRET is None
     assert configured_settings.LAVA_TOP_API_BASE_URL == "https://gate.lava.top"
+
+
+def test_production_lava_checkout_requires_separate_webhook_secret() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="LAVA_TOP_WEBHOOK_SECRET must be non-empty",
+    ):
+        build_settings(
+            APP_ENV="prod",
+            ADMIN_TOKEN="production-admin-token",
+            SECRET_KEY="production-secret-key",
+            LAVA_TOP_API_KEY="outbound-key",
+        )
+
+
+def test_production_lava_checkout_accepts_webhook_secret() -> None:
+    configured_settings = build_settings(
+        APP_ENV="prod",
+        ADMIN_TOKEN="production-admin-token",
+        SECRET_KEY="production-secret-key",
+        LAVA_TOP_API_KEY="outbound-key",
+        LAVA_TOP_WEBHOOK_SECRET="different-inbound-key",
+    )
+
+    assert configured_settings.LAVA_TOP_WEBHOOK_SECRET == "different-inbound-key"
+
+
+def test_lava_top_inbound_and_outbound_secrets_must_differ() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="LAVA_TOP_WEBHOOK_SECRET must differ",
+    ):
+        build_settings(
+            LAVA_TOP_API_KEY="same-key",
+            LAVA_TOP_WEBHOOK_SECRET="same-key",
+        )
 
 
 @pytest.mark.parametrize("invalid_capacity", [0, -1])

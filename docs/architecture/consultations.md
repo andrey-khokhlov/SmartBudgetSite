@@ -126,6 +126,13 @@ the success page and in the confirmation email so the customer can return later.
 Booking remains the customer's responsibility for MVP. Future capability-bearing
 emails must disable click tracking and provider link rewriting.
 
+Authoritative payment success creates a consultation entitlement for every
+purchased consultation `SaleItem`. For product-plus-consultation bundles, that
+entitlement and the product download entitlement are created atomically in the
+same transaction as the Sale's paid transition. Payment fulfillment only makes
+booking access available; the customer's later Calendly booking remains a
+separate event and lifecycle transition.
+
 ## Webhook boundary
 
 The route is `/v1/webhooks/calendly`. The request pipeline is:

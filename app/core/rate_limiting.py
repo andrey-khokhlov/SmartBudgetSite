@@ -25,6 +25,7 @@ FEEDBACK_PATH = "/v1/feedback"
 PURCHASE_LOOKUP_PATH = "/v1/check-purchase"
 ADMIN_LOGIN_PATH = "/admin/login"
 CALENDLY_WEBHOOK_PATH = "/v1/webhooks/calendly"
+LAVA_TOP_WEBHOOK_PATH = "/v1/webhooks/lava-top/payment-result"
 
 DOWNLOAD_PATH_PATTERN = re.compile(r"^/download/([^/]+)(/.*)?$")
 CONSULTATION_PATH_PATTERN = re.compile(r"^/consultation/book/([^/]+)(/.*)?$")
@@ -449,6 +450,25 @@ def enforce_calendly_verified_limits(
     )
 
 
+def enforce_lava_top_verified_limit(request: Request) -> None:
+    provider_identity = keyed_identity("provider", "lava_top")
+    _enforce(
+        request,
+        rules=(
+            _rule(
+                policy_name="lava_top_provider_5m",
+                limit=300,
+                window_seconds=5 * 60,
+                identity_kind="provider",
+                identity_key=provider_identity,
+            ),
+        ),
+        route_template=LAVA_TOP_WEBHOOK_PATH,
+        response_kind="api",
+        provider="lava_top",
+    )
+
+
 class RateLimitMiddleware:
     """Apply approved pre-body limits only to abuse-sensitive route families."""
 
@@ -579,6 +599,24 @@ class RateLimitMiddleware:
                 route_template=CALENDLY_WEBHOOK_PATH,
                 response_kind="api",
                 provider="calendly",
+            )
+            return
+
+        if normalized_path == LAVA_TOP_WEBHOOK_PATH and method == "POST":
+            _enforce(
+                request,
+                rules=(
+                    _rule(
+                        policy_name="lava_top_ip_1m",
+                        limit=120,
+                        window_seconds=60,
+                        identity_kind="client_ip",
+                        identity_key=ip_identity,
+                    ),
+                ),
+                route_template=LAVA_TOP_WEBHOOK_PATH,
+                response_kind="api",
+                provider="lava_top",
             )
             return
 

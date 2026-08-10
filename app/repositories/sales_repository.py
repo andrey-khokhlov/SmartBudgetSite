@@ -1,9 +1,13 @@
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.enums import PaymentStatus
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
+
+STALE_PENDING_AFTER = timedelta(hours=24)
 
 
 def list_paid_product_purchases_for_email(
@@ -85,3 +89,46 @@ def list_admin_sales(
     )
 
     return list(db.execute(stmt).scalars().all())
+
+
+def get_sale_for_payment_reconciliation(
+    db: Session,
+    *,
+    payment_provider: str,
+    external_payment_id: str,
+) -> Sale | None:
+    """Resolve and lock one provider-owned Sale for payment reconciliation."""
+
+    stmt = (
+        select(Sale)
+        .options(
+            selectinload(Sale.items).joinedload(SaleItem.service_addon),
+            selectinload(Sale.items).joinedload(SaleItem.consultation_entitlement),
+            selectinload(Sale.items).joinedload(SaleItem.download_entitlement),
+        )
+        .where(
+            Sale.payment_provider == payment_provider,
+            Sale.external_payment_id == external_payment_id,
+        )
+        .with_for_update()
+    )
+    return db.execute(stmt).scalars().unique().one_or_none()
+
+
+def stale_pending_sale_ids(
+    sales: list[Sale],
+    *,
+    now: datetime | None = None,
+) -> set[int]:
+    """Derive the operator warning for pending Sales older than 24 hours."""
+
+    current_time = now or datetime.now(UTC)
+    stale_before = current_time - STALE_PENDING_AFTER
+    result: set[int] = set()
+    for sale in sales:
+        created_at = sale.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
+        if sale.payment_status == PaymentStatus.PENDING and created_at <= stale_before:
+            result.add(sale.id)
+    return result

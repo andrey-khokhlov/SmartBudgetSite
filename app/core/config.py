@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     CALENDLY_PERSONAL_ACCESS_TOKEN: str | None = None
 
     LAVA_TOP_API_KEY: str | None = None
+    LAVA_TOP_WEBHOOK_SECRET: str | None = None
     LAVA_TOP_API_BASE_URL: str = "https://gate.lava.top"
 
     ADMIN_TOKEN: str = ""
@@ -68,6 +69,15 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
+        if (
+            self.LAVA_TOP_API_KEY
+            and self.LAVA_TOP_WEBHOOK_SECRET
+            and self.LAVA_TOP_API_KEY.strip() == self.LAVA_TOP_WEBHOOK_SECRET.strip()
+        ):
+            raise ValueError(
+                "LAVA_TOP_WEBHOOK_SECRET must differ from LAVA_TOP_API_KEY"
+            )
+
         if self.APP_ENV != "prod":
             return self
 
@@ -79,6 +89,12 @@ class Settings(BaseSettings):
 
         if not self.RATE_LIMIT_ENABLED:
             raise ValueError("RATE_LIMIT_ENABLED must be true when APP_ENV is 'prod'")
+
+        if self.LAVA_TOP_API_KEY and not (self.LAVA_TOP_WEBHOOK_SECRET or "").strip():
+            raise ValueError(
+                "LAVA_TOP_WEBHOOK_SECRET must be non-empty when Lava.top "
+                "checkout is enabled in production"
+            )
 
         return self
 

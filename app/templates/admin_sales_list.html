@@ -89,7 +89,12 @@
                             {{ sale.customer_email }}
                         </span>
                     </td>
-                    <td class="sales-col-status">{{ sale.payment_status }}</td>
+                    <td class="sales-col-status">
+                        {{ sale.payment_status }}
+                        {% if sale.id in stale_pending_ids %}
+                            <span class="sales-stale-pending">Pending &gt;24h — check</span>
+                        {% endif %}
+                    </td>
                     <td class="sales-col-total">{{ sale.amount }} {{ sale.currency }}</td>
                     <td class="sales-col-items">
                         {% if sale.items %}
@@ -108,7 +113,20 @@
                         {% endif %}
                     </td>
                     <td class="sales-col-provider">{{ sale.payment_provider or "-" }}</td>
-                    <td class="sales-col-external">{{ sale.external_payment_id or "-" }}</td>
+                    <td class="sales-col-external">
+                        {% if sale.external_payment_id %}
+                            <button
+                                type="button"
+                                class="sales-external-id"
+                                title="Click to copy full External ID: {{ sale.external_payment_id }}"
+                                data-external-payment-id="{{ sale.external_payment_id }}"
+                            >
+                                {{ sale.external_payment_id }}
+                            </button>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
@@ -168,6 +186,20 @@ document.querySelectorAll(".sales-email").forEach((element) => {
         } catch (error) {
             console.error("Failed to copy email", error);
             showSalesToast("Failed to copy email");
+        }
+    });
+});
+
+document.querySelectorAll(".sales-external-id").forEach((element) => {
+    element.addEventListener("click", async () => {
+        const externalPaymentId = element.dataset.externalPaymentId;
+
+        try {
+            await navigator.clipboard.writeText(externalPaymentId);
+            showSalesToast("External ID copied to clipboard");
+        } catch (error) {
+            console.error("Failed to copy External ID", error);
+            showSalesToast("Failed to copy External ID");
         }
     });
 });

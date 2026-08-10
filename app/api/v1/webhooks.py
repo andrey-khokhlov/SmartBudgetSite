@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, Response, status, HTTPException, Depends
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from app.dependencies import get_db
 
@@ -9,11 +10,23 @@ from app.services.webhooks.signature_verification_service import (
     CALENDLY_SIGNATURE_HEADER,
     verify_webhook_signature,
 )
-from app.core.rate_limiting import enforce_calendly_verified_limits
+from app.core.rate_limiting import (
+    enforce_calendly_verified_limits,
+    enforce_lava_top_verified_limit,
+)
+from app.services.payment_reconciliation_service import (
+    PaymentReconciliationError,
+    reconcile_payment_event,
+)
+from app.services.webhooks.payload_normalizers.lava_top_payment_normalizer import (
+    normalize_lava_top_payment_event,
+)
 from app.services.webhooks.webhook_audit_logger import log_webhook_event
 from app.services.webhooks.webhook_audit_statuses import (
     WEBHOOK_STATUS_MALFORMED_PAYLOAD,
     WEBHOOK_STATUS_REJECTED,
+    WEBHOOK_STATUS_PROCESSED,
+    WEBHOOK_STATUS_RECONCILIATION_MISMATCH,
 )
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -88,4 +101,74 @@ async def calendly_webhook(
     )
     db.commit()
 
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/lava-top/payment-result")
+async def lava_top_payment_result_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Authenticate, normalize, and atomically apply one Lava.top result."""
+
+    if not verify_webhook_signature(
+        provider="lava_top",
+        payload=b"",
+        headers=request.headers,
+    ):
+        log_webhook_event(
+            provider="lava_top",
+            event_type="authentication",
+            status=WEBHOOK_STATUS_REJECTED,
+        )
+        raise HTTPException(status_code=401, detail="Invalid webhook credentials")
+
+    enforce_lava_top_verified_limit(request)
+
+    try:
+        payload = await request.json()
+        if not isinstance(payload, dict):
+            raise ValueError
+        event = normalize_lava_top_payment_event(payload)
+    except (ValueError, TypeError):
+        log_webhook_event(
+            provider="lava_top",
+            event_type="payment_result",
+            status=WEBHOOK_STATUS_MALFORMED_PAYLOAD,
+        )
+        raise HTTPException(status_code=400, detail="Malformed webhook payload")
+
+    event_type = f"payment.{event.outcome.value}"
+    try:
+        outcome = reconcile_payment_event(db, event)
+        db.commit()
+    except PaymentReconciliationError:
+        db.rollback()
+        log_webhook_event(
+            provider="lava_top",
+            event_type=event_type,
+            status=WEBHOOK_STATUS_RECONCILIATION_MISMATCH,
+            external_payment_id=event.external_payment_id,
+        )
+        raise HTTPException(
+            status_code=409,
+            detail="Payment reconciliation requires operator attention",
+        )
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=503,
+            detail="Payment reconciliation is temporarily unavailable",
+        ) from exc
+    except Exception:
+        db.rollback()
+        raise
+
+    log_webhook_event(
+        provider="lava_top",
+        event_type=event_type,
+        status=WEBHOOK_STATUS_PROCESSED,
+        external_payment_id=event.external_payment_id,
+        sale_id=outcome.sale_id,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

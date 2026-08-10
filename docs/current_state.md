@@ -93,10 +93,33 @@ Commerce and delivery:
   initiation-error state. It does not treat browser return as payment proof,
   mark sales paid, create entitlements, expose delivery or booking access, or
   send purchase email.
-- Real payment execution, authenticated webhook or server-to-server
-  confirmation, the pending-to-paid transition, fulfillment, purchase email,
-  delivery links, and end-to-end RUB/EUR payment and payout validation remain
-  incomplete.
+- Authoritative Lava.top payment confirmation is implemented through a
+  dedicated inbound `X-Api-Key` webhook for `payment.success` and
+  `payment.failed`, plus an explicit server-to-server invoice lookup/manual
+  reconciliation command. Both normalize provider data and reuse the same
+  locked Sale reconciliation path keyed by provider invoice identity.
+- A successful result now atomically changes a pending Sale to paid and creates
+  one exact-release download entitlement per product item plus one consultation
+  entitlement per consultation service item. Failed results change pending to
+  failed without fulfillment. Same-result replay is idempotent; terminal
+  conflicts and reconciliation mismatches do not rewrite history.
+- Sales Admin derives a `Stale — reconcile` warning for pending records at least
+  24 hours old without introducing another payment status.
+- A real 50 RUB hosted Lava.top payment succeeded provider-side. On 2026-08-10,
+  Sale #6 was manually reconciled through the server-to-server invoice lookup:
+  authoritative confirmation changed it from pending to paid and created
+  exactly one `DownloadEntitlement` for its product `SaleItem`. It created no
+  `ConsultationEntitlement` because the Sale contained no consultation item.
+  Repeating the same reconciliation returned idempotent and did not duplicate
+  fulfillment.
+- The earlier 50 RUB Sale #5 remains pending because Lava.top reported its
+  invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent). No payment status
+  was forced manually for that Sale.
+- Purchase email, delivery-link communication, live webhook delivery/resend,
+  product-plus-consultation live payment, result-page delivery UX, and
+  end-to-end RUB/EUR payment and payout validation remain incomplete. Live
+  Lava.top webhook delivery cannot be validated until SmartBudgetSite has a
+  public HTTPS deployment or approved temporary public endpoint.
 - Lava.top is the approved first production payment provider within the
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
@@ -120,8 +143,8 @@ Commerce and delivery:
   are intentionally not the SmartBudget delivery path; SmartBudgetSite-owned
   entitlements, protected access, purchase emails, and private R2 delivery
   remain required.
-- Payment-success orchestration does not yet create download entitlements or
-  send purchase emails containing download links.
+- Payment-success orchestration creates item-owned entitlements atomically but
+  does not yet send purchase emails containing delivery links.
 - The approved MVP checkout uses hosted Lava.top checkout and returns to a
   SmartBudgetSite payment result page. Browser return is not proof of payment;
   paid state, entitlements, customer content, and purchase emails require an
@@ -312,9 +335,12 @@ Infrastructure and quality:
 
 ## Current launch constraint
 
-The payment release blocker is completing and validating the approved Lava.top
-integration: hosted checkout, authenticated webhook or server-to-server
-verification, the SmartBudgetSite result page, fulfillment, and delivery.
+The payment release blocker is completing live validation of the approved
+Lava.top integration and customer delivery: configure and validate webhook
+delivery/resend after a public HTTPS endpoint exists, validate the EUR and live
+product-plus-consultation paths, and implement purchase email/delivery-link
+communication. The browser result page remains neutral until a separately
+approved result-page redesign.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.

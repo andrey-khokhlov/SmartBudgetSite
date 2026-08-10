@@ -228,6 +228,8 @@ Application policies:
 | admin authentication | shared 5/15 min per IP across login and invalid-cookie access |
 | Calendly pre-verification | 120/min per IP |
 | Calendly post-verification | 300/5 min provider-wide and 10/3 min per signature HMAC |
+| Lava.top pre-verification | 120/min per IP |
+| Lava.top post-verification | 300/5 min provider-wide |
 
 The production perimeter must provide:
 
@@ -241,6 +243,7 @@ The production perimeter must provide:
 | admin login | 20/min, burst 5 |
 | generic admin safety ceiling | 120/min |
 | Calendly webhook | 300/min, burst 100 |
+| Lava.top payment-result webhook | 300/min, burst 100 |
 
 No proxy technology is selected in this repository. Production configuration
 must return HTTP 429 rather than a technology-default 503 for quota rejection
@@ -384,6 +387,62 @@ The command does not accept an amount. It selects the exact active
 and prints only non-secret sale and invoice diagnostics. It never prints the
 customer email, API key, hosted payment URL, request headers, or full provider
 response.
+
+### Lava.top payment confirmation and reconciliation
+
+Configure two different server-owned secrets:
+
+```dotenv
+LAVA_TOP_API_KEY=<outbound API credential>
+LAVA_TOP_WEBHOOK_SECRET=<dedicated inbound Payment-result key>
+```
+
+The inbound secret is configured as Lava.top's Payment-result webhook API key
+and arrives in `X-Api-Key`; it must never equal the outbound API credential.
+When outbound Lava.top checkout is enabled in production, application startup
+fails if the inbound webhook secret is empty. The webhook URL is
+`/v1/webhooks/lava-top/payment-result`. Do not log either key, raw webhook
+payloads, customer data, or hosted payment URLs.
+
+Lava.top may retry webhook delivery. For an unresolved invoice, inspect the
+Payment-result webhook history in the Lava.top dashboard and resend the exact
+event. Same-outcome replay is safe. HTTP 409 means the event needs operator
+reconciliation; do not alter payment status manually in SQL.
+
+For explicit server-to-server verification of one known Sale/invoice pair:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\reconcile_lava_top_invoice.py `
+  --sale-id <sale-id> `
+  --external-payment-id <lava-invoice-id>
+```
+
+The command queries `GET /api/v2/invoices/{id}` with the outbound credential,
+requires the returned invoice identity to match, and applies a terminal
+`COMPLETED` or `FAILED` result through the same domain transaction used by the
+webhook. `NEW` and `IN_PROGRESS` remain unresolved and cause no mutation.
+
+Live validation on 2026-08-10 used this command for two real 50 RUB Sales. Lava.top
+reported Sale #6's invoice as terminal and successful; reconciliation changed
+Sale #6 from pending to paid, created exactly one product
+`DownloadEntitlement`, created no consultation entitlement, and returned
+idempotent without duplicate fulfillment when repeated. Lava.top reported Sale
+#5's invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent), so Sale #5
+remained pending and no status was forced manually.
+
+Live Payment-result webhook delivery remains unvalidated because SmartBudgetSite
+is not publicly reachable over HTTPS. Configure and validate the webhook in
+Lava.top when a public HTTPS deployment or approved temporary public endpoint
+exists; until then, do not treat manual reconciliation evidence as webhook
+validation.
+
+Interpret Admin payment state as follows:
+
+- `paid`: authoritative success committed with complete item fulfillment;
+- `failed`: authoritative provider failure for a formerly pending Sale;
+- `pending`: no terminal provider result has been committed;
+- `Stale — reconcile`: pending for at least 24 hours and requires an operator
+  webhook-history or explicit invoice check; it is not a stored payment status.
 
 ## Deployment and external integration validation
 

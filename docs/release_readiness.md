@@ -669,14 +669,26 @@ returns HTTP 303 to the hosted Lava.top checkout. `/payment/result` provides
 only a neutral pending state, and expected initiation failures render an opaque
 customer-facing result without creating paid or fulfillment state.
 
-`REL-001` remains incomplete. Invoice creation is not payment confirmation, a
-successful payment, or fulfillment. Remaining work is:
+The first authoritative confirmation and fulfillment slice is implemented:
+authenticated Lava.top Payment-result events and explicit invoice lookup share
+one provider-independent reconciliation path, and success atomically creates
+all product/consultation entitlements. Conflicts remain operator-visible and do
+not rewrite terminal history.
 
-- execute and validate a real payment and the pending-to-paid transition;
-- authenticated Lava.top webhook processing or explicit server-to-server
-  payment verification;
-- SmartBudgetSite-owned payment-success fulfillment, including entitlement
-  creation;
+Server-to-server reconciliation has now been validated against a real 50 RUB
+payment: Sale #6 moved from pending to paid, received exactly one product
+download entitlement and no consultation entitlement, and repeated
+reconciliation was idempotent. The earlier Sale #5 correctly remained pending
+when Lava.top reported a non-terminal invoice; its status was not forced.
+
+`REL-001` remains incomplete. This product-only manual reconciliation is not
+live webhook, bundle, email, or result-page delivery validation. Remaining work
+is:
+
+- configure and validate live webhook delivery, history, resend, and conflict
+  operations when a public HTTPS deployment or approved temporary endpoint is
+  available;
+- validate a live product-plus-consultation payment and atomic fulfillment;
 - customer purchase email and delivery links;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.

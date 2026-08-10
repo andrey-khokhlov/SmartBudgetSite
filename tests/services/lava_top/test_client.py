@@ -6,8 +6,10 @@ import pytest
 from app.core.config import settings
 from app.services.lava_top.client import (
     LavaTopConfigurationError,
+    LavaTopInvoiceStatus,
     LavaTopRequestError,
     create_invoice,
+    get_invoice,
 )
 
 
@@ -99,3 +101,49 @@ def test_create_invoice_converts_non_success_response(monkeypatch):
             currency="EUR",
             amount=Decimal("39.00"),
         )
+
+
+def test_get_invoice_uses_exact_identity_and_parses_receipt(monkeypatch):
+    captured = {}
+
+    def fake_get(url, **kwargs):
+        captured["url"] = url
+        captured.update(kwargs)
+        return httpx.Response(
+            200,
+            json={
+                "id": "invoice-123",
+                "status": "COMPLETED",
+                "receipt": {"amount": 50, "currency": "RUB", "fee": 1},
+            },
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(settings, "LAVA_TOP_API_KEY", "outbound-api-key")
+    monkeypatch.setattr(settings, "LAVA_TOP_API_BASE_URL", "https://gate.lava.top/")
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    invoice = get_invoice("invoice-123")
+
+    assert captured["url"] == "https://gate.lava.top/api/v2/invoices/invoice-123"
+    assert captured["headers"] == {"X-Api-Key": "outbound-api-key"}
+    assert invoice.status == LavaTopInvoiceStatus.COMPLETED
+    assert invoice.amount == Decimal("50")
+    assert invoice.currency == "RUB"
+
+
+def test_get_invoice_rejects_changed_provider_identity(monkeypatch):
+    def fake_get(url, **kwargs):
+        return httpx.Response(
+            200,
+            json={"id": "different", "status": "FAILED"},
+            request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(settings, "LAVA_TOP_API_KEY", "outbound-api-key")
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    from app.services.lava_top.client import LavaTopResponseError
+
+    with pytest.raises(LavaTopResponseError):
+        get_invoice("invoice-123")
