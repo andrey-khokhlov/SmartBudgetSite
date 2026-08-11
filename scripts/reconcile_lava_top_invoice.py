@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable, Sequence
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -22,6 +23,7 @@ from app.services.payment_delivery_orchestration_service import (  # noqa: E402
 from app.services.payment_reconciliation_service import (  # noqa: E402
     PaymentReconciliationError,
     PaymentReconciliationOutcome,
+    record_non_terminal_payment_check,
 )
 from app.services.webhooks.payload_normalizers.lava_top_payment_normalizer import (  # noqa: E402
     normalize_lava_top_invoice,
@@ -47,14 +49,25 @@ def reconcile_lava_top_invoice(
     sale_id: int,
     external_payment_id: str,
     invoice_lookup: Callable = get_invoice,
+    checked_at: datetime | None = None,
 ) -> PaymentReconciliationOutcome:
     """Query one provider invoice and reuse authoritative domain reconciliation."""
 
     invoice = invoice_lookup(external_payment_id)
     event = normalize_lava_top_invoice(invoice)
     if event is None:
+        record_non_terminal_payment_check(
+            db,
+            payment_provider="lava_top",
+            external_payment_id=invoice.invoice_id,
+            expected_sale_id=sale_id,
+            amount=invoice.amount,
+            currency=invoice.currency,
+            checked_at=checked_at,
+        )
+        db.commit()
         raise InvoiceNotTerminalError(
-            "Lava.top invoice is not in a terminal payment state."
+            "Lava.top invoice is not terminal; non-terminal check recorded."
         )
     outcome = reconcile_payment_and_deliver(
         db,

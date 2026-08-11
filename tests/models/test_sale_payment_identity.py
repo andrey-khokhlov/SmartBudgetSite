@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -59,3 +60,29 @@ def test_multiple_null_external_payment_ids_are_allowed(db_session):
         ]
     )
     db_session.commit()
+
+
+@pytest.mark.parametrize(
+    ("checked_at", "check_result"),
+    [
+        (datetime(2026, 8, 11, tzinfo=UTC), None),
+        (None, "non_terminal"),
+        (datetime(2026, 8, 11, tzinfo=UTC), "provider_specific_status"),
+    ],
+)
+def test_payment_check_metadata_must_be_complete_and_provider_independent(
+    db_session,
+    checked_at,
+    check_result,
+):
+    sale = make_sale(
+        provider="lava_top",
+        external_id="payment-check-constraint",
+        status=PaymentStatus.PENDING,
+    )
+    sale.payment_last_checked_at = checked_at
+    sale.payment_last_check_result = check_result
+    db_session.add(sale)
+
+    with pytest.raises(IntegrityError):
+        db_session.commit()

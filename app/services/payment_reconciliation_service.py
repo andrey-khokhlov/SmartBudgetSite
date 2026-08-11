@@ -1,10 +1,12 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from decimal import Decimal
 from enum import StrEnum
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.models.enums import PaymentStatus, SaleItemType
+from app.models.enums import PaymentCheckResult, PaymentStatus, SaleItemType
 from app.models.purchase_email_delivery import PurchaseEmailDelivery
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
@@ -44,6 +46,39 @@ class PaymentReconciliationOutcome:
     sale_id: int
 
 
+def record_non_terminal_payment_check(
+    db: Session,
+    *,
+    payment_provider: str,
+    external_payment_id: str,
+    expected_sale_id: int,
+    amount: Decimal | None = None,
+    currency: str | None = None,
+    checked_at: datetime | None = None,
+) -> int:
+    """Persist one provider-independent non-terminal payment observation."""
+
+    sale = get_sale_for_payment_reconciliation(
+        db,
+        payment_provider=payment_provider,
+        external_payment_id=external_payment_id,
+    )
+    if sale is None or sale.id != expected_sale_id:
+        raise PaymentReconciliationMismatchError(
+            "Provider invoice identity does not match the expected Sale."
+        )
+    _validate_sale_snapshot_values(sale, amount=amount, currency=currency)
+    if sale.payment_status != PaymentStatus.PENDING:
+        raise PaymentReconciliationConflictError(
+            "Non-terminal payment check conflicts with terminal Sale history."
+        )
+
+    sale.payment_last_checked_at = checked_at or datetime.now(UTC)
+    sale.payment_last_check_result = PaymentCheckResult.NON_TERMINAL.value
+    db.flush()
+    return sale.id
+
+
 def reconcile_payment_event(
     db: Session,
     event: NormalizedPaymentEvent,
@@ -73,11 +108,24 @@ def reconcile_payment_event(
 
 
 def _validate_sale_snapshot(sale: Sale, event: NormalizedPaymentEvent) -> None:
-    if event.currency is not None and sale.currency.upper() != event.currency:
+    _validate_sale_snapshot_values(
+        sale,
+        amount=event.amount,
+        currency=event.currency,
+    )
+
+
+def _validate_sale_snapshot_values(
+    sale: Sale,
+    *,
+    amount: Decimal | None,
+    currency: str | None,
+) -> None:
+    if currency is not None and sale.currency.upper() != currency:
         raise PaymentReconciliationMismatchError(
             "Provider currency does not match the Sale snapshot."
         )
-    if event.amount is not None and sale.amount != event.amount:
+    if amount is not None and sale.amount != amount:
         raise PaymentReconciliationMismatchError(
             "Provider amount does not match the Sale snapshot."
         )
@@ -88,6 +136,8 @@ def _apply_failed(
     sale: Sale,
 ) -> PaymentReconciliationOutcome:
     if sale.payment_status == PaymentStatus.FAILED:
+        _clear_payment_check_metadata(sale)
+        db.flush()
         return PaymentReconciliationOutcome(
             PaymentReconciliationResult.IDEMPOTENT,
             sale.id,
@@ -98,6 +148,7 @@ def _apply_failed(
         )
 
     sale.payment_status = PaymentStatus.FAILED
+    _clear_payment_check_metadata(sale)
     db.flush()
     return PaymentReconciliationOutcome(
         PaymentReconciliationResult.APPLIED,
@@ -117,6 +168,7 @@ def _apply_success(
     if sale.payment_status == PaymentStatus.PAID:
         _validate_existing_fulfillment(sale)
         _ensure_purchase_email_delivery(db, sale)
+        _clear_payment_check_metadata(sale)
         db.flush()
         return PaymentReconciliationOutcome(
             PaymentReconciliationResult.IDEMPOTENT,
@@ -135,11 +187,17 @@ def _apply_success(
     for item in sale.items:
         _fulfill_sale_item(db, item)
     _ensure_purchase_email_delivery(db, sale)
+    _clear_payment_check_metadata(sale)
     db.flush()
     return PaymentReconciliationOutcome(
         PaymentReconciliationResult.APPLIED,
         sale.id,
     )
+
+
+def _clear_payment_check_metadata(sale: Sale) -> None:
+    sale.payment_last_checked_at = None
+    sale.payment_last_check_result = None
 
 
 def _fulfill_sale_item(db: Session, item: SaleItem) -> None:

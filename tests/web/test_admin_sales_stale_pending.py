@@ -1,11 +1,19 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from app.models.enums import PaymentStatus
+from app.models.enums import PaymentCheckResult, PaymentStatus
 from app.models.sale import Sale
 
 
-def add_sale(db_session, *, status, age, external_payment_id=None):
+def add_sale(
+    db_session,
+    *,
+    status,
+    age,
+    external_payment_id=None,
+    payment_last_checked_at=None,
+    payment_last_check_result=None,
+):
     sale = Sale(
         customer_email="operator-test@example.com",
         amount=Decimal("50.00"),
@@ -17,6 +25,8 @@ def add_sale(db_session, *, status, age, external_payment_id=None):
             if external_payment_id is not None
             else f"admin-{status}-{age.total_seconds()}"
         ),
+        payment_last_checked_at=payment_last_checked_at,
+        payment_last_check_result=payment_last_check_result,
         created_at=datetime.now(UTC) - age,
     )
     db_session.add(sale)
@@ -24,7 +34,10 @@ def add_sale(db_session, *, status, age, external_payment_id=None):
     return sale
 
 
-def test_admin_marks_only_old_pending_sale_as_stale(auth_client, db_session):
+def test_admin_marks_only_unchecked_old_pending_sale_as_needing_check(
+    auth_client,
+    db_session,
+):
     stale = add_sale(
         db_session,
         status=PaymentStatus.PENDING,
@@ -47,9 +60,29 @@ def test_admin_marks_only_old_pending_sale_as_stale(auth_client, db_session):
     stale_row = response.text.split(f">{stale.id}<", 1)[1].split("</tr>", 1)[0]
     current_row = response.text.split(f">{current.id}<", 1)[1].split("</tr>", 1)[0]
     paid_row = response.text.split(f">{paid.id}<", 1)[1].split("</tr>", 1)[0]
-    assert "Pending &gt;24h — check" in stale_row
-    assert "Pending &gt;24h — check" not in current_row
-    assert "Pending &gt;24h — check" not in paid_row
+    assert "Check needed" in stale_row
+    assert "Check needed" not in current_row
+    assert "Check needed" not in paid_row
+    assert "Pending &gt;24h — check" not in response.text
+
+
+def test_admin_marks_checked_stale_pending_sale_as_waiting(auth_client, db_session):
+    checked_at = datetime(2026, 8, 11, 12, 0, tzinfo=UTC)
+    sale = add_sale(
+        db_session,
+        status=PaymentStatus.PENDING,
+        age=timedelta(hours=25),
+        payment_last_checked_at=checked_at,
+        payment_last_check_result=PaymentCheckResult.NON_TERMINAL.value,
+    )
+
+    response = auth_client.get("/admin/sales")
+
+    assert response.status_code == 200
+    sale_row = response.text.split(f">{sale.id}<", 1)[1].split("</tr>", 1)[0]
+    assert "Checked — waiting" in sale_row
+    assert "Check needed" not in sale_row
+    assert 'title="Last checked: 2026-08-11T12:00:00"' in sale_row
 
 
 def test_admin_external_id_copy_target_and_empty_state(auth_client, db_session):

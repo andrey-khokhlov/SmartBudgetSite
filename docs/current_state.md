@@ -103,8 +103,13 @@ Commerce and delivery:
   entitlement per consultation service item. Failed results change pending to
   failed without fulfillment. Same-result replay is idempotent; terminal
   conflicts and reconciliation mismatches do not rewrite history.
-- Sales Admin derives a `Stale — reconcile` warning for pending records at least
-  24 hours old without introducing another payment status.
+- Sales Admin keeps stale records in the authoritative `pending` status and
+  distinguishes operational follow-up without introducing another payment
+  status. Pending Sales at least 24 hours old show `Check needed` until an
+  explicit provider lookup records a provider-independent `non_terminal`
+  observation, after which they show `Checked — waiting`. The observation
+  stores only the last-check time and generic result; it creates no fulfillment
+  or email delivery state.
 - A real 50 RUB hosted Lava.top payment succeeded provider-side. On 2026-08-10,
   Sale #6 was manually reconciled through the server-to-server invoice lookup:
   authoritative confirmation changed it from pending to paid and created
@@ -115,11 +120,16 @@ Commerce and delivery:
 - The earlier 50 RUB Sale #5 remains pending because Lava.top reported its
   invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent). No payment status
   was forced manually for that Sale.
-- Purchase email, delivery-link communication, live webhook delivery/resend,
-  product-plus-consultation live payment, result-page delivery UX, and
-  end-to-end RUB/EUR payment and payout validation remain incomplete. Live
-  Lava.top webhook delivery cannot be validated until SmartBudgetSite has a
-  public HTTPS deployment or approved temporary public endpoint.
+- On 2026-08-11, real Sale #7 was confirmed through the explicit authoritative
+  server-to-server reconciliation path. Its purchase email was sent through
+  Resend, the protected product access page opened, and the protected download
+  completed successfully. This validates the manually reconciled product-only
+  delivery journey, not automatic Lava.top webhook delivery.
+- Live automatic webhook delivery/resend, product-plus-consultation live
+  payment, result-page delivery UX, and end-to-end RUB/EUR payment and payout
+  validation remain incomplete. Live Lava.top webhook delivery cannot be
+  validated until SmartBudgetSite has a public HTTPS deployment or approved
+  temporary public endpoint.
 - Lava.top is the approved first production payment provider within the
   provider-independent architecture. Stripe remains the strategic long-term
   target after legitimate long-term Stripe infrastructure becomes available;
@@ -161,9 +171,10 @@ Commerce and delivery:
   the message was not sent before authorizing another attempt.
 - Purchase-email delivery is disabled unless explicitly enabled. Enabled
   configuration requires the Resend key, sender identity, and server-owned
-  public base URL. Automated coverage uses fake transports; live application
-  sending, provider click-tracking behavior for capability links, and the full
-  production customer journey remain unvalidated.
+  public base URL. Automated coverage uses fake transports. Sale #7 confirms
+  one live product-only Resend delivery and protected download journey;
+  provider click-tracking behavior for capability links and the remaining
+  customer journeys remain unvalidated.
 - The approved MVP checkout uses hosted Lava.top checkout and returns to a
   SmartBudgetSite payment result page. Browser return is not proof of payment;
   paid state, entitlements, customer content, and purchase emails require an

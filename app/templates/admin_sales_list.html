@@ -96,7 +96,16 @@
                     <td class="sales-col-status">
                         {{ sale.payment_status }}
                         {% if sale.id in stale_pending_ids %}
-                            <span class="sales-stale-pending">Pending &gt;24h — check</span>
+                            {% if sale.payment_last_check_result == 'non_terminal' %}
+                                <span
+                                    class="sales-stale-pending"
+                                    {% if sale.payment_last_checked_at %}
+                                        title="Last checked: {{ sale.payment_last_checked_at.isoformat() }}"
+                                    {% endif %}
+                                >Checked — waiting</span>
+                            {% else %}
+                                <span class="sales-stale-pending">Check needed</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                     <td class="sales-col-total">{{ sale.amount }} {{ sale.currency }}</td>

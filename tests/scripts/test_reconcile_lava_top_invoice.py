@@ -1,9 +1,11 @@
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.download_entitlement import DownloadEntitlement
-from app.models.enums import PaymentStatus
+from app.models.enums import PaymentCheckResult, PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
 from app.models.purchase_email_delivery import (
@@ -12,7 +14,11 @@ from app.models.purchase_email_delivery import (
 )
 from app.core.config import settings
 from app.services.email_transport import EmailTransportResult
-from app.services.lava_top.client import LavaTopInvoiceDetails, LavaTopInvoiceStatus
+from app.services.lava_top.client import (
+    LavaTopInvoiceDetails,
+    LavaTopInvoiceStatus,
+    LavaTopRequestError,
+)
 from app.services.payment_reconciliation_service import (
     PaymentReconciliationMismatchError,
 )
@@ -151,7 +157,69 @@ def test_manual_failed_reconciliation_does_not_attempt_purchase_email(
     assert sent_messages == []
 
 
-def test_manual_path_rejects_nonterminal_and_wrong_sale_identity(db_session):
+def test_nonterminal_lookup_persists_observation_without_fulfillment(db_session):
+    sale = create_sale(db_session)
+    checked_at = datetime(2026, 8, 11, 12, 0, tzinfo=UTC)
+
+    with pytest.raises(InvoiceNotTerminalError, match="non-terminal check recorded"):
+        reconcile_lava_top_invoice(
+            db_session,
+            sale_id=sale.id,
+            external_payment_id="manual-invoice",
+            invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.IN_PROGRESS),
+            checked_at=checked_at,
+        )
+
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_status == PaymentStatus.PENDING
+    assert persisted_sale.payment_last_checked_at.replace(tzinfo=UTC) == checked_at
+    assert (
+        persisted_sale.payment_last_check_result
+        == PaymentCheckResult.NON_TERMINAL.value
+    )
+    assert db_session.query(DownloadEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
+
+
+def test_repeated_nonterminal_lookup_refreshes_observation(db_session):
+    sale = create_sale(db_session)
+    first_check = datetime(2026, 8, 11, 12, 0, tzinfo=UTC)
+    second_check = first_check + timedelta(hours=1)
+
+    for checked_at in (first_check, second_check):
+        with pytest.raises(InvoiceNotTerminalError):
+            reconcile_lava_top_invoice(
+                db_session,
+                sale_id=sale.id,
+                external_payment_id="manual-invoice",
+                invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.NEW),
+                checked_at=checked_at,
+            )
+
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_status == PaymentStatus.PENDING
+    assert persisted_sale.payment_last_checked_at.replace(tzinfo=UTC) == second_check
+    assert (
+        persisted_sale.payment_last_check_result
+        == PaymentCheckResult.NON_TERMINAL.value
+    )
+
+
+@pytest.mark.parametrize(
+    ("terminal_status", "expected_payment_status", "entitlement_count"),
+    [
+        (LavaTopInvoiceStatus.COMPLETED, PaymentStatus.PAID, 1),
+        (LavaTopInvoiceStatus.FAILED, PaymentStatus.FAILED, 0),
+    ],
+)
+def test_terminal_reconciliation_after_nonterminal_observation(
+    db_session,
+    terminal_status,
+    expected_payment_status,
+    entitlement_count,
+):
     sale = create_sale(db_session)
 
     with pytest.raises(InvoiceNotTerminalError):
@@ -162,13 +230,81 @@ def test_manual_path_rejects_nonterminal_and_wrong_sale_identity(db_session):
             invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.IN_PROGRESS),
         )
 
+    reconcile_lava_top_invoice(
+        db_session,
+        sale_id=sale.id,
+        external_payment_id="manual-invoice",
+        invoice_lookup=lambda invoice_id: invoice(terminal_status),
+    )
+
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_status == expected_payment_status
+    assert persisted_sale.payment_last_checked_at is None
+    assert persisted_sale.payment_last_check_result is None
+    assert db_session.query(DownloadEntitlement).count() == entitlement_count
+    assert db_session.query(PurchaseEmailDelivery).count() == entitlement_count
+
+
+def test_provider_lookup_failure_does_not_record_observation(db_session):
+    sale = create_sale(db_session)
+
+    def failed_lookup(_invoice_id):
+        raise LavaTopRequestError("provider unavailable")
+
+    with pytest.raises(LavaTopRequestError):
+        reconcile_lava_top_invoice(
+            db_session,
+            sale_id=sale.id,
+            external_payment_id="manual-invoice",
+            invoice_lookup=failed_lookup,
+        )
+
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_last_checked_at is None
+    assert persisted_sale.payment_last_check_result is None
+
+
+def test_nonterminal_mismatch_does_not_record_observation(db_session):
+    sale = create_sale(db_session)
+
     with pytest.raises(PaymentReconciliationMismatchError):
         reconcile_lava_top_invoice(
             db_session,
             sale_id=sale.id + 1,
             external_payment_id="manual-invoice",
-            invoice_lookup=lambda invoice_id: invoice(),
+            invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.NEW),
         )
+
+    db_session.rollback()
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_last_checked_at is None
+    assert persisted_sale.payment_last_check_result is None
+
+
+def test_nonterminal_commit_failure_rolls_back_observation(db_session, monkeypatch):
+    sale = create_sale(db_session)
+
+    def fail_commit():
+        raise SQLAlchemyError("database unavailable")
+
+    monkeypatch.setattr(db_session, "commit", fail_commit)
+    with pytest.raises(SQLAlchemyError):
+        reconcile_lava_top_invoice(
+            db_session,
+            sale_id=sale.id,
+            external_payment_id="manual-invoice",
+            invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.NEW),
+        )
+
+    db_session.rollback()
+    db_session.expire_all()
+    persisted_sale = db_session.get(type(sale), sale.id)
+    assert persisted_sale.payment_status == PaymentStatus.PENDING
+    assert persisted_sale.payment_last_checked_at is None
+    assert persisted_sale.payment_last_check_result is None
 
 
 def test_manual_path_rejects_cross_sale_invoice_mismatch_without_mutation(

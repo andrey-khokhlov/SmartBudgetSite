@@ -428,7 +428,12 @@ For explicit server-to-server verification of one known Sale/invoice pair:
 The command queries `GET /api/v2/invoices/{id}` with the outbound credential,
 requires the returned invoice identity to match, and applies a terminal
 `COMPLETED` or `FAILED` result through the same domain transaction used by the
-webhook. `NEW` and `IN_PROGRESS` remain unresolved and cause no mutation.
+webhook. `NEW` and `IN_PROGRESS` remain unresolved payment truth. After the
+response identity and Sale snapshot are validated under the Sale lock, the
+command commits only a provider-independent `non_terminal` observation and its
+last-check timestamp, then reports that the invoice is not terminal. Repeating
+the lookup safely refreshes that observation. Provider lookup, identity,
+reconciliation, database, or commit failures do not record a successful check.
 
 Live validation on 2026-08-10 used this command for two real 50 RUB Sales. Lava.top
 reported Sale #6's invoice as terminal and successful; reconciliation changed
@@ -437,6 +442,12 @@ Sale #6 from pending to paid, created exactly one product
 idempotent without duplicate fulfillment when repeated. Lava.top reported Sale
 #5's invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent), so Sale #5
 remained pending and no status was forced manually.
+
+On 2026-08-11, the same explicit authoritative path successfully reconciled
+real Sale #7. Its purchase email was sent through Resend, its protected product
+access page opened, and its protected download completed successfully. This is
+product-only manual reconciliation evidence; live automatic Lava.top webhook
+delivery remains unvalidated pending public HTTPS.
 
 Live Payment-result webhook delivery remains unvalidated because SmartBudgetSite
 is not publicly reachable over HTTPS. Configure and validate the webhook in
@@ -449,8 +460,11 @@ Interpret Admin payment state as follows:
 - `paid`: authoritative success committed with complete item fulfillment;
 - `failed`: authoritative provider failure for a formerly pending Sale;
 - `pending`: no terminal provider result has been committed;
-- `Stale — reconcile`: pending for at least 24 hours and requires an operator
-  webhook-history or explicit invoice check; it is not a stored payment status.
+- `Check needed`: pending for at least 24 hours with no durable non-terminal
+  provider check recorded;
+- `Checked — waiting`: pending for at least 24 hours after an explicit lookup
+  found the provider invoice non-terminal. The exact last-check time is exposed
+  in the Admin tooltip.
 
 ## Deployment and external integration validation
 

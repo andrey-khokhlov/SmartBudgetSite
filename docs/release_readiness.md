@@ -680,10 +680,14 @@ payment: Sale #6 moved from pending to paid, received exactly one product
 download entitlement and no consultation entitlement, and repeated
 reconciliation was idempotent. The earlier Sale #5 correctly remained pending
 when Lava.top reported a non-terminal invoice; its status was not forced.
+On 2026-08-11, real Sale #7 was also authoritatively reconciled through the
+manual path; its purchase email was sent through Resend, protected product
+access opened, and the protected download completed successfully.
 
-`REL-001` remains incomplete. This product-only manual reconciliation is not
-live webhook, bundle, purchase-email, or result-page delivery validation. The
-purchase-email workflow, Resend adapter, stable-key retry behavior, and
+`REL-001` remains incomplete. This product-only manual reconciliation and
+delivery evidence is not live webhook, bundle, or result-page delivery
+validation. The purchase-email workflow, Resend adapter, stable-key retry
+behavior, and
 protected Admin retry controls are implemented with automated fake-transport
 coverage, but still require deployed-environment validation. Remaining work is:
 
@@ -691,8 +695,8 @@ coverage, but still require deployed-environment validation. Remaining work is:
   operations when a public HTTPS deployment or approved temporary endpoint is
   available;
 - validate a live product-plus-consultation payment and atomic fulfillment;
-- live customer purchase-email delivery for product, consultation, and bundle
-  access, including provider tracking/link-rewriting configuration and the
+- live customer purchase-email delivery for consultation and bundle access,
+  plus provider tracking/link-rewriting configuration and the
   reconciliation-required operator path;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.

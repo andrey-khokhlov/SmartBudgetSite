@@ -2,15 +2,25 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, func, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
-from app.models.enums import PaymentStatus
+from app.models.enums import PaymentCheckResult, PaymentStatus
 
 if TYPE_CHECKING:
     from app.models.purchase_email_delivery import PurchaseEmailDelivery
     from app.models.sale_item import SaleItem
+
 
 class Sale(Base):
     __tablename__ = "sales"
@@ -55,6 +65,15 @@ class Sale(Base):
 
     external_payment_id: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
 
+    payment_last_checked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    payment_last_check_result: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -62,6 +81,14 @@ class Sale(Base):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "(payment_last_checked_at IS NULL AND payment_last_check_result IS NULL) "
+            "OR (payment_last_checked_at IS NOT NULL "
+            "AND payment_last_check_result IS NOT NULL "
+            f"AND payment_last_check_result = "
+            f"'{PaymentCheckResult.NON_TERMINAL.value}')",
+            name="ck_sales_payment_last_check_metadata",
+        ),
         Index(
             "uq_sales_payment_provider_external_payment_id",
             "payment_provider",

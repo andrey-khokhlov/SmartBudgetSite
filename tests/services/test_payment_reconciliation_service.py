@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -133,6 +134,30 @@ def test_failed_transition_and_duplicate_are_safe(db_session):
     assert sale.payment_status == PaymentStatus.FAILED
     assert db_session.query(DownloadEntitlement).count() == 0
     assert db_session.query(PurchaseEmailDelivery).count() == 0
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [PaymentOutcome.SUCCESS, PaymentOutcome.FAILED],
+)
+def test_idempotent_terminal_replay_clears_stale_payment_check_metadata(
+    db_session,
+    outcome,
+):
+    sale = create_pending_sale(db_session)
+    reconcile_payment_event(db_session, event(sale, outcome))
+    db_session.commit()
+    sale.payment_last_checked_at = datetime(2026, 8, 11, 12, 0, tzinfo=UTC)
+    sale.payment_last_check_result = "non_terminal"
+    db_session.commit()
+
+    replay = reconcile_payment_event(db_session, event(sale, outcome))
+    db_session.commit()
+
+    db_session.refresh(sale)
+    assert replay.result == PaymentReconciliationResult.IDEMPOTENT
+    assert sale.payment_last_checked_at is None
+    assert sale.payment_last_check_result is None
 
 
 @pytest.mark.parametrize(
