@@ -143,8 +143,27 @@ Commerce and delivery:
   are intentionally not the SmartBudget delivery path; SmartBudgetSite-owned
   entitlements, protected access, purchase emails, and private R2 delivery
   remain required.
-- Payment-success orchestration creates item-owned entitlements atomically but
-  does not yet send purchase emails containing delivery links.
+- Payment-success orchestration creates item-owned entitlements atomically.
+  The same authoritative transaction creates exactly one
+  `PurchaseEmailDelivery` per Sale, then commits before any email transport.
+  Post-commit orchestration renders one product, consultation, or bundle email
+  with SmartBudgetSite-protected access and sends it through the
+  provider-independent transport boundary backed by Resend.
+- Purchase-email states are `pending`, `sending`, `sent`, `failed`, and
+  `reconciliation_required`. Claiming commits `sending`, attempt count, and
+  attempt time before the external call. Normal Admin retry covers pending,
+  failed, and ambiguous sending attempts younger than 23 hours using the stable
+  `purchase-email/{delivery_id}` Resend idempotency key. A separate persisted
+  sending-start timestamp prevents later retries from extending that window.
+  Older ambiguous sends are lazily persisted as reconciliation-required and
+  cannot use normal retry;
+  a separate protected action requires the operator to confirm in Resend that
+  the message was not sent before authorizing another attempt.
+- Purchase-email delivery is disabled unless explicitly enabled. Enabled
+  configuration requires the Resend key, sender identity, and server-owned
+  public base URL. Automated coverage uses fake transports; live application
+  sending, provider click-tracking behavior for capability links, and the full
+  production customer journey remain unvalidated.
 - The approved MVP checkout uses hosted Lava.top checkout and returns to a
   SmartBudgetSite payment result page. Browser return is not proof of payment;
   paid state, entitlements, customer content, and purchase emails require an
@@ -338,9 +357,9 @@ Infrastructure and quality:
 The payment release blocker is completing live validation of the approved
 Lava.top integration and customer delivery: configure and validate webhook
 delivery/resend after a public HTTPS endpoint exists, validate the EUR and live
-product-plus-consultation paths, and implement purchase email/delivery-link
-communication. The browser result page remains neutral until a separately
-approved result-page redesign.
+product-plus-consultation paths, and validate the implemented purchase-email
+workflow and protected delivery links in the deployed environment. The browser
+result page remains neutral until a separately approved result-page redesign.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.

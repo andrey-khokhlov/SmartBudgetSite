@@ -5,6 +5,14 @@ from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
+from app.models.purchase_email_delivery import (
+    PurchaseEmailDelivery,
+    PurchaseEmailDeliveryStatus,
+)
+from app.services.email_transport import (
+    EmailTransportDefinitiveError,
+    EmailTransportResult,
+)
 from app.services.sale_service import create_product_sale
 
 WEBHOOK_URL = "/v1/webhooks/lava-top/payment-result"
@@ -70,6 +78,7 @@ def test_authenticated_success_commits_then_replay_is_safe(
     assert second.status_code == 204
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
     assert db_session.query(DownloadEntitlement).count() == 1
+    assert db_session.query(PurchaseEmailDelivery).count() == 1
 
 
 def test_wrong_or_missing_key_is_rejected_before_domain_processing(
@@ -90,6 +99,71 @@ def test_wrong_or_missing_key_is_rejected_before_domain_processing(
     assert wrong.status_code == 401
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PENDING
     assert db_session.query(DownloadEntitlement).count() == 0
+
+
+def test_success_sends_once_after_commit_and_replay_does_not_resend(
+    client, db_session, monkeypatch
+):
+    sale = create_sale(db_session)
+    monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_EMAIL", "support@example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
+    sent_messages = []
+
+    def fake_send(_transport, message):
+        sent_messages.append(message)
+        return EmailTransportResult(provider_message_id="webhook-resend-id")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send",
+        fake_send,
+    )
+    headers = {"X-Api-Key": "inbound-secret"}
+
+    first = client.post(WEBHOOK_URL, headers=headers, json=payload())
+    replay = client.post(WEBHOOK_URL, headers=headers, json=payload())
+
+    db_session.expire_all()
+    delivery = db_session.query(PurchaseEmailDelivery).one()
+    assert first.status_code == 204
+    assert replay.status_code == 204
+    assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
+    assert delivery.status == PurchaseEmailDeliveryStatus.SENT.value
+    assert len(sent_messages) == 1
+
+
+def test_email_transport_failure_does_not_fail_payment_webhook(
+    client, db_session, monkeypatch
+):
+    sale = create_sale(db_session)
+    monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_EMAIL", "support@example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
+
+    def fail_send(_transport, message):
+        raise EmailTransportDefinitiveError("private provider failure")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send",
+        fail_send,
+    )
+
+    response = client.post(
+        WEBHOOK_URL,
+        headers={"X-Api-Key": "inbound-secret"},
+        json=payload(),
+    )
+
+    db_session.expire_all()
+    delivery = db_session.query(PurchaseEmailDelivery).one()
+    assert response.status_code == 204
+    assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
+    assert db_session.query(DownloadEntitlement).count() == 1
+    assert delivery.status == PurchaseEmailDeliveryStatus.FAILED.value
 
 
 def test_malformed_json_and_unknown_invoice_are_controlled(
@@ -119,6 +193,17 @@ def test_malformed_json_and_unknown_invoice_are_controlled(
 def test_failed_event_commits_no_fulfillment(client, db_session, monkeypatch):
     sale = create_sale(db_session)
     monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    sent_messages = []
+
+    def fake_send(_transport, message):
+        sent_messages.append(message)
+        return EmailTransportResult(provider_message_id="must-not-be-used")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send",
+        fake_send,
+    )
 
     response = client.post(
         WEBHOOK_URL,
@@ -130,3 +215,5 @@ def test_failed_event_commits_no_fulfillment(client, db_session, monkeypatch):
     assert response.status_code == 204
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.FAILED
     assert db_session.query(DownloadEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
+    assert sent_messages == []

@@ -6,6 +6,12 @@ from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
+from app.models.purchase_email_delivery import (
+    PurchaseEmailDelivery,
+    PurchaseEmailDeliveryStatus,
+)
+from app.core.config import settings
+from app.services.email_transport import EmailTransportResult
 from app.services.lava_top.client import LavaTopInvoiceDetails, LavaTopInvoiceStatus
 from app.services.payment_reconciliation_service import (
     PaymentReconciliationMismatchError,
@@ -80,6 +86,69 @@ def test_manual_path_reuses_domain_reconciliation_and_commits(db_session):
     assert result.sale_id == sale.id
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
     assert db_session.query(DownloadEntitlement).count() == 1
+    assert db_session.query(PurchaseEmailDelivery).count() == 1
+
+
+def test_manual_path_attempts_purchase_email_after_commit(
+    db_session, monkeypatch
+):
+    sale = create_sale(db_session)
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_EMAIL", "support@example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
+    sent_messages = []
+
+    def fake_send(_transport, message):
+        sent_messages.append(message)
+        return EmailTransportResult(provider_message_id="manual-resend-id")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send",
+        fake_send,
+    )
+
+    reconcile_lava_top_invoice(
+        db_session,
+        sale_id=sale.id,
+        external_payment_id="manual-invoice",
+        invoice_lookup=lambda invoice_id: invoice(),
+    )
+
+    delivery = db_session.query(PurchaseEmailDelivery).one()
+    assert delivery.status == PurchaseEmailDeliveryStatus.SENT.value
+    assert len(sent_messages) == 1
+
+
+def test_manual_failed_reconciliation_does_not_attempt_purchase_email(
+    db_session, monkeypatch
+):
+    sale = create_sale(db_session)
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    sent_messages = []
+
+    def fake_send(_transport, message):
+        sent_messages.append(message)
+        return EmailTransportResult(provider_message_id="must-not-be-used")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send",
+        fake_send,
+    )
+
+    result = reconcile_lava_top_invoice(
+        db_session,
+        sale_id=sale.id,
+        external_payment_id="manual-invoice",
+        invoice_lookup=lambda invoice_id: invoice(LavaTopInvoiceStatus.FAILED),
+    )
+
+    db_session.expire_all()
+    assert result.sale_id == sale.id
+    assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.FAILED
+    assert db_session.query(DownloadEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
+    assert sent_messages == []
 
 
 def test_manual_path_rejects_nonterminal_and_wrong_sale_identity(db_session):

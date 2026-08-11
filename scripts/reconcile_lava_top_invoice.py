@@ -16,10 +16,12 @@ from app.services.lava_top.client import (  # noqa: E402
     LavaTopProviderError,
     get_invoice,
 )
+from app.services.payment_delivery_orchestration_service import (  # noqa: E402
+    reconcile_payment_and_deliver,
+)
 from app.services.payment_reconciliation_service import (  # noqa: E402
     PaymentReconciliationError,
     PaymentReconciliationOutcome,
-    reconcile_payment_event,
 )
 from app.services.webhooks.payload_normalizers.lava_top_payment_normalizer import (  # noqa: E402
     normalize_lava_top_invoice,
@@ -54,12 +56,11 @@ def reconcile_lava_top_invoice(
         raise InvoiceNotTerminalError(
             "Lava.top invoice is not in a terminal payment state."
         )
-    outcome = reconcile_payment_event(
+    outcome = reconcile_payment_and_deliver(
         db,
         event,
         expected_sale_id=sale_id,
     )
-    db.commit()
     return outcome
 
 

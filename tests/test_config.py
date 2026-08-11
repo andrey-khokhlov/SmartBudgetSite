@@ -136,6 +136,61 @@ def test_lava_top_configuration_has_safe_defaults() -> None:
     assert configured_settings.LAVA_TOP_API_BASE_URL == "https://gate.lava.top"
 
 
+def test_purchase_email_delivery_has_safe_defaults() -> None:
+    configured_settings = build_settings()
+
+    assert configured_settings.PURCHASE_EMAIL_DELIVERY_ENABLED is False
+    assert configured_settings.PUBLIC_BASE_URL is None
+
+
+def test_enabled_purchase_email_requires_complete_configuration() -> None:
+    with pytest.raises(ValidationError, match="RESEND_API_KEY must be non-empty"):
+        build_settings(PURCHASE_EMAIL_DELIVERY_ENABLED=True)
+
+
+def test_enabled_purchase_email_accepts_absolute_public_base_url() -> None:
+    configured_settings = build_settings(
+        PURCHASE_EMAIL_DELIVERY_ENABLED=True,
+        RESEND_API_KEY="resend-key",
+        MAIL_FROM_EMAIL="support@example.test",
+        MAIL_FROM_NAME="SmartBudget",
+        PUBLIC_BASE_URL="https://app.example.test/",
+    )
+
+    assert configured_settings.PUBLIC_BASE_URL == "https://app.example.test"
+
+
+@pytest.mark.parametrize(
+    "public_base_url",
+    ["localhost:8800", "/relative", "https://app.example.test/?token=secret"],
+)
+def test_enabled_purchase_email_rejects_unsafe_public_base_url(
+    public_base_url: str,
+) -> None:
+    with pytest.raises(ValidationError, match="PUBLIC_BASE_URL must be"):
+        build_settings(
+            PURCHASE_EMAIL_DELIVERY_ENABLED=True,
+            RESEND_API_KEY="resend-key",
+            MAIL_FROM_EMAIL="support@example.test",
+            MAIL_FROM_NAME="SmartBudget",
+            PUBLIC_BASE_URL=public_base_url,
+        )
+
+
+def test_production_purchase_email_requires_https_public_base_url() -> None:
+    with pytest.raises(ValidationError, match="must use HTTPS"):
+        build_settings(
+            APP_ENV="prod",
+            ADMIN_TOKEN="production-admin-token",
+            SECRET_KEY="production-secret-key",
+            PURCHASE_EMAIL_DELIVERY_ENABLED=True,
+            RESEND_API_KEY="resend-key",
+            MAIL_FROM_EMAIL="support@example.test",
+            MAIL_FROM_NAME="SmartBudget",
+            PUBLIC_BASE_URL="http://app.example.test",
+        )
+
+
 def test_production_lava_checkout_requires_separate_webhook_secret() -> None:
     with pytest.raises(
         ValidationError,

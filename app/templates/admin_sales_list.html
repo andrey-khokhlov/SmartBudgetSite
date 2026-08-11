@@ -60,6 +60,9 @@
     </form>
 
     <p>Shown: {{ sales|length }}</p>
+    {% if email_result %}
+        <p class="admin-operation-result">Purchase email result: {{ email_result }}</p>
+    {% endif %}
 
     <div class="admin-table-wrapper">
         <table class="admin-table sales-table">
@@ -71,6 +74,7 @@
                     <th class="sales-col-status">Status</th>
                     <th class="sales-col-total">Total</th>
                     <th class="sales-col-items">Items</th>
+                    <th>Purchase email</th>
                     <th class="sales-col-provider">Provider</th>
                     <th class="sales-col-external">External ID</th>
                 </tr>
@@ -112,6 +116,36 @@
                             <span>No items</span>
                         {% endif %}
                     </td>
+                    <td>
+                        {% if sale.purchase_email_delivery %}
+                            {{ sale.purchase_email_delivery.status }}<br>
+                            Attempts: {{ sale.purchase_email_delivery.attempt_count }}
+                            {% if sale.purchase_email_delivery.status in ['pending', 'failed', 'sending'] %}
+                                <form
+                                    method="post"
+                                    action="/admin/sales/{{ sale.id }}/purchase-email/retry"
+                                >
+                                    <button type="submit">Retry email</button>
+                                </form>
+                            {% elif sale.purchase_email_delivery.status == 'reconciliation_required' %}
+                                <form
+                                    method="post"
+                                    action="/admin/sales/{{ sale.id }}/purchase-email/authorize-resend"
+                                >
+                                    <p>Confirm in Resend that the email was not sent.</p>
+                                    <button
+                                        type="submit"
+                                        name="authorization"
+                                        value="provider_confirmed_not_sent"
+                                    >
+                                        Authorize resend
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td class="sales-col-provider">{{ sale.payment_provider or "-" }}</td>
                     <td class="sales-col-external">
                         {% if sale.external_payment_id %}
@@ -130,7 +164,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8">No sales yet.</td>
+                    <td colspan="9">No sales yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -7,6 +7,7 @@ from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
+from app.models.purchase_email_delivery import PurchaseEmailDelivery
 from app.models.sale import Sale
 from app.models.service_addon import ServiceAddon
 from app.schemas.webhooks import NormalizedPaymentEvent, PaymentOutcome
@@ -102,6 +103,7 @@ def test_success_fulfills_product_once_and_replay_is_idempotent(db_session):
     assert sale.payment_status == PaymentStatus.PAID
     assert db_session.query(DownloadEntitlement).count() == 1
     assert db_session.query(ConsultationEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 1
 
 
 def test_success_fulfills_product_and_consultation_bundle(db_session):
@@ -112,6 +114,7 @@ def test_success_fulfills_product_and_consultation_bundle(db_session):
 
     assert db_session.query(DownloadEntitlement).count() == 1
     assert db_session.query(ConsultationEntitlement).count() == 1
+    assert db_session.query(PurchaseEmailDelivery).count() == 1
     product_item = next(item for item in sale.items if item.item_type == "product")
     service_item = next(item for item in sale.items if item.item_type == "service")
     assert product_item.consultation_entitlement is None
@@ -129,6 +132,7 @@ def test_failed_transition_and_duplicate_are_safe(db_session):
     assert second.result == PaymentReconciliationResult.IDEMPOTENT
     assert sale.payment_status == PaymentStatus.FAILED
     assert db_session.query(DownloadEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
 
 
 @pytest.mark.parametrize(
@@ -198,6 +202,7 @@ def test_bundle_fulfillment_failure_rolls_back_paid_and_product_entitlement(
     assert sale.payment_status == PaymentStatus.PENDING
     assert db_session.query(DownloadEntitlement).count() == 0
     assert db_session.query(ConsultationEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
 
 
 def test_product_fulfillment_failure_rolls_back_paid_transition(db_session):
@@ -213,6 +218,7 @@ def test_product_fulfillment_failure_rolls_back_paid_transition(db_session):
     db_session.refresh(sale)
     assert sale.payment_status == PaymentStatus.PENDING
     assert db_session.query(DownloadEntitlement).count() == 0
+    assert db_session.query(PurchaseEmailDelivery).count() == 0
 
 
 def test_paid_sale_without_complete_fulfillment_requires_attention(db_session):

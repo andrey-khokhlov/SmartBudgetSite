@@ -9,6 +9,7 @@ from app.core.db import Base
 from app.models.enums import PaymentStatus
 
 if TYPE_CHECKING:
+    from app.models.purchase_email_delivery import PurchaseEmailDelivery
     from app.models.sale_item import SaleItem
 
 class Sale(Base):
@@ -31,6 +32,12 @@ class Sale(Base):
         "SaleItem",
         back_populates="sale",
         cascade="all, delete-orphan",
+    )
+    purchase_email_delivery: Mapped["PurchaseEmailDelivery | None"] = relationship(
+        "PurchaseEmailDelivery",
+        back_populates="sale",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)

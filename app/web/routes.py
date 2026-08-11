@@ -70,6 +70,10 @@ from app.services.payment_provider_offer_service import (
     get_lava_top_product_configuration,
     set_lava_top_product_offer,
 )
+from app.services.purchase_email_delivery_service import (
+    authorize_reconciliation_resend,
+    deliver_purchase_email_after_payment_commit,
+)
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -1336,6 +1340,7 @@ async def admin_sales_list(
     status: str | None = Query(default=None),
     customer_email: str | None = Query(default=None),
     item_type: str | None = Query(default=None),
+    email_result: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     db: Session = Depends(get_db),
 ):
@@ -1364,11 +1369,43 @@ async def admin_sales_list(
             "selected_status": status,
             "selected_customer_email": customer_email,
             "selected_item_type": item_type,
+            "email_result": email_result,
             "page": page,
             "page_size": page_size,
             "has_next": has_next,
         },
         document_lang="en",
+    )
+
+
+@admin_router.post("/admin/sales/{sale_id}/purchase-email/retry")
+async def admin_purchase_email_retry(
+    sale_id: int,
+    db: Session = Depends(get_db),
+):
+    result = deliver_purchase_email_after_payment_commit(db, sale_id=sale_id)
+    return RedirectResponse(
+        url=f"/admin/sales?email_result={result.value}",
+        status_code=303,
+    )
+
+
+@admin_router.post("/admin/sales/{sale_id}/purchase-email/authorize-resend")
+async def admin_purchase_email_authorize_resend(
+    sale_id: int,
+    authorization: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    if authorization != "provider_confirmed_not_sent":
+        raise HTTPException(status_code=400, detail="Explicit authorization required")
+    result = authorize_reconciliation_resend(
+        db,
+        sale_id=sale_id,
+        provider_confirmed_not_sent=True,
+    )
+    return RedirectResponse(
+        url=f"/admin/sales?email_result={result.value}",
+        status_code=303,
     )
 
 

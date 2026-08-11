@@ -1,5 +1,6 @@
 import os
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,6 +32,8 @@ class Settings(BaseSettings):
     MAIL_FROM_EMAIL: str = ""
     MAIL_FROM_NAME: str = "SmartBudget"
     RESEND_API_KEY: str | None = None
+    PURCHASE_EMAIL_DELIVERY_ENABLED: bool = False
+    PUBLIC_BASE_URL: str | None = None
 
     MAIL_SMTP_HOST: str = ""
     MAIL_SMTP_PORT: int = 587
@@ -78,6 +81,40 @@ class Settings(BaseSettings):
         ):
             raise ValueError(
                 "LAVA_TOP_WEBHOOK_SECRET must differ from LAVA_TOP_API_KEY"
+            )
+
+        if self.PURCHASE_EMAIL_DELIVERY_ENABLED:
+            required_email_settings = {
+                "RESEND_API_KEY": self.RESEND_API_KEY or "",
+                "MAIL_FROM_EMAIL": self.MAIL_FROM_EMAIL,
+                "MAIL_FROM_NAME": self.MAIL_FROM_NAME,
+                "PUBLIC_BASE_URL": self.PUBLIC_BASE_URL or "",
+            }
+            for field_name, value in required_email_settings.items():
+                if not value.strip():
+                    raise ValueError(
+                        f"{field_name} must be non-empty when purchase email "
+                        "delivery is enabled"
+                    )
+
+            parsed_base_url = urlsplit(required_email_settings["PUBLIC_BASE_URL"])
+            if (
+                parsed_base_url.scheme not in {"http", "https"}
+                or not parsed_base_url.netloc
+                or parsed_base_url.query
+                or parsed_base_url.fragment
+            ):
+                raise ValueError(
+                    "PUBLIC_BASE_URL must be an absolute HTTP(S) URL without "
+                    "a query string or fragment"
+                )
+            if self.APP_ENV == "prod" and parsed_base_url.scheme != "https":
+                raise ValueError(
+                    "PUBLIC_BASE_URL must use HTTPS when purchase email delivery "
+                    "is enabled in production"
+                )
+            self.PUBLIC_BASE_URL = required_email_settings["PUBLIC_BASE_URL"].rstrip(
+                "/"
             )
 
         if self.APP_ENV != "prod":

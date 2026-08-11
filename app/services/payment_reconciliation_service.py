@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.enums import PaymentStatus, SaleItemType
+from app.models.purchase_email_delivery import PurchaseEmailDelivery
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.repositories.sales_repository import get_sale_for_payment_reconciliation
@@ -115,6 +116,8 @@ def _apply_success(
 
     if sale.payment_status == PaymentStatus.PAID:
         _validate_existing_fulfillment(sale)
+        _ensure_purchase_email_delivery(db, sale)
+        db.flush()
         return PaymentReconciliationOutcome(
             PaymentReconciliationResult.IDEMPOTENT,
             sale.id,
@@ -131,6 +134,7 @@ def _apply_success(
     sale.payment_status = PaymentStatus.PAID
     for item in sale.items:
         _fulfill_sale_item(db, item)
+    _ensure_purchase_email_delivery(db, sale)
     db.flush()
     return PaymentReconciliationOutcome(
         PaymentReconciliationResult.APPLIED,
@@ -203,3 +207,8 @@ def _validate_existing_fulfillment(sale: Sale) -> None:
             raise PaymentFulfillmentError(
                 "Paid Sale contains an unsupported item type."
             )
+
+
+def _ensure_purchase_email_delivery(db: Session, sale: Sale) -> None:
+    if sale.purchase_email_delivery is None:
+        db.add(PurchaseEmailDelivery(sale=sale))

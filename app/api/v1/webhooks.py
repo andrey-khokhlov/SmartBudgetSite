@@ -14,10 +14,10 @@ from app.core.rate_limiting import (
     enforce_calendly_verified_limits,
     enforce_lava_top_verified_limit,
 )
-from app.services.payment_reconciliation_service import (
-    PaymentReconciliationError,
-    reconcile_payment_event,
+from app.services.payment_delivery_orchestration_service import (
+    reconcile_payment_and_deliver,
 )
+from app.services.payment_reconciliation_service import PaymentReconciliationError
 from app.services.webhooks.payload_normalizers.lava_top_payment_normalizer import (
     normalize_lava_top_payment_event,
 )
@@ -140,8 +140,7 @@ async def lava_top_payment_result_webhook(
 
     event_type = f"payment.{event.outcome.value}"
     try:
-        outcome = reconcile_payment_event(db, event)
-        db.commit()
+        outcome = reconcile_payment_and_deliver(db, event)
     except PaymentReconciliationError:
         db.rollback()
         log_webhook_event(

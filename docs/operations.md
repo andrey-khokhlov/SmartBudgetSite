@@ -144,6 +144,14 @@ A configuration change is not complete until the example and active development
 configuration are updated. Secrets, tokens, credentials, and provider signing
 secrets must never be committed or accepted from request input.
 
+Purchase-email delivery is controlled by
+`PURCHASE_EMAIL_DELIVERY_ENABLED`. When enabled, `RESEND_API_KEY`,
+`MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, and an absolute server-owned
+`PUBLIC_BASE_URL` are required at startup. `PUBLIC_BASE_URL` owns customer
+download and consultation link construction; request Host headers are never
+used. Keep delivery disabled in local environments unless a deliberate
+provider send is intended. Automated tests always use fake transports.
+
 `PRODUCT_RELEASE_MAX_UPLOAD_BYTES` owns the application-level administrative
 release archive limit. Its default and production value are 52,428,800 bytes
 (50 MiB), and the value must remain strictly positive. The inclusive limit is
