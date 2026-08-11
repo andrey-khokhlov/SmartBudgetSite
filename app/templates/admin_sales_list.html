@@ -74,7 +74,7 @@
                     <th class="sales-col-status">Status</th>
                     <th class="sales-col-total">Total</th>
                     <th class="sales-col-items">Items</th>
-                    <th>Purchase email</th>
+                    <th class="sales-col-purchase-email">Purchase email</th>
                     <th class="sales-col-provider">Provider</th>
                     <th class="sales-col-external">External ID</th>
                 </tr>
@@ -116,7 +116,7 @@
                             <span>No items</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="sales-col-purchase-email">
                         {% if sale.purchase_email_delivery %}
                             {{ sale.purchase_email_delivery.status }}<br>
                             Attempts: {{ sale.purchase_email_delivery.attempt_count }}

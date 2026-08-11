@@ -34,7 +34,7 @@
 }
 
 .sales-col-status {
-    width: 110px;
+    width: 150px;
 }
 
 .sales-stale-pending {
@@ -52,6 +52,10 @@
 
 .sales-col-items {
     width: 320px;
+}
+
+.sales-col-purchase-email {
+    width: 170px;
 }
 
 .sales-col-provider {
