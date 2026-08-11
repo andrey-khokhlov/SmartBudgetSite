@@ -345,6 +345,63 @@ manually. This validates manual invoice reconciliation for a product-only Sale,
 not webhook delivery, bundle payment, purchase email, or payment-result delivery
 UX.
 
+## Purchase email and delivery communication
+
+Customer purchase email is a post-payment delivery workflow. It must never be
+used as proof of payment and must not participate in the transaction that
+authoritatively confirms payment.
+
+The required ordering is:
+
+    Authoritative payment confirmation
+        -> Sale becomes paid
+        -> all SaleItem entitlements are created atomically
+        -> database transaction commits
+        -> purchase email becomes eligible for delivery
+
+A failure to send customer email must therefore never roll back a confirmed
+payment, remove entitlements, or change a paid Sale back to another payment
+state. Email delivery has its own durable operational lifecycle and must be
+retryable independently from payment reconciliation.
+
+Purchase-email delivery must be idempotent. Replayed provider webhooks, repeated
+server-to-server reconciliation, or operator retries must not cause duplicate
+customer purchase emails once the same delivery has already been completed.
+The application must persist enough delivery state to distinguish at least an
+email that still requires delivery from one that has already been sent or has
+failed and requires operational attention. The exact persistence model and
+migration are implementation decisions and are not prescribed here.
+
+One Sale should normally produce one purchase email containing the customer
+access relevant to all fulfilled SaleItems in that Sale. A product-only Sale
+includes its protected product-download access. A Sale containing a
+consultation entitlement includes the corresponding protected consultation
+access. A bundle may include both in the same purchase communication.
+
+Customer-facing delivery URLs must be generated from server-owned application
+configuration rather than inferred from an incoming Host header or browser
+request. Capability tokens and protected delivery URLs remain sensitive:
+application logging, provider metadata, analytics, and other telemetry must not
+record them unnecessarily.
+
+Email transport is an infrastructure boundary and must remain separate from
+commerce business logic. Business services must not depend directly on a
+specific email provider API.
+
+Resend is the approved first transactional-email transport for MVP. SmartBudgetSite
+uses the Resend REST API with a server-owned `RESEND_API_KEY`; the provider
+adapter is responsible only for transport-specific request and response handling.
+The configured sender identity is `SmartBudget <support@neocitrix.com>`.
+Inbound replies to that public address remain handled separately through
+Cloudflare Email Routing.
+
+The Resend domain `neocitrix.com` and outbound sending from
+`support@neocitrix.com` were validated before application integration by a real
+API send and successful delivery to an external Gmail mailbox. This validates
+the transport and domain configuration only; it does not yet validate the
+SmartBudgetSite purchase-email workflow, persistence, retry behavior, or
+production delivery links.
+
 ## Payout operations
 
 Payout routing is an operational concern and must not be encoded in business

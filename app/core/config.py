@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     MAIL_FROM_EMAIL: str = ""
     MAIL_FROM_NAME: str = "SmartBudget"
+    RESEND_API_KEY: str | None = None
+
     MAIL_SMTP_HOST: str = ""
     MAIL_SMTP_PORT: int = 587
     MAIL_SMTP_USER: str = ""
