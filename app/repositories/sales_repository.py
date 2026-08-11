@@ -108,7 +108,7 @@ def get_sale_for_payment_reconciliation(
             selectinload(Sale.items).joinedload(SaleItem.service_addon),
             selectinload(Sale.items).joinedload(SaleItem.consultation_entitlement),
             selectinload(Sale.items).joinedload(SaleItem.download_entitlement),
-            joinedload(Sale.purchase_email_delivery),
+            selectinload(Sale.purchase_email_delivery),
         )
         .where(
             Sale.payment_provider == payment_provider,
