@@ -530,3 +530,131 @@ capability response-header policy and contains no token or raw URL.
 Strict one-time completion, automatic completion detection, IP/user-agent audit
 records, and backend file proxying are deferred until reliable completion
 criteria justify them. Future admin reissue/reset must be explicit and auditable.
+
+## Refund architecture
+
+Refunds are administrative commerce operations. They are not customer-initiated
+self-service actions in the MVP.
+
+### Authoritative business rules
+
+- Only an administrator may initiate or retry a refund.
+- Only a `Sale` whose payment status is `paid` is eligible for refund.
+- MVP supports full-Sale refunds only. Partial refunds and item-level refunds are
+  intentionally out of scope even if a payment provider supports them.
+- SmartBudgetSite must preserve the originating payment provider and provider
+  payment identity for every historical Sale. Refund execution must route through
+  that originating provider so a future Stripe migration does not break refunds
+  for historical Lava.top Sales.
+- SmartBudgetSite must not change `Sale.payment_status` to `refunded` merely
+  because an administrator requested a refund.
+- `Sale.payment_status = refunded` is allowed only after authoritative provider
+  confirmation that the refund completed successfully.
+- Provider/API failure, timeout, ambiguous response, or unknown refund outcome
+  must leave the Sale history intact and result in an operator-visible
+  reconciliation-required state. Manual database edits are not a supported
+  recovery mechanism.
+- Refund initiation and retry must be idempotent. Repeated administrative
+  actions or network retries must not create duplicate provider refunds.
+- `Sale`, `SaleItem`, payment identity, refund-operation history, and entitlement
+  history must never be deleted as part of refund processing.
+
+### Entitlement consequences
+
+A confirmed full-Sale refund revokes future customer access derived from that Sale.
+
+For product items:
+
+- any `DownloadEntitlement` that can still grant product access must become
+  unavailable after confirmed refund;
+- historical download-attempt and completion data must remain preserved;
+- refund processing must not delete the entitlement or its audit history.
+
+For consultation items:
+
+- an unused consultation entitlement must become unavailable after confirmed
+  refund;
+- already booked or completed consultation history must not be rewritten to make
+  it appear that the consultation never occurred;
+- refund processing must not delete consultation entitlement or provider event
+  history.
+
+The exact transition rules for already-consumed product access and already-booked
+consultations remain historical/audit concerns rather than a reason to preserve
+future entitlement access.
+
+### Administrative workflow
+
+The intended normal operator flow is:
+
+`Sales -> Sale -> Refund -> confirmation`
+
+The Admin UI should make the normal full-refund operation simple while requiring
+an explicit confirmation before provider interaction.
+
+The administrative surface must distinguish at least:
+
+- refund available;
+- refund operation in progress or awaiting authoritative confirmation;
+- refund confirmed;
+- reconciliation required / provider outcome uncertain;
+- refund unavailable because the Sale is not eligible.
+
+Provider-specific error text, credentials, raw payloads, or secret identifiers
+must not be exposed unnecessarily through the Admin UI.
+
+### Provider-independent boundary
+
+Refund business logic belongs in the application/service layer and operates on
+provider-independent refund concepts.
+
+Provider integrations are responsible for:
+
+- provider-specific refund execution;
+- authentication;
+- provider refund/payment identifiers;
+- provider-specific statuses and responses;
+- authoritative refund verification or lookup;
+- normalization into the internal refund lifecycle.
+
+The domain layer must not assume that Lava.top, Stripe, or another provider uses
+the same refund endpoint, status model, webhook behavior, idempotency mechanism,
+or timing semantics.
+
+### Lava.top contract status
+
+The current public Lava.top documentation confirms that creators can perform
+full and partial refunds through the provider UI.
+
+The currently published public API documentation does not establish a supported
+refund-creation endpoint, provider refund identifier, refund idempotency
+contract, or refund webhook. Published Lava.top webhook documentation does not
+currently describe refund events.
+
+Therefore Lava.top refund execution and confirmation are not yet approved for
+implementation.
+
+Implementation must remain blocked until the provider contract is clarified,
+including:
+
+1. whether a server-to-server refund API exists and its endpoint, authentication,
+   request, and response contract;
+2. whether Lava.top exposes a refund identifier and refund lifecycle/statuses;
+3. how duplicate refund requests and retries are made idempotent;
+4. how SmartBudgetSite can authoritatively determine that a refund completed,
+   especially if no refund webhook is emitted.
+
+Do not infer or implement undocumented Lava.top refund behavior.
+
+### Persistence design status
+
+A durable refund operation must be represented separately from the terminal
+`Sale.payment_status` because initiation, retries, provider uncertainty, and
+reconciliation may exist before a Sale becomes `refunded`.
+
+The exact persisted refund-operation state model, provider identifiers, database
+constraints, and migration shape are intentionally not approved yet. They depend
+on the confirmed payment-provider refund contract.
+
+No refund model, migration, provider client method, or Admin refund action should
+be implemented until that contract and lifecycle are approved.
