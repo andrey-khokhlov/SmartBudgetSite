@@ -694,7 +694,10 @@ coverage, but still require deployed-environment validation. Remaining work is:
 - configure and validate live webhook delivery, history, resend, and conflict
   operations when a public HTTPS deployment or approved temporary endpoint is
   available;
-- validate a live product-plus-consultation payment and atomic fulfillment;
+- add founder-operated `ServiceAddon` consultation-offer Admin management
+  sufficient to inspect and edit existing catalog fields and configure a
+  temporary 50 RUB test offer without direct SQL, then validate a live
+  product-plus-consultation payment and atomic fulfillment;
 - live customer purchase-email delivery for consultation and bundle access,
   plus provider tracking/link-rewriting configuration and the
   reconciliation-required operator path;
