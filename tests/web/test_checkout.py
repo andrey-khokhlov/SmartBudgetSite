@@ -68,13 +68,16 @@ def test_checkout_with_consultation_shows_product_addon_and_total(client, db_ses
     assert 'name="consultation" value="1"' in response.text
 
 
-def test_checkout_with_consultation_rejects_currency_mismatch(client, db_session):
+def test_checkout_with_consultation_does_not_fall_back_to_another_currency(
+    client,
+    db_session,
+):
     """
-    Test case: checkout rejects product/add-on currency mismatch
+    Test case: checkout resolves consultation by the exact product currency
 
     What we verify:
-    - Checkout does not silently calculate totals across different currencies.
-    - Currency mismatch returns server error until data is fixed.
+    - An otherwise matching offer in another currency is not selected.
+    - The product checkout remains usable without the unavailable add-on.
     """
 
     product = Product(
@@ -116,8 +119,9 @@ def test_checkout_with_consultation_rejects_currency_mismatch(client, db_session
         "?currency=RUB&consultation=1"
     )
 
-    assert response.status_code == 500
-    assert response.json()["detail"] == "Currency mismatch between product and addon"
+    assert response.status_code == 200
+    assert "Личная консультация" not in response.text
+    assert 'name="currency" value="RUB"' in response.text
 
 
 def test_checkout_with_consultation_uses_addon_usage_type_only(client, db_session):

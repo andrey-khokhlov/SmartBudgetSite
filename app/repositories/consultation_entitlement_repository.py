@@ -1,7 +1,12 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session, joinedload
 from typing import cast
 
-from app.models.consultation_entitlement import ConsultationEntitlement
+from app.models.consultation_entitlement import (
+    ConsultationEntitlement,
+    ConsultationEntitlementStatus,
+)
 from app.models.sale_item import SaleItem
 
 
@@ -92,4 +97,23 @@ class ConsultationEntitlementRepository:
         return cast(
             list[ConsultationEntitlement],
             query.all(),
+        )
+
+    @staticmethod
+    def list_due_available(
+        db: Session,
+        *,
+        expires_at_or_before: datetime,
+    ) -> list[ConsultationEntitlement]:
+        """Load every available entitlement whose booking window has elapsed."""
+        return cast(
+            list[ConsultationEntitlement],
+            db.query(ConsultationEntitlement)
+            .filter(
+                ConsultationEntitlement.status
+                == ConsultationEntitlementStatus.AVAILABLE.value,
+                ConsultationEntitlement.expires_at <= expires_at_or_before,
+            )
+            .order_by(ConsultationEntitlement.id)
+            .all(),
         )

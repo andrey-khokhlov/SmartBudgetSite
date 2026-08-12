@@ -2,6 +2,16 @@
    Admin: Consultation Entitlements
    ========================= */
 
+.consultation-entitlements-page {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.consultation-entitlements-table {
+    min-width: 1120px;
+}
+
 .admin-table td:nth-child(7),
 .admin-table td:nth-child(8) {
     max-width: 260px;

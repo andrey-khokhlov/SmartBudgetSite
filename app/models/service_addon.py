@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import Boolean, CheckConstraint, Numeric, String
+from sqlalchemy import Boolean, CheckConstraint, Index, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -24,7 +24,7 @@ class ServiceAddon(Base):
     - None. This model only describes persisted add-on data.
 
     Invariants/restrictions:
-    - code is unique and stable, e.g. consultation_1h.
+    - code is a unique, stable technical identifier.
     - service_type describes WHAT the service is:
       e.g. consultation, onboarding, support.
     - usage_type describes HOW the service is sold:
@@ -53,4 +53,15 @@ class ServiceAddon(Base):
 
     __table_args__ = (
         CheckConstraint("amount >= 0", name="ck_service_addons_amount_non_negative"),
+        Index(
+            "uq_service_addons_active_business_identity",
+            "family_slug",
+            "package_code",
+            "service_type",
+            "usage_type",
+            "currency_code",
+            unique=True,
+            postgresql_where=text("is_active = true"),
+            sqlite_where=text("is_active = true"),
+        ),
     )

@@ -40,6 +40,16 @@ class ProductsRepository:
         """Return one product by its internal identifier."""
         return self.db.get(Product, product_id)
 
+    def list_family_slugs(self) -> list[str]:
+        """Return distinct product families available to catalog Admin."""
+        rows = (
+            self.db.query(Product.family_slug)
+            .distinct()
+            .order_by(Product.family_slug)
+            .all()
+        )
+        return [family_slug for (family_slug,) in rows]
+
     def has_active_price(self, product_id: int) -> bool:
         """Return whether a product has at least one active catalog price."""
         return (

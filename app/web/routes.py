@@ -23,6 +23,16 @@ from app.repositories.sales_repository import (
     stale_pending_sale_ids,
 )
 from app.services.admin_consultation_service import get_consultation_entitlements
+from app.services.consultation_offer_admin_service import (
+    ConsultationOfferInputError,
+    ConsultationOfferNotFoundError,
+    ConsultationOfferPersistenceError,
+    create_consultation_offer,
+    get_consultation_offer,
+    get_consultation_offer_form_options,
+    list_consultation_offers,
+    update_consultation_offer,
+)
 from app.services.feedback_service import (
     list_public_reviews,
     send_feedback_reply,
@@ -37,6 +47,7 @@ from app.services.feedback_prefill_service import (
     get_download_feedback_prefill_context,
 )
 from app.services.consultation_entitlement_service import (
+    expire_due_consultation_entitlements,
     get_valid_consultation_entitlement_by_token,
 )
 from app.services.download_entitlement_service import (
@@ -81,7 +92,7 @@ from app.utils.product_utils import get_product_package
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from datetime import UTC, datetime, timezone, timedelta
 from decimal import Decimal
 
@@ -1084,12 +1095,7 @@ def checkout_page(
             package_code=package,
             service_type="consultation",
             usage_type="addon",
-        )
-
-    if addon is not None and addon.currency_code != price.currency_code:
-        raise HTTPException(
-            status_code=500,
-            detail="Currency mismatch between product and addon",
+            currency_code=price.currency_code,
         )
 
     total_amount = price.amount
@@ -1206,13 +1212,16 @@ def product_buy_page(
     for product, price in family_products:
         package = get_product_package(product.slug)
 
-        consultation_addon = ServiceAddonRepository.get_active_addon(
-            db,
-            family_slug=product.family_slug,
-            package_code=package,
-            service_type="consultation",
-            usage_type="addon",
-        )
+        consultation_addon = None
+        if price is not None:
+            consultation_addon = ServiceAddonRepository.get_active_addon(
+                db,
+                family_slug=product.family_slug,
+                package_code=package,
+                service_type="consultation",
+                usage_type="addon",
+                currency_code=price.currency_code,
+            )
 
         product_options.append(
             {
@@ -1291,18 +1300,25 @@ def admin_consultations_page(
     Render consultation entitlement admin page.
 
     Business rules:
-    - Admin visibility is read-only.
+    - Due available entitlements are persisted as expired before listing.
     - Consultation lifecycle must remain observable operationally.
 
     Side effects:
-    - Executes read queries only.
+    - Commits lazy expiration reconciliation for due available entitlements.
 
     Invariants/restrictions:
-    - Does not mutate entitlement state.
+    - The entitlement service owns lifecycle transition rules.
     """
 
     page_size = 50
     offset = (page - 1) * page_size
+
+    try:
+        expire_due_consultation_entitlements(db)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise
 
     entitlements_page = get_consultation_entitlements(
         db=db,
@@ -1332,6 +1348,134 @@ def admin_consultations_page(
             "has_next": has_next,
         },
     )
+
+
+@admin_router.get("/admin/consultation-offers")
+def admin_consultation_offers_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    return render(
+        request,
+        "admin_consultation_offers.html",
+        {"offers": list_consultation_offers(db)},
+        document_lang="en",
+    )
+
+
+@admin_router.get("/admin/consultation-offers/new")
+def admin_consultation_offer_new_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    return render(
+        request,
+        "admin_consultation_offer_form.html",
+        {
+            "offer": None,
+            "options": get_consultation_offer_form_options(db),
+            "form_action": "/admin/consultation-offers/new",
+            "page_title": "Create consultation offer",
+        },
+        document_lang="en",
+    )
+
+
+@admin_router.post("/admin/consultation-offers/new")
+def admin_consultation_offer_create(
+    db: Session = Depends(get_db),
+    family_slug: str = Form(...),
+    package_code: str = Form(...),
+    usage_type: str = Form(...),
+    currency_code: str = Form(...),
+    name: str = Form(...),
+    amount: Decimal = Form(...),
+    status: str = Form(default=""),
+):
+    try:
+        if status not in {"active", "inactive"}:
+            raise ConsultationOfferInputError("Select a valid offer status.")
+        create_consultation_offer(
+            db,
+            family_slug=family_slug,
+            package_code=package_code,
+            service_type="consultation",
+            usage_type=usage_type,
+            currency_code=currency_code,
+            name=name,
+            amount=amount,
+            is_active=status == "active",
+        )
+    except ConsultationOfferInputError:
+        return RedirectResponse(
+            url="/admin/consultation-offers/new?error=invalid_input",
+            status_code=303,
+        )
+    except ConsultationOfferPersistenceError:
+        return RedirectResponse(
+            url="/admin/consultation-offers/new?error=persistence",
+            status_code=303,
+        )
+
+    return RedirectResponse(url="/admin/consultation-offers", status_code=303)
+
+
+@admin_router.get("/admin/consultation-offers/{offer_id}/edit")
+def admin_consultation_offer_edit_page(
+    offer_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    try:
+        offer = get_consultation_offer(db, offer_id)
+    except ConsultationOfferNotFoundError:
+        raise HTTPException(status_code=404) from None
+
+    return render(
+        request,
+        "admin_consultation_offer_form.html",
+        {
+            "offer": offer,
+            "options": get_consultation_offer_form_options(db),
+            "form_action": f"/admin/consultation-offers/{offer_id}/edit",
+            "page_title": "Edit consultation offer",
+        },
+        document_lang="en",
+    )
+
+
+@admin_router.post("/admin/consultation-offers/{offer_id}/edit")
+def admin_consultation_offer_update(
+    offer_id: int,
+    db: Session = Depends(get_db),
+    name: str = Form(...),
+    amount: Decimal = Form(...),
+    status: str = Form(default=""),
+):
+    try:
+        if status not in {"active", "inactive"}:
+            raise ConsultationOfferInputError("Select a valid offer status.")
+        update_consultation_offer(
+            db,
+            offer_id=offer_id,
+            name=name,
+            amount=amount,
+            is_active=status == "active",
+        )
+    except ConsultationOfferNotFoundError:
+        raise HTTPException(status_code=404) from None
+    except ConsultationOfferInputError:
+        return RedirectResponse(
+            url=f"/admin/consultation-offers/{offer_id}/edit?error=invalid_input",
+            status_code=303,
+        )
+    except ConsultationOfferPersistenceError:
+        return RedirectResponse(
+            url=f"/admin/consultation-offers/{offer_id}/edit?error=persistence",
+            status_code=303,
+        )
+
+    return RedirectResponse(url="/admin/consultation-offers", status_code=303)
 
 
 @admin_router.get("/admin/sales")

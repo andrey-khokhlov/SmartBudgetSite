@@ -98,14 +98,11 @@ def initiate_lava_top_product_checkout(
             package_code=get_product_package(product.slug),
             service_type="consultation",
             usage_type="addon",
+            currency_code=normalized_currency,
         )
         if consultation_addon is None:
             raise CheckoutValidationError(
                 "The selected consultation add-on is unavailable."
-            )
-        if consultation_addon.currency_code != normalized_currency:
-            raise CheckoutValidationError(
-                "The consultation add-on is unavailable for this currency."
             )
 
     try:

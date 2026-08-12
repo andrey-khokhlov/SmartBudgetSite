@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-workspace">
+    <h1>Consultation offers</h1>
+    <p>Catalog offers and purchased consultation entitlements are managed separately.</p>
+    <p><a href="/admin/consultation-offers/new">+ Create consultation offer</a></p>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Identity</th>
+                    <th>Price</th>
+                    <th>State</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                <tr>
+                    <td>{{ offer.name }}</td>
+                    <td>{{ offer.family_slug }} / {{ offer.package_code }} / {{ offer.service_type }} / {{ offer.usage_type }}</td>
+                    <td>{{ offer.amount }} {{ offer.currency_code }}</td>
+                    <td><strong>{{ "Active" if offer.is_active else "Inactive" }}</strong></td>
+                    <td><a href="/admin/consultation-offers/{{ offer.id }}/edit">Edit</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not offers %}<p>No consultation offers found.</p>{% endif %}
+    <p class="admin-page-navigation"><a href="/admin">Back to admin dashboard</a></p>
+</div>
+{% endblock %}

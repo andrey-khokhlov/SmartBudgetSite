@@ -9,10 +9,32 @@ from app.models.consultation_entitlement import (
 )
 from app.models.enums import PaymentStatus
 from app.models.sale_item import SaleItem, SaleItemType
+from app.repositories.consultation_entitlement_repository import (
+    ConsultationEntitlementRepository,
+)
 
 
 DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS = 14
 CONSULTATION_SERVICE_TYPE = "consultation"
+
+
+def expire_due_consultation_entitlements(
+    db: Session,
+    *,
+    now: datetime | None = None,
+) -> int:
+    """Persist AVAILABLE -> EXPIRED for every elapsed booking entitlement."""
+    due_entitlements = ConsultationEntitlementRepository.list_due_available(
+        db,
+        expires_at_or_before=now or datetime.now(UTC),
+    )
+    for entitlement in due_entitlements:
+        entitlement.status = ConsultationEntitlementStatus.EXPIRED.value
+
+    if due_entitlements:
+        db.flush()
+
+    return len(due_entitlements)
 
 
 def create_consultation_entitlement(

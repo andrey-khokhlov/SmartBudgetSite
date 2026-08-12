@@ -34,6 +34,7 @@ def test_get_active_addon_by_family_package_and_type(db_session):
         package_code="INT",
         service_type="consultation",
         usage_type="addon",
+        currency_code="EUR",
     )
 
     assert result is not None
@@ -70,6 +71,49 @@ def test_get_active_addon_ignores_inactive_addons(db_session):
         package_code="INT",
         service_type="consultation",
         usage_type="addon",
+        currency_code="EUR",
     )
 
     assert result is None
+
+
+def test_get_active_addon_selects_exact_currency(db_session):
+    db_session.add_all(
+        [
+            ServiceAddon(
+                code="consultation-eur-currency-test",
+                name="EUR consultation",
+                service_type="consultation",
+                usage_type="addon",
+                family_slug="smartbudget",
+                package_code="INT",
+                currency_code="EUR",
+                amount=Decimal("35.00"),
+                is_active=True,
+            ),
+            ServiceAddon(
+                code="consultation-rub-currency-test",
+                name="RUB consultation",
+                service_type="consultation",
+                usage_type="addon",
+                family_slug="smartbudget",
+                package_code="INT",
+                currency_code="RUB",
+                amount=Decimal("50.00"),
+                is_active=True,
+            ),
+        ]
+    )
+    db_session.commit()
+
+    result = ServiceAddonRepository.get_active_addon(
+        db_session,
+        family_slug="smartbudget",
+        package_code="INT",
+        service_type="consultation",
+        usage_type="addon",
+        currency_code="RUB",
+    )
+
+    assert result is not None
+    assert result.code == "consultation-rub-currency-test"

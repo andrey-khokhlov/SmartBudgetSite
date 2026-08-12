@@ -14,6 +14,7 @@ from app.models.product_release import ProductRelease
 from app.services.consultation_entitlement_service import (
     DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS,
     create_consultation_entitlement,
+    expire_due_consultation_entitlements,
     get_valid_consultation_entitlement_by_token,
     mark_entitlement_as_booked,
 )
@@ -65,6 +66,68 @@ def create_test_consultation_entitlement(db_session):
         db=db_session,
         sale_item=sale.items[0],
     )
+
+
+@pytest.mark.parametrize(
+    ("initial_status", "expires_delta", "expected_status", "expected_count"),
+    [
+        ("available", timedelta(seconds=-1), "expired", 1),
+        ("available", timedelta(seconds=1), "available", 0),
+        ("booked", timedelta(seconds=-1), "booked", 0),
+        ("cancelled", timedelta(seconds=-1), "cancelled", 0),
+        ("expired", timedelta(seconds=-1), "expired", 0),
+    ],
+)
+def test_expire_due_consultation_entitlements_preserves_lifecycle_invariants(
+    db_session,
+    initial_status,
+    expires_delta,
+    expected_status,
+    expected_count,
+):
+    now = datetime.now(UTC)
+    entitlement = create_test_consultation_entitlement(db_session)
+    entitlement.status = initial_status
+    entitlement.expires_at = now + expires_delta
+    db_session.commit()
+    entitlement_id = entitlement.id
+
+    count = expire_due_consultation_entitlements(db_session, now=now)
+    db_session.commit()
+    db_session.expire_all()
+    persisted = db_session.get(ConsultationEntitlement, entitlement_id)
+
+    assert count == expected_count
+    assert persisted is not None
+    assert persisted.status == expected_status
+
+
+def test_expire_due_consultation_entitlements_is_idempotent(db_session):
+    now = datetime.now(UTC)
+    entitlement = create_test_consultation_entitlement(db_session)
+    entitlement.expires_at = now - timedelta(seconds=1)
+    db_session.commit()
+
+    assert expire_due_consultation_entitlements(db_session, now=now) == 1
+    db_session.commit()
+    assert expire_due_consultation_entitlements(db_session, now=now) == 0
+    assert entitlement.status == ConsultationEntitlementStatus.EXPIRED.value
+
+
+def test_expiration_can_be_rolled_back_by_transaction_owner(db_session):
+    now = datetime.now(UTC)
+    entitlement = create_test_consultation_entitlement(db_session)
+    entitlement.expires_at = now - timedelta(seconds=1)
+    db_session.commit()
+    entitlement_id = entitlement.id
+
+    assert expire_due_consultation_entitlements(db_session, now=now) == 1
+    db_session.rollback()
+    db_session.expire_all()
+
+    persisted = db_session.get(ConsultationEntitlement, entitlement_id)
+    assert persisted is not None
+    assert persisted.status == ConsultationEntitlementStatus.AVAILABLE.value
 
 
 def test_create_consultation_entitlement_for_consultation_service_item(db_session):

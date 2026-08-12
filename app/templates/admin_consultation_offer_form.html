@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_products.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-form">
+    <h1 class="admin-form-title">{{ page_title }}</h1>
+
+    {% if request.query_params.get("error") == "invalid_input" %}
+        <div class="admin-error" role="alert">The offer values are invalid. Review the controlled fields, name, and amount.</div>
+    {% elif request.query_params.get("error") == "persistence" %}
+        <div class="admin-error" role="alert">The offer could not be saved safely.</div>
+    {% endif %}
+
+    {% if not offer and not options.family_slugs %}
+        <div class="admin-error" role="alert">Create a Product before creating a consultation offer.</div>
+    {% endif %}
+
+    <form method="post" action="{{ form_action }}" class="admin-form-body">
+        {% if offer %}
+            <dl class="admin-metadata" aria-label="Immutable offer identity">
+                <div class="admin-metadata-row admin-metadata-row--technical"><dt>Technical code</dt><dd><code>{{ offer.code }}</code></dd></div>
+                <div class="admin-metadata-row"><dt>Product family</dt><dd>{{ offer.family_slug }}<small>Family slug groups product SKUs, for example <code>smartbudget</code>.</small></dd></div>
+                <div class="admin-metadata-row"><dt>Package</dt><dd>{{ offer.package_code }}<small>RU/INT package markers come from product SKU segments such as <code>-ru-</code> and <code>-int-</code>; they are not family slugs.</small></dd></div>
+                <div class="admin-metadata-row"><dt>Usage type</dt><dd>{{ offer.usage_type }}</dd></div>
+                <div class="admin-metadata-row"><dt>Currency</dt><dd>{{ offer.currency_code }}</dd></div>
+            </dl>
+        {% else %}
+            <div class="form-group">
+                <label for="family-slug">Product family</label>
+                <select id="family-slug" name="family_slug" required {% if not options.family_slugs %}disabled{% endif %}>
+                    {% for value in options.family_slugs %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+                </select>
+                <small>Family slug groups product SKUs, for example <code>smartbudget</code>.</small>
+            </div>
+            <div class="form-group">
+                <label for="package-code">Package</label>
+                <select id="package-code" name="package_code" required>{% for value in options.package_codes %}<option value="{{ value }}">{{ value }}</option>{% endfor %}</select>
+                <small>RU/INT are derived from product SKU markers such as <code>-ru-</code> and <code>-int-</code>; they are not family slugs.</small>
+            </div>
+            <div class="form-group"><label for="usage-type">Usage type</label><select id="usage-type" name="usage_type" required>{% for value in options.usage_types %}<option value="{{ value }}">{{ value }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="currency-code">Currency</label><select id="currency-code" name="currency_code" required>{% for value in options.currencies %}<option value="{{ value }}">{{ value }}</option>{% endfor %}</select></div>
+        {% endif %}
+
+        <div class="form-group"><label for="offer-name">Name</label><input id="offer-name" type="text" name="name" maxlength="200" value="{{ offer.name if offer else '' }}" required></div>
+        <div class="form-group"><label for="offer-amount">Amount</label><input id="offer-amount" type="number" name="amount" min="0.01" max="99999999.99" step="0.01" value="{{ offer.amount if offer else '' }}" required></div>
+        <div class="form-group">
+            <label for="offer-status">Status</label>
+            <select id="offer-status" name="status" required>
+                <option value="active" {% if not offer or offer.is_active %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if offer and not offer.is_active %}selected{% endif %}>Inactive</option>
+            </select>
+            <small>Activating this offer automatically deactivates another active offer with the same full identity.</small>
+        </div>
+
+        <div class="form-actions form-actions--split">
+            <button type="submit" class="btn-primary" {% if not offer and not options.family_slugs %}disabled{% endif %}>Save</button>
+            <a href="/admin/consultation-offers" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <p class="admin-form-note">No delete action is available. Deactivate an offer to remove it from active catalog resolution.</p>
+</div>
+{% endblock %}

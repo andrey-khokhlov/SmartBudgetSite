@@ -87,6 +87,43 @@ main.container {
     flex-wrap: wrap;
 }
 
+.admin-metadata {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid #e6e8ec;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.admin-metadata-row + .admin-metadata-row {
+    margin-top: 14px;
+}
+
+.admin-metadata-row dt {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.admin-metadata-row dd {
+    margin: 4px 0 0;
+    color: #111827;
+}
+
+.admin-metadata-row dd small {
+    display: block;
+    margin-top: 4px;
+    color: #667085;
+}
+
+.admin-metadata-row--technical dd {
+    color: #667085;
+}
+
+.admin-form-note {
+    margin-top: 28px;
+}
+
 /* =========================
    Admin: Buttons
    ========================= */
@@ -190,6 +227,10 @@ main.container {
 
 .admin-table td {
     border-bottom: 1px solid #ececec;
+}
+
+.admin-page-navigation {
+    margin-top: 28px;
 }
 
 /* =========================

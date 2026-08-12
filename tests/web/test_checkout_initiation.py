@@ -191,6 +191,61 @@ def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     assert captured["amount"] == Decimal("74.00")
 
 
+def test_checkout_selects_consultation_in_exact_product_currency(
+    client,
+    db_session,
+    monkeypatch,
+):
+    product = create_checkout_catalog(
+        db_session,
+        slug="smartbudget-int-standard-exact-addon-currency-test",
+        currency="RUB",
+        amount=Decimal("500.00"),
+    )
+    eur_addon = ServiceAddon(
+        code="exact-addon-currency-eur",
+        name="EUR consultation",
+        service_type="consultation",
+        usage_type="addon",
+        family_slug=product.family_slug,
+        package_code="INT",
+        currency_code="EUR",
+        amount=Decimal("35.00"),
+        is_active=True,
+    )
+    rub_addon = ServiceAddon(
+        code="exact-addon-currency-rub",
+        name="RUB consultation",
+        service_type="consultation",
+        usage_type="addon",
+        family_slug=product.family_slug,
+        package_code="INT",
+        currency_code="RUB",
+        amount=Decimal("50.00"),
+        is_active=True,
+    )
+    db_session.add_all([eur_addon, rub_addon])
+    db_session.commit()
+    captured = {}
+    install_successful_provider(monkeypatch, captured)
+
+    response = client.post(
+        f"/checkout/{product.slug}",
+        data={
+            "customer_email": "buyer@example.com",
+            "currency": "RUB",
+            "consultation": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    service_item = db_session.query(SaleItem).filter_by(item_type="service").one()
+    assert service_item.service_addon_id == rub_addon.id
+    assert service_item.currency_code == "RUB"
+    assert captured["amount"] == Decimal("550.00")
+
+
 @pytest.mark.parametrize("submitted_currency", ["RUB", "   "])
 def test_checkout_missing_or_invalid_active_price_is_controlled(
     client,

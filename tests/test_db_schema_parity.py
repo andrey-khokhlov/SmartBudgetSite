@@ -7,8 +7,10 @@ from sqlalchemy.dialects import postgresql
 
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.product_price import ProductPrice
+from app.models.service_addon import ServiceAddon
 
 ACTIVE_PRICE_INDEX_NAME = "uq_product_price_active_per_currency"
+ACTIVE_SERVICE_ADDON_INDEX_NAME = "uq_service_addons_active_business_identity"
 CONSULTATION_TIMESTAMP_COLUMNS = ("created_at", "expires_at", "booked_at")
 
 
@@ -40,6 +42,15 @@ def _active_price_index() -> sa.Index:
     return matching_indexes[0]
 
 
+def _active_service_addon_index() -> sa.Index:
+    table = ServiceAddon.metadata.tables[ServiceAddon.__tablename__]
+    matching_indexes = [
+        index for index in table.indexes if index.name == ACTIVE_SERVICE_ADDON_INDEX_NAME
+    ]
+    assert len(matching_indexes) == 1
+    return matching_indexes[0]
+
+
 def test_consultation_timestamps_are_timezone_aware_in_metadata() -> None:
     for column_name in CONSULTATION_TIMESTAMP_COLUMNS:
         column_type = ConsultationEntitlement.__table__.c[column_name].type
@@ -59,6 +70,23 @@ def test_product_price_metadata_declares_active_price_partial_unique_index() -> 
     predicate = index.dialect_options["postgresql"]["where"]
     compiled_predicate = str(predicate.compile(dialect=postgresql.dialect()))
     assert compiled_predicate.lower() == "is_active = true"
+
+
+def test_service_addon_metadata_declares_active_identity_partial_unique_index() -> None:
+    index = _active_service_addon_index()
+
+    assert index.unique is True
+    assert [column.name for column in index.columns] == [
+        "family_slug",
+        "package_code",
+        "service_type",
+        "usage_type",
+        "currency_code",
+    ]
+    predicate = index.dialect_options["postgresql"]["where"]
+    assert str(predicate.compile(dialect=postgresql.dialect())).lower() == (
+        "is_active = true"
+    )
 
 
 def test_migration_interprets_naive_consultation_timestamps_as_utc() -> None:

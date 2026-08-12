@@ -188,16 +188,25 @@ Commerce and delivery:
 Consultations:
 
 - Add-on and standalone consultation offers are distinguished by `usage_type`.
+- Protected founder-operated Consultation Offers Admin now lists, creates, and
+  maintains consultation `ServiceAddon` catalog records separately from
+  purchased entitlements. New records use server-generated UUID technical
+  codes; routing identity fields are immutable after creation; deactivation is
+  the removal mechanism and no physical delete path is exposed.
+- Active consultation-offer identity and resolution include `family_slug`,
+  `package_code`, `service_type`, `usage_type`, and `currency_code`. Creating or
+  activating a version atomically deactivates the other active offer with the
+  same full identity, while different currencies and usage types remain
+  independent. Product-plus-consultation checkout selects the offer in the
+  exact product currency.
 - Consultation ownership is represented by a backend-owned
   `ConsultationEntitlement` tied to a service `SaleItem`.
-- Consultation Entitlements Admin manages purchased booking rights, but
-  founder-operated consultation catalog management for `ServiceAddon` offers is
-  not implemented. The next bounded sprint should add an Admin path to inspect
-  and edit the existing offer fields needed for testing and operations,
-  including price, currency, activation, and the existing catalog identity and
-  usage fields. It must support configuring a temporary 50 RUB consultation
-  offer for live validation without direct SQL while keeping catalog offers
-  separate from entitlement administration.
+- Elapsed available consultation entitlements are lazily reconciled to the
+  persisted `expired` status when Consultation Entitlements Admin is opened,
+  before filtering and pagination. Booked and cancelled history is preserved;
+  MVP requires no scheduler or background expiration worker.
+- Consultation Entitlements Admin continues to manage purchased booking rights,
+  not catalog offers.
 - `CODE-003` is complete: consultation entitlement creation requires a
   consultation service item owned by a `PaymentStatus.PAID` sale.
 - The protected booking page validates the entitlement before exposing the

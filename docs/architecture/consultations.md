@@ -23,10 +23,18 @@ onboarding, or support. `usage_type` defines how it is sold: currently `addon` o
 `standalone`. Each usage scenario is a separate catalog record with one price;
 do not introduce `addon_price` and `standalone_price` columns.
 
-Lookups include `family_slug`, `package_code`, `service_type`, and `usage_type`.
-Product checkout explicitly requests `service_type = consultation` and
-`usage_type = addon` and must never load standalone pricing implicitly.
-`ProductsRepository` remains product-focused and does not resolve add-ons.
+The business identity used for lookup and versioning is `family_slug`,
+`package_code`, `service_type`, `usage_type`, and `currency_code`. Product
+checkout explicitly requests `service_type = consultation`, `usage_type =
+addon`, and the exact selected product currency; it must never load standalone
+pricing or fall back to another currency implicitly. `ProductsRepository`
+remains product-focused and does not resolve add-ons.
+
+At most one offer may be active for one full business identity. Creating an
+active version or reactivating a historical version automatically deactivates
+the other active version in the same service-owned transaction. Currency and
+usage type are parts of the identity, so corresponding RUB/EUR and
+add-on/standalone offers remain independent.
 
 ## Purchase and booking are separate events
 
@@ -89,14 +97,20 @@ Statuses are:
 - `expired` — the booking window elapsed;
 - `cancelled` — access is blocked.
 
-Supported transition behavior includes `available -> booked` and an idempotent
-`booked -> booked` no-op. `expired -> booked` and `cancelled -> booked` are
-blocked. Lifecycle transitions belong in services, not repositories.
+Supported transition behavior includes `available -> booked`, `available ->
+expired`, and an idempotent `booked -> booked` no-op. Time expiration applies
+only when an available entitlement has `expires_at` at or before the current UTC
+time. Booked and cancelled entitlements preserve their lifecycle history even
+after that time; expired entitlements remain expired. `expired -> booked` and
+`cancelled -> booked` are blocked. Lifecycle transitions belong in services,
+not repositories.
 
 The default booking window is 14 days after entitlement creation. It controls
 when a slot must be booked, not the date on which the consultation occurs.
-Expiration may be derived dynamically until a scheduled job or admin action
-persists it.
+MVP uses bounded lazy reconciliation rather than a scheduler or background
+worker. Opening Consultation Entitlements Admin reconciles every due available
+entitlement before filtering or pagination, commits the transition through the
+Admin request, and displays only persisted lifecycle state.
 
 ## Booking page and customer communication
 
@@ -193,6 +207,20 @@ additional safeguards, or another supported tracking field. Do not finalize or
 replace this architecture based only on assumed payloads.
 
 ## Administration and operations
+
+`/admin/consultation-offers` is the protected founder-operated consultation
+catalog surface. It lists active and inactive `ServiceAddon` consultation
+records, creates new offers from controlled product-family, package, usage, and
+currency values, and edits only `name`, `amount`, and `is_active`. The
+consultation-specific application boundary supplies `service_type =
+consultation`; it is not founder input on this surface.
+New records receive a server-generated UUID string as their purely technical
+stable `code`; historical codes remain valid. After creation, `code` and every
+business-identity field are immutable. Conceptually different offers require a
+new record, and deactivation is the removal mechanism; there is no physical
+delete path.
+
+Catalog administration remains separate from purchased-right administration.
 
 `/admin/consultations` is protected by the admin router. The admin view provides
 customer email, sale-item context, status badges, booked time, provider event and
