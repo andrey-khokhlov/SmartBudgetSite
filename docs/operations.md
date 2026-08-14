@@ -466,6 +466,28 @@ Interpret Admin payment state as follows:
   found the provider invoice non-terminal. The exact last-check time is exposed
   in the Admin tooltip.
 
+### Manual Lava.top full refund
+
+Use only the protected Sales Admin workflow. SmartBudgetSite supports full-Sale
+refunds only and does not call a Lava.top refund API.
+
+1. Open the paid Sale and verify its exact amount, currency, provider, and
+   external payment ID.
+2. Select **Start refund** and accept the explicit acknowledgement. This creates
+   one `pending` `RefundOperation`; it does not issue money or change the Sale
+   from `paid`.
+3. In Lava.top Sales, manually refund the exact full Sale amount. Do not use a
+   partial amount and do not create another SmartBudgetSite operation.
+4. Verify the amount and provider-side refund evidence in Lava.top. The observed
+   `SENT` label is provider UI metadata, not a SmartBudgetSite lifecycle state
+   and not proof of bank/card settlement.
+5. Return to the Sale and accept **I verified the full refund in Lava.top.** Only
+   this action confirms the internal operation, changes the Sale to `refunded`,
+   and revokes future access atomically.
+6. If the Admin reports a conflict or persistence error, do not edit SQL or
+   start another refund. Preserve the provider evidence and investigate the
+   existing Sale/refund operation.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,

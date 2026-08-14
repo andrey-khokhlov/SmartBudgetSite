@@ -26,6 +26,9 @@
             <option value="failed" {% if selected_status == "failed" %}selected{% endif %}>
                 Failed
             </option>
+            <option value="refunded" {% if selected_status == "refunded" %}selected{% endif %}>
+                Refunded
+            </option>
         </select>
 
         <label for="customer_email">Customer email:</label>
@@ -82,7 +85,7 @@
             <tbody>
                 {% for sale in sales %}
                 <tr>
-                    <td class="sales-col-id">{{ sale.id }}</td>
+                    <td class="sales-col-id"><a href="/admin/sales/{{ sale.id }}">{{ sale.id }}</a></td>
                     <td class="sales-col-created">{{ sale.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
                     <td class="sales-col-customer">
                         <span

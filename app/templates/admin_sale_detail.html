@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_sales.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-form sales-page">
+    <h1 class="admin-form-title">Sale #{{ sale.id }}</h1>
+
+    {% if refund_result %}
+        <p class="admin-operation-result">Refund result: {{ refund_result }}</p>
+    {% endif %}
+
+    <dl>
+        <dt>Customer</dt><dd>{{ sale.customer_email }}</dd>
+        <dt>Payment status</dt><dd>{{ sale.payment_status }}</dd>
+        <dt>Total</dt><dd>{{ sale.amount }} {{ sale.currency }}</dd>
+        <dt>Provider</dt><dd>{{ sale.payment_provider or "-" }}</dd>
+        <dt>External payment ID</dt><dd>{{ sale.external_payment_id or "-" }}</dd>
+    </dl>
+
+    <h2>Items</h2>
+    <ul>
+        {% for item in sale.items %}
+            <li>{{ item.item_name }} — {{ item.amount }} {{ item.currency_code }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Full refund</h2>
+    {% if not sale.refund_operation %}
+        {% if sale.payment_status == 'paid' and sale.payment_provider and sale.external_payment_id %}
+            <p>This creates a pending internal full-refund operation for the exact Sale total. It does not issue a provider refund.</p>
+            <form method="post" action="/admin/sales/{{ sale.id }}/refund/start">
+                <label>
+                    <input type="checkbox" name="confirmation" value="start_full_refund" required>
+                    I understand that I must issue the exact full refund manually in Lava.top.
+                </label>
+                <button type="submit">Start refund</button>
+            </form>
+        {% else %}
+            <p>This Sale is not eligible to start a refund.</p>
+        {% endif %}
+    {% else %}
+        <dl>
+            <dt>Refund status</dt><dd>{{ sale.refund_operation.status }}</dd>
+            <dt>Full amount</dt><dd>{{ sale.refund_operation.amount }} {{ sale.refund_operation.currency }}</dd>
+            <dt>Provider snapshot</dt><dd>{{ sale.refund_operation.payment_provider }}</dd>
+            <dt>External payment ID snapshot</dt><dd>{{ sale.refund_operation.external_payment_id }}</dd>
+            <dt>Requested at</dt><dd>{{ sale.refund_operation.requested_at }}</dd>
+            {% if sale.refund_operation.confirmed_at %}
+                <dt>Confirmed at</dt><dd>{{ sale.refund_operation.confirmed_at }}</dd>
+            {% endif %}
+        </dl>
+
+        {% if sale.refund_operation.status == 'pending' %}
+            <p>Complete the exact full refund manually in Lava.top Sales. Verify the amount and provider refund evidence there before confirming below.</p>
+            <p>Internal confirmation records founder verification; it does not claim bank or card settlement.</p>
+            <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm">
+                <label>
+                    <input type="checkbox" name="acknowledgement" value="verified_full_refund_in_lava_top" required>
+                    I verified the full refund in Lava.top.
+                </label>
+                <button type="submit">Confirm verified full refund</button>
+            </form>
+        {% elif sale.refund_operation.status == 'confirmed' %}
+            <p>The full refund is internally confirmed and future customer access is revoked.</p>
+        {% else %}
+            <p>This refund requires operator reconciliation. Do not create another refund operation.</p>
+        {% endif %}
+    {% endif %}
+
+    <p><a href="/admin/sales">Back to Sales</a></p>
+</div>
+{% endblock %}

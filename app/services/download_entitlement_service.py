@@ -127,6 +127,15 @@ def get_valid_download_entitlement_by_token(
             detail="Download link was not found.",
         )
 
+    owning_sale = (
+        entitlement.sale_item.sale if entitlement.sale_item is not None else None
+    )
+    if owning_sale is None or owning_sale.payment_status != PaymentStatus.PAID:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Download link has been cancelled.",
+        )
+
     if entitlement.status == DownloadEntitlementStatus.COMPLETED.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

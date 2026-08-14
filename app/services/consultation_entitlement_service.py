@@ -13,7 +13,6 @@ from app.repositories.consultation_entitlement_repository import (
     ConsultationEntitlementRepository,
 )
 
-
 DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS = 14
 CONSULTATION_SERVICE_TYPE = "consultation"
 
@@ -96,8 +95,7 @@ def create_consultation_entitlement(
         sale_item_id=sale_item.id,
         status=ConsultationEntitlementStatus.AVAILABLE.value,
         expires_at=(
-                datetime.now(UTC)
-                + timedelta(days=DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS)
+            datetime.now(UTC) + timedelta(days=DEFAULT_CONSULTATION_BOOKING_WINDOW_DAYS)
         ),
     )
 
@@ -162,6 +160,15 @@ def get_valid_consultation_entitlement_by_token(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Consultation booking link was not found.",
+        )
+
+    owning_sale = (
+        entitlement.sale_item.sale if entitlement.sale_item is not None else None
+    )
+    if owning_sale is None or owning_sale.payment_status != PaymentStatus.PAID:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Consultation booking link is no longer available.",
         )
 
     if entitlement.status == ConsultationEntitlementStatus.BOOKED.value:
@@ -233,5 +240,3 @@ def mark_entitlement_as_booked(
     db.flush()
 
     return entitlement
-
-

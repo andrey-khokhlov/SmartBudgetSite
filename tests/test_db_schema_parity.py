@@ -7,11 +7,20 @@ from sqlalchemy.dialects import postgresql
 
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.product_price import ProductPrice
+from app.models.refund_operation import RefundOperation
 from app.models.service_addon import ServiceAddon
 
 ACTIVE_PRICE_INDEX_NAME = "uq_product_price_active_per_currency"
 ACTIVE_SERVICE_ADDON_INDEX_NAME = "uq_service_addons_active_business_identity"
 CONSULTATION_TIMESTAMP_COLUMNS = ("created_at", "expires_at", "booked_at")
+REFUND_TIMESTAMP_COLUMNS = (
+    "provider_observed_at",
+    "requested_at",
+    "confirmed_at",
+    "reconciliation_required_at",
+    "created_at",
+    "updated_at",
+)
 
 
 def _load_migration():
@@ -45,7 +54,9 @@ def _active_price_index() -> sa.Index:
 def _active_service_addon_index() -> sa.Index:
     table = ServiceAddon.metadata.tables[ServiceAddon.__tablename__]
     matching_indexes = [
-        index for index in table.indexes if index.name == ACTIVE_SERVICE_ADDON_INDEX_NAME
+        index
+        for index in table.indexes
+        if index.name == ACTIVE_SERVICE_ADDON_INDEX_NAME
     ]
     assert len(matching_indexes) == 1
     return matching_indexes[0]
@@ -56,6 +67,23 @@ def test_consultation_timestamps_are_timezone_aware_in_metadata() -> None:
         column_type = ConsultationEntitlement.__table__.c[column_name].type
         assert isinstance(column_type, sa.DateTime)
         assert column_type.timezone is True
+
+
+def test_refund_metadata_declares_timezone_aware_timestamps_and_unique_sale() -> None:
+    for column_name in REFUND_TIMESTAMP_COLUMNS:
+        column_type = RefundOperation.__table__.c[column_name].type
+        assert isinstance(column_type, sa.DateTime)
+        assert column_type.timezone is True
+
+    sale_id = RefundOperation.__table__.c.sale_id
+    assert sale_id.nullable is False
+    matching_indexes = [
+        index
+        for index in RefundOperation.__table__.indexes
+        if [column.name for column in index.columns] == ["sale_id"]
+    ]
+    assert len(matching_indexes) == 1
+    assert matching_indexes[0].unique is True
 
 
 def test_product_price_metadata_declares_active_price_partial_unique_index() -> None:

@@ -16,6 +16,7 @@ from app.models.purchase_email_delivery import (
     PurchaseEmailDelivery,
     PurchaseEmailDeliveryStatus,
 )
+from app.models.refund_operation import RefundOperation, RefundOperationStatus
 from app.models.download_entitlement import (
     DownloadEntitlement,
     DownloadEntitlementStatus,

@@ -19,6 +19,7 @@ from app.models.enums import PaymentCheckResult, PaymentStatus
 
 if TYPE_CHECKING:
     from app.models.purchase_email_delivery import PurchaseEmailDelivery
+    from app.models.refund_operation import RefundOperation
     from app.models.sale_item import SaleItem
 
 
@@ -49,6 +50,11 @@ class Sale(Base):
         cascade="all, delete-orphan",
         uselist=False,
     )
+    refund_operation: Mapped["RefundOperation | None"] = relationship(
+        "RefundOperation",
+        back_populates="sale",
+        uselist=False,
+    )
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
@@ -63,7 +69,9 @@ class Sale(Base):
         default=PaymentStatus.PENDING,
     )
 
-    external_payment_id: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
+    external_payment_id: Mapped[str | None] = mapped_column(
+        String(200), nullable=True, index=True
+    )
 
     payment_last_checked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),

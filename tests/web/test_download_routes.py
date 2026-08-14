@@ -92,6 +92,19 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert db_session.get(type(entitlement), entitlement.id).attempt_count == 0
 
 
+def test_download_get_fails_closed_after_owning_sale_is_refunded(client, db_session):
+    entitlement, _ = create_download(db_session)
+    token = entitlement.download_token
+    entitlement.sale_item.sale.payment_status = PaymentStatus.REFUNDED
+    db_session.commit()
+
+    response = client.get(f"/download/{token}")
+
+    assert response.status_code == 403
+    assert_capability_response_headers(response)
+    assert "This download access has been cancelled" in response.text
+
+
 @pytest.mark.parametrize(
     ("detail", "expected"),
     [

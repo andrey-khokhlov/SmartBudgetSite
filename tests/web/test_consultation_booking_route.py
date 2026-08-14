@@ -89,6 +89,43 @@ def test_consultation_booking_page_opens_with_valid_token(
     assert entitlement.booking_token not in response.text
 
 
+def test_consultation_booking_fails_closed_after_owning_sale_is_refunded(
+    client, db_session
+):
+    service_addon = ServiceAddon(
+        code="consultation_refunded_booking_route_test",
+        name="Refunded consultation",
+        service_type="consultation",
+        usage_type="standalone",
+        family_slug="smartbudget",
+        package_code="INT",
+        currency_code="EUR",
+        amount=Decimal("79.00"),
+        is_active=True,
+    )
+    db_session.add(service_addon)
+    db_session.flush()
+    sale = create_standalone_service_sale(
+        db=db_session,
+        service_addon_id=service_addon.id,
+        service_name=service_addon.name,
+        customer_email="refunded@example.com",
+        amount=service_addon.amount,
+        currency=service_addon.currency_code,
+        payment_status=PaymentStatus.PAID,
+    )
+    db_session.flush()
+    entitlement = create_consultation_entitlement(db_session, sale.items[0])
+    sale.payment_status = PaymentStatus.REFUNDED
+    db_session.commit()
+
+    response = client.get(f"/consultation/book/{entitlement.booking_token}")
+
+    assert response.status_code == 403
+    assert_capability_response_headers(response)
+    assert "consultation booking link is no longer available" in response.text.lower()
+
+
 @pytest.mark.parametrize(
     ("status_code", "detail"),
     [

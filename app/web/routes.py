@@ -85,6 +85,15 @@ from app.services.purchase_email_delivery_service import (
     authorize_reconciliation_resend,
     deliver_purchase_email_after_payment_commit,
 )
+from app.services.refund_service import (
+    RefundConflictError,
+    RefundEligibilityError,
+    RefundNotFoundError,
+    RefundPersistenceError,
+    confirm_full_refund,
+    get_refund_sale_for_admin,
+    start_full_refund,
+)
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
@@ -1522,6 +1531,84 @@ async def admin_sales_list(
     )
 
 
+@admin_router.get("/admin/sales/{sale_id}", response_class=HTMLResponse)
+async def admin_sale_detail(
+    request: Request,
+    sale_id: int,
+    refund_result: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    try:
+        sale = get_refund_sale_for_admin(db, sale_id)
+    except RefundNotFoundError:
+        raise HTTPException(status_code=404, detail="Sale not found") from None
+
+    return render(
+        request,
+        "admin_sale_detail.html",
+        {"sale": sale, "refund_result": refund_result},
+        document_lang="en",
+    )
+
+
+@admin_router.post("/admin/sales/{sale_id}/refund/start")
+async def admin_start_full_refund(
+    sale_id: int,
+    confirmation: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    if confirmation != "start_full_refund":
+        raise HTTPException(status_code=400, detail="Explicit confirmation required")
+    try:
+        operation = start_full_refund(db, sale_id=sale_id)
+    except RefundNotFoundError:
+        raise HTTPException(status_code=404, detail="Sale not found") from None
+    except RefundEligibilityError:
+        return RedirectResponse(
+            url=f"/admin/sales/{sale_id}?refund_result=ineligible", status_code=303
+        )
+    except RefundPersistenceError:
+        return RedirectResponse(
+            url=f"/admin/sales/{sale_id}?refund_result=persistence_error",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/admin/sales/{sale_id}?refund_result={operation.status}",
+        status_code=303,
+    )
+
+
+@admin_router.post("/admin/sales/{sale_id}/refund/confirm")
+async def admin_confirm_full_refund(
+    sale_id: int,
+    acknowledgement: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    if acknowledgement != "verified_full_refund_in_lava_top":
+        raise HTTPException(status_code=400, detail="Explicit acknowledgement required")
+    try:
+        result = confirm_full_refund(
+            db,
+            sale_id=sale_id,
+            provider_refund_verified=True,
+        )
+    except RefundNotFoundError:
+        raise HTTPException(status_code=404, detail="Refund not found") from None
+    except RefundConflictError:
+        return RedirectResponse(
+            url=f"/admin/sales/{sale_id}?refund_result=conflict", status_code=303
+        )
+    except RefundPersistenceError:
+        return RedirectResponse(
+            url=f"/admin/sales/{sale_id}?refund_result=persistence_error",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/admin/sales/{sale_id}?refund_result={result.result.value}",
+        status_code=303,
+    )
+
+
 @admin_router.post("/admin/sales/{sale_id}/purchase-email/retry")
 async def admin_purchase_email_retry(
     sale_id: int,
@@ -1645,9 +1732,7 @@ def admin_product_release_create(
             product_id=product_id,
             error_code="validation_failed",
             status_code=413,
-            validation_message=(
-                f"Release archive exceeds the {display_limit} limit."
-            ),
+            validation_message=(f"Release archive exceeds the {display_limit} limit."),
             submitted_version=version,
             submitted_release_notes=release_notes,
         )

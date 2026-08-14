@@ -110,6 +110,16 @@ Commerce and delivery:
   observation, after which they show `Checked — waiting`. The observation
   stores only the last-check time and generic result; it creates no fulfillment
   or email delivery state.
+- Sales Admin now provides a founder-operated, full-refund-only workflow. One
+  provider-independent `RefundOperation` snapshots the paid Sale amount,
+  currency, provider, and external payment identity in `pending`; a database
+  uniqueness invariant prevents a second operation for the Sale. SmartBudgetSite
+  does not call a Lava.top refund API. After the founder manually completes and
+  verifies the exact refund in Lava.top Sales, a second explicit acknowledgement
+  atomically confirms the operation, changes the Sale to `refunded`, cancels
+  available product/consultation entitlements, and preserves completed, booked,
+  expired, cancelled, provider-event, and attempt history. Protected download
+  and booking validation also fails closed unless the owning Sale remains paid.
 - A real 50 RUB hosted Lava.top payment succeeded provider-side. On 2026-08-10,
   Sale #6 was manually reconciled through the server-to-server invoice lookup:
   authoritative confirmation changed it from pending to paid and created
@@ -363,10 +373,11 @@ Infrastructure and quality:
   ID uniqueness constraint for shared Price-by-request mappings and has been
   applied successfully to the configured PostgreSQL development database. Its
   downgrade remains separate environment validation.
-- The latest confirmed full ordinary suite result is 480 passing tests after
-  the PaymentProviderOffer Admin and checkout-readiness implementation. The
-  focused Admin, provider repository/script, payment, and checkout suite passes
-  62 tests. The focused `REL-004` upload, storage,
+- The latest confirmed full ordinary suite result is 612 passing tests after
+  the founder-operated full-refund implementation. The focused refund service,
+  Admin, locking, capability-boundary, and schema-parity suite passes 54 tests. The
+  earlier PaymentProviderOffer Admin and checkout-readiness focused suite
+  remains at 62 tests. The focused `REL-004` upload, storage,
   logging, repository, reconciliation, route, and download suite passes 77
   tests. The focused SEC-009 capability, logging, SQL, storage, helper-script,
   and support-isolation suite passes 50 tests. The focused Feedback

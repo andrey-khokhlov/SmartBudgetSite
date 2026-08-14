@@ -684,6 +684,20 @@ On 2026-08-11, real Sale #7 was also authoritatively reconciled through the
 manual path; its purchase email was sent through Resend, protected product
 access opened, and the protected download completed successfully.
 
+The founder-operated Lava.top full-refund workflow is implemented without an
+undocumented provider API. A unique provider-independent `RefundOperation`
+records pending intent and immutable Sale/provider snapshots; only an explicit
+post-provider verification acknowledgement atomically confirms the refund,
+marks the Sale refunded, and revokes future product and consultation access
+while preserving historical entitlement and provider metadata. Lava.top UI
+evidence from a real 50 RUB refund confirms the displayed amount, `SENT` marker,
+and refund date, but does not establish bank settlement or an API/lookup/webhook
+contract. The complete SmartBudgetSite Admin refund journey still requires live
+release-environment validation.
+
+The focused refund service, Admin, locking, protected-access, and schema-parity
+suite passes 54 tests, and the full ordinary suite passes 612 tests.
+
 `REL-001` remains incomplete. This product-only manual reconciliation and
 delivery evidence is not live webhook, bundle, or result-page delivery
 validation. The purchase-email workflow, Resend adapter, stable-key retry
@@ -703,6 +717,10 @@ coverage, but still require deployed-environment validation. Remaining work is:
   reconciliation-required operator path;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.
+- live founder execution of the protected pending-to-confirmed full-refund Admin
+  journey against a disposable paid Sale, including post-refund download and
+  consultation access denial; do not interpret Lava.top `SENT` as bank/card
+  settlement confirmation.
 
 ### Production deployment (`REL-002`)
 

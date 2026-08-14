@@ -595,7 +595,7 @@ self-service actions in the MVP.
 
 ### Authoritative business rules
 
-- Only an administrator may initiate or retry a refund.
+- Only an administrator may start or confirm a refund.
 - Only a `Sale` whose payment status is `paid` is eligible for refund.
 - MVP supports full-Sale refunds only. Partial refunds and item-level refunds are
   intentionally out of scope even if a payment provider supports them.
@@ -605,14 +605,16 @@ self-service actions in the MVP.
   for historical Lava.top Sales.
 - SmartBudgetSite must not change `Sale.payment_status` to `refunded` merely
   because an administrator requested a refund.
-- `Sale.payment_status = refunded` is allowed only after authoritative provider
-  confirmation that the refund completed successfully.
-- Provider/API failure, timeout, ambiguous response, or unknown refund outcome
-  must leave the Sale history intact and result in an operator-visible
-  reconciliation-required state. Manual database edits are not a supported
-  recovery mechanism.
-- Refund initiation and retry must be idempotent. Repeated administrative
-  actions or network retries must not create duplicate provider refunds.
+- `Sale.payment_status = refunded` is allowed only after the founder has
+  completed the exact full refund manually in the originating provider and
+  explicitly confirms in SmartBudgetSite that the provider evidence was
+  verified. This operator confirmation does not claim bank or card settlement.
+- `reconciliation_required` is reserved for real internal/provider uncertainty,
+  not ordinary operator cancellation or validation failure. Manual database
+  edits are not a supported recovery mechanism.
+- Starting and confirming a refund must be idempotent. Repeated administrative
+  actions must not create a second refund operation or repeat entitlement
+  mutation.
 - `Sale`, `SaleItem`, payment identity, refund-operation history, and entitlement
   history must never be deleted as part of refund processing.
 
@@ -622,32 +624,36 @@ A confirmed full-Sale refund revokes future customer access derived from that Sa
 
 For product items:
 
-- any `DownloadEntitlement` that can still grant product access must become
-  unavailable after confirmed refund;
+- `available` becomes `cancelled`;
+- `completed`, `expired`, and `cancelled` remain unchanged;
 - historical download-attempt and completion data must remain preserved;
 - refund processing must not delete the entitlement or its audit history.
 
 For consultation items:
 
-- an unused consultation entitlement must become unavailable after confirmed
-  refund;
-- already booked or completed consultation history must not be rewritten to make
-  it appear that the consultation never occurred;
+- `available` becomes `cancelled`;
+- `booked`, `expired`, and `cancelled` remain unchanged;
+- booked consultation history must not be rewritten to make it appear that the
+  consultation never occurred;
 - refund processing must not delete consultation entitlement or provider event
   history.
 
-The exact transition rules for already-consumed product access and already-booked
-consultations remain historical/audit concerns rather than a reason to preserve
-future entitlement access.
+Both protected capability validators also require the owning Sale to remain
+`paid`. A refunded Sale therefore fails closed even when a historical entitlement
+status is intentionally preserved.
 
 ### Administrative workflow
 
-The intended normal operator flow is:
+The implemented normal operator flow is:
 
 `Sales -> Sale -> Refund -> confirmation`
 
-The Admin UI should make the normal full-refund operation simple while requiring
-an explicit confirmation before provider interaction.
+The protected Sale detail page requires explicit acknowledgement before creating
+the one pending operation. The founder then performs the exact full refund
+manually in Lava.top Sales. SmartBudgetSite makes no provider refund API call.
+After verifying the full amount and provider-side evidence, the founder must
+explicitly acknowledge `I verified the full refund in Lava.top.` before internal
+confirmation can reconcile the Sale and entitlements.
 
 The administrative surface must distinguish at least:
 
@@ -665,7 +671,7 @@ must not be exposed unnecessarily through the Admin UI.
 Refund business logic belongs in the application/service layer and operates on
 provider-independent refund concepts.
 
-Provider integrations are responsible for:
+Future provider integrations may be responsible for:
 
 - provider-specific refund execution;
 - authentication;
@@ -678,40 +684,45 @@ The domain layer must not assume that Lava.top, Stripe, or another provider uses
 the same refund endpoint, status model, webhook behavior, idempotency mechanism,
 or timing semantics.
 
-### Lava.top contract status
+### Lava.top MVP contract
 
-The current public Lava.top documentation confirms that creators can perform
-full and partial refunds through the provider UI.
+Lava.top UI supports a manually entered refund amount. After a real 50 RUB full
+refund, the UI showed the 50 RUB amount, status `SENT`, refund date, and a Sales
+refund marker. `GET /api/v2/invoices/{id}` continued to expose the original
+invoice as `COMPLETED` without refund fields; the downloaded invoice and Sales
+report exposed no useful additional refund data.
 
-The currently published public API documentation does not establish a supported
-refund-creation endpoint, provider refund identifier, refund idempotency
-contract, or refund webhook. Published Lava.top webhook documentation does not
-currently describe refund events.
+Public Lava.top documentation does not establish a refund-creation API,
+provider refund identifier, refund-status lookup contract, idempotency contract,
+or refund webhook. `SENT` is provider-side UI evidence only and is not an
+internal lifecycle state. SmartBudgetSite therefore neither calls nor infers an
+undocumented Lava.top refund API. For MVP, the founder's explicit verification
+of the manual full refund is the authoritative operator action permitting
+internal confirmation; it is not a claim of bank or card settlement.
 
-Therefore Lava.top refund execution and confirmation are not yet approved for
-implementation.
+### Persisted refund operation
 
-Implementation must remain blocked until the provider contract is clarified,
-including:
+`RefundOperation` is separate from terminal `Sale.payment_status`, with exactly
+zero or one operation per Sale enforced by a database uniqueness invariant. Its
+provider-independent lifecycle is `pending`, `confirmed`, or
+`reconciliation_required`; there is no terminal `failed` state.
 
-1. whether a server-to-server refund API exists and its endpoint, authentication,
-   request, and response contract;
-2. whether Lava.top exposes a refund identifier and refund lifecycle/statuses;
-3. how duplicate refund requests and retries are made idempotent;
-4. how SmartBudgetSite can authoritatively determine that a refund completed,
-   especially if no refund webhook is emitted.
+The persisted model supports `reconciliation_required`, but the current
+founder-operated Lava.top MVP implements only `no operation -> pending ->
+confirmed`. No current service or route automatically transitions an operation
+to `reconciliation_required` or sets `reconciliation_required_at`. That status
+is reserved for a future explicitly implemented uncertainty and recovery path.
 
-Do not infer or implement undocumented Lava.top refund behavior.
+The operation snapshots the full Sale amount, currency, originating payment
+provider, and external payment ID. It also stores request/confirmation/
+reconciliation timestamps plus optional provider refund identity, provider
+status, and observation time for future integrations. Optional provider metadata
+never drives `Sale.payment_status` directly.
 
-### Persistence design status
-
-A durable refund operation must be represented separately from the terminal
-`Sale.payment_status` because initiation, retries, provider uncertainty, and
-reconciliation may exist before a Sale becomes `refunded`.
-
-The exact persisted refund-operation state model, provider identifiers, database
-constraints, and migration shape are intentionally not approved yet. They depend
-on the confirmed payment-provider refund contract.
-
-No refund model, migration, provider client method, or Admin refund action should
-be implemented until that contract and lifecycle are approved.
+Creation requires a paid Sale, non-empty provider and external payment identity,
+and no existing operation. The workflow accepts no operator-entered amount, so
+partial and item-level refunds cannot enter it. Confirmation owns one database
+transaction, locks the Sale, operation, and both entitlement sets, revalidates
+the immutable snapshot, reconciles access, and only then changes the operation
+to `confirmed` and the Sale to `refunded`. Any reconciliation failure rolls the
+whole transaction back.
