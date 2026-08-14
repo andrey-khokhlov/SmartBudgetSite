@@ -425,6 +425,10 @@ For explicit server-to-server verification of one known Sale/invoice pair:
   --external-payment-id <lava-invoice-id>
 ```
 
+This command is the founder-operated fallback for a known invoice and a live
+validation tool. It is not the normal automatic production completion path;
+that path is the authenticated Payment-result webhook.
+
 The command queries `GET /api/v2/invoices/{id}` with the outbound credential,
 requires the returned invoice identity to match, and applies a terminal
 `COMPLETED` or `FAILED` result through the same domain transaction used by the
@@ -448,6 +452,13 @@ real Sale #7. Its purchase email was sent through Resend, its protected product
 access page opened, and its protected download completed successfully. This is
 product-only manual reconciliation evidence; live automatic Lava.top webhook
 delivery remains unvalidated pending public HTTPS.
+
+On 2026-08-14, the same manual path reconciled real Sale #8 after Lava.top
+reported its 100 RUB invoice as `COMPLETED` (50 RUB product plus 50 RUB
+consultation). The Sale became paid with exactly one product entitlement and
+one consultation entitlement available, the purchase email was sent, and both
+protected access pages opened. This validated the bundle path without executing
+a live webhook or a browser return from Lava.top.
 
 Live Payment-result webhook delivery remains unvalidated because SmartBudgetSite
 is not publicly reachable over HTTPS. Configure and validate the webhook in

@@ -86,6 +86,12 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert "01.07.2026" in response.text
     assert "DL-" in response.text
     assert entitlement.support_reference in response.text
+    assert "Remaining attempts" not in response.text
+    assert "Осталось попыток" not in response.text
+    assert "remaining_attempts" not in response.text
+    localized_response = client.get(f"/download/{token}?lang=ru")
+    assert localized_response.status_code == 200
+    assert "Осталось попыток" not in localized_response.text
     assert token not in response.text
     assert release.storage_key not in response.text
     db_session.expire_all()
@@ -112,7 +118,7 @@ def test_download_get_fails_closed_after_owning_sale_is_refunded(client, db_sess
         ("Download link has expired.", "Срок действия ссылки"),
         ("Download link has been cancelled.", "Доступ к скачиванию был отменён"),
         ("This download has already been completed.", "скачивание уже было завершено"),
-        ("Download attempt limit has been reached.", "максимальное количество попыток"),
+        ("Download attempt limit has been reached.", "больше недоступна"),
         ("Download release was not found.", "Приобретённый выпуск сейчас недоступен"),
     ],
 )
@@ -191,7 +197,8 @@ def test_download_post_blocks_attempt_limit_without_generating_url(
 
     assert response.status_code == 403
     assert_capability_response_headers(response)
-    assert "maximum number of download attempts" in response.text
+    assert "This download link is no longer available" in response.text
+    assert "attempt" not in response.text.lower()
     db_session.expire_all()
     assert db_session.get(type(entitlement), entitlement.id).attempt_count == 3
 

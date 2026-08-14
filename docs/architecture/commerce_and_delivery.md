@@ -249,15 +249,16 @@ Product page
     -> Backend creates Lava.top payment
     -> Hosted Lava.top checkout
     -> Payment
-    -> SmartBudgetSite payment result page
+    -> Buyer may remain on Lava.top
 ```
 
-The customer returns to the dedicated SmartBudgetSite payment result page at
-`/payment/result`, rather than directly to the product page. The browser
-redirect is not proof of payment. Browser navigation serves only the customer
-experience; authoritative payment state is maintained by backend verification.
-Payment completion is confirmed only by an authenticated provider webhook or
-explicit server-to-server payment verification.
+No Lava.top browser return to SmartBudgetSite is currently integrated; after
+payment, the buyer may remain on Lava.top. `/payment/result` provides only a
+neutral verification state if opened directly or used by a future supported
+redirect. Browser navigation is never proof of payment. Payment completion is
+confirmed automatically only by the authenticated provider webhook. Explicit
+server-to-server payment verification is the founder-operated fallback for
+known invoices and live validation, not the normal production completion path.
 
 While backend confirmation is pending, the payment result page may display a
 payment-confirmation state. Only confirmed payment may:
@@ -341,9 +342,15 @@ Live server-to-server validation on 2026-08-10 reconciled the provider-successfu
 repeat reconciliation returned idempotent and did not duplicate fulfillment.
 The earlier 50 RUB Sale #5 remained pending because Lava.top reported its
 invoice as non-terminal (`NEW`/`IN_PROGRESS` equivalent); no status was forced
-manually. This validates manual invoice reconciliation for a product-only Sale,
-not webhook delivery, bundle payment, purchase email, or payment-result delivery
-UX.
+manually. This validates manual invoice reconciliation for a product-only Sale.
+
+On 2026-08-14, real Sale #8 validated the bundle path with a 100 RUB payment
+(50 RUB product plus 50 RUB consultation). Lava.top reported the invoice as
+`COMPLETED`; founder-operated manual reconciliation changed the Sale to paid
+and made exactly one product entitlement and one consultation entitlement
+available. The purchase email was sent and both protected access pages opened.
+The run did not exercise live webhook delivery or a browser return from
+Lava.top.
 
 ## Purchase email and delivery communication
 

@@ -668,6 +668,9 @@ optional consultation snapshots, derives the sale total from those items, and
 returns HTTP 303 to the hosted Lava.top checkout. `/payment/result` provides
 only a neutral pending state, and expected initiation failures render an opaque
 customer-facing result without creating paid or fulfillment state.
+No Lava.top browser return to SmartBudgetSite is currently integrated, so a
+buyer may remain on Lava.top after payment; browser navigation is not payment
+proof.
 
 The first authoritative confirmation and fulfillment slice is implemented:
 authenticated Lava.top Payment-result events and explicit invoice lookup share
@@ -683,6 +686,12 @@ when Lava.top reported a non-terminal invoice; its status was not forced.
 On 2026-08-11, real Sale #7 was also authoritatively reconciled through the
 manual path; its purchase email was sent through Resend, protected product
 access opened, and the protected download completed successfully.
+On 2026-08-14, real Sale #8 validated a 100 RUB bundle payment (50 RUB product
+plus 50 RUB consultation). Lava.top reported the invoice as `COMPLETED`; manual
+reconciliation changed the Sale to paid and made exactly one product entitlement
+and one consultation entitlement available. The purchase email was sent and
+both protected access pages opened. This did not exercise live webhook delivery
+or a browser return from Lava.top.
 
 The founder-operated Lava.top full-refund workflow is implemented without an
 undocumented provider API. A unique provider-independent `RefundOperation`
@@ -698,9 +707,9 @@ release-environment validation.
 The focused refund service, Admin, locking, protected-access, and schema-parity
 suite passes 54 tests, and the full ordinary suite passes 612 tests.
 
-`REL-001` remains incomplete. This product-only manual reconciliation and
-delivery evidence is not live webhook, bundle, or result-page delivery
-validation. The purchase-email workflow, Resend adapter, stable-key retry
+`REL-001` remains incomplete. The manual product-only and bundle reconciliation
+and delivery evidence is not live webhook or deployed-environment validation.
+The purchase-email workflow, Resend adapter, stable-key retry
 behavior, and
 protected Admin retry controls are implemented with automated fake-transport
 coverage, but still require deployed-environment validation. Remaining work is:
@@ -708,12 +717,8 @@ coverage, but still require deployed-environment validation. Remaining work is:
 - configure and validate live webhook delivery, history, resend, and conflict
   operations when a public HTTPS deployment or approved temporary endpoint is
   available;
-- add founder-operated `ServiceAddon` consultation-offer Admin management
-  sufficient to inspect and edit existing catalog fields and configure a
-  temporary 50 RUB test offer without direct SQL, then validate a live
-  product-plus-consultation payment and atomic fulfillment;
-- live customer purchase-email delivery for consultation and bundle access,
-  plus provider tracking/link-rewriting configuration and the
+- deployed customer purchase-email delivery validation, provider
+  tracking/link-rewriting configuration, and the
   reconciliation-required operator path;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.

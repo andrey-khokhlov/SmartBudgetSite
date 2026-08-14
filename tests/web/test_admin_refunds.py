@@ -88,12 +88,21 @@ def test_admin_full_refund_flow_is_visible_and_confirmed(auth_client, db_session
 
     assert detail.status_code == 200
     assert "Start refund" in detail.text
+    assert 'class="refund-confirmation-form"' in detail.text
+    assert 'class="refund-confirmation-checkbox" required' in detail.text
+    assert 'class="btn-primary refund-confirmation-button"' in detail.text
+    assert "button.disabled = !checkbox.checked;" in detail.text
+    assert 'checkbox.addEventListener("change", updateButtonState);' in detail.text
     assert started.status_code == 303
     assert (
         "Complete the exact full refund manually in Lava.top Sales"
         in pending_detail.text
     )
     assert "I verified the full refund in Lava.top." in pending_detail.text
+    assert 'class="refund-confirmation-form"' in pending_detail.text
+    assert 'class="refund-confirmation-checkbox" required' in pending_detail.text
+    assert 'class="btn-primary refund-confirmation-button"' in pending_detail.text
+    assert "button.disabled = !checkbox.checked;" in pending_detail.text
     assert confirmed.status_code == 303
     db_session.expire_all()
     assert db_session.get(Sale, sale.id).payment_status == PaymentStatus.REFUNDED

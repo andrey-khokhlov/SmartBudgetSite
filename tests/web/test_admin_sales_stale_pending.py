@@ -53,6 +53,16 @@ def test_admin_marks_only_unchecked_old_pending_sale_as_needing_check(
         status=PaymentStatus.PAID,
         age=timedelta(days=2),
     )
+    failed = add_sale(
+        db_session,
+        status=PaymentStatus.FAILED,
+        age=timedelta(hours=1),
+    )
+    refunded = add_sale(
+        db_session,
+        status=PaymentStatus.REFUNDED,
+        age=timedelta(hours=1),
+    )
 
     response = auth_client.get("/admin/sales")
 
@@ -60,9 +70,22 @@ def test_admin_marks_only_unchecked_old_pending_sale_as_needing_check(
     stale_row = response.text.split(f">{stale.id}<", 1)[1].split("</tr>", 1)[0]
     current_row = response.text.split(f">{current.id}<", 1)[1].split("</tr>", 1)[0]
     paid_row = response.text.split(f">{paid.id}<", 1)[1].split("</tr>", 1)[0]
+    failed_row = response.text.split(f">{failed.id}<", 1)[1].split("</tr>", 1)[0]
+    refunded_row = response.text.split(f">{refunded.id}<", 1)[1].split("</tr>", 1)[0]
     assert "Check needed" in stale_row
     assert "Check needed" not in current_row
     assert "Check needed" not in paid_row
+    for sale, row in (
+        (stale, stale_row),
+        (current, current_row),
+        (paid, paid_row),
+        (failed, failed_row),
+        (refunded, refunded_row),
+    ):
+        assert f'href="/admin/sales/{sale.id}"' in row
+        assert "Details" in row
+        assert "/refund/start" not in row
+    assert "Start refund" not in response.text
     assert "Pending &gt;24h — check" not in response.text
 
 

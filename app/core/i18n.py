@@ -202,13 +202,13 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.email_hint": "Use the address where you want to receive purchase information.",
         "checkout.continue_payment": "Continue to secure payment",
         "payment_result.title": "Payment status",
-        "payment_result.pending_title": "Payment confirmation is pending",
+        "payment_result.pending_title": "Payment is being verified",
         "payment_result.pending_message": (
-            "Your return to SmartBudgetSite does not by itself confirm payment."
+            "SmartBudgetSite has not yet received authoritative payment confirmation."
         ),
         "payment_result.pending_note": (
-            "Access and delivery will become available only after SmartBudgetSite "
-            "receives authoritative payment confirmation."
+            "After confirmation, your fulfillment links will be emailed to your "
+            "purchase address."
         ),
         "payment_result.error_title": "Checkout is temporarily unavailable",
         "payment_result.error_message": (
@@ -248,7 +248,6 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_file_size": "File size",
         "download_sha256": "SHA-256",
         "download_expires_at": "Access expires at",
-        "download_remaining_attempts": "Remaining attempts",
         "download_support_reference": "Support reference",
         "download_button": "Download",
         "download_secure_note": "Your download will start automatically after you click the button.",
@@ -257,7 +256,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_error_expired": "This download link has expired.",
         "download_error_cancelled": "This download access has been cancelled.",
         "download_error_completed": "This download has already been completed.",
-        "download_error_attempt_limit": "The maximum number of download attempts has been reached.",
+        "download_error_attempt_limit": "This download link is no longer available.",
         "download_error_missing_release": "The purchased release is currently unavailable.",
         "download_error_unavailable": "The download service is temporarily unavailable. Please try again later.",
         "download_error_support_prefix": "Contact support through the ",
@@ -460,13 +459,13 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.email_hint": "Укажите адрес, на который вы хотите получать информацию о покупке.",
         "checkout.continue_payment": "Перейти к безопасной оплате",
         "payment_result.title": "Статус оплаты",
-        "payment_result.pending_title": "Ожидается подтверждение оплаты",
+        "payment_result.pending_title": "Платёж проверяется",
         "payment_result.pending_message": (
-            "Возврат на SmartBudgetSite сам по себе не подтверждает оплату."
+            "SmartBudgetSite ещё не получил достоверное подтверждение оплаты."
         ),
         "payment_result.pending_note": (
-            "Доступ и доставка станут доступны только после получения "
-            "SmartBudgetSite достоверного подтверждения оплаты."
+            "После подтверждения ссылки для получения покупки будут отправлены "
+            "на указанный при покупке email."
         ),
         "payment_result.error_title": "Оплата временно недоступна",
         "payment_result.error_message": (
@@ -506,7 +505,6 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_file_size": "Размер файла",
         "download_sha256": "SHA-256",
         "download_expires_at": "Доступ действует до",
-        "download_remaining_attempts": "Осталось попыток",
         "download_support_reference": "Номер для поддержки",
         "download_button": "Скачать",
         "download_secure_note": "Скачивание начнётся автоматически после нажатия кнопки.",
@@ -515,7 +513,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_error_expired": "Срок действия ссылки для скачивания истёк.",
         "download_error_cancelled": "Доступ к скачиванию был отменён.",
         "download_error_completed": "Это скачивание уже было завершено.",
-        "download_error_attempt_limit": "Достигнуто максимальное количество попыток скачивания.",
+        "download_error_attempt_limit": "Эта ссылка для скачивания больше недоступна.",
         "download_error_missing_release": "Приобретённый выпуск сейчас недоступен.",
         "download_error_unavailable": "Сервис скачивания временно недоступен. Пожалуйста, повторите попытку позже.",
         "download_error_support_prefix": "Обратитесь в поддержку через ",

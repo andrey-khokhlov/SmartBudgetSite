@@ -131,3 +131,11 @@
 .sales-pagination span {
     color: #374151;
 }
+
+.refund-confirmation-button:disabled {
+    color: #667085;
+    background: #e4e7ec;
+    cursor: not-allowed;
+    box-shadow: none;
+    filter: none;
+}

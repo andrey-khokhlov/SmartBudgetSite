@@ -410,7 +410,6 @@ def download_page(
     #         "released_at": datetime.now(UTC),
     #         "expires_at": datetime.now(UTC),
     #         "file_size": "18.6 MB",
-    #         "remaining_attempts": 3,
     #         "support_reference": "DL-8F3A19",
     #         "signed_url_ttl_minutes": 15,
     #     },
@@ -430,9 +429,6 @@ def download_page(
                 else None
             ),
             "expires_at": _as_moscow_time(entitlement.expires_at),
-            "remaining_attempts": (
-                settings.DOWNLOAD_MAX_ATTEMPTS - entitlement.attempt_count
-            ),
             "support_reference": entitlement.support_reference,
             "feedback_url": _feedback_prefill_url(
                 request,

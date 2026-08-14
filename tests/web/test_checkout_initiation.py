@@ -624,8 +624,10 @@ def test_payment_result_page_is_non_authoritative_and_creates_no_fulfillment(
     response = client.get("/payment/result")
 
     assert response.status_code == 200
-    assert "Payment confirmation is pending" in response.text
-    assert "does not by itself confirm payment" in response.text
+    assert "Payment is being verified" in response.text
+    assert "has not yet received authoritative payment confirmation" in response.text
+    assert "fulfillment links will be emailed" in response.text
+    assert "Payment successful" not in response.text
     db_session.refresh(sale)
     assert sale.payment_status == "pending"
     assert db_session.query(DownloadEntitlement).count() == 0

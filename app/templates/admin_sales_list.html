@@ -80,12 +80,13 @@
                     <th class="sales-col-purchase-email">Purchase email</th>
                     <th class="sales-col-provider">Provider</th>
                     <th class="sales-col-external">External ID</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for sale in sales %}
                 <tr>
-                    <td class="sales-col-id"><a href="/admin/sales/{{ sale.id }}">{{ sale.id }}</a></td>
+                    <td class="sales-col-id">{{ sale.id }}</td>
                     <td class="sales-col-created">{{ sale.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
                     <td class="sales-col-customer">
                         <span
@@ -173,10 +174,11 @@
                             -
                         {% endif %}
                     </td>
+                    <td><a href="/admin/sales/{{ sale.id }}">Details</a></td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="9">No sales yet.</td>
+                    <td colspan="10">No sales yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

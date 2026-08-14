@@ -32,12 +32,12 @@
     {% if not sale.refund_operation %}
         {% if sale.payment_status == 'paid' and sale.payment_provider and sale.external_payment_id %}
             <p>This creates a pending internal full-refund operation for the exact Sale total. It does not issue a provider refund.</p>
-            <form method="post" action="/admin/sales/{{ sale.id }}/refund/start">
+            <form method="post" action="/admin/sales/{{ sale.id }}/refund/start" class="refund-confirmation-form">
                 <label>
-                    <input type="checkbox" name="confirmation" value="start_full_refund" required>
+                    <input type="checkbox" name="confirmation" value="start_full_refund" class="refund-confirmation-checkbox" required>
                     I understand that I must issue the exact full refund manually in Lava.top.
                 </label>
-                <button type="submit">Start refund</button>
+                <button type="submit" class="btn-primary refund-confirmation-button">Start refund</button>
             </form>
         {% else %}
             <p>This Sale is not eligible to start a refund.</p>
@@ -57,12 +57,12 @@
         {% if sale.refund_operation.status == 'pending' %}
             <p>Complete the exact full refund manually in Lava.top Sales. Verify the amount and provider refund evidence there before confirming below.</p>
             <p>Internal confirmation records founder verification; it does not claim bank or card settlement.</p>
-            <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm">
+            <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm" class="refund-confirmation-form">
                 <label>
-                    <input type="checkbox" name="acknowledgement" value="verified_full_refund_in_lava_top" required>
+                    <input type="checkbox" name="acknowledgement" value="verified_full_refund_in_lava_top" class="refund-confirmation-checkbox" required>
                     I verified the full refund in Lava.top.
                 </label>
-                <button type="submit">Confirm verified full refund</button>
+                <button type="submit" class="btn-primary refund-confirmation-button">Confirm verified full refund</button>
             </form>
         {% elif sale.refund_operation.status == 'confirmed' %}
             <p>The full refund is internally confirmed and future customer access is revoked.</p>
@@ -73,4 +73,22 @@
 
     <p><a href="/admin/sales">Back to Sales</a></p>
 </div>
+
+<script>
+document.querySelectorAll(".refund-confirmation-form").forEach((form) => {
+    const checkbox = form.querySelector(".refund-confirmation-checkbox");
+    const button = form.querySelector(".refund-confirmation-button");
+
+    if (!checkbox || !button) {
+        return;
+    }
+
+    const updateButtonState = () => {
+        button.disabled = !checkbox.checked;
+    };
+
+    checkbox.addEventListener("change", updateButtonState);
+    updateButtonState();
+});
+</script>
 {% endblock %}

@@ -89,8 +89,10 @@ Commerce and delivery:
   as separate `SaleItem` rows, the `Sale` total is derived from those snapshots,
   and successful Lava.top invoice creation returns an HTTP 303 redirect to the
   hosted checkout URL.
-- `/payment/result` now provides a neutral browser-return state and controlled
-  initiation-error state. It does not treat browser return as payment proof,
+- `/payment/result` now provides a neutral verification state and controlled
+  initiation-error state. No Lava.top browser return is currently integrated,
+  and the buyer may remain on Lava.top after payment. The route does not treat
+  browser navigation as payment proof,
   mark sales paid, create entitlements, expose delivery or booking access, or
   send purchase email.
 - Authoritative Lava.top payment confirmation is implemented through a
@@ -135,9 +137,14 @@ Commerce and delivery:
   Resend, the protected product access page opened, and the protected download
   completed successfully. This validates the manually reconciled product-only
   delivery journey, not automatic Lava.top webhook delivery.
-- Live automatic webhook delivery/resend, product-plus-consultation live
-  payment, result-page delivery UX, and end-to-end RUB/EUR payment and payout
-  validation remain incomplete. Live Lava.top webhook delivery cannot be
+- On 2026-08-14, real Sale #8 validated a 100 RUB bundle payment (50 RUB
+  product plus 50 RUB consultation). Lava.top reported the invoice as
+  `COMPLETED`; manual reconciliation changed the Sale to paid and made exactly
+  one product entitlement and one consultation entitlement available. The
+  purchase email was sent and both protected access pages opened. This did not
+  validate live webhook delivery or a browser return from Lava.top.
+- Live automatic webhook delivery/resend and end-to-end RUB/EUR payment and
+  payout validation remain incomplete. Live Lava.top webhook delivery cannot be
   validated until SmartBudgetSite has a public HTTPS deployment or approved
   temporary public endpoint.
 - Lava.top is the approved first production payment provider within the
@@ -181,14 +188,15 @@ Commerce and delivery:
   the message was not sent before authorizing another attempt.
 - Purchase-email delivery is disabled unless explicitly enabled. Enabled
   configuration requires the Resend key, sender identity, and server-owned
-  public base URL. Automated coverage uses fake transports. Sale #7 confirms
-  one live product-only Resend delivery and protected download journey;
+  public base URL. Automated coverage uses fake transports. Sales #7 and #8
+  confirm live product-only and bundle Resend delivery plus protected access;
   provider click-tracking behavior for capability links and the remaining
   customer journeys remain unvalidated.
-- The approved MVP checkout uses hosted Lava.top checkout and returns to a
-  SmartBudgetSite payment result page. Browser return is not proof of payment;
-  paid state, entitlements, customer content, and purchase emails require an
-  authenticated webhook or explicit server-to-server verification.
+- The approved MVP checkout uses hosted Lava.top checkout. No Lava.top browser
+  return is currently integrated, so the buyer may remain on Lava.top after
+  payment; `/payment/result` remains a neutral verification route. Paid state,
+  entitlements, customer content, and purchase emails require the authenticated
+  webhook or founder-operated explicit server-to-server verification.
 - The catalog-defined selected price determines currency: RUB for Russian
   customers and EUR for international customers. Payout routing remains
   operational rather than application business logic. The planned foreign EUR
@@ -395,10 +403,11 @@ Infrastructure and quality:
 
 The payment release blocker is completing live validation of the approved
 Lava.top integration and customer delivery: configure and validate webhook
-delivery/resend after a public HTTPS endpoint exists, validate the EUR and live
-product-plus-consultation paths, and validate the implemented purchase-email
-workflow and protected delivery links in the deployed environment. The browser
-result page remains neutral until a separately approved result-page redesign.
+delivery/resend after a public HTTPS endpoint exists, validate the EUR path,
+and validate the implemented purchase-email workflow and protected delivery
+links in the deployed environment. No Lava.top browser return is currently
+integrated; `/payment/result` remains neutral unless a supported return flow is
+separately approved and implemented.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.
