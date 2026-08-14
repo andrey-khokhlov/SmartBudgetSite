@@ -120,6 +120,15 @@ Missing provider configuration produces a deterministic fallback message.
 Support diagnostics use a masked token reference and never reveal the full
 token.
 
+Known customer capability failures render through the normal public HTML layout
+without weakening validation: an unknown token remains HTTP 404, while a
+refunded/cancelled, expired, or already-booked entitlement remains HTTP 403.
+The localized page never echoes the capability token, raw exception detail, or
+internal/provider identifiers and retains the feedback/support link. The
+consultation entitlement has no approved separate public support-reference
+field; adding one remains a persistence and domain decision rather than a UI
+fallback.
+
 Every booking capability response, including framework-generated errors, uses
 `Cache-Control: private, no-store, max-age=0`, `Pragma: no-cache`, `Expires: 0`,
 and `Referrer-Policy: no-referrer`. Uvicorn access logging removes query strings

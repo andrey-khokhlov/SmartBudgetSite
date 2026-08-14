@@ -123,16 +123,52 @@ def test_consultation_booking_fails_closed_after_owning_sale_is_refunded(
 
     assert response.status_code == 403
     assert_capability_response_headers(response)
-    assert "consultation booking link is no longer available" in response.text.lower()
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Consultation booking is unavailable" in response.text
+    assert "Access to consultation booking has been cancelled." in response.text
+    assert "Contact support" in response.text
+    assert "message_type=purchase_or_download_issue" in response.text
+    assert entitlement.booking_token not in response.text
+    assert '"detail"' not in response.text
+    assert "Consultation booking link is no longer available." not in response.text
+
+    localized_response = client.get(
+        f"/consultation/book/{entitlement.booking_token}?lang=ru"
+    )
+
+    assert localized_response.status_code == 403
+    assert_capability_response_headers(localized_response)
+    assert localized_response.headers["content-type"].startswith("text/html")
+    assert "Запись на консультацию недоступна" in localized_response.text
+    assert "Доступ к записи на консультацию был отменён." in localized_response.text
+    assert "Обратитесь в поддержку" in localized_response.text
+    assert entitlement.booking_token not in localized_response.text
+    assert '"detail"' not in localized_response.text
 
 
 @pytest.mark.parametrize(
-    ("status_code", "detail"),
+    ("status_code", "detail", "expected"),
     [
-        (404, "Consultation booking link was not found."),
-        (403, "This consultation has already been booked."),
-        (403, "Consultation booking link has expired."),
-        (403, "Consultation booking link is no longer available."),
+        (
+            404,
+            "Consultation booking link was not found.",
+            "This consultation booking link is invalid or unavailable.",
+        ),
+        (
+            403,
+            "This consultation has already been booked.",
+            "This consultation has already been booked.",
+        ),
+        (
+            403,
+            "Consultation booking link has expired.",
+            "This consultation booking access has expired.",
+        ),
+        (
+            403,
+            "Consultation booking link is no longer available.",
+            "Access to consultation booking has been cancelled.",
+        ),
     ],
 )
 def test_consultation_booking_errors_receive_capability_protection_headers(
@@ -140,6 +176,7 @@ def test_consultation_booking_errors_receive_capability_protection_headers(
     monkeypatch,
     status_code,
     detail,
+    expected,
 ):
     def reject(*args, **kwargs):
         raise HTTPException(status_code=status_code, detail=detail)
@@ -153,6 +190,35 @@ def test_consultation_booking_errors_receive_capability_protection_headers(
 
     assert response.status_code == status_code
     assert_capability_response_headers(response)
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Consultation booking is unavailable" in response.text
+    assert expected in response.text
+    assert "Contact support" in response.text
+    assert '"detail"' not in response.text
+    assert "booking-secret" not in response.text
+
+
+def test_consultation_booking_renders_generic_html_for_internal_http_error(
+    client,
+    monkeypatch,
+):
+    def reject(*args, **kwargs):
+        raise HTTPException(status_code=503, detail="Internal provider failure")
+
+    monkeypatch.setattr(
+        "app.web.routes.get_valid_consultation_entitlement_by_token",
+        reject,
+    )
+
+    response = client.get("/consultation/book/booking-secret")
+
+    assert response.status_code == 503
+    assert_capability_response_headers(response)
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Consultation booking is unavailable" in response.text
+    assert "Consultation booking is temporarily unavailable" in response.text
+    assert "Internal provider failure" not in response.text
+    assert '"detail"' not in response.text
     assert "booking-secret" not in response.text
 
 

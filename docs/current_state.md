@@ -141,8 +141,13 @@ Commerce and delivery:
   product plus 50 RUB consultation). Lava.top reported the invoice as
   `COMPLETED`; manual reconciliation changed the Sale to paid and made exactly
   one product entitlement and one consultation entitlement available. The
-  purchase email was sent and both protected access pages opened. This did not
-  validate live webhook delivery or a browser return from Lava.top.
+  purchase email was sent and both protected access pages opened. The founder
+  then issued the full 100 RUB refund manually; Lava.top showed `SENT` and a
+  refund date, and explicit SmartBudgetSite confirmation changed Sale #8 to
+  refunded. Both old product and consultation capabilities were denied after
+  refund. `SENT` is provider refund evidence, not proof of final bank/card
+  settlement. This did not validate live webhook delivery or a browser return
+  from Lava.top.
 - Live automatic webhook delivery/resend and end-to-end RUB/EUR payment and
   payout validation remain incomplete. Live Lava.top webhook delivery cannot be
   validated until SmartBudgetSite has a public HTTPS deployment or approved
@@ -381,7 +386,7 @@ Infrastructure and quality:
   ID uniqueness constraint for shared Price-by-request mappings and has been
   applied successfully to the configured PostgreSQL development database. Its
   downgrade remains separate environment validation.
-- The latest confirmed full ordinary suite result is 612 passing tests after
+- The latest confirmed full ordinary suite result is 615 passing tests after
   the founder-operated full-refund implementation. The focused refund service,
   Admin, locking, capability-boundary, and schema-parity suite passes 54 tests. The
   earlier PaymentProviderOffer Admin and checkout-readiness focused suite

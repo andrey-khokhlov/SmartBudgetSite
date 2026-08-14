@@ -2,6 +2,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/download.css') }}">
+<script src="{{ url_for('static', path='js/support_reference.js') }}" defer></script>
 {% endblock %}
 
 {% block title %}{{ t("download_title") }}{% endblock %}
@@ -13,15 +14,7 @@
             <div class="download-icon" aria-hidden="true">!</div>
             <h1>{{ t("download_error_title") }}</h1>
             <p class="download-error">{{ t(error_key) }}</p>
-            <p class="download-support-note">
-                {{ t("download_error_support_prefix") }}
-                <a href="{{ feedback_url }}">
-                    {{ t("download_feedback_link") }}
-                </a>
-                {% if support_reference %}
-                    {{ t("download_error_support_suffix").format(reference=support_reference) }}
-                {% endif %}
-            </p>
+            {% include "_support_reference.html" %}
         {% else %}
             <div class="download-icon" aria-hidden="true">↓</div>
             <p class="download-kicker">{{ t("download_kicker") }}</p>
@@ -59,11 +52,9 @@
                     <dt>{{ t("download_expires_at") }}</dt>
                     <dd>{{ expires_at.strftime("%d.%m.%Y %H:%M") }}</dd>
                 </div>
-                <div>
-                    <dt>{{ t("download_support_reference") }}</dt>
-                    <dd>{{ support_reference }}</dd>
-                </div>
             </dl>
+
+            {% include "_support_reference.html" %}
 
             <form method="post">
                 <button class="download-button" type="submit">

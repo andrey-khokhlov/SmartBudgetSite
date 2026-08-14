@@ -589,6 +589,23 @@ def test_get_valid_consultation_entitlement_by_token_rejects_booked_token(
     assert exc_info.value.detail == "This consultation has already been booked."
 
 
+def test_get_valid_consultation_entitlement_by_token_rejects_persisted_expired_token(
+    db_session,
+):
+    entitlement = create_test_consultation_entitlement(db_session)
+    entitlement.status = ConsultationEntitlementStatus.EXPIRED.value
+    db_session.flush()
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_valid_consultation_entitlement_by_token(
+            db=db_session,
+            booking_token=entitlement.booking_token,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Consultation booking link has expired."
+
+
 def test_mark_entitlement_as_booked_happy_path(db_session):
     """
     Test case: mark consultation entitlement as booked.

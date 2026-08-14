@@ -1,0 +1,23 @@
+<div class="support-reference">
+    <p class="support-reference__instruction">
+        <a href="{{ feedback_url }}">{{ t("support_contact") }}</a>{% if support_reference %}{{ t("support_reference_prompt") }}{% endif %}
+    </p>
+    {% if support_reference %}
+        <span
+            class="support-reference__value"
+            role="button"
+            tabindex="0"
+            title="{{ t('support_reference_copy_hint') }}"
+            aria-label="{{ t('support_reference_copy_hint') }}"
+            data-support-reference-copy
+            data-copy-value="{{ support_reference }}"
+            data-copy-success="{{ t('support_reference_copied') }}"
+            aria-describedby="support-reference-copy-status"
+        >{{ support_reference }}</span>
+        <span
+            class="support-reference__status"
+            id="support-reference-copy-status"
+            aria-live="polite"
+        ></span>
+    {% endif %}
+</div>

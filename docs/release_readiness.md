@@ -698,14 +698,15 @@ undocumented provider API. A unique provider-independent `RefundOperation`
 records pending intent and immutable Sale/provider snapshots; only an explicit
 post-provider verification acknowledgement atomically confirms the refund,
 marks the Sale refunded, and revokes future product and consultation access
-while preserving historical entitlement and provider metadata. Lava.top UI
-evidence from a real 50 RUB refund confirms the displayed amount, `SENT` marker,
-and refund date, but does not establish bank settlement or an API/lookup/webhook
-contract. The complete SmartBudgetSite Admin refund journey still requires live
-release-environment validation.
+while preserving historical entitlement and provider metadata. On 2026-08-14,
+the founder executed that complete workflow against real bundle Sale #8: Lava.top
+showed the full 100 RUB refund, `SENT`, and a refund date; explicit SmartBudgetSite
+confirmation changed the Sale to refunded; and both old product and consultation
+capabilities were denied. `SENT` does not establish final bank/card settlement
+or an API/lookup/webhook contract.
 
 The focused refund service, Admin, locking, protected-access, and schema-parity
-suite passes 54 tests, and the full ordinary suite passes 612 tests.
+suite passes 54 tests, and the full ordinary suite passes 615 tests.
 
 `REL-001` remains incomplete. The manual product-only and bundle reconciliation
 and delivery evidence is not live webhook or deployed-environment validation.
@@ -722,10 +723,6 @@ coverage, but still require deployed-environment validation. Remaining work is:
   reconciliation-required operator path;
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.
-- live founder execution of the protected pending-to-confirmed full-refund Admin
-  journey against a disposable paid Sale, including post-refund download and
-  consultation access denial; do not interpret Lava.top `SENT` as bank/card
-  settlement confirmation.
 
 ### Production deployment (`REL-002`)
 

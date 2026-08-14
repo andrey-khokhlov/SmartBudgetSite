@@ -4,11 +4,19 @@
 <link rel="stylesheet" href="{{ url_for('static', path='css/consultation_booking.css') }}">
 {% endblock %}
 
-{% block title %}{{ t("consultation_booking_title") }}{% endblock %}
+{% block title %}{% if error_key %}{{ t("consultation_booking_error_title") }}{% else %}{{ t("consultation_booking_title") }}{% endif %}{% endblock %}
 
 {% block content %}
 <section class="consultation-page">
     <div class="consultation-card">
+        {% if error_key %}
+        <div class="consultation-error-icon" aria-hidden="true">!</div>
+        <h1>{{ t("consultation_booking_error_title") }}</h1>
+        <p class="consultation-error">{{ t(error_key) }}</p>
+        <p class="consultation-error-support">
+            <a href="{{ feedback_url }}">{{ t("support_contact") }}</a>
+        </p>
+        {% else %}
         <div class="consultation-icon-main" aria-hidden="true">
             📅
         </div>
@@ -72,6 +80,7 @@
         <p class="consultation-security-note">
             🔒 {{ t("consultation_booking_security_note") }}
         </p>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

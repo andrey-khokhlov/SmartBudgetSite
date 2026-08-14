@@ -239,6 +239,26 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
             "Please contact support."
         ),
         "consultation_booking_security_note": "This link is personal and must not be shared.",
+        "consultation_booking_error_title": "Consultation booking is unavailable",
+        "consultation_booking_error_unknown": (
+            "This consultation booking link is invalid or unavailable."
+        ),
+        "consultation_booking_error_cancelled": (
+            "Access to consultation booking has been cancelled."
+        ),
+        "consultation_booking_error_expired": (
+            "This consultation booking access has expired."
+        ),
+        "consultation_booking_error_booked": (
+            "This consultation has already been booked."
+        ),
+        "consultation_booking_error_temporary": (
+            "Consultation booking is temporarily unavailable. Please try again later."
+        ),
+        "support_contact": "Contact support",
+        "support_reference_prompt": " and provide this reference:",
+        "support_reference_copy_hint": "Click to copy",
+        "support_reference_copied": "Copied",
         "download_title": "Secure download",
         "download_kicker": "Protected download",
         "download_intro": "Review the release details below, then generate your secure temporary download link.",
@@ -259,9 +279,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_error_attempt_limit": "This download link is no longer available.",
         "download_error_missing_release": "The purchased release is currently unavailable.",
         "download_error_unavailable": "The download service is temporarily unavailable. Please try again later.",
-        "download_error_support_prefix": "Contact support through the ",
         "download_feedback_link": "Feedback Form",
-        "download_error_support_suffix": " and provide reference code {reference}.",
         "rate_limit_title": "Too many requests",
         "rate_limit_message": "Too many requests. Please try again later.",
         "rate_limit_unavailable_message": "Request protection is temporarily unavailable.",
@@ -496,6 +514,26 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
             "Пожалуйста, свяжитесь с поддержкой."
         ),
         "consultation_booking_security_note": "Ссылка является персональной и не подлежит передаче.",
+        "consultation_booking_error_title": "Запись на консультацию недоступна",
+        "consultation_booking_error_unknown": (
+            "Ссылка для записи на консультацию недействительна или недоступна."
+        ),
+        "consultation_booking_error_cancelled": (
+            "Доступ к записи на консультацию был отменён."
+        ),
+        "consultation_booking_error_expired": (
+            "Срок действия доступа к записи на консультацию истёк."
+        ),
+        "consultation_booking_error_booked": (
+            "Эта консультация уже забронирована."
+        ),
+        "consultation_booking_error_temporary": (
+            "Запись на консультацию временно недоступна. Повторите попытку позже."
+        ),
+        "support_contact": "Обратитесь в поддержку",
+        "support_reference_prompt": " и сообщите код обращения:",
+        "support_reference_copy_hint": "Нажмите, чтобы скопировать",
+        "support_reference_copied": "Скопировано",
         "download_title": "Безопасное скачивание",
         "download_kicker": "Защищённое скачивание",
         "download_intro": "Проверьте информацию о выпуске, затем создайте временную защищённую ссылку для скачивания.",
@@ -516,9 +554,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "download_error_attempt_limit": "Эта ссылка для скачивания больше недоступна.",
         "download_error_missing_release": "Приобретённый выпуск сейчас недоступен.",
         "download_error_unavailable": "Сервис скачивания временно недоступен. Пожалуйста, повторите попытку позже.",
-        "download_error_support_prefix": "Обратитесь в поддержку через ",
         "download_feedback_link": "форму обратной связи",
-        "download_error_support_suffix": " и сообщите код обращения {reference}.",
         "rate_limit_title": "Слишком много запросов",
         "rate_limit_message": "Слишком много запросов. Повторите попытку позже.",
         "rate_limit_unavailable_message": "Защита запросов временно недоступна.",

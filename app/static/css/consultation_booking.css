@@ -294,3 +294,54 @@
     }
 
 }
+
+.consultation-error-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.consultation-error {
+    margin: 1.25rem 0 0.75rem;
+    color: #b91c1c;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.consultation-error-support {
+    margin: 0;
+    color: #5b6475;
+    line-height: 1.65;
+}
+
+@media (max-width: 380px) {
+    .consultation-page {
+        padding: 0.75rem 0 0.5rem;
+    }
+
+    .consultation-card {
+        padding: 1.25rem 0.75rem;
+        border-radius: 16px;
+    }
+
+    .consultation-card h1 {
+        font-size: clamp(1.3rem, 7vw, 1.5rem);
+        overflow-wrap: normal;
+        word-break: normal;
+        letter-spacing: normal;
+    }
+
+    .consultation-error,
+    .consultation-error-support {
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+}

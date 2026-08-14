@@ -98,6 +98,41 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert db_session.get(type(entitlement), entitlement.id).attempt_count == 0
 
 
+def test_download_support_reference_is_separate_copyable_and_localized(
+    client,
+    db_session,
+):
+    entitlement, _ = create_download(db_session)
+    token = entitlement.download_token
+
+    response = client.get(f"/download/{token}")
+
+    assert response.status_code == 200
+    assert "Contact support" in response.text
+    assert "and provide this reference:" in response.text
+    assert f'data-copy-value="{entitlement.support_reference}"' in response.text
+    assert 'data-copy-success="Copied"' in response.text
+    assert 'title="Click to copy"' in response.text
+    assert 'aria-label="Click to copy"' in response.text
+    assert 'data-support-reference-copy' in response.text
+    assert 'role="button"' in response.text
+    assert 'tabindex="0"' in response.text
+    assert "message_type=purchase_or_download_issue" in response.text
+    assert entitlement.support_reference in response.text
+    assert token not in response.text
+
+    localized_response = client.get(f"/download/{token}?lang=ru")
+
+    assert localized_response.status_code == 200
+    assert "Обратитесь в поддержку" in localized_response.text
+    assert "и сообщите код обращения:" in localized_response.text
+    assert 'data-copy-success="Скопировано"' in localized_response.text
+    assert 'title="Нажмите, чтобы скопировать"' in localized_response.text
+    assert 'aria-label="Нажмите, чтобы скопировать"' in localized_response.text
+    assert f'data-copy-value="{entitlement.support_reference}"' in localized_response.text
+    assert token not in localized_response.text
+
+
 def test_download_get_fails_closed_after_owning_sale_is_refunded(client, db_session):
     entitlement, _ = create_download(db_session)
     token = entitlement.download_token
@@ -109,6 +144,8 @@ def test_download_get_fails_closed_after_owning_sale_is_refunded(client, db_sess
     assert response.status_code == 403
     assert_capability_response_headers(response)
     assert "This download access has been cancelled" in response.text
+    assert f'data-copy-value="{entitlement.support_reference}"' in response.text
+    assert entitlement.download_token not in response.text
 
 
 @pytest.mark.parametrize(
@@ -228,6 +265,10 @@ def test_download_post_storage_failure_is_localized_and_still_counts_attempt(
     assert refreshed.attempt_count == 1
     assert refreshed.status == DownloadEntitlementStatus.AVAILABLE.value
     assert entitlement.support_reference in response.text
+    assert f'data-copy-value="{entitlement.support_reference}"' in response.text
+    assert 'data-copy-success="Скопировано"' in response.text
+    assert "Обратитесь в поддержку" in response.text
+    assert "и сообщите код обращения:" in response.text
     assert "message_type=purchase_or_download_issue" in response.text
     assert f"support_reference={entitlement.support_reference}" in response.text
     assert entitlement.download_token not in response.text

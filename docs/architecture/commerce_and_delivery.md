@@ -572,7 +572,11 @@ MVP rules:
 
 Lifecycle statuses are `available`, `completed`, `expired`, and `cancelled`.
 Expiration may be derived dynamically without immediately mutating stored
-status. Support-facing pages expose only a masked reference, never the token.
+status. Customer access and error pages expose the approved opaque
+`DownloadEntitlement.support_reference` separately from explanatory text, never
+the capability token or an internal identifier. The reference remains visible
+and selectable without JavaScript; the progressive copy action copies only the
+reference value and provides localized success feedback.
 
 Download capability paths, query strings, signed R2 URLs, and redirect
 `Location` values must not be written to application or operational logs.

@@ -154,6 +154,13 @@ DOWNLOAD_ERROR_TRANSLATION_KEYS = {
     "Download release was not found.": "download_error_missing_release",
 }
 
+CONSULTATION_ERROR_TRANSLATION_KEYS = {
+    "Consultation booking link was not found.": "consultation_booking_error_unknown",
+    "Consultation booking link is no longer available.": "consultation_booking_error_cancelled",
+    "Consultation booking link has expired.": "consultation_booking_error_expired",
+    "This consultation has already been booked.": "consultation_booking_error_booked",
+}
+
 
 def _feedback_prefill_url(
     request: Request,
@@ -185,6 +192,24 @@ def _render_download_error(
             "error_key": error_key,
             "support_reference": support_reference,
             "feedback_url": _feedback_prefill_url(request, support_reference),
+        },
+        status_code=exc.status_code,
+    )
+
+
+def _render_consultation_error(request: Request, exc: HTTPException):
+    error_key = CONSULTATION_ERROR_TRANSLATION_KEYS.get(str(exc.detail))
+    if error_key is None and exc.status_code >= 500:
+        error_key = "consultation_booking_error_temporary"
+    if error_key is None:
+        raise exc
+
+    return render(
+        request,
+        "consultation_booking.html",
+        {
+            "error_key": error_key,
+            "feedback_url": _feedback_prefill_url(request, None),
         },
         status_code=exc.status_code,
     )
@@ -1271,10 +1296,13 @@ def consultation_booking_page(
     - Route stays thin and delegates validation to service layer.
     """
 
-    entitlement = get_valid_consultation_entitlement_by_token(
-        db=db,
-        booking_token=booking_token,
-    )
+    try:
+        entitlement = get_valid_consultation_entitlement_by_token(
+            db=db,
+            booking_token=booking_token,
+        )
+    except HTTPException as exc:
+        return _render_consultation_error(request, exc)
 
     lang = get_lang(request)
 
