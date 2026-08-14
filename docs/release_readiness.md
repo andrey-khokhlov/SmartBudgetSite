@@ -650,6 +650,28 @@ The following work is mandatory before the first public commercial release, but
 it is planned release completion rather than remediation of existing backend
 defects.
 
+### Pre-deployment release sequence
+
+Production deployment begins only after these cross-project gates are complete:
+
+1. Complete SmartBudget Excel release-candidate hardening through a final
+   reliability and performance review that preserves existing functionality and
+   scope, limiting changes to release-critical defects and narrowly safe
+   reliability or performance corrections.
+2. Finalize the Russian and English product description and Walkthrough, using
+   the Walkthrough as the workbook's final functional acceptance pass. After
+   that pass, the workbook and content are the intended commercial release
+   candidate unless a release-blocking defect is found.
+3. Perform the dedicated final SmartBudgetSite visual/UI/UX review with the
+   stable workbook, copy, and product materials across the complete public
+   customer journey, separately from backend feature expansion.
+
+After these gates, proceed with `REL-002` production deployment, public DNS and
+HTTPS, then resume the remaining deployed/live validation and release-polish
+work. `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and all
+other existing release gaps remain open until their own completion criteria are
+met; this sequence defers rather than abandons them.
+
 ### Commerce and fulfillment (`REL-001`)
 
 Partial integration validation is complete: the normal admin upload and Publish

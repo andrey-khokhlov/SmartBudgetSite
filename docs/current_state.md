@@ -406,13 +406,12 @@ Infrastructure and quality:
 
 ## Current launch constraint
 
-The payment release blocker is completing live validation of the approved
-Lava.top integration and customer delivery: configure and validate webhook
-delivery/resend after a public HTTPS endpoint exists, validate the EUR path,
-and validate the implemented purchase-email workflow and protected delivery
-links in the deployed environment. No Lava.top browser return is currently
-integrated; `/payment/result` remains neutral unless a supported return flow is
-separately approved and implemented.
+The remaining live validation of the approved Lava.top integration and customer
+delivery requires the real deployed HTTPS environment. Production deployment
+and that validation are intentionally deferred until the approved
+pre-deployment release gates below are complete. No Lava.top browser return is
+currently integrated; `/payment/result` remains neutral unless a supported
+return flow is separately approved and implemented.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.
@@ -424,16 +423,35 @@ decision remains to continue development while the approved payment and payout
 operations are validated rather than block product work on future Stripe
 infrastructure.
 
-## Next sprint priorities
+## Next active phase and release sequence
 
-### 1. Complete the Expected Release Gaps
+### 1. SmartBudget release-candidate hardening
 
-The Official Release Backlog is complete. Continue release preparation through
-the authoritative Expected Release Gaps in `release_readiness.md`; select each
-bounded implementation scope through the established architecture discussion
-and review workflow rather than creating a parallel backlog.
+The next active phase is the cross-project SmartBudget Excel release-candidate
+gate: complete a final reliability and performance review while preserving
+existing functionality and product scope. Only release-critical defects and
+narrowly safe reliability or performance corrections belong in this gate;
+feature development and non-critical improvements remain deferred to the next
+SmartBudget version.
 
-### 2. Smart Feedback support flow (later work)
+### 2. Complete the remaining pre-deployment gates
+
+After workbook hardening, finalize the bilingual product description and
+Walkthrough. Creating the Walkthrough is the final functional acceptance pass
+of the release-candidate workbook; afterward, the workbook and content are the
+intended commercial release candidate unless a release-blocking defect is
+found. Then perform the dedicated SmartBudgetSite visual/UI/UX review against
+the final copy and product materials, covering the complete public customer
+journey without expanding backend scope.
+
+### 3. Resume SmartBudgetSite release completion
+
+Only after those gates should SmartBudgetSite proceed to production deployment,
+public DNS and HTTPS, then resume the still-open Expected Release Gaps and live
+validation in `release_readiness.md`. This sequencing defers those obligations;
+it does not close or abandon them.
+
+### Later application work: Smart Feedback support flow
 
 Extend the fully prefilled Feedback experience to payment failures. The bounded
 download-support slice is implemented; payment support-reference generation and
@@ -456,7 +474,7 @@ This remains planned support-flow work after the applicable Official Release
 Backlog priorities. It is separate from the Expected Release Gaps roadmap in
 `release_readiness.md`.
 
-### 3. Continue release-readiness validation
+### Ongoing release-readiness validation
 
 Continue manually validating complete end-to-end user journeys as major
 functionality is completed.
