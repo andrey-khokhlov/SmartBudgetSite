@@ -703,13 +703,20 @@ refund marker. `GET /api/v2/invoices/{id}` continued to expose the original
 invoice as `COMPLETED` without refund fields; the downloaded invoice and Sales
 report exposed no useful additional refund data.
 
-Public Lava.top documentation does not establish a refund-creation API,
-provider refund identifier, refund-status lookup contract, idempotency contract,
-or refund webhook. `SENT` is provider-side UI evidence only and is not an
-internal lifecycle state. SmartBudgetSite therefore neither calls nor infers an
-undocumented Lava.top refund API. For MVP, the founder's explicit verification
-of the manual full refund is the authoritative operator action permitting
-internal confirmation; it is not a claim of bank or card settlement.
+Neither public Lava.top documentation nor this live observation establishes a
+refund-creation API, provider refund identifier, refund-status lookup contract,
+idempotency contract, refund webhook, or complete status lifecycle. In the
+verified live SmartBudget refund, Lava.top showed the full refund amount, status
+`SENT`, and a refund date; the money later reached the customer's bank card
+while the UI still displayed `SENT`, and no later `settled`, `completed`, or
+equivalent UI state was observed. `SENT` is therefore provider-side evidence
+that Lava.top sent or processed the refund, but not proof that bank/card
+settlement has already occurred. SmartBudgetSite neither calls nor infers
+undocumented provider capabilities and must not depend on a later Lava.top UI
+transition to determine whether money reached the customer. For MVP, the
+founder's explicit verification of the manual full refund is the authoritative
+operator action permitting internal confirmation; it is not a claim of bank or
+card settlement.
 
 ### Persisted refund operation
 

@@ -145,9 +145,10 @@ Commerce and delivery:
   then issued the full 100 RUB refund manually; Lava.top showed `SENT` and a
   refund date, and explicit SmartBudgetSite confirmation changed Sale #8 to
   refunded. Both old product and consultation capabilities were denied after
-  refund. `SENT` is provider refund evidence, not proof of final bank/card
-  settlement. This did not validate live webhook delivery or a browser return
-  from Lava.top.
+  refund. The money was later returned to the customer's bank card while
+  Lava.top continued to display `SENT`; no later provider UI state was observed.
+  `SENT` is provider refund evidence, not proof of final bank/card settlement.
+  This did not validate live webhook delivery or a browser return from Lava.top.
 - Live automatic webhook delivery/resend and end-to-end RUB/EUR payment and
   payout validation remain incomplete. Live Lava.top webhook delivery cannot be
   validated until SmartBudgetSite has a public HTTPS deployment or approved
