@@ -697,17 +697,23 @@ or timing semantics.
 
 ### Lava.top MVP contract
 
-Lava.top UI supports a manually entered refund amount. After a real 50 RUB full
-refund, the UI showed the 50 RUB amount, status `SENT`, refund date, and a Sales
-refund marker. `GET /api/v2/invoices/{id}` continued to expose the original
+Confirmed provider facts supplied by direct Lava.top support:
+
+- Refund initiation through API is currently unavailable. Support passed the
+  request/idea to the provider's developers; this is not a delivery commitment.
+- One Lava.top transaction permits at most one refund. A second refund against
+  the same transaction is unsupported.
+- Lava.top processes its side of a refund immediately; customer bank/card
+  settlement may take up to 10 business days.
+
+Live UI observations: Lava.top supports a manually entered refund amount. After
+a real 50 RUB full refund, the UI showed the 50 RUB amount, status `SENT`, refund
+date, and a Sales refund marker. `GET /api/v2/invoices/{id}` continued to expose the original
 invoice as `COMPLETED` without refund fields; the downloaded invoice and Sales
 report exposed no useful additional refund data.
 
-Neither public Lava.top documentation nor this live observation establishes a
-refund-creation API, provider refund identifier, refund-status lookup contract,
-idempotency contract, refund webhook, or complete status lifecycle. In the
-verified live SmartBudget refund, Lava.top showed the full refund amount, status
-`SENT`, and a refund date; the money later reached the customer's bank card
+In the verified live SmartBudget refund, Lava.top showed the full refund amount,
+status `SENT`, and a refund date; the money later reached the customer's bank card
 while the UI still displayed `SENT`, and no later `settled`, `completed`, or
 equivalent UI state was observed. `SENT` is therefore provider-side evidence
 that Lava.top sent or processed the refund, but not proof that bank/card
@@ -717,6 +723,16 @@ transition to determine whether money reached the customer. For MVP, the
 founder's explicit verification of the manual full refund is the authoritative
 operator action permitting internal confirmation; it is not a claim of bank or
 card settlement.
+
+Unresolved provider capability: authoritative refund verification/reconciliation
+through API, webhook, lookup, or another machine-readable mechanism remains
+unconfirmed while Lava.top support investigates and prepares a response.
+Neither public documentation nor the live observations establish a provider
+refund identifier, refund-status lookup contract, idempotency contract, refund
+webhook, or complete status lifecycle. SmartBudgetSite must not claim independent
+machine-readable verification of refund completion until such a contract is
+confirmed. This pending question is separate from confirmed API initiation
+unavailability.
 
 ### Persisted refund operation
 
@@ -744,3 +760,48 @@ transaction, locks the Sale, operation, and both entitlement sets, revalidates
 the immutable snapshot, reconciles access, and only then changes the operation
 to `confirmed` and the Sale to `refunded`. Any reconciliation failure rolls the
 whole transaction back.
+
+### Deferred customer refund requests and item-targeted refunds
+
+This is deferred post-release direction, not current MVP behavior. A future
+customer-facing `RefundRequest` lifecycle should be separate from the
+financial/provider `RefundOperation`. Requests may concern either a consultation
+or the SmartBudget product and should identify the exact purchased `SaleItem`.
+
+Any item-targeted refund amount must derive from the immutable purchased
+`SaleItem` snapshot, not current catalog pricing or arbitrary SmartBudgetSite
+operator input. Where provider and business rules permit, refunding one item
+should cancel only its associated entitlement and preserve unaffected purchased
+rights, including access to an unrefunded product. Original successful purchase
+and entitlement history must remain preserved.
+
+Product refund eligibility, refund window, applicable legal requirements, and
+treatment of already-downloaded, non-revocable digital files remain intentionally
+undecided until implementation planning. Refund requests should capture
+structured reason codes, optional customer comments, and operator/agent analysis
+where appropriate. This telemetry should support operational and product
+learning about capacity, expectation mismatch, accidental purchases, technical
+problems, product issues, and other causes.
+
+Unresolved architecture decision:
+
+```text
+One SmartBudget Sale -> one Lava.top transaction -> at most one provider refund
+```
+
+After an item-targeted refund, handling a later request for another item from
+the same original Sale remains unresolved. Multiple provider refunds per Sale
+are not an accepted design. The relationship between Sale, provider transaction,
+refund target, and later requests requires an explicit decision before
+implementation; no solution is selected here.
+
+Current behavior remains zero or one `RefundOperation` per Sale, enforced by
+`RefundOperation.sale_id` uniqueness. Removal of that constraint is not approved;
+it may align with the provider transaction limit. The future persistence model
+must explicitly address whole-Sale versus item-targeted refunds.
+
+The current access invariant also remains: both protected capability validators
+require the owning Sale to remain `paid`. Future item-level refund implementation
+must explicitly reconcile that invariant with keeping an unrefunded product
+usable; cancelling only one entitlement while marking the whole Sale `refunded`
+would still block the unaffected product. That design is not resolved here.

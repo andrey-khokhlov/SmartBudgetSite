@@ -452,6 +452,30 @@ public DNS and HTTPS, then resume the still-open Expected Release Gaps and live
 validation in `release_readiness.md`. This sequencing defers those obligations;
 it does not close or abandon them.
 
+### Post-release priority: Consultation Capacity & Refund Operations
+
+This initiative is deferred until after the first public commercial release and
+is not a current release blocker. It is deliberately the first planned
+post-release SmartBudgetSite enhancement, with this sequence:
+
+`Public release -> short production stabilization -> Consultation Capacity &
+Refund Operations -> SmartBudgetSite becomes maintenance-first -> primary
+development focus returns to SmartBudget Excel`.
+
+The objective is to make refunds, criticism/support handling, and consultation
+workload operationally predictable before development focus returns to Excel.
+
+Current provider research, confirmed directly by Lava.top support: refund API
+initiation is unavailable; only one refund is possible per provider transaction;
+Lava.top processes its side immediately, while bank/card settlement may take up
+to 10 business days. Authoritative machine-readable refund
+verification/reconciliation remains pending a provider-support response.
+
+Detailed deferred rules and unresolved decisions belong in
+[refund architecture](architecture/commerce_and_delivery.md#deferred-customer-refund-requests-and-item-targeted-refunds),
+[consultation capacity](architecture/consultations.md#deferred-operational-capacity),
+and [assisted refund operations](operations.md#deferred-assisted-refund-operations).
+
 ### Later application work: Smart Feedback support flow
 
 Extend the fully prefilled Feedback experience to payment failures. The bounded

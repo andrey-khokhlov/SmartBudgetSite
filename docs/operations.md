@@ -482,6 +482,11 @@ Interpret Admin payment state as follows:
 Use only the protected Sales Admin workflow. SmartBudgetSite supports full-Sale
 refunds only and does not call a Lava.top refund API.
 
+Lava.top support confirms that only one refund is possible per provider
+transaction; do not attempt a second provider refund. See the authoritative
+[Lava.top refund contract](architecture/commerce_and_delivery.md#lavatop-mvp-contract)
+for confirmed capabilities, settlement timing, and pending verification research.
+
 1. Open the paid Sale and verify its exact amount, currency, provider, and
    external payment ID.
 2. Select **Start refund** and accept the explicit acknowledgement. This creates
@@ -498,6 +503,36 @@ refunds only and does not call a Lava.top refund API.
 6. If the Admin reports a conflict or persistence error, do not edit SQL or
    start another refund. Preserve the provider evidence and investigate the
    existing Sale/refund operation.
+
+### Deferred assisted refund operations
+
+This is a deferred post-release operating model for a dedicated
+operations-oriented Codex/Computer-Use project, not an implemented workflow.
+Work should be batched rather than interruption-driven, initially roughly once
+every 1–3 days depending on actual volume.
+
+The intended operations agent workflow is:
+
+1. Review new refund requests and backend-owned purchase/refund context.
+2. Require backend-owned deterministic eligibility and an exact refund amount
+   before provider execution; summarize the customer's reason and flag anomalies
+   or cases requiring judgment.
+3. Prepare the exact provider-side refund and obtain founder approval before
+   irreversible money movement, at least initially.
+4. After approval, execute through the approved provider interface, inspect
+   provider evidence, and reconcile/record the result and operational outcome
+   according to the verified SmartBudgetSite/provider contract.
+
+The agent must not invent eligibility or amounts from free text, attempt a
+second refund against the same Lava.top transaction, treat `SENT` as proof of
+bank/card settlement, or assume an API/webhook/lookup verification capability
+that Lava.top has not confirmed. Authoritative machine-readable refund
+verification/reconciliation is still pending provider response; this workflow
+does not establish such a capability. See the
+[commerce refund direction and unresolved decisions](architecture/commerce_and_delivery.md#deferred-customer-refund-requests-and-item-targeted-refunds).
+
+No-approval autonomous money movement requires a later explicit
+architecture/operations decision supported by real operating evidence.
 
 ## Deployment and external integration validation
 

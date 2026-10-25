@@ -243,3 +243,34 @@ Manual Calendly booking, cancellation emails, Google Meet, and Google Calendar
 synchronization have been validated. Some users in Russia may require VPN access
 to Calendly; a customer-facing fallback support option remains desirable before
 launch.
+
+### Deferred operational capacity
+
+This is deferred post-release direction. Operational capacity must be separate
+from catalog activation:
+
+```text
+Catalog offer active AND operational capacity available
+    = consultation add-on sellable
+```
+
+`ServiceAddon.is_active` remains catalog/versioning state and must not be
+repurposed as temporary capacity state. Exhausted operational capacity should
+eventually suppress or disable new consultation add-on purchases without
+rewriting catalog history.
+
+Outstanding consultation liability is the preferred future direction/candidate
+signal rather than raw weekly sales. It may include available consultation
+entitlements and relevant future booked consultations, but this is not a
+finalized formula. The exact workload definition, measurement window, warning
+threshold, hard limit, and re-enable behavior remain empirical decisions for
+implementation planning.
+
+### Deferred consultation refund requests
+
+Future consultation refund requests should refer to the purchased consultation
+`SaleItem` and use the commerce-owned
+[refund-request/refund-operation rules](commerce_and_delivery.md#deferred-customer-refund-requests-and-item-targeted-refunds).
+They remain subject to the unresolved architecture decision about later requests
+when Lava.top permits only one refund per provider transaction. These deferred
+directions do not change the currently implemented entitlement lifecycle.
