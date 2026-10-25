@@ -652,19 +652,22 @@ defects.
 
 ### Pre-deployment release sequence
 
-Production deployment begins only after these cross-project gates are complete:
+Production deployment begins only after the cross-project pre-deployment gates
+are complete. Their current state is:
 
-1. Complete SmartBudget Excel release-candidate hardening through a final
-   reliability and performance review that preserves existing functionality and
-   scope, limiting changes to release-critical defects and narrowly safe
-   reliability or performance corrections.
-2. Finalize the Russian and English product description and Walkthrough, using
-   the Walkthrough as the workbook's final functional acceptance pass. After
-   that pass, the workbook and content are the intended commercial release
-   candidate unless a release-blocking defect is found.
-3. Perform the dedicated final SmartBudgetSite visual/UI/UX review with the
-   stable workbook, copy, and product materials across the complete public
-   customer journey, separately from backend feature expansion.
+1. **Completed, owner-confirmed:** SmartBudget Excel release-candidate hardening.
+2. **Completed, owner-confirmed:** Final Russian and English workbook versions
+   and Walkthroughs are complete, packaged into ZIP archives, and ready for
+   distribution. The bilingual Walkthrough is the accepted detailed
+   customer-facing guide for this release. A separate Product Description has
+   intentionally been removed from the release gate because it would duplicate
+   the Walkthrough; it is not an outstanding deliverable. The workbook and
+   materials are the intended commercial release candidate unless a
+   release-blocking defect is found.
+3. **Open; next active phase:** Perform the dedicated SmartBudgetSite public
+   visual/UI/UX review and release-polish pass against the final workbook,
+   bilingual Walkthroughs, and packaged customer materials across the complete
+   public customer journey, separately from backend feature expansion.
 
 After these gates, proceed with `REL-002` production deployment, public DNS and
 HTTPS, then resume the remaining deployed/live validation and release-polish

@@ -426,24 +426,26 @@ infrastructure.
 
 ## Next active phase and release sequence
 
-### 1. SmartBudget release-candidate hardening
+### 1. Completed SmartBudget release-candidate and materials gate
 
-The next active phase is the cross-project SmartBudget Excel release-candidate
-gate: complete a final reliability and performance review while preserving
-existing functionality and product scope. Only release-critical defects and
-narrowly safe reliability or performance corrections belong in this gate;
-feature development and non-critical improvements remain deferred to the next
-SmartBudget version.
+The project owner has confirmed that SmartBudget Excel release-candidate
+hardening is complete. The final Russian and English workbook versions and
+Walkthroughs are complete, packaged into ZIP archives, and ready for
+distribution.
 
-### 2. Complete the remaining pre-deployment gates
+A separate Product Description has intentionally been removed from this
+release gate. The bilingual Walkthrough is the accepted detailed customer-facing
+guide to the workbook and its use; maintaining another standalone description
+would be redundant. This is an explicit product decision, not a missing
+deliverable. The workbook and materials are the intended commercial release
+candidate unless a release-blocking defect is found.
 
-After workbook hardening, finalize the bilingual product description and
-Walkthrough. Creating the Walkthrough is the final functional acceptance pass
-of the release-candidate workbook; afterward, the workbook and content are the
-intended commercial release candidate unless a release-blocking defect is
-found. Then perform the dedicated SmartBudgetSite visual/UI/UX review against
-the final copy and product materials, covering the complete public customer
-journey without expanding backend scope.
+### 2. Next active phase: public visual/UI/UX review and release polish
+
+The next active SmartBudgetSite work is the dedicated public visual/UI/UX review
+and release-polish pass against the final workbook, bilingual Walkthroughs, and
+packaged customer materials. Cover the complete public customer journey without
+expanding backend scope. This pre-deployment gate remains open.
 
 ### 3. Resume SmartBudgetSite release completion
 
