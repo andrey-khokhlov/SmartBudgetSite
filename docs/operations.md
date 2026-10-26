@@ -62,6 +62,80 @@ local listener before starting another process on the same port. This is a
 temporary local review setup, not production deployment or live payment
 validation. Closing the dedicated session leaves normal `.env` selection intact.
 
+### Temporary external HTTPS access
+
+The validated review endpoint is `https://smartbudget-review.neocitrix.com`,
+served by the locally managed named Cloudflare Tunnel `smartbudget-review`
+(UUID `aff8bb9a-4a82-4f4b-9596-c718371abf72`). Its local origin is
+`http://127.0.0.1:8800`. The dedicated local configuration is
+`C:\Users\Admin\.cloudflared\config-smartbudget-review.yml`, with
+`protocol: http2` explicitly configured. The tunnel credentials JSON remains
+private local material and must not be copied into repository documentation.
+
+The default `C:\Users\Admin\.cloudflared\config.yml` belongs to the separate
+Ollama tunnel. Do not reuse or modify it for SmartBudget review.
+
+### Review-only Cloudflare perimeter
+
+A fail-closed WAF custom rule on the review hostname permits only `GET` and
+`HEAD` requests to explicitly approved public visual-review routes and
+`/static/*`. All other methods and paths are blocked at the Cloudflare edge.
+In particular, external access is blocked to `/admin*`, `/v1/*`, `/download/*`,
+`/consultation/book/*`, `/docs`, `/redoc`, `/openapi.json`, administrative
+product-release routes, and POST checkout. This permits visual inspection,
+not external administrative, API, capability, or purchase operations.
+
+A Response Header Transform Rule adds
+`X-Robots-Tag: noindex, nofollow, noarchive`. A Cache Rule bypasses cache for
+`smartbudget-review.neocitrix.com`.
+
+### Confirmed external validation
+
+Manual checks from outside the local origin verified:
+
+| Check | Observed result |
+| --- | --- |
+| Public `/` GET | HTTP 200 |
+| EN checkout GET | HTTP 200; `sb_lang=en` preserved |
+| `/admin` | Cloudflare HTTP 403 |
+| POST checkout | Cloudflare HTTP 403 |
+| `/v1/health` | Cloudflare HTTP 403 |
+| `/download/test` | Cloudflare HTTP 403 |
+| Response headers | `X-Robots-Tag` present; `cf-cache-status: DYNAMIC` |
+| Five consecutive public root GETs | HTTP 200 for all five |
+
+This evidence validates temporary review access and its review-only perimeter;
+it is not production deployment or production security validation.
+
+### VPN and network constraints
+
+Hiddify/VLESS caused unstable long-lived Cloudflare Tunnel edge connections,
+with repeated control-stream disconnects and intermittent HTTP 502/520/530
+responses. AmneziaWG produced stable review access in the validation run;
+prefer AmneziaWG over Hiddify while `cloudflared` is running for review sessions.
+Keep `protocol: http2` explicitly configured.
+
+The connectivity pre-check under AmneziaWG found `region1.v2.argotunnel.com`
+reachable and `region2.v2.argotunnel.com` unavailable. This reduces network
+redundancy and was accepted only for the temporary review environment because
+repeated public requests succeeded. It is not suitable evidence of production
+deployment readiness.
+
+### Review tunnel cleanup
+
+After the UI/UX review is complete:
+
+1. Stop `cloudflared` for the review tunnel.
+2. Remove the review DNS route/hostname.
+3. Remove the review-only WAF rule.
+4. Remove the review `X-Robots-Tag` transform rule.
+5. Remove the review cache-bypass rule.
+6. Delete the `smartbudget-review` tunnel if it is no longer needed.
+7. Remove the dedicated local review tunnel configuration and credentials only
+   after the tunnel is deleted and no longer required.
+
+Do not touch the existing `ha-cloudflare` or `ollama-tunnel` tunnels.
+
 ## Port contract
 
 | Port | Purpose | Environment scope | Port role |

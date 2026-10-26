@@ -479,6 +479,14 @@ strong emphasis for Total; and Product Releases Admin displays Moscow-local
 release timestamps without changing stored UTC values. These corrections do
 not close the overall UI/UX gate or establish production validation.
 
+The temporary HTTPS endpoint `https://smartbudget-review.neocitrix.com` is now
+externally reachable and perimeter-validated: approved public GET review routes
+work, while privileged, API, capability, and POST surfaces are blocked at the
+Cloudflare edge. Operational details and validation evidence are in the
+temporary review environment section of `operations.md`. The overall public
+UI/UX review gate remains open; this is neither production deployment nor
+production security validation.
+
 ### 3. Resume SmartBudgetSite release completion
 
 Only after those gates should SmartBudgetSite proceed to production deployment,
