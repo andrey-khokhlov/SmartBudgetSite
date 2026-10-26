@@ -1,8 +1,95 @@
+import re
 from decimal import Decimal
+
+import pytest
 
 from app.models.product import Product
 from app.models.product_price import ProductPrice
 from app.models.service_addon import ServiceAddon
+
+
+@pytest.mark.parametrize(
+    "lang,package,currency,amount,addon_amount,total,title",
+    [
+        ("en", "int", "EUR", "49.00", "69.00", "118.00 EUR", "Checkout"),
+        ("ru", "ru", "RUB", "2990.00", "3900.00", "6 890,00 RUB", "Оплата"),
+    ],
+)
+@pytest.mark.parametrize("explicit_language", [True, False])
+def test_buy_to_checkout_preserves_language_and_bundle_total(
+    client,
+    db_session,
+    lang,
+    package,
+    currency,
+    amount,
+    addon_amount,
+    total,
+    title,
+    explicit_language,
+):
+    product = Product(
+        family_slug="smartbudget",
+        slug=f"smartbudget-{package}-standard",
+        name="SmartBudget",
+        edition="Standard",
+        archive_path="",
+        status="in_sale",
+    )
+    db_session.add(product)
+    db_session.flush()
+    db_session.add_all(
+        [
+            ProductPrice(
+                product_id=product.id,
+                currency_code=currency,
+                amount=Decimal(amount),
+                is_active=True,
+            ),
+            ServiceAddon(
+                code=f"consultation-{package}",
+                name="Consultation",
+                service_type="consultation",
+                usage_type="addon",
+                family_slug="smartbudget",
+                package_code=package.upper(),
+                currency_code=currency,
+                amount=Decimal(addon_amount),
+                is_active=True,
+            ),
+        ]
+    )
+    db_session.commit()
+    client.cookies.set(
+        "sb_lang", lang if not explicit_language else ("ru" if lang == "en" else "en")
+    )
+
+    buy = client.get(
+        "/products/smartbudget/buy",
+        params={"lang": lang} if explicit_language else {},
+    )
+
+    assert buy.status_code == 200
+    assert f'<html lang="{lang}">' in buy.text
+    if explicit_language:
+        assert f"sb_lang={lang};" in buy.headers["set-cookie"]
+    link = re.search(r'data-base-url="([^"]+)"', buy.text)
+    assert link is not None
+    # Follow the displayed link with the consultation selection used by the buy UI.
+    checkout = client.get(link.group(1) + "&consultation=1")
+
+    assert checkout.status_code == 200
+    assert f'<html lang="{lang}">' in checkout.text
+    assert title in checkout.text
+    assert total in checkout.text
+    assert 'name="consultation" value="1"' in checkout.text
+    summary = checkout.text.split('<div class="checkout-summary">', 1)[1].split(
+        '<form class="checkout-form"',
+        1,
+    )[0]
+    assert summary.count("<strong>") == 1
+    assert f"<strong>{total}</strong>" in summary
+    assert summary.count('class="checkout-value"') == 5
 
 
 def test_checkout_with_consultation_shows_product_addon_and_total(client, db_session):

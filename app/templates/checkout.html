@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=2">
 {% endblock %}
 
 {% block title %}{{ t("checkout.title") }} · SmartBudget{% endblock %}
@@ -14,28 +14,28 @@
         <div class="checkout-summary">
             <div class="checkout-row">
                 <span>{{ t("checkout.product") }}</span>
-                <strong>{{ product.name }}</strong>
+                <span class="checkout-value">{{ product.name }}</span>
             </div>
 
             <div class="checkout-row">
                 <span>{{ t("checkout.package") }}</span>
-                <strong>{{ package }}</strong>
+                <span class="checkout-value">{{ package }}</span>
             </div>
 
             <div class="checkout-row">
                 <span>{{ t("checkout.edition") }}</span>
-                <strong>{{ product.edition }}</strong>
+                <span class="checkout-value">{{ product.edition }}</span>
             </div>
 
             <div class="checkout-row">
                 <span>{{ t("checkout.price_product") }}</span>
-                <strong>{{ price.amount | money(lang) }} {{ price.currency_code }}</strong>
+                <span class="checkout-value">{{ price.amount | money(lang) }} {{ price.currency_code }}</span>
             </div>
 
             {% if addon %}
                 <div class="checkout-row">
                     <span>{{ t("checkout.consultation") }}</span>
-                    <strong>{{ addon.amount | money(lang) }} {{ addon.currency_code }}</strong>
+                    <span class="checkout-value">{{ addon.amount | money(lang) }} {{ addon.currency_code }}</span>
                 </div>
             {% endif %}
 

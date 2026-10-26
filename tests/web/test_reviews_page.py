@@ -11,7 +11,7 @@ from app.models.product import Product
 def create_product(
     db_session,
     *,
-    slug: str = "smartbudget",
+    slug: str = "smartbudget-int-standard",
     name: str = "SmartBudget",
 ) -> Product:
     product = Product(
@@ -94,7 +94,7 @@ def test_reviews_empty_state_is_complete_localized_html(
 ) -> None:
     create_product(db_session)
 
-    response = client.get(f"/reviews/smartbudget{query}")
+    response = client.get(f"/reviews/smartbudget-int-standard{query}")
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
@@ -123,7 +123,7 @@ def test_one_published_review_renders_only_public_fields(
         admin_reply="Thank you for sharing your experience.",
     )
 
-    response = client.get("/reviews/smartbudget")
+    response = client.get("/reviews/smartbudget-int-standard")
 
     assert response.status_code == 200
     assert response.text.count('class="review-card"') == 1
@@ -161,7 +161,7 @@ def test_multiple_published_reviews_render_as_separate_articles(
         published_at=datetime(2026, 7, 2, 10, 0, tzinfo=UTC),
     )
 
-    response = client.get("/reviews/smartbudget")
+    response = client.get("/reviews/smartbudget-int-standard")
 
     assert response.status_code == 200
     assert response.text.count('class="review-card"') == 2
@@ -206,7 +206,7 @@ def test_unpublished_ineligible_and_other_product_feedback_are_excluded(
         message="Other product message.",
     )
 
-    response = client.get("/reviews/smartbudget")
+    response = client.get("/reviews/smartbudget-int-standard")
 
     assert response.status_code == 200
     assert "Visible review" in response.text
@@ -231,28 +231,65 @@ def test_anonymous_review_uses_localized_public_fallback(
         name=None,
     )
 
-    response = client.get("/reviews/smartbudget?lang=ru")
+    response = client.get("/reviews/smartbudget-int-standard?lang=ru")
 
     assert response.status_code == 200
     assert "Анонимно" in response.text
 
 
-def test_existing_reviews_urls_and_navigation_link_resolve_to_html(
+@pytest.mark.parametrize("lang,package", [("ru", "ru"), ("en", "int")])
+@pytest.mark.parametrize("language_source", ["query", "cookie", "landing"])
+def test_default_reviews_navigation_preserves_language_and_sku_ownership(
     client: TestClient,
     db_session,
+    lang: str,
+    package: str,
+    language_source: str,
 ) -> None:
-    create_product(db_session)
+    for variant in ("ru", "int"):
+        product = create_product(db_session, slug=f"smartbudget-{variant}-standard")
+        create_feedback(
+            db_session,
+            product,
+            subject=f"Review for {variant}",
+            message=f"Only the {variant} SKU owns this review.",
+        )
 
-    redirect_response = client.get("/reviews", follow_redirects=False)
-    landing_response = client.get("/products/smartbudget")
-    reviews_response = client.get("/reviews/smartbudget")
+    params = {}
+    if language_source == "cookie":
+        client.cookies.set("sb_lang", lang)
+    else:
+        client.cookies.set("sb_lang", "en" if lang == "ru" else "ru")
+        if language_source == "landing":
+            landing = client.get(f"/products/smartbudget?lang={lang}")
+            assert landing.status_code == 200
+            assert 'href="/reviews"' in landing.text
+        else:
+            params = {"lang": lang}
+
+    redirect_response = client.get("/reviews", params=params, follow_redirects=False)
 
     assert redirect_response.status_code == 307
-    assert redirect_response.headers["location"] == "/reviews/smartbudget"
-    assert landing_response.status_code == 200
-    assert 'href="/reviews/smartbudget"' in landing_response.text
+    assert redirect_response.headers["location"] == (
+        f"/reviews/smartbudget-{package}-standard?lang={lang}"
+    )
+    reviews_response = client.get(redirect_response.headers["location"])
     assert reviews_response.status_code == 200
-    assert reviews_response.headers["content-type"].startswith("text/html")
+    assert f'<html lang="{lang}">' in reviews_response.text
+    assert f"Review for {package}" in reviews_response.text
+    other_package = "int" if package == "ru" else "ru"
+    assert f"Review for {other_package}" not in reviews_response.text
+
+
+@pytest.mark.parametrize("package", ["ru", "int"])
+def test_sku_reviews_empty_back_link_returns_to_family(client, db_session, package):
+    create_product(db_session, slug=f"smartbudget-{package}-standard")
+
+    response = client.get(f"/reviews/smartbudget-{package}-standard")
+
+    assert response.status_code == 200
+    assert 'class="reviews-action" href="/products/smartbudget"' in response.text
+    assert client.get("/products/smartbudget").status_code == 200
 
 
 def test_reviews_database_failure_uses_safe_public_error_response(
@@ -268,7 +305,7 @@ def test_reviews_database_failure_uses_safe_public_error_response(
     monkeypatch.setattr("app.web.routes.list_public_reviews", fail_review_lookup)
 
     with TestClient(app, raise_server_exceptions=False) as safe_client:
-        response = safe_client.get("/reviews/smartbudget")
+        response = safe_client.get("/reviews/smartbudget-int-standard")
 
     assert response.status_code == 500
     assert "private database exception detail" not in response.text

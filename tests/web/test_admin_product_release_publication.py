@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC, datetime
+
+import pytest
 
 from app.models.product import Product
 from app.models.product_release import ProductRelease
@@ -61,6 +64,49 @@ def create_publication_candidates(db_session, storage: PublicationStorage):
 
     db_session.commit()
     return product, releases[0], releases[1]
+
+
+@pytest.mark.parametrize(
+    "released_at,displayed",
+    [
+        (datetime(2026, 10, 26, 8, 35, tzinfo=UTC), "2026-10-26 11:35"),
+        (datetime(2026, 10, 26, 22, 35, tzinfo=UTC), "2026-10-27 01:35"),
+    ],
+)
+def test_release_list_displays_moscow_time_without_changing_stored_timestamp(
+    auth_client,
+    db_session,
+    monkeypatch,
+    released_at,
+    displayed,
+):
+    storage = PublicationStorage()
+    product, old_release, selected_release = create_publication_candidates(
+        db_session,
+        storage,
+    )
+    old_release.released_at = released_at
+    db_session.commit()
+    storage.objects.clear()
+    monkeypatch.setattr(
+        "app.services.product_release_service.R2StorageService",
+        lambda: storage,
+    )
+
+    page = auth_client.get(f"/products/{product.id}/releases")
+    error_page = auth_client.post(
+        f"/products/{product.id}/releases/{selected_release.id}/publish",
+    )
+
+    assert page.status_code == 200
+    assert error_page.status_code == 409
+    for response in (page, error_page):
+        assert displayed in response.text
+        assert released_at.strftime("%Y-%m-%d %H:%M") not in response.text
+    db_session.expire_all()
+    persisted = db_session.get(ProductRelease, old_release.id)
+    # SQLite drops timezone information; the stored UTC clock time must be intact.
+    assert persisted.released_at.replace(tzinfo=UTC) == released_at
 
 
 def test_admin_publication_control_publishes_release_and_redirects(

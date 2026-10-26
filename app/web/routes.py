@@ -338,6 +338,7 @@ def format_money(value, lang: str = "ru"):
 
 
 templates.env.filters["money"] = format_money
+templates.env.filters["as_moscow_time"] = _as_moscow_time
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -697,8 +698,10 @@ async def reviews_page(
 
 
 @router.get("/reviews")
-async def reviews_redirect():
-    return RedirectResponse(url="/reviews/smartbudget", status_code=307)
+async def reviews_redirect(request: Request):
+    lang = get_lang(request)
+    slug = "smartbudget-ru-standard" if lang == "ru" else "smartbudget-int-standard"
+    return RedirectResponse(url=f"/reviews/{slug}?lang={lang}", status_code=307)
 
 
 @admin_router.get("/admin/products")
@@ -1236,7 +1239,6 @@ def product_buy_page(
     if not family_products:
         raise HTTPException(status_code=404, detail="Product family not found")
 
-    lang = get_lang(request)
     product_options = []
 
     for product, price in family_products:
@@ -1261,15 +1263,12 @@ def product_buy_page(
             }
         )
 
-    return templates.TemplateResponse(
+    return render(
         request,
         "product_buy.html",
         {
             "product_options": product_options,
             "family_slug": family_slug,
-            "lang": lang,
-            "t": lambda key: t(lang, key),
-            "document_lang": lang,
         },
     )
 

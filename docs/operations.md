@@ -28,6 +28,40 @@ process environment
 environment value overrides the selected file, and `Settings.APP_PORT = 8000`
 is only the fallback when neither source supplies `APP_PORT`.
 
+## Temporary visual-only UI/UX review environment
+
+The temporary local review database is `smartbudget_review`, separate from the
+ordinary `.env` development database. Its environment file is
+`.env.review.local`, ignored by the existing `.env.*.local` Git rule. It selects
+that database through `DATABASE_URL` and isolates storage with:
+
+```dotenv
+R2_PRODUCT_RELEASES_PREFIX=product-releases-review-20261026
+UPLOAD_DIR=uploads-review
+PURCHASE_EMAIL_DELIVERY_ENABLED=false
+```
+
+Lava.top API credentials are intentionally absent for visual-only review; do
+not enable live checkout. Existing R2 configuration supports Admin release
+upload and publication under the separate review prefix. Keep that prefix
+separate from the normal managed prefix so reconciliation cannot classify
+another database's releases as orphaned objects.
+
+In a dedicated PowerShell session, select the existing review environment and
+use the normal migration and startup paths:
+
+```powershell
+$env:ENV_FILE = ".env.review.local"
+.\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe run.py
+```
+
+Before migration or startup, ensure no inherited `DATABASE_URL` or provider
+environment overrides replace the review file's values. Stop the existing
+local listener before starting another process on the same port. This is a
+temporary local review setup, not production deployment or live payment
+validation. Closing the dedicated session leaves normal `.env` selection intact.
+
 ## Port contract
 
 | Port | Purpose | Environment scope | Port role |

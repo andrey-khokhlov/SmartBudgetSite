@@ -81,7 +81,7 @@
 
                     <td class="product-releases-col-released">
                         {% if release.released_at %}
-                            {{ release.released_at.strftime("%Y-%m-%d %H:%M") }}
+                            {{ (release.released_at | as_moscow_time).strftime("%Y-%m-%d %H:%M") }}
                         {% else %}
                             -
                         {% endif %}

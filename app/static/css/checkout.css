@@ -41,6 +41,10 @@
     margin-bottom: 0;
 }
 
+.checkout-value {
+    font-weight: 500;
+}
+
 .checkout-divider {
     height: 1px;
     background: #e3e6ea;
@@ -151,7 +155,7 @@
         color: #4b5563;
     }
 
-    .checkout-row strong,
+    .checkout-row .checkout-value,
     .checkout-total strong {
         display: block;
         text-align: left;
@@ -161,7 +165,7 @@
         text-align: center;
     }
 
-    .checkout-row strong,
+    .checkout-row .checkout-value,
     .checkout-total strong {
     text-align: center;
     }

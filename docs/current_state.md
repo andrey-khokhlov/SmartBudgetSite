@@ -462,6 +462,23 @@ and release-polish pass against the final workbook, bilingual Walkthroughs, and
 packaged customer materials. Cover the complete public customer journey without
 expanding backend scope. This pre-deployment gate remains open.
 
+The owner-reported clean review environment uses `smartbudget_review` and
+`.env.review.local` (see `operations.md`). It contains the two intended Standard
+SKUs, `smartbudget-ru-standard` at 2,990 RUB and `smartbudget-int-standard` at
+49 EUR. RU and EN `ProductRelease` 1.0 archives were successfully uploaded and
+published through the existing Admin/R2 workflow under the isolated
+`product-releases-review-20261026` prefix. Review consultation offers are RU
+`addon` 3,900 RUB / `standalone` 5,900 RUB and EN `addon` 69 EUR / `standalone`
+99 EUR; bundle checkout totals were verified as 6,890 RUB and 118 EUR.
+
+Four defects discovered during this review are corrected with focused
+regression coverage: default reviews navigation selects the resolved UI
+language's exact SKU and uses a valid family back link; buy-page language
+persists into checkout through the shared rendering contract; checkout reserves
+strong emphasis for Total; and Product Releases Admin displays Moscow-local
+release timestamps without changing stored UTC values. These corrections do
+not close the overall UI/UX gate or establish production validation.
+
 ### 3. Resume SmartBudgetSite release completion
 
 Only after those gates should SmartBudgetSite proceed to production deployment,
