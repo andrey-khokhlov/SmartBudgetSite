@@ -405,6 +405,21 @@ Infrastructure and quality:
   including request-level durability validation through a fresh independent
   SQLAlchemy session.
 
+## Approved SmartBudget 1.0 commercial position
+
+On 2026-10-26, the project owner approved launch pricing and perpetual use of
+the purchased SmartBudget 1.0 release: one-time purchase, no subscription,
+including budgeting for future years. Consultation remains an optional paid
+service. The authoritative launch price table is in
+`architecture/commerce_and_delivery.md`, with consultation pricing and sales
+modes in `architecture/consultations.md`; durable positioning is in
+`product_positioning.md`.
+
+These are the intended release catalog/UI values, not a claim that the database,
+Lava.top mappings/offers, or public website have been updated. Applying them is
+separate execution work. The update/support/EULA policy remains unresolved and
+required before publication under `REL-001` in `release_readiness.md`.
+
 ## Current launch constraint
 
 The remaining live validation of the approved Lava.top integration and customer

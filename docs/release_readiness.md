@@ -675,6 +675,21 @@ work. `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and all
 other existing release gaps remain open until their own completion criteria are
 met; this sequence defers rather than abandons them.
 
+### Commercial terms consistency
+
+The owner-approved 2026-10-26 SmartBudget 1.0 launch prices and perpetual-use
+position are recorded in `architecture/commerce_and_delivery.md` and
+`product_positioning.md`. Before public commercial release, the owner must
+agree which SmartBudget 1.0 bug fixes and technical updates are provided without
+additional charge, whether minor functional updates are included, whether
+future major versions such as SmartBudget 2.0 are sold separately, whether
+existing customers receive an upgrade discount, what standard support includes,
+and what requires a paid consultation. This policy remains unresolved; approval
+of indefinite use of the purchased release does not settle these questions.
+
+The agreed policy must be consistent across the EULA / user licence terms,
+website copy, purchase terms, FAQ, and other customer-facing materials. This is an open pre-publication requirement, not completed work or an approved promise of upgrades, support, or consultation.
+
 ### Commerce and fulfillment (`REL-001`)
 
 Partial integration validation is complete: the normal admin upload and Publish

@@ -36,6 +36,23 @@ the other active version in the same service-owned transaction. Currency and
 usage type are parts of the identity, so corresponding RUB/EUR and
 add-on/standalone offers remain independent.
 
+### SmartBudget 1.0 launch consultation prices
+
+Owner-approved on 2026-10-26 for 60-minute consultations:
+
+| Sales mode | RU | EN |
+| --- | ---: | ---: |
+| `addon` with SmartBudget purchase | 3,900 RUB | 69 EUR |
+| `standalone` | 5,900 RUB | 99 EUR |
+
+The resulting SmartBudget + consultation totals are 6,890 RUB and 118 EUR.
+These are independent market prices, not currency conversions. The complete
+launch price table is recorded in `commerce_and_delivery.md`; runtime
+consultation prices remain database-owned `ServiceAddon` data. Approval does
+not claim that existing catalog records or public pages have been updated.
+Consultation remains an optional paid service, and the existing offer identity,
+entitlement lifecycle, booking, and capacity rules remain unchanged.
+
 ## Purchase and booking are separate events
 
 A purchased consultation is not automatically a booked consultation. The

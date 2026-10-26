@@ -91,6 +91,21 @@ SmartBudget should not try to impress users with the amount of data collected.
 
 It should help users answer financially meaningful questions.
 
+## SmartBudget 1.0 Commercial Positioning
+
+Owner-approved on 2026-10-26: **One-time purchase. No subscription.**
+The Russian customer-facing concept is **Разовая покупка. Без подписки.**
+
+The customer may use the purchased SmartBudget 1.0 release indefinitely,
+including to create budgets for future years. Consultation remains an optional
+paid service, not a dependency for continued product use.
+
+This perpetual-use position does not promise lifetime free upgrades or access
+to future major versions. Do not describe it only as “Lifetime”. Exact launch
+prices and the distinction between product-use rights and protected download
+access belong in `architecture/commerce_and_delivery.md`; the unresolved
+update/support policy is a pre-publication requirement in `release_readiness.md`.
+
 ## Entitlement-Based Platform Philosophy
 
 SmartBudgetSite should represent purchased customer rights as backend-owned entitlements rather than as files, external links, or provider-controlled access.

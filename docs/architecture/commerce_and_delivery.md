@@ -33,6 +33,36 @@ releases, download entitlements, and protected product delivery.
 `products` and `service_addons` are catalog/configuration entities. They are not
 purchase history.
 
+## SmartBudget 1.0 launch pricing and product-use rights
+
+The project owner approved the following launch prices on 2026-10-26. RU and
+EN prices are independently defined market prices, not currency conversions.
+
+| Product / service | RU | EN |
+| --- | ---: | ---: |
+| SmartBudget 1.0 — perpetual-use license | 2,990 RUB | 49 EUR |
+| Standalone consultation, 60 minutes | 5,900 RUB | 99 EUR |
+| Consultation add-on with SmartBudget purchase, 60 minutes | 3,900 RUB | 69 EUR |
+| SmartBudget + consultation total | 6,890 RUB | 118 EUR |
+
+These are the intended release catalog/UI values. Runtime prices remain owned
+by database `ProductPrice` and `ServiceAddon` records; this approval does not
+update catalog data, provider configuration, or public website copy.
+Consultation sales modes remain defined in `consultations.md`.
+
+SmartBudget 1.0 is a **one-time purchase with no subscription**. The customer
+may use the purchased SmartBudget 1.0 release indefinitely, including for
+budgeting in future years. The limited lifetime of a protected download link
+or `DownloadEntitlement` governs download access only: download-token expiry
+does not limit continued use of a legitimately purchased local workbook.
+
+Do not describe this solely as “Lifetime” or imply lifetime free upgrades,
+free access to all future major versions (including SmartBudget 2.0), unlimited
+support, unlimited free consultation, or an upgrade discount. None of those
+rights is approved. Update and support terms remain unresolved and must be
+agreed before public commercial release as recorded under `REL-001` in
+`../release_readiness.md`.
+
 ## Sales and sale items
 
 `Sale` is the order header. It owns customer identity, payment status, payment
