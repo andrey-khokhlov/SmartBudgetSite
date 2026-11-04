@@ -1,53 +1,32 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/faq.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/faq.css') }}?v=3">
 {% endblock %}
 
 {% block title %}{{ t("faq_title") }}{% endblock %}
 
 {% block content %}
-<section class="faq-page">
-    <h1 class="faq-page__title">{{ t("faq_title") }}</h1>
-    <p class="faq-page__intro">{{ t("faq_intro") }}</p>
-
-    <div class="faq-list">
-
-        <article class="faq-item">
-            <details class="faq-details" open>
-                <summary class="faq-item__question">{{ t("faq_q1") }}</summary>
-                <p class="faq-item__answer">{{ t("faq_a1") }}</p>
+<div class="faq-page">
+  <h1 class="faq-page__title">{{ t("faq_title") }}</h1>
+  {% for group in faq_groups %}
+    <section class="faq-group" id="{{ group.id }}" aria-labelledby="{{ group.id }}-heading">
+      <h2 id="{{ group.id }}-heading">{{ t(group.title_key) }}</h2>
+      <div class="faq-list">
+        {% for question in group.questions %}
+          <article class="faq-item">
+            <details class="faq-details"{% if question.id %} id="{{ question.id }}"{% if question.id == faq_open_question %} open{% endif %}{% endif %}>
+              <summary class="faq-item__question">{{ t(question.question_key) }}</summary>
+              <div class="faq-item__answer">
+                {% for part in question.body %}
+                  <p>{% if part.url %}<a href="{{ part.url }}" target="_blank" rel="noopener">{{ t(part.text_key) }}</a>{% else %}{{ t(part.text_key) }}{% endif %}</p>
+                {% endfor %}
+              </div>
             </details>
-        </article>
-
-        <article class="faq-item">
-            <details class="faq-details">
-                <summary class="faq-item__question">{{ t("faq_q2") }}</summary>
-                <p class="faq-item__answer">{{ t("faq_a2") }}</p>
-            </details>
-        </article>
-
-        <article class="faq-item">
-            <details class="faq-details">
-                <summary class="faq-item__question">{{ t("faq_q3") }}</summary>
-                <p class="faq-item__answer">{{ t("faq_a3") }}</p>
-            </details>
-        </article>
-
-        <article class="faq-item">
-            <details class="faq-details">
-                <summary class="faq-item__question">{{ t("faq_q4") }}</summary>
-                <p class="faq-item__answer">{{ t("faq_a4") }}</p>
-            </details>
-        </article>
-
-        <article class="faq-item">
-            <details class="faq-details">
-                <summary class="faq-item__question">{{ t("faq_q5") }}</summary>
-                <p class="faq-item__answer">{{ t("faq_a5") }}</p>
-            </details>
-        </article>
-
-    </div>
-</section>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</div>
 {% endblock %}

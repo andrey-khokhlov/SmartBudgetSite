@@ -663,9 +663,10 @@ G1's accepted language/navigation scope is implemented and regression-validated
 as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
 scope are also implemented and regression/browser-validated. G9 remains separate
 and decision-dependent; full R07 and the overall UI/UX gate are not complete.
-G5 About/Products presentation is implemented and web/browser-validated; R17/R19
-are implemented, while R18 retains its final compatibility-link dependency on
-G6/R32. No incomplete FAQ requirements link was added.
+G5 About/Products presentation is implemented and web/browser-validated. G6 now
+completes R18's compatibility link and implements the grouped FAQ foundation,
+R31 and R47. R30 remains Partial for later FAQ groups; R32 remains Partial for
+G9/G10 pre-purchase surfaces. No empty future FAQ groups are rendered.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -681,10 +682,19 @@ validation in this sprint. Do not schedule their rebuild as outstanding work.
 The bilingual Walkthrough remains the detailed customer guide; a separate Product
 Description is intentionally excluded as redundant.
 
-**Open validation obligations:** any remaining complete Microsoft 365 ActiveX
-scenario, final validation of the new artifacts and Gate 2 replacement/verification.
-Excel 2021 evidence does not establish Microsoft 365 validation. ZIP rebuilding
-alone does not close this gate; the current review R2 bytes remain stale.
+**Owner-verified product validation:** installed desktop Microsoft 365 for
+Windows, Microsoft Excel 2608, Click-to-Run, Current Channel. This newer evidence
+supersedes the older pending Microsoft 365 statement; Codex did not independently
+reproduce it. Final ActiveX guidance now reflects user-controlled Office settings,
+Safe Mode retained, required Excel restart/recheck and corporate restrictions.
+32-bit Excel was not separately practically reproduced. This is internal
+release-validation evidence; the public supported product matrix includes both
+32-bit and 64-bit Excel without claiming independent reproduction of every
+supported combination during G6. No guarantee of future Excel releases is inferred.
+
+**Open validation obligations:** final validation of the new artifacts and Gate 2
+replacement/verification. ZIP rebuilding alone does not close this gate; the
+current review R2 bytes remain stale.
 
 #### Gate 2 — Review ProductRelease artifact replacement
 
@@ -722,8 +732,13 @@ G9 pricing/practical/commercial work is not implemented, and R07 remains Partial
 The existing temporary Buy tail is not a G9 completion claim. G5 now uses the
 complete approved About biography and a restrained catalog-driven Products card
 with three capabilities and Windows/local-data/one-time-purchase conditions.
-R17/R19 are implemented; R18 remains Partial only for the final G6/R32
-compatibility-requirements link. No G6/FAQ rewrite was performed. Focused browser
+R17/R18/R19 are implemented, including the G6 link to the actual FAQ compatibility
+section. G6 renders the approved four-question overview and seven-question
+Before You Buy group with final manual ActiveX/restart guidance and approved
+Microsoft links. R31/R47 are implemented; R30 still awaits G12/G14/G15 FAQ groups,
+and R32 still awaits applicable G9/G10 compatibility disclosures. Owner-verified
+Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
+on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses
 and R55's first-release exclusion. Keep validation/operational tasks separate from
 implementation; concrete findings may justify later bounded changes. Execute

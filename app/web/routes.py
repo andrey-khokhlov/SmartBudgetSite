@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.products_catalog import products_index, product_by_slug
+from app.faq_content import FAQ_GROUPS
 from app.core.i18n import get_lang, set_lang_cookie, t
 from app.web.navigation import public_navigation_context
 from app.core.config import settings
@@ -362,7 +363,16 @@ async def products(request: Request):
 
 @router.get("/faq", response_class=HTMLResponse)
 async def faq(request: Request):
-    return render(request, "faq.html", {})
+    open_question = (
+        "system-requirements-question"
+        if request.query_params.get("open") == "system-requirements"
+        else None
+    )
+    return render(
+        request,
+        "faq.html",
+        {"faq_groups": FAQ_GROUPS, "faq_open_question": open_question},
+    )
 
 
 @router.get("/feedback", response_class=HTMLResponse)

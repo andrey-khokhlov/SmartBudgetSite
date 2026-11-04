@@ -119,14 +119,23 @@ def test_products_approved_card_is_price_free_and_links_to_landing(client, lang)
     for paragraph in copy:
         assert blocks.count(" ".join(paragraph.split())) == 1
     assert [b["text"] for b in page.blocks if b["tag"] == "li"] == copy[4:7]
-    assert len(page.links) == 1
-    assert page.links[0]["href"] == "/products/smartbudget"
-    assert page.links[0]["text"].strip() == copy[8]
-    assert client.get(page.links[0]["href"]).status_code == 200
+    assert len(page.links) == 2
+    details = next(
+        link for link in page.links if link["href"] == "/products/smartbudget"
+    )
+    requirements = next(
+        link
+        for link in page.links
+        if link["href"] == "/faq?open=system-requirements#system-requirements-question"
+    )
+    assert requirements["text"].strip() == (
+        "Полные системные требования" if lang == "ru" else "Full System Requirements"
+    )
+    assert details["text"].strip() == copy[8]
+    assert client.get(details["href"]).status_code == 200
     assert not re.search(r"[$€₽]|\b(?:RUB|EUR|USD)\b|\d+[.,]\d{2}", " ".join(page.text))
     assert "/products/smartbudget/buy" not in response.text
     assert 'class="products-section"' not in response.text
-    assert not any(link["href"].startswith("/faq") for link in page.links)
 
 
 def test_product_presentation_fields_are_catalog_driven():

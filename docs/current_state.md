@@ -449,11 +449,18 @@ Walkthrough have each been revised, and both RU and EN customer ZIP archives
 have been rebuilt. These content/rebuild steps are owner-confirmed complete;
 they were not independently inspected in this documentation sprint.
 
-Excel 2021 detection, blocked-state detection, opening Trust Center, required
-configuration and continuing startup after correction are owner-verified.
-Complete Microsoft 365 ActiveX validation still requires confirmation; automatic
-`{UP}` navigation remains unverified. Final public RU/EN guidance is pending
-editorial approval under R47. SmartBudget does not change security settings.
+Excel 2021 detection, blocked-state detection, opening Trust Center and required
+configuration are owner-verified. New owner evidence also confirms installed
+desktop Microsoft 365 for Windows: Excel 2608, Click-to-Run, Current Channel.
+Codex did not independently reproduce these external product tests. The final
+R47 flow requires the user to change ActiveX settings manually, restart Excel,
+then relaunch for a fresh availability check; SmartBudget does not change Office
+security automatically. Safe Mode stays enabled; corporate policy may prevent
+full functionality. Final RU/EN FAQ guidance now reflects this behavior.
+Experimental SendKeys navigation is abandoned and is not public guidance.
+32-bit Excel was not separately practically reproduced. This evidence boundary
+remains internal; the supported product matrix includes both 32-bit and 64-bit
+Excel and does not claim independent reproduction of every supported combination.
 
 The previously uploaded review-environment RU/EN `ProductRelease 1.0` archives
 contain earlier bytes and are now stale. Safely replacing them and verifying the
@@ -501,8 +508,8 @@ while all R03 behavior explicitly accepted for G1 is implemented.
 
 **G5 About/Products presentation is implemented and validated** against
 `9aec0b7`. R17 and R19 are implemented; R18 has the approved catalog content and
-Windows conditions line, while its final compatibility-requirements link remains
-pending G6/R32. No temporary FAQ requirements link was added.
+Windows conditions line. G6 now completes R18 with a localized link to the actual
+FAQ compatibility section; G5 About/Products presentation is preserved.
 
 `release_uiux_requirements.md` remains the durable source of what is required.
 The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
@@ -656,7 +663,7 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Partial | Local Excel/no-subscription note exists; four practical benefits, guide, indefinite-use wording and compatibility disclosure are incomplete. | G6/G9; no unapproved update/support promises |
 | R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
-| R18 | Partial | Approved 5.3 title/subtitle/description, exactly three capabilities, localized details CTA and Windows/local-data/one-time-purchase conditions implemented through the catalog; no price. | Accepted G5 card/content complete; final compatibility-requirements link pending G6/R32, not linked to incomplete FAQ |
+| R18 | Implemented | Approved catalog content and restrained G5 card retained; localized Full System Requirements link now targets `/faq#system-requirements`. | G6 link/anchor validated in RU/EN desktop/mobile; no price or Buy CTA |
 | R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
 | R20 | Partial | Priced Buy options/add-ons exist; Package RU/INT and locale-dependent Recommended badge remain. | Preserve catalog/payment routing; G10 |
 | R21 | Partial | Setup add-on selection and database amount exist; 60-minute/online/booking-after-payment explanation is missing. | Named platform needs validation; neutral copy can proceed; G10 |
@@ -668,9 +675,9 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R27 | Required | First topic and JS reset select `site_issue`; required empty initial topic is absent. | Preserve intentional support preselection; G3 |
 | R28 | Required | Landing review link is unconditional; product detail does not load publication counts. | Exact-SKU 0/1+ publication behavior; G4 |
 | R29 | Partial | Direct localized empty review page/family back link exist; repeated intro/heading/body need the approved single neutral message. | None; G4 |
-| R30 | Partial | Five native accordion questions exist; five approved groups, full question set and localized page titles are absent. | G6 structure; conditional content follows G12/G14/G15 |
-| R31 | Partial | FAQ uses older product/irregular-income answers; approved four-question overview and expanded audience answer are absent. | None; G6 |
-| R32 | Required | Generic Excel/macro wording omits the cross-surface Windows/Excel/VBA/ActiveX standard and unsupported/corporate restrictions. | R47 editorial/device limits; G6 |
+| R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
+| R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
+| R32 | Partial | FAQ and Products disclose Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions; official Microsoft links and manual/restart guidance implemented. | Remaining applicable Landing/version-selection/Checkout disclosures belong to G9/G10; R47 no longer pending |
 | R33 | Required | Purchase/delivery FAQ group is absent; configured default download lifetime is 12 hours. | G14; D6 blocks only affected update/commercial wording |
 | R34 | Partial | Buy/Checkout use ProductPrice/ServiceAddon dynamically; Landing/FAQ have no price context and public Consultations is absent. Actual DB amounts were not checked. | D1 Landing; D3 standalone; dynamic sourcing on all applicable surfaces |
 | R35 | Required | `purchase_email_renderer.py` supplies product links without the RU/EN 12-hour notice. | D5 durable email language; actual entitlement expiry; G13 |
@@ -685,7 +692,7 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R44 | Partial | Support and founder refund operations exist; public 2/5/10-day distinctions and operational readiness are incomplete. | Policy approval and support-capacity validation; G15 |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
-| R47 | Partial | Owner reports workbook/Walkthrough ActiveX changes complete with Excel 2021 evidence; website guidance and complete Microsoft 365 validation remain open. | Editorial approval and device validation; G6; VBA not independently verified |
+| R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
 | R48 | Requires validation | Rebuilt RU/EN ZIPs are owner-complete; review ProductRelease 1.0 bytes remain stale; immutable release/upload/publication mechanisms exist. | Reference inspection, safe replacement and hash/size/R2/active-current verification; operations only |
 | R49 | Partial | No universal waiver is present; clear checkout delivery disclosure and Refund Policy access are missing. | G10/G15; D4 for policy publication, no automatic consent checkbox |
 | R50 | Requires decision | No immediate-supply consent mechanism exists; applicability, supply start, no-consent path and durable evidence/confirmation are unresolved. | D4; scope implementation only if applicable |
@@ -804,12 +811,62 @@ size, left alignment/paragraph widths, no document overflow, simplified card
 styling and keyboard CTA navigation with locale continuity. Focused Ruff and
 Black checks (catalog/new tests) and `git diff --check` pass.
 
-R17/R19 are implemented. R18 card/content is implemented but remains Partial:
-the final compatibility-requirements link awaits G6/R32 and a complete destination;
-no misleading FAQ requirements link was added. No G6, G3/G4, G9, checkout,
-consultation, footer/contact or backend behavior work was performed. Full-suite,
+R17/R19 are implemented. At the G5 baseline, R18 card/content was implemented
+while its final requirements link remained pending. G6 now completes that link
+to the actual compatibility section (see G6 below). G5 itself did not add FAQ,
+G3/G4, G9, checkout, consultation, footer/contact or backend behavior work. Full-suite,
 live-customer and screen-reader validation were not run; final R45 review remains
 open. Requirement definitions were not modified. No commit or push was made.
+
+### G6 Compatibility / FAQ foundation implementation and validation
+
+Implemented against clean `main` at `55cc6f2`. `app/faq_content.py` contains only
+presentation data with explicit translation keys and paragraph/link blocks;
+`faq.html` loops ordinary semantic group headings and native details/summary
+questions. There is no CMS, persistence or accordion JavaScript. Only the ready
+About SmartBudget (4 questions) and Before You Buy (7 questions) groups render.
+Future approved groups can use the same shape under G12/G14/G15, without empty
+placeholder groups now. The approved 5.6.1/5.6.2 copy remains intact.
+
+The owner update supersedes the older R47 restriction against final public copy
+and the older restart-free behavior. Narrow factual additions disclose the
+confirmed manual Office-security boundary, localized Trust Center path, safer
+prompt setting with Safe Mode enabled, required Excel restart and next-launch
+recheck, plus the supported Microsoft 365 and 32/64-bit product matrix. Exact
+validation configuration and reproduction limits remain internal. No unsafe
+setting, automatic security change or experimental SendKeys recommendation is
+published. Official Microsoft link targets are exactly those supplied in 5.6.2,
+with new-tab/noopener behavior; RU retains official English targets.
+
+Products adds a catalog-driven localized requirements link beside its conditions
+to `/faq#system-requirements`, with sticky-header scroll clearance. G5 layout,
+price-free content and product-details CTA are retained. R18/R31/R47 are
+Implemented; R30 stays Partial for G12/G14/G15 content, and R32 stays Partial for
+G9/G10 cross-surface compatibility disclosures. The owner-verified Microsoft 365
+environment is Excel 2608 Click-to-Run Current Channel on Windows, not an
+independent Codex product test. 32-bit Excel was not separately practically
+reproduced. These details stay internal: the public FAQ states support for both
+32-bit and 64-bit Excel as a product compatibility commitment, not a claim that
+every supported combination was reproduced during G6. The public future-release
+boundary is retained; R47 is not reopened.
+
+Validation through `.venv`, with required external temp/cache paths:
+**57 passed** (`g6-faq-final`): 49 web checks (6 G6, 5 G5, 28 public navigation,
+10 document-language) and 8 browser cases (4 G6, 4 existing G5), RU/EN at
+1280/375 px. Native keyboard toggle/focus, Microsoft link reachability, long
+answers, no nested scrolling/document overflow, locale continuity, actual Products
+anchor positioning and card stability were checked. FAQ collapsed/expanded,
+ActiveX guidance and Products screenshots were captured and visually reviewed.
+Focused Ruff passes. Black passes for the FAQ data, catalog, route and changed
+tests; the whole-file `i18n.py` check fails at baseline too, so unrelated
+formatting is preserved. `git diff --check` passes. Initial new-test assertion and
+changing-selector issues were corrected before the passing final run.
+
+No full suite, screen-reader audit, live Microsoft-link availability test or
+independent workbook/VBA test was performed. Final R45 review and R48 artifact
+replacement remain separate. No G9/G10/G12/G14/G15 implementation, workbook/VBA,
+Working Queue, deployment, commit or push work was performed. Requirement
+definitions remain unchanged.
 
 ### Decision dependencies
 
@@ -847,8 +904,8 @@ surface-specific slices, not duplicate requirements.
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
 | G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
 | G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
-| G5 — About / Products | R17–R19 | **Accepted presentation/content scope implemented and validated**; R17/R19 implemented, R18 final compatibility link remains pending G6/R32. |
-| G6 — Compatibility / FAQ foundation | R30–R32, R47 | FAQ structure/overview and consistent compatibility/ActiveX guidance; retain editorial and device-validation limits. |
+| G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
+| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 later surfaces with G9/G10. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
 | G9 — Practical/commercial Landing | R08, R10, R16, Landing portion of R34 | Practical benefits and concluding offer; partly blocked by D1 and standalone-destination dependencies, not every stable block. |
@@ -865,7 +922,8 @@ implementation scopes only if D4 establishes applicability. R39, R45 and R48
 remain validation/operational work; R46 is complete; R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
-R18 still awaits the final compatibility-requirements link under G6/R32. Further bounded tasks must
+G6 foundation and the R18 requirements link are also implemented; R30/R32 remain
+Partial for later groups/surfaces. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 was not implemented. G7–G9 split Landing work; G11 precedes G12. Complete required material
 replacement before treating review artifacts as current, repeat review against
@@ -876,8 +934,10 @@ the updated interface, then follow the later deployment/live-validation gates.
 Keep these separate from implementation; their existence does not authorize
 speculative code changes or provider operations:
 
-- Microsoft 365 ActiveX startup/blocked-state validation; Excel 2021 evidence is
-  owner-supplied and does not establish the complete Microsoft 365 scenario.
+- Owner-verified Microsoft 365 validation is recorded above for Excel 2608,
+  Click-to-Run, Current Channel on Windows; it is not a pending R47 requirement.
+  Both Excel bitnesses are not independently established by that evidence, and
+  no future-release guarantee is inferred.
 - Review ProductRelease 1.0 reference inspection and safe replacement. Stop if
   persistently referenced; preserve version 1.0, immutable identity and isolated
   review prefix. Rebuilt RU/EN archives are ready, but current review bytes are stale.

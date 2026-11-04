@@ -13,6 +13,8 @@ class Product:
     conditions_key: str
     highlights_keys: List[str]
     cta_key: str
+    requirements_url: str | None = None
+    requirements_label_key: str | None = None
 
 
 PRODUCTS: List[Product] = [
@@ -29,6 +31,8 @@ PRODUCTS: List[Product] = [
             "product_smartbudget_h3",
         ],
         cta_key="product_smartbudget_cta",
+        requirements_url="/faq?open=system-requirements#system-requirements-question",
+        requirements_label_key="product_requirements_label",
     ),
 ]
 
@@ -45,6 +49,8 @@ def products_index() -> List[Dict]:
             "conditions_key": p.conditions_key,
             "highlights_keys": p.highlights_keys,
             "cta_key": p.cta_key,
+            "requirements_url": p.requirements_url,
+            "requirements_label_key": p.requirements_label_key,
         }
         for p in PRODUCTS
     ]
