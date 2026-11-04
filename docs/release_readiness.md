@@ -654,10 +654,14 @@ defects.
 
 ### Pre-deployment release sequence
 
-The next bounded task is **`R01–R55 -> current main implementation mapping`**
-against `release_uiux_requirements.md`. This documentation freeze does not perform
-the mapping. R01–R55 define the recovered/agreed scope: proceed to mapping and
-sequential delivery rather than mining old chats or adding speculative features.
+The R01–R55 static repository mapping against `cd5190b` is complete and accepted.
+Its authoritative statuses, D1–D6 dependencies, implementation groups and separate
+validation/operational work are in
+[current state](current_state.md#release-uiux-implementation-mapping). Completion
+of analysis is not runtime/provider validation or closure of a release gate.
+**Next bounded implementation sprint: G1 — R01–R03 Language/navigation.**
+R01–R55 define the recovered/agreed scope: proceed through bounded implementation
+groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
 legal blockers, security and correctness issues may still be escalated. R55 is
 explicitly deferred and must not become a release requirement.
@@ -701,9 +705,13 @@ documentation sprint. The reset procedure is not selected here.
 
 #### Gate 3 — SmartBudgetSite UI/UX implementation and repeat review
 
-**Open.** Implement accepted R01–R55 requirements applicable to the website,
-respecting conditional/decision-dependent statuses and R55's first-release
-exclusion. Execute required non-live validation, then repeat desktop/mobile/
+**Open; mapping complete.** Proceed through the accepted bounded implementation
+groups in [current state](current_state.md#accepted-implementation-groups), starting
+with G1. D1–D6 block only affected work: G2A removes the obsolete Telegram Landing
+block (R05) without waiting for D2; G2B (R04) awaits D2. Respect conditional statuses
+and R55's first-release exclusion. Keep validation/operational tasks separate from
+implementation; concrete findings may justify later bounded changes. Execute
+required non-live validation, then repeat desktop/mobile/
 accessibility review against the actually updated interface and resolve
 release-blocking findings. The detailed source retains the full copy, image
 specifications, acceptance criteria and validation checklists. Conflicts recorded

@@ -475,15 +475,23 @@ A separate Product Description remains intentionally excluded: the bilingual
 Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
 do not close release-material validation or make SmartBudgetSite release-ready.
 
-### 2. Next task: R01–R55 -> current main implementation mapping
+### 2. Mapping complete; next sprint: G1 — R01–R03 Language/navigation
 
-`release_uiux_requirements.md` is now the durable detailed UI/UX requirements
-source. The recovered R01–R46 content and later R47–R55 amendments are preserved.
-The next bounded task is **`R01–R55 -> current main implementation mapping`**,
-followed by sequential implementation and validation. That mapping has not been
-performed in this documentation sprint. The public UI/UX implementation/review
-gate remains open; repeat desktop/mobile/accessibility review must assess the
-actually updated interface.
+The R01–R55 mapping was completed against local HEAD `cd5190b` and independently
+reviewed and accepted. The [implementation-state snapshot below](#release-uiux-implementation-mapping)
+records all accepted statuses, unresolved decisions, corrected groups and
+validation/operational dependencies. It is static repository analysis, not
+runtime/provider validation or implementation completion.
+
+**Next bounded implementation sprint: G1 — R01–R03 Language/navigation.** Its
+scope direction is a segmented RU/EN control, preservation of current path and
+relevant query state (especially checkout currency/add-on selection), and active
+navigation semantics/accessibility. A separate task must define the exact end
+state and tests; this documentation closeout does not implement G1.
+
+`release_uiux_requirements.md` remains the durable source of what is required.
+The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
+accessibility review must assess the actually updated interface.
 
 The recovered Refund Policy remains agreed commercial content, but is no longer
 final publication-ready legal wording. R49–R54 require a new owner-approved
@@ -590,6 +598,176 @@ Each discovered issue should be evaluated for:
 
 Treat release readiness as an incremental activity rather than a final project
 phase.
+
+## Release UI/UX implementation mapping
+
+**Completed and accepted:** static repository analysis of R01–R55 against
+`cd5190b3ed0ee109e5f4983842c89a70571f0219` (`docs: freeze pre-release UI UX
+requirements`), closed out on 2026-11-04. The independently reviewed statuses
+below are the accepted implementation-state snapshot, not a new requirements
+register or release backlog. Requirements/copy remain owned by
+`release_uiux_requirements.md`; release gates remain owned by
+`release_readiness.md`.
+
+The analysis inspected repository code, templates, translations, CSS/JS, models,
+services, repositories, tests, migrations and existing images. Tests were read,
+not rerun. No runtime/browser/provider validation, database inspection or release
+operation was performed. Workbook/Walkthrough/ZIP completion is owner-reported;
+repository evidence does not independently verify the workbook's VBA or current
+review R2 bytes. No architecture/business/legal decision was resolved.
+
+Statuses distinguish existing behavior (`Implemented`), incomplete behavior
+(`Partial`), missing approved implementation (`Required`), runtime/provider proof
+(`Requires validation`), unresolved approval (`Requires decision`), and work
+outside first release (`Deferred`). None was established as `Not applicable`.
+D1–D6 below are dependencies, not decisions made by this mapping.
+
+| ID | Accepted status | Current state / remaining gap | Decision or validation dependency |
+| --- | --- | --- | --- |
+| R01 | Required | `base.html` has a single locale toggle; segmented RU/EN, active semantics and keyboard/focus behavior are missing. | None; G1 |
+| R02 | Required | Bare `?lang=...` in `base.html` drops currency/add-on query state; `checkout_page` requires currency. Product slug survives, typed-email preservation is absent. | Concrete code defect, not a decision gate; G1 |
+| R03 | Partial | Locale resolution/cookie and shared rendering exist; active navigation, Consultations entry and consistent cookie handling on booking success are incomplete. | G1; consultation destination follows G12 |
+| R04 | Requires decision | Footer exposes personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email. Recovered removal conflicts with unresolved UX-001 treatment, including possible informational LinkedIn retention. | D2; do not choose silently |
+| R05 | Required | Obsolete Landing heading/text/Telegram CTA remain in `sm_landing.html`; complete removal is approved. | None; G2A is not blocked by D2 |
+| R06 | Requires decision | Consultation catalog/standalone identity, service SaleItem and entitlement support exist; public consultation purchase/provider orchestration do not. | D3; G11 then G12 |
+| R07 | Required | Landing still presents older feature sections; approved seven-block narrative and Hero are absent. | G7–G9; D1 affects only commercial pricing |
+| R08 | Requires decision | Hero is price-free and purchase reaches Buy; concluding priced offer is absent. | D1; G9 |
+| R09 | Partial | Separate Landing sections/translation keys/CSS exist; approved organization and simple release/image/offer maintenance convention are incomplete. | G7; D1 for offer data |
+| R10 | Required | Large Telegram consultation block remains instead of a short optional add-on mention at purchase. | G2A removal is independent; G9 offer/destination dependencies |
+| R11 | Partial | RU/EN assets are selected separately, but inspected images use older compositions/terminology; release provenance and original-image enlargement are missing. | Genuine release materials and image validation; G7/G8 |
+| R12 | Partial | Split/full-width layouts and responsive rules exist; repetitive grey card framing and updated visual hierarchy remain. | Updated blocks/images and rendered review; G7/G8 |
+| R13 | Required | Generic planning/shortfall sections do not supply the approved future-expense explanation and verified screenshot scenario. | Real workbook calculation/image; G8 |
+| R14 | Partial | PLAN/FACT sections exist; preserved-plan baseline, actual-past/revised-future explanation and approved crop are missing. | Genuine release image; preserve meaning of future values; G8 |
+| R15 | Required | Current comparison is plan/actual variance, not account-balance reconciliation with Check before/after. | Reproducible release example; G8 |
+| R16 | Partial | Local Excel/no-subscription note exists; four practical benefits, guide, indefinite-use wording and compatibility disclosure are incomplete. | G6/G9; no unapproved update/support promises |
+| R17 | Partial | Photograph and three activity areas exist; approved biography/training/story, ACCA/FCCA distinction and left alignment are missing. | Approved copy and responsive verification; G5 |
+| R18 | Partial | Price-free product card links to Landing; six old highlights/CTA remain instead of three approved outcomes and Windows note. | None; G5 |
+| R19 | Partial | Card exists with extra section/container framing and prominent shadow; visual simplification remains. | Rendered verification; G5 |
+| R20 | Partial | Priced Buy options/add-ons exist; Package RU/INT and locale-dependent Recommended badge remain. | Preserve catalog/payment routing; G10 |
+| R21 | Partial | Setup add-on selection and database amount exist; 60-minute/online/booking-after-payment explanation is missing. | Named platform needs validation; neutral copy can proceed; G10 |
+| R22 | Partial | Selected items, Total emphasis and email/payment form exist; Your order heading, language terminology and remaining hierarchy polish are missing. | None; G10 |
+| R23 | Required | Checkout email hint lacks approved protected-download and conditional booking explanation; standalone variant is absent. | G10 product copy; D3/G12 for standalone |
+| R24 | Partial | Attachment/drop behavior and form width exist; Feedback's loaded CSS does not supply its primary button treatment and file-picker styling is incomplete. | Preserve limits, keyboard and native file access; G3 |
+| R25 | Partial | Localized live success/error and optional private-enquiry email exist; approved post-submit guidance/success copy are incomplete. | Editorial success wording; G3 |
+| R26 | Partial | Paid product ownership verification and pre-purchase General question work; customers-only review category label is missing. | Preserve verified-purchase boundary; G3 |
+| R27 | Required | First topic and JS reset select `site_issue`; required empty initial topic is absent. | Preserve intentional support preselection; G3 |
+| R28 | Required | Landing review link is unconditional; product detail does not load publication counts. | Exact-SKU 0/1+ publication behavior; G4 |
+| R29 | Partial | Direct localized empty review page/family back link exist; repeated intro/heading/body need the approved single neutral message. | None; G4 |
+| R30 | Partial | Five native accordion questions exist; five approved groups, full question set and localized page titles are absent. | G6 structure; conditional content follows G12/G14/G15 |
+| R31 | Partial | FAQ uses older product/irregular-income answers; approved four-question overview and expanded audience answer are absent. | None; G6 |
+| R32 | Required | Generic Excel/macro wording omits the cross-surface Windows/Excel/VBA/ActiveX standard and unsupported/corporate restrictions. | R47 editorial/device limits; G6 |
+| R33 | Required | Purchase/delivery FAQ group is absent; configured default download lifetime is 12 hours. | G14; D6 blocks only affected update/commercial wording |
+| R34 | Partial | Buy/Checkout use ProductPrice/ServiceAddon dynamically; Landing/FAQ have no price context and public Consultations is absent. Actual DB amounts were not checked. | D1 Landing; D3 standalone; dynamic sourcing on all applicable surfaces |
+| R35 | Required | `purchase_email_renderer.py` supplies product links without the RU/EN 12-hour notice. | D5 durable email language; actual entitlement expiry; G13 |
+| R36 | Partial | Download expiry has date/minute and Moscow conversion; visible timezone label is missing. | Keep stored UTC/conversion semantics; G14 |
+| R37 | Partial | Download errors retain support reference/Feedback prefill; indefinite-use expiry explanation and real interrupted/repeat-download proof are missing. | Editorial expired-page copy and validation; G14 |
+| R38 | Requires decision | Add-on/standalone catalog/Admin and service-only Sale helper exist; public checkout/provider mapping remain product-bound. | D3, then G11/G12; platform validation |
+| R39 | Requires validation | Booking/token/webhook lifecycle exists; tests pre-link provider event URI and do not establish first-booking end-to-end behavior. | Real integration evidence first; no speculative architecture change |
+| R40 | Partial | Item-specific email links and durable retries exist; renderer is English-only and omits approved 60-minute/14-day/next-step content. | D5, editorial subjects, Calendly confirmation validation; G13 |
+| R41 | Requires decision | Policy is preserved in requirements; public policy page/pre-payment links are absent and recovered wording is not publication-final. | D4/new approved revision; G15 |
+| R42 | Requires decision | Founder `start_full_refund`/`confirm_full_refund` snapshot the full Sale; partial/item refunds and customer confirmation are unsupported. | D4 and later operational validation; not automatically G15 implementation |
+| R43 | Requires decision | Seller block is preserved but not published; legal sufficiency remains open. | D4; do not publish home address without explicit owner reconsideration; G15 |
+| R44 | Partial | Support and founder refund operations exist; public 2/5/10-day distinctions and operational readiness are incomplete. | Policy approval and support-capacity validation; G15 |
+| R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
+| R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
+| R47 | Partial | Owner reports workbook/Walkthrough ActiveX changes complete with Excel 2021 evidence; website guidance and complete Microsoft 365 validation remain open. | Editorial approval and device validation; G6; VBA not independently verified |
+| R48 | Requires validation | Rebuilt RU/EN ZIPs are owner-complete; review ProductRelease 1.0 bytes remain stale; immutable release/upload/publication mechanisms exist. | Reference inspection, safe replacement and hash/size/R2/active-current verification; operations only |
+| R49 | Partial | No universal waiver is present; clear checkout delivery disclosure and Refund Policy access are missing. | G10/G15; D4 for policy publication, no automatic consent checkbox |
+| R50 | Requires decision | No immediate-supply consent mechanism exists; applicability, supply start, no-consent path and durable evidence/confirmation are unresolved. | D4; scope implementation only if applicable |
+| R51 | Requires decision | Separate product/service items/access exist, but refunds are full-Sale and public service-only checkout is absent. | D3/D4; composition-specific legal wording; G12/G15 |
+| R52 | Requires decision | Policy publication/legal gate is explicitly open; a new owner-approved revision aligned with actual behavior is missing. | D4; G15 |
+| R53 | Requires decision | No dedicated withdrawal path exists; ordinary support/Feedback do not establish applicability or sufficiency. | D4; bounded flow only if applicable, otherwise rationale for Not applicable |
+| R54 | Requires decision | Stop-use/delete-copies direction is accepted; backend refund revokes access, not downloaded files; publication wording is not legally final. | D4/R52; law/licence/statutory safeguards; G15 |
+| R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
+
+### Decision dependencies
+
+These accepted unresolved dependencies block only affected work. They do not
+change architecture, approve implementation or require unrelated UI tasks to
+wait for every decision.
+
+| Gate | Unresolved decision | Affected work |
+| --- | --- | --- |
+| D1 — Landing prices | Reconcile the concluding priced offer with architecture assigning price/package selection to Buy; define exact SKU/currency if approved. | R08 and Landing/R34 portion of G9 only |
+| D2 — Public contact boundary | Approve final footer/contact/profile links under UX-001, including LinkedIn treatment, ownership and configuration. | R04/G2B only; does not block R05/G2A |
+| D3 — Standalone consultation checkout | Define provider-offer identity/resolution and server-owned initiation for service-only Sales; existing catalog/SaleItem/entitlement helpers do not provide public checkout. | G11 and dependent standalone purchase in G12 |
+| D4 — Refund / supply / policy publication | Resolve partial/item refunds, the one-provider-refund-per-transaction constraint, later requests and unaffected rights; digital supply start, immediate-supply consent applicability, no-consent path, evidence/durable confirmation, product/service/bundle treatment, online withdrawal applicability, seller-information sufficiency and final owner-approved policy/public wording. | Affected refund/policy/consent work; G15; R42 remains separate; R50/R53 only if applicable |
+| D5 — Purchase-email language | Decide and persist the durable language source for asynchronous delivery and retries; do not infer a prior browser locale during webhook processing. | Full RU/EN R35/R40 implementation in G13 |
+| D6 — Updates/support terms | Resolve 1.0 fixes, minor updates, future major releases, possible upgrade discounts, ordinary support and paid-consultation boundaries. Accepted indefinite use does not settle these terms. | Only dependent commercial/update wording, including the affected R33 answer |
+
+Current refunds remain founder-operated full-Sale operations. Recovered
+item/partial/mixed-order promises must not be published as supported behavior:
+zero or one RefundOperation per Sale and paid-Sale capability checks do not
+preserve unaffected access after a whole-Sale refund. Supporting research is not
+an implementation decision or legal compliance conclusion. No new consent,
+withdrawal, partial-refund or jurisdiction-selection architecture is selected.
+
+### Accepted implementation groups
+
+This is the accepted execution grouping for the mapped state, not a second
+backlog or authorization to implement every group. Each sprint still needs a
+separate bounded end state and verification commands. Shared R-IDs denote
+surface-specific slices, not duplicate requirements.
+
+| Group | R-IDs | Scope and dependencies |
+| --- | --- | --- |
+| G1 — Language/navigation | R01–R03 | **Next bounded implementation sprint**; segmented RU/EN, path/query preservation including checkout currency/add-on, active navigation semantics/accessibility. Exact end state/tests follow separately. |
+| G2A — Remove obsolete Telegram Landing block | R05 | Complete removal of heading/text/CTA; no architecture decision and no D2 dependency. |
+| G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
+| G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
+| G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
+| G5 — About / Products | R17–R19 | Approved biography/product presentation and simpler framing. |
+| G6 — Compatibility / FAQ foundation | R30–R32, R47 | FAQ structure/overview and consistent compatibility/ActiveX guidance; retain editorial and device-validation limits. |
+| G7 — Landing foundation | R07, R09, R11–R12 | Approved structure/Hero/reserves, maintenance convention and image presentation. |
+| G8 — Landing demonstrations | R11, R13–R15 | Genuine future-expense, PLAN/ACTUAL and reconciliation examples. |
+| G9 — Practical/commercial Landing | R08, R10, R16, Landing portion of R34 | Practical benefits and concluding offer; partly blocked by D1 and standalone-destination dependencies, not every stable block. |
+| G10 — Product Buy / Checkout | R20–R23, applicable R34/R49 | Equal language cards, add-on/order/delivery presentation; preserve server-authoritative commerce; final policy links follow G15. |
+| G11 — Standalone payment boundary | R06, R38 | Service-only provider initiation; blocked by D3. |
+| G12 — Public Consultations | R06, R23, R34, R38, applicable R51 | Public page/navigation/checkout; depends on approved G11 architecture, platform evidence and applicable policy wording. |
+| G13 — Purchase email | R35, R40 | Localized composition-specific delivery copy; full localization blocked by D5. |
+| G14 — Delivery presentation / FAQ | R33, R36–R37 | Delivery FAQ, explicit timezone and expired-link guidance; D6 blocks only genuinely dependent commercial/update wording. |
+| G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish newly approved policy/seller information and synchronized summaries; blocked by D4. |
+
+R42 remains a separate decision-dependent refund capability/operational topic;
+do not fold it into G15 implementation automatically. R50 and R53 receive
+implementation scopes only if D4 establishes applicability. R39, R45 and R48
+remain validation/operational work; R46 is complete; R55 remains deferred.
+
+After G1, independent low-risk groups can proceed without waiting for unrelated
+decisions. G7–G9 split Landing work; G11 precedes G12. Complete required material
+replacement before treating review artifacts as current, repeat review against
+the updated interface, then follow the later deployment/live-validation gates.
+
+### Validation-only and operational dependencies
+
+Keep these separate from implementation; their existence does not authorize
+speculative code changes or provider operations:
+
+- Microsoft 365 ActiveX startup/blocked-state validation; Excel 2021 evidence is
+  owner-supplied and does not establish the complete Microsoft 365 scenario.
+- Review ProductRelease 1.0 reference inspection and safe replacement. Stop if
+  persistently referenced; preserve version 1.0, immutable identity and isolated
+  review prefix. Rebuilt RU/EN archives are ready, but current review bytes are stale.
+- Separate RU/EN local/persisted SHA-256 and size, R2 object and active/current
+  publication verification; filenames alone are not proof.
+- Calendly first-booking, confirmation, reschedule/cancellation and post-window
+  end-to-end validation. Existing pre-linked-event tests do not prove this;
+  collect integration evidence before deciding whether architecture must change.
+- Actual meeting-platform/guest/screen-sharing and fallback validation before
+  publishing conditional platform claims.
+- Actual purchase-email receipt/content and capability-link validation after
+  implementation, plus download expiry/interruption/repeat-download/support flow.
+- Later live payment/provider validation under the deployment gates.
+- Later refund/provider/customer-communication validation; no partial-refund
+  experiment against the current full-Sale implementation before D4.
+- Owner confirmation of 2/5-business-day support readiness, distinct from the
+  provider-reported bank settlement period.
+- Final repeat desktop/mobile/accessibility review of the updated real interface;
+  earlier screenshots or browser tests do not close R45.
+
+Concrete validation findings may justify later bounded implementation tasks.
+None of this validation or operational work was performed by the analysis or
+its documentation closeout. SmartBudgetSite is not declared release-ready.
 
 ## Intentionally deferred
 

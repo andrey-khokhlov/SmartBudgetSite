@@ -34,8 +34,9 @@ This is a requirements source, not an implementation report or a second backlog.
   establish the complete Microsoft 365 scenario.
 - R48 records owner-complete workbook/Walkthrough/ZIP revisions. Existing review
   `ProductRelease 1.0` bytes are stale; replacement and verification remain open.
-- Next task: **`R01–R55 -> current main implementation mapping`**. The full mapping
-  is intentionally not performed in this documentation sprint.
+- Implementation status, completed mapping against `cd5190b` and next sprint
+  **G1 — R01–R03 Language/navigation** belong to
+  [current state](current_state.md#release-uiux-implementation-mapping).
 
 ## Как пользоваться документом
 
@@ -2176,9 +2177,9 @@ missing microcopy, screenshot assets, real internal routes, platform/fallback an
 compatibility evidence. Commercial FAQ wording about each future release being
 sold separately (5.6.3 question 5) must be reconciled with the still-unresolved
 minor-update/bug-fix/support policy in `release_readiness.md`; it does not settle
-that policy. R04/R05 public-link choices also remain subject to the existing
-`UX-001` approval/configuration boundary; copy approval alone is not an approved
-public-link architecture.
+that policy. R04's final public-link choices remain subject to the existing
+`UX-001` approval/configuration boundary. R05's approved complete removal is not
+blocked by that decision; current grouping belongs in `current_state.md`.
 
 ## Приложение А. Полный сохранённый текст политики отмены и возвратов
 

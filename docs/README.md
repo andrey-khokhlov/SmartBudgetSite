@@ -42,8 +42,10 @@ separately as history.
   not authorize implementation by themselves, replace architecture, establish
   current implementation state or create a competing backlog.
 
-Next bounded task: `R01–R55 -> current main implementation mapping`. The
-2026-11-04 documentation freeze prepares its source; it does not perform it.
+Next bounded implementation sprint: **G1 — R01–R03 Language/navigation**.
+The accepted static mapping against `cd5190b`, decision dependencies,
+implementation groups and separate validation/operational work are recorded in
+[current state](current_state.md#release-uiux-implementation-mapping).
 
 ## External sprint working memory
 
