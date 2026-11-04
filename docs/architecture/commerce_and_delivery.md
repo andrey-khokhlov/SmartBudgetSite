@@ -805,10 +805,14 @@ should cancel only its associated entitlement and preserve unaffected purchased
 rights, including access to an unrefunded product. Original successful purchase
 and entitlement history must remain preserved.
 
-Product refund eligibility, refund window, applicable legal requirements, and
-treatment of already-downloaded, non-revocable digital files remain intentionally
-undecided until implementation planning. Refund requests should capture
-structured reason codes, optional customer comments, and operator/agent analysis
+Product refund eligibility, refund window and applicable legal requirements
+remain subject to the pre-sale decisions in R49–R53 of
+`../release_uiux_requirements.md`. R54 now records the accepted stop-use and delete-copies
+direction for a fully refunded digital product, subject to law, licence
+terms and final legal/editorial review; downloaded copies remain technically
+non-revocable. This does not implement item refunds or remote control. Refund
+requests should capture structured reason codes, optional customer comments, and
+operator/agent analysis
 where appropriate. This telemetry should support operational and product
 learning about capacity, expectation mismatch, accidental purchases, technical
 problems, product issues, and other causes.
@@ -835,3 +839,29 @@ require the owning Sale to remain `paid`. Future item-level refund implementatio
 must explicitly reconcile that invariant with keeping an unrefunded product
 usable; cancelling only one entitlement while marking the whole Sale `refunded`
 would still block the unaffected product. That design is not resolved here.
+
+### Public refund-policy and supply-consent boundary
+
+The detailed accepted planning requirements are R49–R55 in
+`../release_uiux_requirements.md`; the mandatory pre-sale publication/legal gate
+is in `../release_readiness.md`. The recovered policy is agreed commercial
+content requiring a new owner-approved publication revision, not final legal
+wording or evidence that all promised refund operations are implemented.
+
+Payment, email, protected access and downloading do not establish a universal
+waiver of mandatory rights. Product, consultation and mixed-order treatment
+must stay distinct. Any immediate digital-supply consent is conditional on legal
+applicability, never inferred from language or currency. Supply start, no-consent
+handling, durable confirmation and any evidence/persistence changes require a
+later explicit decision; the existing paid-fulfillment and post-commit email
+lifecycle remains unchanged. No checkbox or jurisdiction-selection system is
+prescribed here.
+
+R54 accepts that customers can retain autonomous local copies after refund;
+policy should explain the end of continued-use rights under applicable law and
+licence terms and ask customers to stop use and delete copies, without restricting
+statutory protections. SmartBudget cannot claim remote removal, inspection,
+deletion verification or disabling of downloaded copies. R55 excludes preventive
+activation, DRM, time limits and mandatory continued server contact from the
+first release; reconsideration requires observed post-release evidence and
+explicit review. This does not weaken backend download/booking authorization.

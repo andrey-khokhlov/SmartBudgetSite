@@ -441,26 +441,58 @@ infrastructure.
 
 ## Next active phase and release sequence
 
-### 1. Completed SmartBudget release-candidate and materials gate
+### 1. Updated release materials ready; review releases stale
 
-The project owner has confirmed that SmartBudget Excel release-candidate
-hardening is complete. The final Russian and English workbook versions and
-Walkthroughs are complete, packaged into ZIP archives, and ready for
-distribution.
+As of the 2026-11-04 owner update, the SmartBudget workbook has been revised for
+ActiveX onboarding and blocked-state guidance. The RU Walkthrough and EN
+Walkthrough have each been revised, and both RU and EN customer ZIP archives
+have been rebuilt. These content/rebuild steps are owner-confirmed complete;
+they were not independently inspected in this documentation sprint.
 
-A separate Product Description has intentionally been removed from this
-release gate. The bilingual Walkthrough is the accepted detailed customer-facing
-guide to the workbook and its use; maintaining another standalone description
-would be redundant. This is an explicit product decision, not a missing
-deliverable. The workbook and materials are the intended commercial release
-candidate unless a release-blocking defect is found.
+Excel 2021 detection, blocked-state detection, opening Trust Center, required
+configuration and continuing startup after correction are owner-verified.
+Complete Microsoft 365 ActiveX validation still requires confirmation; automatic
+`{UP}` navigation remains unverified. Final public RU/EN guidance is pending
+editorial approval under R47. SmartBudget does not change security settings.
 
-### 2. Next active phase: public visual/UI/UX review and release polish
+The previously uploaded review-environment RU/EN `ProductRelease 1.0` archives
+contain earlier bytes and are now stale. Safely replacing them and verifying the
+new bytes remain pending under R48. The commercial version stays **1.0**.
+Customer-visible ZIP filenames may remain unchanged and are not replacement
+proof. Required proof for each language is local SHA-256 and size matched to
+persisted release metadata, verified R2 object metadata and the served object,
+plus active/current state and one active release per SKU.
 
-The next active SmartBudgetSite work is the dedicated public visual/UI/UX review
-and release-polish pass against the final workbook, bilingual Walkthroughs, and
-packaged customer materials. Cover the complete public customer journey without
-expanding backend scope. This pre-deployment gate remains open.
+A later bounded operational task must first inspect `smartbudget_review` release
+references, including `SaleItem`, `DownloadEntitlement` and any other persistent
+owners. Referenced releases must trigger a stop and escalation. Only if safe and
+unreferenced may a minimal review-only reset/replacement procedure be defined,
+followed by normal Admin upload/publication under the isolated review prefix.
+Do not weaken immutable/idempotent release identity, overwrite an R2 object or
+invent version 1.1. No review database or storage operation was performed here.
+
+A separate Product Description remains intentionally excluded: the bilingual
+Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
+do not close release-material validation or make SmartBudgetSite release-ready.
+
+### 2. Next task: R01–R55 -> current main implementation mapping
+
+`release_uiux_requirements.md` is now the durable detailed UI/UX requirements
+source. The recovered R01–R46 content and later R47–R55 amendments are preserved.
+The next bounded task is **`R01–R55 -> current main implementation mapping`**,
+followed by sequential implementation and validation. That mapping has not been
+performed in this documentation sprint. The public UI/UX implementation/review
+gate remains open; repeat desktop/mobile/accessibility review must assess the
+actually updated interface.
+
+The recovered Refund Policy remains agreed commercial content, but is no longer
+final publication-ready legal wording. R49–R54 require a new owner-approved
+publication revision and resolution of refund-consent/legal applicability before
+paid sales. No legal compliance conclusion is claimed. Conditional consent,
+service/product/bundle separation and any online withdrawal path remain subject
+to the decisions in the requirements and release gates. R54 records accepted
+post-refund stop-use/delete-copies policy direction subject to law/licence and
+review; R55 explicitly defers activation/DRM from the first release.
 
 The owner-reported clean review environment uses `smartbudget_review` and
 `.env.review.local` (see `operations.md`). It contains the two intended Standard
@@ -470,6 +502,9 @@ published through the existing Admin/R2 workflow under the isolated
 `product-releases-review-20261026` prefix. Review consultation offers are RU
 `addon` 3,900 RUB / `standalone` 5,900 RUB and EN `addon` 69 EUR / `standalone`
 99 EUR; bundle checkout totals were verified as 6,890 RUB and 118 EUR.
+Those earlier R2 uploads/publications remain integration evidence for upload,
+private storage and publication; they do not establish that the currently
+uploaded archive bytes are the rebuilt customer release artifacts.
 
 Four defects discovered during this review are corrected with focused
 regression coverage: default reviews navigation selects the resolved UI
@@ -487,7 +522,7 @@ temporary review environment section of `operations.md`. The overall public
 UI/UX review gate remains open; this is neither production deployment nor
 production security validation.
 
-### 3. Resume SmartBudgetSite release completion
+### 3. Production deployment and live validation after prior gates
 
 Only after those gates should SmartBudgetSite proceed to production deployment,
 public DNS and HTTPS, then resume the still-open Expected Release Gaps and live

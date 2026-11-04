@@ -10,6 +10,8 @@ separately as history.
   strategic feature fit.
 - `current_state.md` — current implementation state, constraints, and next
   priorities.
+- `release_uiux_requirements.md` — detailed approved public release UI/UX
+  requirements, stable R01–R55 identifiers and full RU/EN copy.
 - `release_readiness.md` — first public commercial release criteria, accepted
   release backlog, expected release gaps, and completion definition.
 - `architecture/backend.md` — backend layers, boundaries, and implementation
@@ -22,6 +24,26 @@ separately as history.
   publication rules.
 - `operations.md` — development commands, configuration, deployment, and
   operational validation.
+
+## Active source boundaries
+
+- `release_uiux_requirements.md` defines **what** the approved public release
+  experience requires: R01–R55, approved and explicitly conditional RU/EN copy,
+  image/material requirements, acceptance criteria, required customer-flow
+  validation and superseded UX decisions retained to prevent regression.
+- `current_state.md` defines what is actually implemented and externally
+  validated now; approval of a requirement does not establish completion.
+- `release_readiness.md` defines which gates must close before the first public
+  commercial release and retains ownership of the Official Release Backlog and
+  Expected Release Gaps. The detailed requirements are not a second backlog.
+- Architecture documents own domain and lifecycle rules. Requirements that
+  conflict with those rules require an explicit decision before implementation.
+- Supporting review/research artifacts preserve evidence and reasoning. They do
+  not authorize implementation by themselves, replace architecture, establish
+  current implementation state or create a competing backlog.
+
+Next bounded task: `R01–R55 -> current main implementation mapping`. The
+2026-11-04 documentation freeze prepares its source; it does not perform it.
 
 ## External sprint working memory
 
@@ -45,3 +67,12 @@ task tracker. See `../AGENTS.md` for ChatGPT and Codex responsibilities and
 Historical checkpoints explain how the implementation evolved. They are not a
 source of truth for active architecture or current priorities. If a historical
 statement differs from an active document, the active document governs.
+
+## Supporting research
+
+- `history/SmartBudget_Refund_Consent_Checkout_Advisory_2026-10-29.md` — preserved
+  refund-consent legal/UX research, kept in the existing non-authoritative history
+  directory to avoid a new documentation branch. It is not legal advice, final
+  wording, proof of compliance, implementation authority, current state,
+  architecture or a competing backlog. Accepted planning implications live in
+  R49–R54 and the release gates; legal applicability remains unresolved.

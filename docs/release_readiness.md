@@ -9,8 +9,10 @@ backlog, the expected release gaps, and the final completion boundary.
 
 This document does not replace the domain rules under `docs/architecture/`, the
 implementation snapshot in `current_state.md`, or the operational procedures in
-`operations.md`. Audit reports and remediation reviews remain working artifacts;
-only their accepted architectural decisions are recorded here.
+`operations.md`. `release_uiux_requirements.md` owns the detailed approved
+public release experience (R01–R55); approval does not close implementation or
+validation gates. Supporting audit/research artifacts do not authorize
+implementation by themselves.
 
 ## 2. Release Philosophy
 
@@ -652,28 +654,111 @@ defects.
 
 ### Pre-deployment release sequence
 
-Production deployment begins only after the cross-project pre-deployment gates
-are complete. Their current state is:
+The next bounded task is **`R01–R55 -> current main implementation mapping`**
+against `release_uiux_requirements.md`. This documentation freeze does not perform
+the mapping. R01–R55 define the recovered/agreed scope: proceed to mapping and
+sequential delivery rather than mining old chats or adding speculative features.
+Ordinary enhancements go post-release; genuine defects, architecture conflicts,
+legal blockers, security and correctness issues may still be escalated. R55 is
+explicitly deferred and must not become a release requirement.
 
-1. **Completed, owner-confirmed:** SmartBudget Excel release-candidate hardening.
-2. **Completed, owner-confirmed:** Final Russian and English workbook versions
-   and Walkthroughs are complete, packaged into ZIP archives, and ready for
-   distribution. The bilingual Walkthrough is the accepted detailed
-   customer-facing guide for this release. A separate Product Description has
-   intentionally been removed from the release gate because it would duplicate
-   the Walkthrough; it is not an outstanding deliverable. The workbook and
-   materials are the intended commercial release candidate unless a
-   release-blocking defect is found.
-3. **Open; next active phase:** Perform the dedicated SmartBudgetSite public
-   visual/UI/UX review and release-polish pass against the final workbook,
-   bilingual Walkthroughs, and packaged customer materials across the complete
-   public customer journey, separately from backend feature expansion.
+#### Gate 1 — SmartBudget release candidate and customer materials
 
-After these gates, proceed with `REL-002` production deployment, public DNS and
-HTTPS, then resume the remaining deployed/live validation and release-polish
-work. `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and all
-other existing release gaps remain open until their own completion criteria are
-met; this sequence defers rather than abandons them.
+**Owner-completed content work:** workbook revised for ActiveX onboarding and
+blocked-state guidance; RU Walkthrough revised; EN Walkthrough revised; RU ZIP
+rebuilt; EN ZIP rebuilt. These are owner-confirmed facts, not independent artifact
+validation in this sprint. Do not schedule their rebuild as outstanding work.
+The bilingual Walkthrough remains the detailed customer guide; a separate Product
+Description is intentionally excluded as redundant.
+
+**Open validation obligations:** any remaining complete Microsoft 365 ActiveX
+scenario, final validation of the new artifacts and Gate 2 replacement/verification.
+Excel 2021 evidence does not establish Microsoft 365 validation. ZIP rebuilding
+alone does not close this gate; the current review R2 bytes remain stale.
+
+#### Gate 2 — Review ProductRelease artifact replacement
+
+**Open.** R48 requires a later bounded review-only operational task:
+
+- Inspect the dedicated `smartbudget_review` database's RU/EN release 1.0 rows
+  and all persistent references, including SaleItems and download entitlements,
+  before any destructive cleanup. If referenced, stop and escalate; do not delete
+  or mutate release history.
+- Only if unreferenced and safe, define the smallest review-only reset/replacement
+  procedure, preserving the isolated `product-releases-review-20261026` prefix.
+  Production and unrelated objects must remain outside its scope.
+- Preserve commercial version **1.0**, immutable/idempotent `(product_id, version)`
+  identity and unique opaque keys. Do not overwrite existing R2 objects or invent
+  version 1.1 to bypass conflicts.
+- Upload the rebuilt archives and publish using the normal Admin workflows.
+- Separately for RU and EN, match the local ZIP SHA-256 and size to persisted
+  `ProductRelease.sha256_hash` and size, verify the represented R2 object's
+  metadata and served new object, and confirm active/current publication with
+  only one active release per SKU. An unchanged ZIP filename is not evidence.
+
+No database cleanup, upload, publication or R2 mutation is authorized by this
+documentation sprint. The reset procedure is not selected here.
+
+#### Gate 3 — SmartBudgetSite UI/UX implementation and repeat review
+
+**Open.** Implement accepted R01–R55 requirements applicable to the website,
+respecting conditional/decision-dependent statuses and R55's first-release
+exclusion. Execute required non-live validation, then repeat desktop/mobile/
+accessibility review against the actually updated interface and resolve
+release-blocking findings. The detailed source retains the full copy, image
+specifications, acceptance criteria and validation checklists. Conflicts recorded
+there (including Landing price placement and item refunds) require decisions
+before affected implementation; preserving the audit does not override domain
+architecture or claim those customer promises are supported today.
+
+#### Gate 4 — Production deployment and live integration validation
+
+Only after the relevant prior gates are complete, proceed with `REL-002`
+production deployment, public DNS, HTTPS, external integrations, real provider/
+payment validation, required end-to-end customer journeys and the final Release
+Readiness Review. Existing `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`,
+`UX-001` and other Expected Release Gaps retain their own completion criteria.
+Completed engineering remediation history is unchanged by these gates.
+
+### Refund / cancellation policy and consent — mandatory pre-sale gate
+
+**Open.** The full recovered 2026-10-28 Refund Policy remains agreed commercial
+content in the requirements' Appendix A, but is no longer final publication-ready
+legal wording. Before paid public sales:
+
+- Obtain a new owner-approved publication revision and reconcile R49–R54 with
+  actual checkout, delivery, refund operations, FAQ and purchase-email behavior.
+  Never describe payment, an email, a link, opening access or downloading as a
+  universal waiver of mandatory refund/withdrawal rights.
+- Resolve legal applicability of any immediate digital-supply consent, the legally
+  relevant supply-start event, the no-consent customer path and any durable-medium
+  confirmation. Do not infer legal regime from language, RU/EN product, currency,
+  citizenship or payment method. No jurisdiction-selection architecture is chosen.
+- If consent is required, use a separate initially unchecked positive action,
+  unbundled from Terms/Privacy/marketing. Distinguish withdrawal without reason
+  from defect/non-conformity rights. Any email confirmation must reflect consent
+  actually obtained; evidence/persistence design requires a later approved scope.
+- Keep product-only, consultation-only and bundle wording internally consistent.
+  Digital-content consent must not waive service rights. Reconcile recovered
+  item/partial-refund promises with current full-Sale-only operations and the
+  one-refund-per-provider-transaction constraint before publication; existing
+  deferred architecture is not silently promoted into current behavior.
+- Determine applicability of an online withdrawal/cancellation path (R53): if
+  required, approve a bounded flow; otherwise record Not applicable with rationale.
+  Do not assume support email or Feedback suffices for every intended regime.
+- Review Russian, EU/EEA and UK digital-product/service treatment and mixed orders
+  as issues raised by the advisory, without treating its conclusions as established
+  legal applicability. Seller-information sufficiency remains open. Do not publish
+  the private home address unless the owner explicitly revisits that decision.
+- Finalize R54's stop-use/delete-retained-copies direction under applicable law and
+  licence terms without limiting statutory rights or claiming remote deletion,
+  inspection, deletion verification or disabling downloaded workbooks.
+- Keep R55 activation/DRM controls deferred. Preserve one-time purchase, immediate
+  complete delivery and indefinite use of the paid version, subject to the resolved
+  legal supply conditions. A lawful refund request is not abuse.
+
+No legal compliance conclusion, final legal wording, checkbox, new persistence
+model or withdrawal workflow is approved by this planning record.
 
 ### Commercial terms consistency
 
