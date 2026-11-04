@@ -1,191 +1,90 @@
-{# templates/sm_landing.html #}
 {% extends "base.html" %}
+
+{# Keep screenshot presentation shared; copy remains in i18n and assets in landing/<lang>/. #}
+{% macro screenshot(stem, alt_key, compact=false, label_key=none) %}
+  {% set src = "/static/img/smartbudget/landing/" ~ lang ~ "/" ~ stem ~ "_" ~ lang ~ ".png" %}
+  <figure class="sb-figure{% if compact %} sb-figure--compact{% endif %}">
+    {% if label_key %}<figcaption class="sb-pair-label">{{ t(label_key) }}</figcaption>{% endif %}
+    <div class="sb-image-viewport" tabindex="0" role="region" aria-label="{{ t(alt_key) }}">
+      <a class="sb-image-link" href="{{ src }}" target="_blank" rel="noopener" aria-label="{{ t('sb_image_open') }}: {{ t(alt_key) }}">
+        <img class="sb-shot" src="{{ src }}" alt="{{ t(alt_key) }}">
+      </a>
+    </div>
+  </figure>
+{% endmacro %}
 
 {% block title %}SmartBudget{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=2">
+<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=4">
 {% endblock %}
 
 {% block content %}
-
-{% set img_suffix = "_en" if lang == "en" else "" %}
-
-<section class="sb-hero">
-  <div class="sb-hero__inner">
-    <h1 class="sb-hero__title">{{ t("sb_landing_title") }}</h1>
-    <p class="sb-hero__type">{{ t("sb_landing_type") }}</p>
+<div class="sb-landing">
+  <section class="sb-hero" aria-labelledby="sb-hero-heading">
+    <h1 class="sb-hero__title" id="sb-hero-heading">{{ t("sb_landing_title") }}</h1>
     <p class="sb-hero__lead">{{ t("sb_landing_lead") }}</p>
-
-    <ul class="sb-hero__cases">
-      <li>{{ t("sb_landing_case_home") }}</li>
-      <li>{{ t("sb_landing_case_job") }}</li>
-      <li>{{ t("sb_landing_case_paycheck") }}</li>
-      <li>{{ t("sb_landing_case_freelance") }}</li>
-    </ul>
-
+    <p class="sb-hero__note">{{ t("sb_landing_note") }}</p>
     <div class="sb-hero__cta">
-      <a class="btn btn-primary" href="/products/smartbudget/buy">
-        {{ t("sb_landing_cta_buy") }}
-      </a>
-
-      <p class="sb-hero__faq">
-        <a href="/faq">{{ t("sb_landing_faq_link") }}</a>
-      </p>
-
-      <p class="sb-hero__faq sb-hero__reviews">
-        <a href="/reviews">{{ t("sb_landing_reviews_link") }}</a>
-      </p>
-
-      <p class="sb-hero__note muted">{{ t("sb_landing_note") }}</p>
+      <a class="sb-hero__explore" href="#sb-capabilities">{{ t("sb_landing_cta_primary") }}</a>
+      <p class="sb-hero__faq"><a href="/faq">{{ t("sb_landing_faq_link") }}</a></p>
+      <p class="sb-hero__faq sb-hero__reviews"><a href="/reviews">{{ t("sb_landing_reviews_link") }}</a></p>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="sb-section" id="sb-nav">
-  <div class="sb-section__text">
-    <h2 class="sb-section__title">{{ t("sb_nav_title") }}</h2>
-  </div>
-
-  <div class="sb-section__media sb-section__media--full">
-    <img class="sb-shot" src="/static/img/smartbudget/sb_nav{{ img_suffix }}.png" alt="{{ t('sb_nav_alt') }}">
-  </div>
-
-  <div class="sb-section__text">
-    <p class="sb-section__p">{{ t("sb_nav_p1") }}</p>
-    <p class="sb-section__p">{{ t("sb_nav_p2") }}</p>
-  </div>
-</section>
-
-<section class="sb-section" id="sb-inputs">
-
-  <h2 class="sb-section__title">{{ t("sb_inputs_title") }}</h2>
-
-  <div class="sb-section__split">
-
-    <div class="sb-section__media">
-      <img class="sb-shot" src="/static/img/smartbudget/sb_inputs{{ img_suffix }}.png" alt="{{ t('sb_inputs_alt') }}">
-    </div>
-
+  <section class="sb-section" id="sb-capabilities" aria-labelledby="sb-reserves-heading">
     <div class="sb-section__text">
-      <p class="sb-section__p">{{ t("sb_inputs_p1") }}</p>
-      <p class="sb-section__p">{{ t("sb_inputs_p2") }}</p>
+      <h2 id="sb-reserves-heading">{{ t("sb_reserves_title") }}</h2>
+      <p>{{ t("sb_reserves_p1") }}</p>
+      <p>{{ t("sb_reserves_p2") }}</p>
+      <ul class="sb-reserve-levels">
+        {% for level in (1, 2, 3) %}<li>{{ t("sb_reserves_level" ~ level) }}</li>{% endfor %}
+      </ul>
+      <p>{{ t("sb_reserves_p3") }}</p>
     </div>
+    {{ screenshot("g8_01_savings_breakdown", "sb_reserves_alt") }}
+    <div class="sb-caption">
+      <h3>{{ t("sb_reserves_caption_title") }}</h3>
+      <p>{{ t("sb_reserves_caption") }}</p>
+    </div>
+  </section>
 
-  </div>
-
-</section>
-
-<section class="sb-section" id="sb-plan">
-  <h2 class="sb-section__title sb-section__title--full">
-    {{ t("sb_plan_title") }}
-  </h2>
-
-  <div class="sb-section__grid">
+  <section class="sb-section" id="sb-future-expense" aria-labelledby="sb-future-heading">
     <div class="sb-section__text">
-      <p class="sb-section__p">{{ t("sb_plan_p1") }}</p>
-      <p class="sb-section__p">{{ t("sb_plan_p2") }}</p>
+      <h2 id="sb-future-heading">{{ t("sb_future_title") }}</h2>
+      {% for number in (1, 2, 3) %}<p>{{ t("sb_future_p" ~ number) }}</p>{% endfor %}
     </div>
+    {{ screenshot("g8_02_future_expense_warning", "sb_future_alt") }}
+    <p class="sb-caption">{{ t("sb_future_caption") }}</p>
+  </section>
 
-    <div class="sb-section__media">
-      <img class="sb-shot" src="/static/img/smartbudget/sb_plan{{ img_suffix }}.png" alt="{{ t('sb_plan_alt') }}">
+  <section class="sb-section" id="sb-plan-actual" aria-labelledby="sb-transition-heading">
+    <div class="sb-section__text">
+      <h2 id="sb-transition-heading">{{ t("sb_transition_title") }}</h2>
+      {% for number in (1, 2, 3, 4) %}<p>{{ t("sb_transition_p" ~ number) }}</p>{% endfor %}
     </div>
-  </div>
-</section>
+    {{ screenshot("g8_03_plan_actual_transition", "sb_transition_alt") }}
+    <p class="sb-caption">{{ t("sb_transition_caption") }}</p>
+  </section>
 
-<section class="sb-section" id="sb-savings-viz">
-  <div class="sb-section__text">
-    <h2 class="sb-section__title">
-      {{ t("sb_savings_viz_title") }}
-    </h2>
-  </div>
+  <section class="sb-section" id="sb-reconciliation" aria-labelledby="sb-reconciliation-heading">
+    <div class="sb-section__text">
+      <h2 id="sb-reconciliation-heading">{{ t("sb_reconciliation_title") }}</h2>
+      {% for number in (1, 2, 3, 4) %}<p>{{ t("sb_reconciliation_p" ~ number) }}</p>{% endfor %}
+    </div>
+    <div class="sb-reconciliation-pair">
+      {{ screenshot("g8_04_reconciliation_before", "sb_reconciliation_before_alt", true, "sb_reconciliation_before") }}
+      {{ screenshot("g8_05_reconciliation_after", "sb_reconciliation_after_alt", true, "sb_reconciliation_after") }}
+    </div>
+    <p class="sb-caption">{{ t("sb_reconciliation_caption") }}</p>
+  </section>
 
-  <div class="sb-section__media sb-section__media--full">
-    <img class="sb-shot"
-         src="/static/img/smartbudget/sb_savings_viz{{ img_suffix }}.png"
-         alt="{{ t('sb_savings_viz_alt') }}">
-  </div>
-
-  <div class="sb-section__text">
-    <p class="sb-section__p">{{ t("sb_savings_viz_p1") }}</p>
-    <p class="sb-section__p">{{ t("sb_savings_viz_p2") }}</p>
-  </div>
-</section>
-
-<section class="sb-section" id="sb-fact">
-  <div class="sb-section__text">
-    <h2 class="sb-section__title">
-      {{ t("sb_fact_title") }}
-    </h2>
-  </div>
-
-  <div class="sb-section__media sb-section__media--full">
-    <img class="sb-shot"
-         src="/static/img/smartbudget/sb_fact{{ img_suffix }}.png"
-         alt="{{ t('sb_fact_alt') }}">
-  </div>
-
-  <div class="sb-section__text">
-    <p class="sb-section__p">{{ t("sb_fact_p1") }}</p>
-    <p class="sb-section__p">{{ t("sb_fact_p2") }}</p>
-  </div>
-</section>
-
-<section class="sb-section" id="sb-utilities">
-  <div class="sb-section__text">
-    <h2 class="sb-section__title">
-      {{ t("sb_utilities_title") }}
-    </h2>
-  </div>
-
-  <div class="sb-section__media sb-section__media--full">
-    <img class="sb-shot"
-         src="/static/img/smartbudget/sb_utilities{{ img_suffix }}.png"
-         alt="{{ t('sb_utilities_alt') }}">
-  </div>
-
-  <div class="sb-section__text">
-    <p class="sb-section__p">{{ t("sb_utilities_p1") }}</p>
-    <p class="sb-section__p">{{ t("sb_utilities_p2") }}</p>
-  </div>
-</section>
-
-<section class="sb-section" id="sb-compare">
-  <div class="sb-section__text">
-    <h2 class="sb-section__title">
-      {{ t("sb_compare_title") }}
-    </h2>
-  </div>
-
-  <div class="sb-section__media sb-section__media--full">
-    <img class="sb-shot"
-         src="/static/img/smartbudget/sb_compare{{ img_suffix }}.png"
-         alt="{{ t('sb_compare_alt') }}">
-  </div>
-
-  <div class="sb-section__text">
-    <p class="sb-section__p">{{ t("sb_compare_p1") }}</p>
-    <p class="sb-section__p">{{ t("sb_compare_p2") }}</p>
-  </div>
-</section>
-
-<section class="sb-section sb-consult">
-  <div class="sb-consult__inner">
-    <h2 class="sb-section__title">{{ t("sb_consult_title") }}</h2>
-    <p class="sb-section__p">{{ t("sb_consult_p") }}</p>
-    <a class="btn btn-primary" href="{{ t('link_tg_url') }}" target="_blank" rel="noopener">
-      {{ t("sb_consult_cta") }}
-    </a>
-  </div>
-</section>
-
-<section class="sb-section sb-final-cta">
-  <div class="sb-final-cta__inner">
-    <h2 class="sb-section__title">{{ t("sb_final_cta_title") }}</h2>
-    <a class="btn btn-primary btn-large" href="/products/smartbudget/buy">
-      {{ t("sb_landing_cta_buy") }}
-    </a>
-  </div>
-</section>
-
+  {# Existing temporary purchase tail; G9 owns the future commercial offer. #}
+  <section class="sb-final-cta">
+    <div class="sb-final-cta__inner">
+      <h2>{{ t("sb_final_cta_title") }}</h2>
+      <a class="btn btn-primary btn-large" href="/products/smartbudget/buy">{{ t("sb_landing_cta_buy") }}</a>
+    </div>
+  </section>
+</div>
 {% endblock %}

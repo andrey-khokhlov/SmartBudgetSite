@@ -660,8 +660,9 @@ validation/operational work are in
 [current state](current_state.md#release-uiux-implementation-mapping). Completion
 of analysis is not runtime/provider validation or closure of a release gate.
 G1's accepted language/navigation scope is implemented and regression-validated
-as recorded in current state. **Next bounded implementation sprint: G2A — R05,
-remove the obsolete Telegram Landing block.**
+as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
+scope are also implemented and regression/browser-validated. G9 remains separate
+and decision-dependent; full R07 and the overall UI/UX gate are not complete.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -709,9 +710,14 @@ documentation sprint. The reset procedure is not selected here.
 
 **Open; mapping complete.** Proceed through the accepted bounded implementation
 groups in [current state](current_state.md#accepted-implementation-groups). G1's
-accepted scope is implemented; G2A is next. Future Consultations navigation stays
-with R06/G12; full-register R03 remains Partial only for that integration. D1–D6 block only affected work: G2A removes the obsolete Telegram Landing
-block (R05) without waiting for D2; G2B (R04) awaits D2. Respect conditional statuses
+accepted scope, G2A and the scoped G7/G8 work are implemented and validated. Future Consultations navigation stays
+with R06/G12; full-register R03 remains Partial only for that integration.
+D1–D6 block only affected work. G2A removed the obsolete Telegram block without
+waiting for D2; G2B/R04 remains untouched and awaits D2. The first five Landing
+sections use approved RU/EN copy and final supplied images with linked originals;
+G9 pricing/practical/commercial work is not implemented, and R07 remains Partial.
+The existing temporary Buy tail is not a G9 completion claim. Focused browser
+checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses
 and R55's first-release exclusion. Keep validation/operational tasks separate from
 implementation; concrete findings may justify later bounded changes. Execute
 required non-live validation, then repeat desktop/mobile/

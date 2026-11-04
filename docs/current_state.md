@@ -475,7 +475,7 @@ A separate Product Description remains intentionally excluded: the bilingual
 Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
 do not close release-material validation or make SmartBudgetSite release-ready.
 
-### 2. G1 language/navigation implemented; next sprint: G2A — R05
+### 2. G1 and scoped Landing G2A/G7/G8 implemented
 
 The R01–R55 mapping was completed against local HEAD `cd5190b` and independently
 reviewed and accepted. The [implementation-state snapshot below](#release-uiux-implementation-mapping)
@@ -490,8 +490,12 @@ semantic active states. Successful booking rendering now shares locale-cookie
 persistence. Unsent checkout email is not persisted; activating the current
 language does not navigate or clear typed input. No R04+ functionality was added.
 
-**Next bounded implementation sprint: G2A — R05, remove the obsolete Telegram
-Landing block.** G2B/R04 remains blocked by D2. The future Consultations entry is
+**G2A and the accepted G7/G8 Landing scope are implemented** against `7034dcb`:
+Hero, resilience levels, future expense, PLAN/ACTUAL and reconciliation use the
+approved RU/EN copy and supplied final assets. The obsolete Telegram block is
+removed. Only the existing temporary Buy tail remains; G9 practical/commercial
+content and Landing pricing were not implemented. G9 remains separate and
+partly blocked by D1/destination dependencies. G2B/R04 remains blocked by D2. The future Consultations entry is
 owned by R06/G12; full-register R03 remains Partial only for that integration,
 while all R03 behavior explicitly accepted for G1 is implemented.
 
@@ -611,7 +615,7 @@ phase.
 `cd5190b3ed0ee109e5f4983842c89a70571f0219` (`docs: freeze pre-release UI UX
 requirements`), closed out on 2026-11-04. The independently reviewed statuses
 formed the accepted implementation-state snapshot. The table now includes the
-G1 updates recorded below; it is not a new requirements register or release backlog. Requirements/copy remain owned by
+G1 and scoped Landing updates recorded below; it is not a new requirements register or release backlog. Requirements/copy remain owned by
 `release_uiux_requirements.md`; release gates remain owned by
 `release_readiness.md`.
 
@@ -634,17 +638,17 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
 | R03 | Partial | G1 active About/Products semantics, locale continuity and booking-success cookie persistence are implemented; only the future Consultations entry remains outside G1. | R06/G12; G1 accepted end state complete |
 | R04 | Requires decision | Footer exposes personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email. Recovered removal conflicts with unresolved UX-001 treatment, including possible informational LinkedIn retention. | D2; do not choose silently |
-| R05 | Required | Obsolete Landing heading/text/Telegram CTA remain in `sm_landing.html`; complete removal is approved. | None; G2A is not blocked by D2 |
+| R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete; R04/footer remains untouched |
 | R06 | Requires decision | Consultation catalog/standalone identity, service SaleItem and entitlement support exist; public consultation purchase/provider orchestration do not. | D3; G11 then G12 |
-| R07 | Required | Landing still presents older feature sections; approved seven-block narrative and Hero are absent. | G7–G9; D1 affects only commercial pricing |
+| R07 | Partial | Approved first five sections and on-page Hero CTA are implemented; the full seven-block requirement still awaits G9 practical/commercial sections. | G7/G8 accepted scope complete; G9/D1 remains separate |
 | R08 | Requires decision | Hero is price-free and purchase reaches Buy; concluding priced offer is absent. | D1; G9 |
-| R09 | Partial | Separate Landing sections/translation keys/CSS exist; approved organization and simple release/image/offer maintenance convention are incomplete. | G7; D1 for offer data |
-| R10 | Required | Large Telegram consultation block remains instead of a short optional add-on mention at purchase. | G2A removal is independent; G9 offer/destination dependencies |
-| R11 | Partial | RU/EN assets are selected separately, but inspected images use older compositions/terminology; release provenance and original-image enlargement are missing. | Genuine release materials and image validation; G7/G8 |
-| R12 | Partial | Split/full-width layouts and responsive rules exist; repetitive grey card framing and updated visual hierarchy remain. | Updated blocks/images and rendered review; G7/G8 |
-| R13 | Required | Generic planning/shortfall sections do not supply the approved future-expense explanation and verified screenshot scenario. | Real workbook calculation/image; G8 |
-| R14 | Partial | PLAN/FACT sections exist; preserved-plan baseline, actual-past/revised-future explanation and approved crop are missing. | Genuine release image; preserve meaning of future values; G8 |
-| R15 | Required | Current comparison is plan/actual variance, not account-balance reconciliation with Check before/after. | Reproducible release example; G8 |
+| R09 | Implemented | Landing uses a shared screenshot macro, consistent semantic sections, localized copy keys and locale-specific asset paths; maintenance convention recorded below. | G7 foundation complete; future G9 content remains separate |
+| R10 | Partial | Obsolete large consultation block removed under G2A; no new consultation marketing or optional add-on wording was introduced. | Remaining purchase-side mention belongs to G9 |
+| R11 | Implemented | All ten owner-supplied final assets are used by locale without byte changes; linked originals, meaningful localized alt text and keyboard-pannable viewports are implemented. | Scoped G7/G8 browser checks complete; independent release/workbook validation and R45 remain open |
+| R12 | Implemented | First five Landing sections use text-led hierarchy, wide readable demonstrations and a responsive reconciliation pair instead of uniform feature cards. | Scoped G7/G8 desktop/mobile checks complete; repeat R45 review remains open |
+| R13 | Implemented | Approved future-expense copy/caption and exact supplied warning screenshot render in RU/EN. | Supplied numerical data unchanged; G8 browser checks complete |
+| R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
+| R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Partial | Local Excel/no-subscription note exists; four practical benefits, guide, indefinite-use wording and compatibility disclosure are incomplete. | G6/G9; no unapproved update/support promises |
 | R17 | Partial | Photograph and three activity areas exist; approved biography/training/story, ACCA/FCCA distinction and left alignment are missing. | Approved copy and responsive verification; G5 |
 | R18 | Partial | Price-free product card links to Landing; six old highlights/CTA remain instead of three approved outcomes and Windows note. | None; G5 |
@@ -727,6 +731,50 @@ was corrected before the passing run above. The full suite, live providers,
 real customer journeys and assistive-technology review were not run. G1 does not
 close the overall UI/UX gate or implement any R04+ functionality.
 
+### G2A / G7 / G8 Landing implementation and validation
+
+Implemented against `7034dcb`. The scoped Landing now presents Hero → three levels
+of financial resilience → future-expense consequences → PLAN/ACTUAL → balance
+reconciliation. Sections 5.1.1–5.1.5 copy/captions are retained verbatim in both
+locales; only new image alt/link labels and before/after labels were authored.
+The Hero CTA targets `#sb-capabilities`. The old Telegram consultation block is
+absent. Existing FAQ/review links and the temporary Buy tail remain; no footer
+contact change, price, compatibility/practical block, new commercial offer,
+consultation destination/marketing or checkout behavior was introduced.
+
+Maintenance: `app/templates/sm_landing.html` uses the local `screenshot` macro for
+figure/link/accessibility presentation. Section copy stays in `app/core/i18n.py`
+under the Hero/reserves/future/transition/reconciliation keys; image stems map to
+`app/static/img/smartbudget/landing/<lang>/g8_*_<lang>.png`. The supplied ten PNGs
+are used unchanged (SHA-256 checked before/after); legacy images are retained.
+Replace imagery/copy through these explicit section inputs, not a CMS or new
+backend model. Landing-only CSS is versioned as `sm_landing.css?v=3`.
+
+Key image crops pan inside keyboard-focusable regions on narrow screens rather
+than shrinking spreadsheet text; original-image anchors open the exact PNG in a
+new tab. Reconciliation is labelled before/after and stacks on mobile.
+
+Validation through the configured `.venv` interpreter with required external
+pytest temp/cache paths:
+
+- Landing, existing reviews and public navigation web regressions: **57 passed**
+  (`landing-g2a-g7-g8`). Approved copy, locale asset paths, image bytes/original
+  links, reconciliation pair, removed block and working temporary Buy tail checked.
+- Landing plus existing checkout/navigation Chromium cases: **8 passed** at
+  1280/375 px in RU/EN (`landing-g2a-g7-g8-browser`). After improving the mobile
+  original-link label, the **4 Landing cases passed again**
+  (`landing-g2a-g7-g8-browser-final`). Keyboard panning, on-page CTA, opening an
+  original, image loading, ordinary reload and no document horizontal overflow
+  checked. Generated desktop/mobile screenshots were visually inspected.
+- Focused Ruff and test-file Black checks and `git diff --check` pass. The existing
+  `i18n.py` whole-file Black baseline remains outside this bounded change.
+
+No full suite, live-provider/customer journey, screen-reader audit or independent
+verification of workbook financial calculations was performed. Assets were
+supplied as final by the owner, not regenerated. Final owner/editorial and repeat
+R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks;
+G9 and D1 remain unchanged and decision-dependent. No commit or push was made.
+
 ### Decision dependencies
 
 These accepted unresolved dependencies block only affected work. They do not
@@ -759,14 +807,14 @@ surface-specific slices, not duplicate requirements.
 | Group | R-IDs | Scope and dependencies |
 | --- | --- | --- |
 | G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**; future Consultations navigation remains with R06/G12. |
-| G2A — Remove obsolete Telegram Landing block | R05 | **Next bounded implementation sprint**; complete removal of heading/text/CTA, no architecture decision or D2 dependency. |
+| G2A — Remove obsolete Telegram Landing block | R05 | **Implemented and validated**; complete heading/text/CTA removal, independently of D2; footer untouched. |
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
 | G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
 | G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
 | G5 — About / Products | R17–R19 | Approved biography/product presentation and simpler framing. |
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | FAQ structure/overview and consistent compatibility/ActiveX guidance; retain editorial and device-validation limits. |
-| G7 — Landing foundation | R07, R09, R11–R12 | Approved structure/Hero/reserves, maintenance convention and image presentation. |
-| G8 — Landing demonstrations | R11, R13–R15 | Genuine future-expense, PLAN/ACTUAL and reconciliation examples. |
+| G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
+| G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
 | G9 — Practical/commercial Landing | R08, R10, R16, Landing portion of R34 | Practical benefits and concluding offer; partly blocked by D1 and standalone-destination dependencies, not every stable block. |
 | G10 — Product Buy / Checkout | R20–R23, applicable R34/R49 | Equal language cards, add-on/order/delivery presentation; preserve server-authoritative commerce; final policy links follow G15. |
 | G11 — Standalone payment boundary | R06, R38 | Service-only provider initiation; blocked by D3. |
@@ -780,8 +828,9 @@ do not fold it into G15 implementation automatically. R50 and R53 receive
 implementation scopes only if D4 establishes applicability. R39, R45 and R48
 remain validation/operational work; R46 is complete; R55 remains deferred.
 
-G1's accepted scope is complete; G2A is next. Independent low-risk groups can
-proceed without waiting for unrelated decisions. G7–G9 split Landing work; G11 precedes G12. Complete required material
+G1, G2A and the accepted G7/G8 scope are implemented. Further bounded tasks must
+be explicitly scoped from the accepted groups; independent work need not wait
+for unrelated decisions. G9 was not implemented. G7–G9 split Landing work; G11 precedes G12. Complete required material
 replacement before treating review artifacts as current, repeat review against
 the updated interface, then follow the later deployment/live-validation gates.
 
