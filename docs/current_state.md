@@ -475,7 +475,7 @@ A separate Product Description remains intentionally excluded: the bilingual
 Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
 do not close release-material validation or make SmartBudgetSite release-ready.
 
-### 2. G1 and scoped Landing G2A/G7/G8 implemented
+### 2. G1, G2A, G5 presentation and scoped Landing G7/G8 implemented
 
 The R01–R55 mapping was completed against local HEAD `cd5190b` and independently
 reviewed and accepted. The [implementation-state snapshot below](#release-uiux-implementation-mapping)
@@ -498,6 +498,11 @@ content and Landing pricing were not implemented. G9 remains separate and
 partly blocked by D1/destination dependencies. G2B/R04 remains blocked by D2. The future Consultations entry is
 owned by R06/G12; full-register R03 remains Partial only for that integration,
 while all R03 behavior explicitly accepted for G1 is implemented.
+
+**G5 About/Products presentation is implemented and validated** against
+`9aec0b7`. R17 and R19 are implemented; R18 has the approved catalog content and
+Windows conditions line, while its final compatibility-requirements link remains
+pending G6/R32. No temporary FAQ requirements link was added.
 
 `release_uiux_requirements.md` remains the durable source of what is required.
 The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
@@ -650,9 +655,9 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Partial | Local Excel/no-subscription note exists; four practical benefits, guide, indefinite-use wording and compatibility disclosure are incomplete. | G6/G9; no unapproved update/support promises |
-| R17 | Partial | Photograph and three activity areas exist; approved biography/training/story, ACCA/FCCA distinction and left alignment are missing. | Approved copy and responsive verification; G5 |
-| R18 | Partial | Price-free product card links to Landing; six old highlights/CTA remain instead of three approved outcomes and Windows note. | None; G5 |
-| R19 | Partial | Card exists with extra section/container framing and prominent shadow; visual simplification remains. | Rendered verification; G5 |
+| R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
+| R18 | Partial | Approved 5.3 title/subtitle/description, exactly three capabilities, localized details CTA and Windows/local-data/one-time-purchase conditions implemented through the catalog; no price. | Accepted G5 card/content complete; final compatibility-requirements link pending G6/R32, not linked to incomplete FAQ |
+| R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
 | R20 | Partial | Priced Buy options/add-ons exist; Package RU/INT and locale-dependent Recommended badge remain. | Preserve catalog/payment routing; G10 |
 | R21 | Partial | Setup add-on selection and database amount exist; 60-minute/online/booking-after-payment explanation is missing. | Named platform needs validation; neutral copy can proceed; G10 |
 | R22 | Partial | Selected items, Total emphasis and email/payment form exist; Your order heading, language terminology and remaining hierarchy polish are missing. | None; G10 |
@@ -775,6 +780,37 @@ supplied as final by the owner, not regenerated. Final owner/editorial and repea
 R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks;
 G9 and D1 remain unchanged and decision-dependent. No commit or push was made.
 
+### G5 About / Products implementation and validation
+
+Implemented against `9aec0b7`. About uses the complete approved 5.2 RU/EN copy
+without shortening, semantic headings and left-aligned readable paragraphs. The
+existing `/static/img/me.jpg` remains unchanged and is capped at 320 px. Old
+biography/bullets/cards are no longer rendered. ACCA qualification versus former
+FCCA status and the two-year GeekBrains Full-Stack Developer training wording
+are preserved exactly.
+
+Products retains its catalog-driven presentation, with explicit description,
+capabilities-heading and conditions translation keys. The approved 5.3 copy,
+exactly three capabilities and localized details CTA link to the existing
+Landing. The conditions line explicitly names Microsoft Excel for Windows,
+local data storage and one-time purchase without subscription. A single modest
+bordered card replaces nested gradient/shadow framing; no price or purchase CTA.
+
+Validation: **37 passed** through `.venv` with external pytest temp/cache paths
+(`g5-about-products`): 5 About/Products web/catalog checks, 28 existing public
+navigation checks and 4 Chromium cases covering both pages in RU/EN at 1280/375 px.
+All eight page screenshots were visually inspected. Browser checks cover photo
+size, left alignment/paragraph widths, no document overflow, simplified card
+styling and keyboard CTA navigation with locale continuity. Focused Ruff and
+Black checks (catalog/new tests) and `git diff --check` pass.
+
+R17/R19 are implemented. R18 card/content is implemented but remains Partial:
+the final compatibility-requirements link awaits G6/R32 and a complete destination;
+no misleading FAQ requirements link was added. No G6, G3/G4, G9, checkout,
+consultation, footer/contact or backend behavior work was performed. Full-suite,
+live-customer and screen-reader validation were not run; final R45 review remains
+open. Requirement definitions were not modified. No commit or push was made.
+
 ### Decision dependencies
 
 These accepted unresolved dependencies block only affected work. They do not
@@ -811,7 +847,7 @@ surface-specific slices, not duplicate requirements.
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
 | G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
 | G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
-| G5 — About / Products | R17–R19 | Approved biography/product presentation and simpler framing. |
+| G5 — About / Products | R17–R19 | **Accepted presentation/content scope implemented and validated**; R17/R19 implemented, R18 final compatibility link remains pending G6/R32. |
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | FAQ structure/overview and consistent compatibility/ActiveX guidance; retain editorial and device-validation limits. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
@@ -828,7 +864,8 @@ do not fold it into G15 implementation automatically. R50 and R53 receive
 implementation scopes only if D4 establishes applicability. R39, R45 and R48
 remain validation/operational work; R46 is complete; R55 remains deferred.
 
-G1, G2A and the accepted G7/G8 scope are implemented. Further bounded tasks must
+G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
+R18 still awaits the final compatibility-requirements link under G6/R32. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 was not implemented. G7–G9 split Landing work; G11 precedes G12. Complete required material
 replacement before treating review artifacts as current, repeat review against

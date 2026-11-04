@@ -663,6 +663,9 @@ G1's accepted language/navigation scope is implemented and regression-validated
 as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
 scope are also implemented and regression/browser-validated. G9 remains separate
 and decision-dependent; full R07 and the overall UI/UX gate are not complete.
+G5 About/Products presentation is implemented and web/browser-validated; R17/R19
+are implemented, while R18 retains its final compatibility-link dependency on
+G6/R32. No incomplete FAQ requirements link was added.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -716,7 +719,11 @@ D1–D6 block only affected work. G2A removed the obsolete Telegram block withou
 waiting for D2; G2B/R04 remains untouched and awaits D2. The first five Landing
 sections use approved RU/EN copy and final supplied images with linked originals;
 G9 pricing/practical/commercial work is not implemented, and R07 remains Partial.
-The existing temporary Buy tail is not a G9 completion claim. Focused browser
+The existing temporary Buy tail is not a G9 completion claim. G5 now uses the
+complete approved About biography and a restrained catalog-driven Products card
+with three capabilities and Windows/local-data/one-time-purchase conditions.
+R17/R19 are implemented; R18 remains Partial only for the final G6/R32
+compatibility-requirements link. No G6/FAQ rewrite was performed. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses
 and R55's first-release exclusion. Keep validation/operational tasks separate from
 implementation; concrete findings may justify later bounded changes. Execute

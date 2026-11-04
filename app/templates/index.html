@@ -1,58 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}
-Andrey Khokhlov
+{% block title %}Andrey Khokhlov{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/about.css') }}?v=2">
 {% endblock %}
 
 {% block content %}
-<section class="hero">
-  <div class="hero-photo">
-    <div class="hero-name">{{ t("brand_name") }}</div>
-    <img src="/static/img/me.jpg" alt="Andrey Khokhlov" />
-  </div>
+<article class="about-page">
+  <section class="about-intro" aria-labelledby="about-heading">
+    <img class="about-photo" src="/static/img/me.jpg" alt="{{ t('brand_name') }}">
+    <h1 id="about-heading">{{ t("about_h1") }}</h1>
+    {% for number in range(1, 6) %}<p>{{ t("about_intro_" ~ number) }}</p>{% endfor %}
+  </section>
 
-  <div class="hero-text">
-    <h1>{{ t("about_h1") }}</h1>
+  <section class="about-section" aria-labelledby="about-story-heading">
+    <h2 id="about-story-heading">{{ t("about_story_title") }}</h2>
+    {% for number in range(1, 8) %}<p>{{ t("about_story_" ~ number) }}</p>{% endfor %}
+  </section>
 
-    <div class="hero-bullets">
-      <ul class="bullets">
-        <li>{{ t("about_b1") }}</li>
-        <li>{{ t("about_b2") }}</li>
-        <li>{{ t("about_b3") }}</li>
-      </ul>
+  <section class="about-section" aria-labelledby="about-work-heading">
+    <h2 id="about-work-heading">{{ t("features_h2") }}</h2>
+    <div class="about-activities">
+      {% for number, icon in ((1, "analytics"), (2, "automation"), (3, "product")) %}
+        <div class="about-activity">
+          <img src="/static/img/{{ icon }}.svg" alt="" width="40" height="40">
+          <h3>{{ t("feature_" ~ number ~ "_h") }}</h3>
+          <p>{{ t("feature_" ~ number ~ "_p") }}</p>
+        </div>
+      {% endfor %}
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="hero-text-full">
-  <p class="lead">{{ t("about_p") }}</p>
-  <p class="lead">{{ t("about_p2") }}</p>
-  <p class="lead">{{ t("about_p3") }}</p>
-</section>
-
-<section class="features">
-  <h2>{{ t("features_h2") }}</h2>
-
-  <div class="features-grid">
-    <div class="feature">
-      <img src="/static/img/analytics.svg" alt="Analytics">
-      <h3>{{ t("feature_1_h") }}</h3>
-      <p>{{ t("feature_1_p") }}</p>
-    </div>
-
-    <div class="feature">
-      <img src="/static/img/automation.svg" alt="Automation">
-      <h3>{{ t("feature_2_h") }}</h3>
-      <p>{{ t("feature_2_p") }}</p>
-    </div>
-
-    <div class="feature">
-      <img src="/static/img/product.svg" alt="Products">
-      <h3>{{ t("feature_3_h") }}</h3>
-      <p>{{ t("feature_3_p") }}</p>
-    </div>
-  </div>
-</section>
-
+  <section class="about-section" aria-labelledby="about-approach-heading">
+    <h2 id="about-approach-heading">{{ t("about_approach_title") }}</h2>
+    {% for number in range(1, 4) %}<p>{{ t("about_approach_" ~ number) }}</p>{% endfor %}
+  </section>
+</article>
 {% endblock %}
-

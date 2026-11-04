@@ -8,6 +8,9 @@ class Product:
     slug: str
     title_key: str
     subtitle_key: str
+    description_key: str
+    capabilities_title_key: str
+    conditions_key: str
     highlights_keys: List[str]
     cta_key: str
 
@@ -17,15 +20,15 @@ PRODUCTS: List[Product] = [
         slug="smartbudget",
         title_key="product_smartbudget_title",
         subtitle_key="product_smartbudget_subtitle",
+        description_key="product_smartbudget_description",
+        capabilities_title_key="product_smartbudget_capabilities_title",
+        conditions_key="product_smartbudget_conditions",
         highlights_keys=[
-            "product_smartbudget_h1",  # Step-by-step planning (walkthrough)
-            "product_smartbudget_h2",  # Plan vs Fact control
-            "product_smartbudget_h3",  # Utilities micro-budget + payment control
-            "product_smartbudget_h4",  # Credit card / cash-gap handling
-            "product_smartbudget_h5",  # Personal projects sub-budgets
-            "product_smartbudget_h6",  # Built-in analytics
+            "product_smartbudget_h1",
+            "product_smartbudget_h2",
+            "product_smartbudget_h3",
         ],
-        cta_key="product_cta_buy",
+        cta_key="product_smartbudget_cta",
     ),
 ]
 
@@ -37,6 +40,9 @@ def products_index() -> List[Dict]:
             "slug": p.slug,
             "title_key": p.title_key,
             "subtitle_key": p.subtitle_key,
+            "description_key": p.description_key,
+            "capabilities_title_key": p.capabilities_title_key,
+            "conditions_key": p.conditions_key,
             "highlights_keys": p.highlights_keys,
             "cta_key": p.cta_key,
         }

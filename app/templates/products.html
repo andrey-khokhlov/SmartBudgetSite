@@ -1,33 +1,26 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/products.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/products.css') }}?v=2">
 {% endblock %}
 
 {% block content %}
-<h1>{{ t("products_h1") }}</h1>
-
-<p class="products-subtitle">
-    {{ t("products_subtitle") }}
-</p>
-<div class="products-section">
-    <div class="products-grid">
-      {% for p in products %}
-        <article class="product-card">
-          <h2 class="product-title">{{ t(p.title_key) }}</h2>
-          <p class="product-subtitle">{{ t(p.subtitle_key) }}</p>
-
-          <ul class="product-highlights">
-            {% for hk in p.highlights_keys %}
-              <li>{{ t(hk) }}</li>
-            {% endfor %}
-          </ul>
-
-          <a class="product-cta" href="/products/{{ p.slug }}">
-            {{ t(p.cta_key) }}
-          </a>
-        </article>
-      {% endfor %}
-    </div>
+<div class="products-page">
+  <h1>{{ t("products_h1") }}</h1>
+  <div class="products-grid">
+    {% for p in products %}
+      <article class="product-card">
+        <h2 class="product-title">{{ t(p.title_key) }}</h2>
+        <p class="product-subtitle">{{ t(p.subtitle_key) }}</p>
+        <p class="product-description">{{ t(p.description_key) }}</p>
+        <h3 class="product-capabilities-title">{{ t(p.capabilities_title_key) }}</h3>
+        <ul class="product-highlights">
+          {% for hk in p.highlights_keys %}<li>{{ t(hk) }}</li>{% endfor %}
+        </ul>
+        <p class="product-conditions">{{ t(p.conditions_key) }}</p>
+        <a class="product-cta" href="/products/{{ p.slug }}">{{ t(p.cta_key) }}</a>
+      </article>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}
