@@ -42,10 +42,9 @@ separately as history.
   not authorize implementation by themselves, replace architecture, establish
   current implementation state or create a competing backlog.
 
-Next bounded implementation sprint: **G1 — R01–R03 Language/navigation**.
-The accepted static mapping against `cd5190b`, decision dependencies,
-implementation groups and separate validation/operational work are recorded in
-[current state](current_state.md#release-uiux-implementation-mapping).
+Implementation progress and the next bounded sprint belong in
+[current state](current_state.md#release-uiux-implementation-mapping), alongside
+the accepted mapping, decision dependencies, groups and separate validation work.
 
 ## External sprint working memory
 

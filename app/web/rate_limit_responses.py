@@ -5,13 +5,16 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from app.core.i18n import get_lang, t
+from app.web.navigation import public_navigation_context
 from app.core.rate_limiting import (
     RATE_LIMIT_MESSAGE,
     RATE_LIMIT_UNAVAILABLE_MESSAGE,
     RateLimitExceeded,
 )
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(
+    directory="app/templates", context_processors=[public_navigation_context]
+)
 
 
 def build_rate_limit_response(request: Request, exc: Exception):

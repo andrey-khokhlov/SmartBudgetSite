@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.products_catalog import products_index, product_by_slug
 from app.core.i18n import get_lang, set_lang_cookie, t
+from app.web.navigation import public_navigation_context
 from app.core.config import settings
 from app.dependencies import get_db, require_admin
 from app.repositories.feedback_admin_repository import FeedbackAdminRepository
@@ -109,7 +110,9 @@ moscow_tz = timezone(timedelta(hours=3))
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(
+    directory="app/templates", context_processors=[public_navigation_context]
+)
 
 ADMIN_COOKIE_NAME = "admin_token"
 
@@ -389,6 +392,13 @@ async def feedback_page(
         {
             "preselected_type": preselected_type,
             "prefill_context": prefill_context,
+            "language_switch_query": (
+                request.url.include_query_params(
+                    support_reference=prefill_context.support_reference
+                ).query
+                if prefill_context is not None
+                else request.url.remove_query_params("support_reference").query
+            ),
         },
     )
 
@@ -1303,19 +1313,14 @@ def consultation_booking_page(
     except HTTPException as exc:
         return _render_consultation_error(request, exc)
 
-    lang = get_lang(request)
-
     masked_token = f"{booking_token[:8]}..."
 
-    return templates.TemplateResponse(
-        request=request,
-        name="consultation_booking.html",
-        context={
+    return render(
+        request,
+        "consultation_booking.html",
+        {
             "entitlement": entitlement,
             "calendly_consultation_url": settings.CALENDLY_CONSULTATION_URL,
-            "lang": lang,
-            "t": lambda key: t(lang, key),
-            "document_lang": lang,
             "masked_token": masked_token,
         },
     )

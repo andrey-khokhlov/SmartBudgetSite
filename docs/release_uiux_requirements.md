@@ -34,8 +34,8 @@ This is a requirements source, not an implementation report or a second backlog.
   establish the complete Microsoft 365 scenario.
 - R48 records owner-complete workbook/Walkthrough/ZIP revisions. Existing review
   `ProductRelease 1.0` bytes are stale; replacement and verification remain open.
-- Implementation status, completed mapping against `cd5190b` and next sprint
-  **G1 — R01–R03 Language/navigation** belong to
+- Implementation status, completed mapping against `cd5190b` and the current
+  next bounded sprint belong to
   [current state](current_state.md#release-uiux-implementation-mapping).
 
 ## Как пользоваться документом

@@ -475,7 +475,7 @@ A separate Product Description remains intentionally excluded: the bilingual
 Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
 do not close release-material validation or make SmartBudgetSite release-ready.
 
-### 2. Mapping complete; next sprint: G1 — R01–R03 Language/navigation
+### 2. G1 language/navigation implemented; next sprint: G2A — R05
 
 The R01–R55 mapping was completed against local HEAD `cd5190b` and independently
 reviewed and accepted. The [implementation-state snapshot below](#release-uiux-implementation-mapping)
@@ -483,11 +483,17 @@ records all accepted statuses, unresolved decisions, corrected groups and
 validation/operational dependencies. It is static repository analysis, not
 runtime/provider validation or implementation completion.
 
-**Next bounded implementation sprint: G1 — R01–R03 Language/navigation.** Its
-scope direction is a segmented RU/EN control, preservation of current path and
-relevant query state (especially checkout currency/add-on selection), and active
-navigation semantics/accessibility. A separate task must define the exact end
-state and tests; this documentation closeout does not implement G1.
+**G1's accepted implementation end state is complete** against baseline
+`df8ab87`: both language segments are visible, only the inactive segment links,
+checkout path/currency/add-on state survives switching, and About/Products have
+semantic active states. Successful booking rendering now shares locale-cookie
+persistence. Unsent checkout email is not persisted; activating the current
+language does not navigate or clear typed input. No R04+ functionality was added.
+
+**Next bounded implementation sprint: G2A — R05, remove the obsolete Telegram
+Landing block.** G2B/R04 remains blocked by D2. The future Consultations entry is
+owned by R06/G12; full-register R03 remains Partial only for that integration,
+while all R03 behavior explicitly accepted for G1 is implemented.
 
 `release_uiux_requirements.md` remains the durable source of what is required.
 The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
@@ -604,15 +610,15 @@ phase.
 **Completed and accepted:** static repository analysis of R01–R55 against
 `cd5190b3ed0ee109e5f4983842c89a70571f0219` (`docs: freeze pre-release UI UX
 requirements`), closed out on 2026-11-04. The independently reviewed statuses
-below are the accepted implementation-state snapshot, not a new requirements
-register or release backlog. Requirements/copy remain owned by
+formed the accepted implementation-state snapshot. The table now includes the
+G1 updates recorded below; it is not a new requirements register or release backlog. Requirements/copy remain owned by
 `release_uiux_requirements.md`; release gates remain owned by
 `release_readiness.md`.
 
-The analysis inspected repository code, templates, translations, CSS/JS, models,
-services, repositories, tests, migrations and existing images. Tests were read,
-not rerun. No runtime/browser/provider validation, database inspection or release
-operation was performed. Workbook/Walkthrough/ZIP completion is owner-reported;
+The original analysis inspected repository code, templates, translations, CSS/JS,
+models, services, repositories, tests, migrations and existing images. It read
+tests without running them and performed no runtime/browser/provider validation,
+database inspection or release operation. Subsequent G1 checks are recorded below. Workbook/Walkthrough/ZIP completion is owner-reported;
 repository evidence does not independently verify the workbook's VBA or current
 review R2 bytes. No architecture/business/legal decision was resolved.
 
@@ -622,11 +628,11 @@ Statuses distinguish existing behavior (`Implemented`), incomplete behavior
 outside first release (`Deferred`). None was established as `Not applicable`.
 D1–D6 below are dependencies, not decisions made by this mapping.
 
-| ID | Accepted status | Current state / remaining gap | Decision or validation dependency |
+| ID | Current status | Current state / remaining gap | Decision or validation dependency |
 | --- | --- | --- | --- |
-| R01 | Required | `base.html` has a single locale toggle; segmented RU/EN, active semantics and keyboard/focus behavior are missing. | None; G1 |
-| R02 | Required | Bare `?lang=...` in `base.html` drops currency/add-on query state; `checkout_page` requires currency. Product slug survives, typed-email preservation is absent. | Concrete code defect, not a decision gate; G1 |
-| R03 | Partial | Locale resolution/cookie and shared rendering exist; active navigation, Consultations entry and consistent cookie handling on booking success are incomplete. | G1; consultation destination follows G12 |
+| R01 | Implemented | Shared RU/EN segments expose the active language as a non-link current state; inactive link supports keyboard/focus. | G1 focused/browser validation complete |
+| R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
+| R03 | Partial | G1 active About/Products semantics, locale continuity and booking-success cookie persistence are implemented; only the future Consultations entry remains outside G1. | R06/G12; G1 accepted end state complete |
 | R04 | Requires decision | Footer exposes personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email. Recovered removal conflicts with unresolved UX-001 treatment, including possible informational LinkedIn retention. | D2; do not choose silently |
 | R05 | Required | Obsolete Landing heading/text/Telegram CTA remain in `sm_landing.html`; complete removal is approved. | None; G2A is not blocked by D2 |
 | R06 | Requires decision | Consultation catalog/standalone identity, service SaleItem and entitlement support exist; public consultation purchase/provider orchestration do not. | D3; G11 then G12 |
@@ -680,6 +686,47 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R54 | Requires decision | Stop-use/delete-copies direction is accepted; backend refund revokes access, not downloaded files; publication wording is not legally final. | D4/R52; law/licence/statutory safeguards; G15 |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 
+### G1 implementation and validation
+
+Implemented on 2026-11-04 against `df8ab87`. `app/web/navigation.py` supplies shared
+navigation state and server-generated query-relative language links to normal
+and rate-limit templates. Links preserve repeated/blank non-language query
+values without repeating capability paths or trusting Host for link destinations.
+Feedback switch links retain only already-resolved support references; rejected
+references remain absent. This is navigation compatibility, not a Feedback feature.
+
+`base.html` renders a non-link current language, keyboard-reachable alternate
+language and `aria-current` primary section. Shared CSS adds underline/current
+and focus states; its URL is versioned for cached-asset compatibility. About is
+active on `/`; Products on product/detail/Buy/Checkout pages; unrelated public
+pages have neither section active. The booking success route now uses `render()`
+without changing consultation validation or lifecycle. Existing query/cookie/
+default locale precedence and cookie lifetime/security settings are unchanged.
+
+Validation through `.venv/Scripts/python.exe -m pytest`, each with external
+`--basetemp` under `C:\Users\Admin\AppData\Local\SmartBudgetSite\pytest-temp`
+and external `cache_dir` under the same project's `pytest-cache` directory:
+
+- Focused public navigation, document language, booking and Feedback-prefill
+  regression files: **57 passed** (`g1-language-navigation`).
+- `tests/web`, `tests/test_rate_limiting.py` and
+  `tests/test_capability_protection.py`: **215 passed** (`g1-language-navigation-web`).
+- `browser_tests/test_checkout_polish.py -m browser`: **4 passed** at 1280/375 px
+  in RU/EN (`g1-language-navigation-browser`). Keyboard switching, current-segment
+  inertness, exact order composition, no email storage/URL transport, ordinary
+  reload and no horizontal overflow were checked; generated desktop/mobile
+  screenshots were visually inspected. Two dependency deprecation warnings remain.
+- Changed-Python-file Ruff passes. Black checks pass for the other five changed
+  Python files; `i18n.py` has the same pre-existing Black failure at HEAD and was
+  not reformatted beyond adding G1 accessibility labels. `git diff --check` passes.
+
+The first sandboxed pytest attempt could not create the required external temp
+directory; the successful runs used authorized access to those locations. The
+initial broader run exposed rejected support references in switch links; this
+was corrected before the passing run above. The full suite, live providers,
+real customer journeys and assistive-technology review were not run. G1 does not
+close the overall UI/UX gate or implement any R04+ functionality.
+
 ### Decision dependencies
 
 These accepted unresolved dependencies block only affected work. They do not
@@ -711,8 +758,8 @@ surface-specific slices, not duplicate requirements.
 
 | Group | R-IDs | Scope and dependencies |
 | --- | --- | --- |
-| G1 — Language/navigation | R01–R03 | **Next bounded implementation sprint**; segmented RU/EN, path/query preservation including checkout currency/add-on, active navigation semantics/accessibility. Exact end state/tests follow separately. |
-| G2A — Remove obsolete Telegram Landing block | R05 | Complete removal of heading/text/CTA; no architecture decision and no D2 dependency. |
+| G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**; future Consultations navigation remains with R06/G12. |
+| G2A — Remove obsolete Telegram Landing block | R05 | **Next bounded implementation sprint**; complete removal of heading/text/CTA, no architecture decision or D2 dependency. |
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
 | G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
 | G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
@@ -733,8 +780,8 @@ do not fold it into G15 implementation automatically. R50 and R53 receive
 implementation scopes only if D4 establishes applicability. R39, R45 and R48
 remain validation/operational work; R46 is complete; R55 remains deferred.
 
-After G1, independent low-risk groups can proceed without waiting for unrelated
-decisions. G7–G9 split Landing work; G11 precedes G12. Complete required material
+G1's accepted scope is complete; G2A is next. Independent low-risk groups can
+proceed without waiting for unrelated decisions. G7–G9 split Landing work; G11 precedes G12. Complete required material
 replacement before treating review artifacts as current, repeat review against
 the updated interface, then follow the later deployment/live-validation gates.
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}SmartBudget{% endblock %}</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/style.css?v=2" />
   <link rel="stylesheet" href="/static/css/responsive.css" />
 
   {% block extra_head %}{% endblock %}
@@ -14,17 +14,19 @@
     <div class="container header-row">
       <a class="brand" href="/">{{ t("brand_name") }}</a>
 
-      <nav class="nav site-nav">
-          <a class="nav-link" href="/">{{ t("nav_about") }}</a>
-          <a class="nav-link" href="/products">{{ t("nav_products") }}</a>
+      <nav class="nav site-nav" aria-label="{{ t('nav_label') }}">
+          <a class="nav-link" href="/"{% if public_navigation_section == "about" %} aria-current="page"{% endif %}>{{ t("nav_about") }}</a>
+          <a class="nav-link" href="/products"{% if public_navigation_section == "products" %} aria-current="page"{% endif %}>{{ t("nav_products") }}</a>
 
-          <span class="nav-sep">|</span>
-
-          {% if lang == "ru" %}
-            <a class="nav-link" href="?lang=en">RU</a>
-          {% else %}
-            <a class="nav-link" href="?lang=ru">EN</a>
-          {% endif %}
+          <div class="language-switch" role="group" aria-label="{{ t('language_switch_label') }}">
+            {% for locale in ("ru", "en") %}
+              {% if lang == locale %}
+                <span class="language-switch__segment" lang="{{ locale }}" aria-current="true">{{ locale | upper }}</span>
+              {% else %}
+                <a class="language-switch__segment" lang="{{ locale }}" hreflang="{{ locale }}" href="{{ language_switch_url(locale, language_switch_query | default(none)) }}">{{ locale | upper }}</a>
+              {% endif %}
+            {% endfor %}
+          </div>
       </nav>
 
     </div>

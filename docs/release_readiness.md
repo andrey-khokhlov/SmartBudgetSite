@@ -659,7 +659,9 @@ Its authoritative statuses, D1–D6 dependencies, implementation groups and sepa
 validation/operational work are in
 [current state](current_state.md#release-uiux-implementation-mapping). Completion
 of analysis is not runtime/provider validation or closure of a release gate.
-**Next bounded implementation sprint: G1 — R01–R03 Language/navigation.**
+G1's accepted language/navigation scope is implemented and regression-validated
+as recorded in current state. **Next bounded implementation sprint: G2A — R05,
+remove the obsolete Telegram Landing block.**
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -706,8 +708,9 @@ documentation sprint. The reset procedure is not selected here.
 #### Gate 3 — SmartBudgetSite UI/UX implementation and repeat review
 
 **Open; mapping complete.** Proceed through the accepted bounded implementation
-groups in [current state](current_state.md#accepted-implementation-groups), starting
-with G1. D1–D6 block only affected work: G2A removes the obsolete Telegram Landing
+groups in [current state](current_state.md#accepted-implementation-groups). G1's
+accepted scope is implemented; G2A is next. Future Consultations navigation stays
+with R06/G12; full-register R03 remains Partial only for that integration. D1–D6 block only affected work: G2A removes the obsolete Telegram Landing
 block (R05) without waiting for D2; G2B (R04) awaits D2. Respect conditional statuses
 and R55's first-release exclusion. Keep validation/operational tasks separate from
 implementation; concrete findings may justify later bounded changes. Execute

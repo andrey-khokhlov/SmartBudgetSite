@@ -1,4 +1,5 @@
 from decimal import Decimal
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from playwright.sync_api import expect, sync_playwright
@@ -112,6 +113,47 @@ def test_localized_buy_checkout_and_review_navigation(
             assert page.evaluate(
                 "document.documentElement.scrollWidth <= window.innerWidth"
             )
+            expect(
+                page.locator('.site-nav > a[aria-current="page"]')
+            ).to_have_attribute("href", "/products")
+            expect(page.locator(".language-switch__segment")).to_have_count(2)
+            current_language = page.locator('.language-switch [aria-current="true"]')
+            expect(current_language).to_have_text(lang.upper())
+            assert current_language.evaluate("element => element.tagName") == "SPAN"
+
+            page.locator("#checkout-email").fill("unsent@example.test")
+            original_url = page.url
+            current_language.click()
+            assert page.url == original_url
+            expect(page.locator("#checkout-email")).to_have_value("unsent@example.test")
+
+            switch = page.locator(".language-switch a")
+            switch.focus()
+            expect(switch).to_be_focused()
+            switch.press("Enter")
+            expect(page.locator("html")).to_have_attribute("lang", opposite)
+            assert urlsplit(page.url).path == urlsplit(original_url).path
+            assert parse_qs(urlsplit(page.url).query) == {
+                "currency": [currency],
+                "consultation": ["1"],
+                "lang": [opposite],
+            }
+            switched_total = "118,00 EUR" if lang == "en" else "6,890.00 RUB"
+            expect(page.locator(".checkout-total strong")).to_have_text(switched_total)
+            expect(page.locator('input[name="currency"]')).to_have_value(currency)
+            expect(page.locator('input[name="consultation"]')).to_have_value("1")
+            expect(page.locator("#checkout-email")).to_have_value("")
+            assert "unsent@example.test" not in page.url
+            assert page.evaluate("Object.keys(localStorage)") == []
+            assert page.evaluate("Object.keys(sessionStorage)") == []
+            assert {cookie["name"] for cookie in page.context.cookies()} == {"sb_lang"}
+            assert page.evaluate(
+                "document.documentElement.scrollWidth <= window.innerWidth"
+            )
+
+            page.locator(".language-switch a").click()
+            expect(page.locator("html")).to_have_attribute("lang", lang)
+            expect(page.locator(".checkout-total strong")).to_have_text(total)
             page.reload()
             expect(page.locator("html")).to_have_attribute("lang", lang)
             expect(page.locator(".checkout-total strong")).to_have_text(total)
