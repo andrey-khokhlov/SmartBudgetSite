@@ -94,25 +94,8 @@
 }
 
 .reviews-action {
-    display: inline-block;
     margin-top: 24px;
-    padding: 11px 18px;
-    border-radius: 8px;
-    background: #111827;
-    color: #ffffff;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.reviews-action:visited {
-    color: #ffffff;
-}
-
-.reviews-action:hover,
-.reviews-action:focus-visible {
-    background: #253047;
-    color: #ffffff;
-    text-decoration: none;
+    padding: 10px 17px;
 }
 
 .reviews-action:focus-visible {

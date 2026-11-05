@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from app.main import app
 from app.models.feedback import FeedbackMessage
@@ -62,22 +63,20 @@ def create_feedback(
 
 
 @pytest.mark.parametrize(
-    ("query", "document_lang", "page_title", "heading", "message", "action"),
+    ("query", "document_lang", "page_title", "message", "action"),
     [
         (
             "",
             "en",
             "User reviews — SmartBudget",
-            "No published reviews yet",
-            "Published user reviews are not available for this product yet.",
+            "There are no published SmartBudget reviews yet.",
             "Back to SmartBudget",
         ),
         (
             "?lang=ru",
             "ru",
             "Отзывы пользователей — SmartBudget",
-            "Опубликованных отзывов пока нет",
-            "Для этого продукта пока нет опубликованных отзывов пользователей.",
+            "Пока нет опубликованных отзывов о SmartBudget.",
             "Вернуться к SmartBudget",
         ),
     ],
@@ -88,7 +87,6 @@ def test_reviews_empty_state_is_complete_localized_html(
     query: str,
     document_lang: str,
     page_title: str,
-    heading: str,
     message: str,
     action: str,
 ) -> None:
@@ -101,8 +99,17 @@ def test_reviews_empty_state_is_complete_localized_html(
     assert f'<html lang="{document_lang}">' in response.text
     assert f"<title>{page_title}</title>" in response.text
     assert response.text.count("<h1") == 1
-    assert heading in response.text
-    assert message in response.text
+    assert response.text.count(message) == 1
+    for obsolete in (
+        "reviews-page__intro",
+        "reviews-empty-heading",
+        'class="review-card"',
+        "No published reviews yet",
+        "Published user reviews are not available for this product yet.",
+        "Опубликованных отзывов пока нет",
+        "Для этого продукта пока нет опубликованных отзывов пользователей.",
+    ):
+        assert obsolete not in response.text
     assert action in response.text
     assert 'href="/products/smartbudget"' in response.text
     assert 'class="site-header"' in response.text
@@ -281,6 +288,58 @@ def test_default_reviews_navigation_preserves_language_and_sku_ownership(
     assert f"Review for {other_package}" not in reviews_response.text
 
 
+@pytest.mark.parametrize(
+    "lang,package,other_package",
+    [
+        ("ru", "ru", "int"),
+        ("en", "int", "ru"),
+    ],
+)
+def test_landing_shows_reviews_only_after_exact_sku_has_published_review(
+    client, db_session, lang, package, other_package
+):
+    url = f"/products/smartbudget?lang={lang}"
+
+    def assert_visibility(expected):
+        response = client.get(url)
+        assert response.status_code == 200
+        assert ('href="/reviews"' in response.text) == expected
+        for href in ("/faq", "#sb-capabilities", "/products/smartbudget/buy"):
+            assert f'href="{href}"' in response.text
+
+    assert_visibility(False)
+    product = create_product(db_session, slug=f"smartbudget-{package}-standard")
+    assert_visibility(False)
+
+    other = create_product(db_session, slug=f"smartbudget-{other_package}-standard")
+    create_feedback(db_session, other, subject="Other SKU", message="Other SKU review.")
+    assert_visibility(False)
+
+    review = create_feedback(
+        db_session,
+        product,
+        subject="Exact SKU",
+        message="Review for this SKU.",
+        is_published=False,
+    )
+    create_feedback(
+        db_session,
+        product,
+        subject="Question",
+        message="A private question.",
+        message_type="general_question",
+    )
+    assert_visibility(False)
+
+    review.is_published = True
+    db_session.commit()
+    assert_visibility(True)
+
+
+def test_unknown_reviews_slug_returns_404(client):
+    assert client.get("/reviews/unknown-product").status_code == 404
+
+
 @pytest.mark.parametrize("package", ["ru", "int"])
 def test_sku_reviews_empty_back_link_returns_to_family(client, db_session, package):
     create_product(db_session, slug=f"smartbudget-{package}-standard")
@@ -288,8 +347,29 @@ def test_sku_reviews_empty_back_link_returns_to_family(client, db_session, packa
     response = client.get(f"/reviews/smartbudget-{package}-standard")
 
     assert response.status_code == 200
-    assert 'class="reviews-action" href="/products/smartbudget"' in response.text
+    assert (
+        'class="reviews-action sb-hero__explore" href="/products/smartbudget"'
+        in response.text
+    )
     assert client.get("/products/smartbudget").status_code == 200
+
+
+def test_landing_hides_reviews_after_visibility_query_failure(
+    client, monkeypatch, caplog
+):
+    def fail_visibility_lookup(db, *, product_slug):
+        assert product_slug == "smartbudget-ru-standard"
+        db.execute(text("SELECT 1 FROM missing_visibility_test_table"))
+
+    monkeypatch.setattr("app.web.routes.has_public_reviews", fail_visibility_lookup)
+
+    response = client.get("/products/smartbudget?lang=ru")
+
+    assert response.status_code == 200
+    assert 'id="sb-capabilities"' in response.text
+    assert 'href="/reviews"' not in response.text
+    assert "missing_visibility_test_table" not in response.text
+    assert "Landing review visibility check failed" in caplog.text
 
 
 def test_reviews_database_failure_uses_safe_public_error_response(

@@ -7,6 +7,7 @@ from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
+@pytest.mark.usefixtures("review_sessions")
 @pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("width", [1280, 375])
 def test_landing_demos_are_readable_accessible_and_localized(tmp_path, lang, width):

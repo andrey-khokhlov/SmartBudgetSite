@@ -179,11 +179,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_invalid_file_type": "Invalid file type selected",
         "reviews_page_title": "User reviews — SmartBudget",
         "reviews_title": "User reviews",
-        "reviews_subtitle": "Read feedback approved for public display.",
-        "reviews_empty_title": "No published reviews yet",
-        "reviews_empty": (
-            "Published user reviews are not available for this product yet."
-        ),
+        "reviews_empty": "There are no published SmartBudget reviews yet.",
         "reviews_back_to_product": "Back to SmartBudget",
         "reviews_from_label": "From",
         "reviews_reply_label": "Reply",
@@ -568,11 +564,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "feedback_invalid_file_type": "Выбран недопустимый тип файла",
         "reviews_page_title": "Отзывы пользователей — SmartBudget",
         "reviews_title": "Отзывы пользователей",
-        "reviews_subtitle": "Здесь собраны отзывы, одобренные для публикации.",
-        "reviews_empty_title": "Опубликованных отзывов пока нет",
-        "reviews_empty": (
-            "Для этого продукта пока нет опубликованных отзывов пользователей."
-        ),
+        "reviews_empty": "Пока нет опубликованных отзывов о SmartBudget.",
         "reviews_back_to_product": "Вернуться к SmartBudget",
         "reviews_from_label": "Автор",
         "reviews_reply_label": "Ответ",

@@ -673,8 +673,8 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R25 | Implemented | Approved RU/EN post-submit guidance and prominent localized confirmation with message ID. | Existing status and alert announcements retained |
 | R26 | Implemented | Customers-only review label and pre-purchase General question available. | Verified purchase remains required for reviews, with optional email for general enquiries |
 | R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
-| R28 | Required | Landing review link is unconditional; product detail does not load publication counts. | Exact-SKU 0/1+ publication behavior; G4 |
-| R29 | Partial | Direct localized empty review page/family back link exist; repeated intro/heading/body need the approved single neutral message. | None; G4 |
+| R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
+| R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Partial | FAQ and Products disclose Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions; official Microsoft links and manual/restart guidance implemented. | Remaining applicable Landing/version-selection/Checkout disclosures belong to G9/G10; R47 no longer pending |
@@ -894,6 +894,22 @@ observed at 375 px.
 The owner traced the initial HTTP 500 to PostgreSQL and Docker being stopped.
 After starting the database, the same local submission succeeded.
 
+### G4 Reviews visibility and validation
+
+Implemented against `9cbed53`. Landing and the `/reviews` redirect resolve the
+same exact RU/EN SmartBudget SKU. Landing uses one database existence query
+with the public list's publication and feedback-type filters. The first
+eligible review reveals the link on the next page load. The direct Reviews
+page shows one approved empty-state message and a link back to SmartBudget.
+Published reviews retain their existing public field projection and layout.
+
+Focused validation passed **77 cases**: 18 Reviews, 14 Landing, 28 public
+navigation, and 1 repository test, plus 16 Chromium cases across Reviews,
+Landing, About/Products and checkout navigation. The four Reviews Chromium
+cases used isolated SQLite fixtures and covered RU/EN at 1280 px and 375 px.
+Empty and populated Reviews screenshots and representative empty Landing
+screenshots were inspected. Final R45 review remains open.
+
 ### Decision dependencies
 
 These accepted unresolved dependencies block only affected work. They do not
@@ -929,7 +945,7 @@ surface-specific slices, not duplicate requirements.
 | G2A — Remove obsolete Telegram Landing block | R05 | **Implemented and validated**; complete heading/text/CTA removal, independently of D2; footer untouched. |
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
-| G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
+| G4 — Reviews visibility | R28–R29 | **Implemented and focused-validated.** See [G4 validation](#g4-reviews-visibility-and-validation). |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 later surfaces with G9/G10. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |

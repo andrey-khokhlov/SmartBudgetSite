@@ -3,12 +3,8 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from playwright.sync_api import expect, sync_playwright
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app.core.db import Base
-from app.dependencies import get_db
 from app.main import app
 from app.models.product import Product
 from app.models.product_price import ProductPrice
@@ -27,6 +23,7 @@ from browser_tests.test_feedback_form import _running_app
 )
 def test_localized_buy_checkout_and_review_navigation(
     tmp_path,
+    review_sessions,
     width,
     lang,
     package,
@@ -35,14 +32,8 @@ def test_localized_buy_checkout_and_review_navigation(
     addon_amount,
     total,
 ):
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    sessions = sessionmaker(bind=engine)
-    Base.metadata.create_all(engine)
-    with sessions() as db:
+    with review_sessions() as db:
+        Base.metadata.create_all(db.get_bind())
         product = Product(
             family_slug="smartbudget",
             slug=f"smartbudget-{package}-standard",
@@ -76,11 +67,6 @@ def test_localized_buy_checkout_and_review_navigation(
         )
         db.commit()
 
-    def review_db():
-        with sessions() as db:
-            yield db
-
-    app.dependency_overrides[get_db] = review_db
     errors = []
     try:
         with _running_app() as base_url, sync_playwright() as playwright:
@@ -159,7 +145,8 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(page.locator(".checkout-total strong")).to_have_text(total)
             page.screenshot(path=str(tmp_path / "checkout.png"), full_page=True)
             page.goto(f"{base_url}/products/smartbudget")
-            page.locator(".sb-hero__reviews a").click()
+            expect(page.locator(".sb-hero__reviews a")).to_have_count(0)
+            page.goto(f"{base_url}/reviews")
             expect(page).to_have_url(
                 f"{base_url}/reviews/smartbudget-{package}-standard?lang={lang}"
             )
@@ -170,6 +157,4 @@ def test_localized_buy_checkout_and_review_navigation(
             browser.close()
         assert errors == []
     finally:
-        app.dependency_overrides.pop(get_db, None)
         app.state.rate_limiter.reset()
-        engine.dispose()

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import (
     APIRouter,
     Request,
@@ -36,6 +38,7 @@ from app.services.consultation_offer_admin_service import (
     update_consultation_offer,
 )
 from app.services.feedback_service import (
+    has_public_reviews,
     list_public_reviews,
     send_feedback_reply,
     toggle_feedback_publish,
@@ -108,6 +111,7 @@ from datetime import UTC, datetime, timezone, timedelta
 from decimal import Decimal
 
 moscow_tz = timezone(timedelta(hours=3))
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -527,7 +531,9 @@ def issue_download(
 
 
 @router.get("/products/{slug}", response_class=HTMLResponse)
-async def product_detail(request: Request, slug: str):
+async def product_detail(
+    request: Request, slug: str, db: Session = Depends(get_db)
+):
     product = product_by_slug(slug)
     if not product:
         raise HTTPException(status_code=404)
@@ -535,12 +541,32 @@ async def product_detail(request: Request, slug: str):
     template_name = (
         "sm_landing.html" if slug == "smartbudget" else "product_detail.html"
     )
+    show_reviews_link = False
+    if slug == "smartbudget":
+        review_slug = _smartbudget_reviews_slug(get_lang(request))
+        try:
+            show_reviews_link = has_public_reviews(db, product_slug=review_slug)
+        except SQLAlchemyError as exc:
+            logger.warning(
+                "Landing review visibility check failed for %s (%s)",
+                review_slug,
+                type(exc).__name__,
+            )
+            try:
+                db.rollback()
+            except SQLAlchemyError as rollback_error:
+                logger.warning(
+                    "Landing review visibility rollback failed for %s (%s)",
+                    review_slug,
+                    type(rollback_error).__name__,
+                )
 
     return render(
         request,
         template_name,
         {
             "product": product,
+            "show_reviews_link": show_reviews_link,
         },
     )
 
@@ -717,10 +743,14 @@ async def reviews_page(
     )
 
 
+def _smartbudget_reviews_slug(lang: str) -> str:
+    return "smartbudget-ru-standard" if lang == "ru" else "smartbudget-int-standard"
+
+
 @router.get("/reviews")
 async def reviews_redirect(request: Request):
     lang = get_lang(request)
-    slug = "smartbudget-ru-standard" if lang == "ru" else "smartbudget-int-standard"
+    slug = _smartbudget_reviews_slug(lang)
     return RedirectResponse(url=f"/reviews/{slug}?lang={lang}", status_code=307)
 
 

@@ -60,6 +60,10 @@ class PublicReview:
     published_at: datetime | None
 
 
+def has_public_reviews(db: Session, *, product_slug: str) -> bool:
+    return FeedbackAdminRepository(db).has_published_product_feedback(product_slug)
+
+
 def list_public_reviews(
     db: Session,
     *,

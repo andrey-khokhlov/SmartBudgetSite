@@ -5,6 +5,7 @@ from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
+@pytest.mark.usefixtures("review_sessions")
 @pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("width", [1280, 375])
 def test_about_products_are_readable_restrained_and_navigable(tmp_path, lang, width):

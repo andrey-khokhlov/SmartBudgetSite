@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/reviews.css') }}?v=2">
+{% if not reviews %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=4">
+{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/reviews.css') }}?v=3">
 {% endblock %}
 
 {% block title %}{{ t("reviews_page_title") }}{% endblock %}
@@ -10,7 +13,6 @@
 <section class="reviews-page" aria-labelledby="reviews-heading">
     <header class="reviews-page__header">
         <h1 id="reviews-heading">{{ t("reviews_title") }}</h1>
-        <p class="reviews-page__intro">{{ t("reviews_subtitle") }}</p>
     </header>
 
     {% if reviews %}
@@ -46,13 +48,12 @@
             {% endfor %}
         </div>
     {% else %}
-        <section class="reviews-empty" aria-labelledby="reviews-empty-heading">
-            <h2 id="reviews-empty-heading">{{ t("reviews_empty_title") }}</h2>
+        <div class="reviews-empty">
             <p>{{ t("reviews_empty") }}</p>
-            <a class="reviews-action" href="/products/{{ product.family_slug }}">
+            <a class="reviews-action sb-hero__explore" href="/products/{{ product.family_slug }}">
                 {{ t("reviews_back_to_product") }}
             </a>
-        </section>
+        </div>
     {% endif %}
 </section>
 {% endblock %}

@@ -726,6 +726,10 @@ G3 Feedback polish (R24–R27) is implemented and focused-validated. The
 covers neutral topic/reset, review verification, native upload, and accessible
 submission status in RU/EN desktop and mobile checks. Final R45 review remains open.
 
+G4 Reviews visibility (R28–R29) is implemented and focused-validated. The
+[current-state evidence](current_state.md#g4-reviews-visibility-and-validation)
+covers exact-SKU Landing visibility and the single localized empty message.
+
 **Open; mapping complete.** Proceed through the accepted bounded implementation
 groups in [current state](current_state.md#accepted-implementation-groups). G1's
 accepted scope, G2A and the scoped G7/G8 work are implemented and validated. Future Consultations navigation stays

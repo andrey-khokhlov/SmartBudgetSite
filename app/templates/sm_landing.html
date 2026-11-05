@@ -28,7 +28,9 @@
     <div class="sb-hero__cta">
       <a class="sb-hero__explore" href="#sb-capabilities">{{ t("sb_landing_cta_primary") }}</a>
       <p class="sb-hero__faq"><a href="/faq">{{ t("sb_landing_faq_link") }}</a></p>
-      <p class="sb-hero__faq sb-hero__reviews"><a href="/reviews">{{ t("sb_landing_reviews_link") }}</a></p>
+      {% if show_reviews_link %}
+        <p class="sb-hero__faq sb-hero__reviews"><a href="/reviews">{{ t("sb_landing_reviews_link") }}</a></p>
+      {% endif %}
     </div>
   </section>
 

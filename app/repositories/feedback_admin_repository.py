@@ -4,6 +4,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.feedback import FeedbackMessage
+from app.models.product import Product
+
+_PUBLIC_REVIEW_FILTERS = (
+    FeedbackMessage.type == "product_feedback",
+    FeedbackMessage.is_published.is_(True),
+)
 
 
 class FeedbackAdminRepository:
@@ -63,10 +69,19 @@ class FeedbackAdminRepository:
         return (
             self.db.query(FeedbackMessage)
             .filter(
-                FeedbackMessage.type == "product_feedback",
-                FeedbackMessage.is_published.is_(True),
+                *_PUBLIC_REVIEW_FILTERS,
                 FeedbackMessage.product_id == product_id,
             )
             .order_by(FeedbackMessage.published_at.desc())
             .all()
         )
+
+    def has_published_product_feedback(self, product_slug: str) -> bool:
+        published_review = (
+            select(1)
+            .select_from(FeedbackMessage)
+            .join(Product, FeedbackMessage.product_id == Product.id)
+            .where(*_PUBLIC_REVIEW_FILTERS, Product.slug == product_slug)
+            .exists()
+        )
+        return bool(self.db.scalar(select(published_review)))
