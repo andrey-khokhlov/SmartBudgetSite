@@ -139,6 +139,37 @@ def test_create_general_feedback_success(client, db_session):
     assert saved_feedback.email == "andrey@example.com"
     assert saved_feedback.subject == "Test subject"
 
+
+def test_create_feedback_rejects_empty_topic(client):
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "",
+            "subject": "Missing topic",
+            "message": "A message without a selected topic.",
+        },
+    )
+
+    assert response.status_code == 422
+    assert any(
+        error["loc"][-1] == "message_type" for error in response.json()["detail"]
+    )
+
+
+def test_create_general_feedback_without_email_or_purchase(client):
+    response = client.post(
+        "/v1/feedback",
+        data={
+            "message_type": "general_question",
+            "subject": "Before buying",
+            "message": "Can I ask a question before buying SmartBudget?",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
 def test_create_product_feedback_without_verified_purchase(client):
     """
     Test case: create product feedback without verified purchase

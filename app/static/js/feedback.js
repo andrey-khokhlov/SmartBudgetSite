@@ -166,19 +166,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function resetAfterSuccessfulSubmission() {
-        typeSelect.value = "site_issue";
+        purchaseCheckSequence += 1;
+        typeSelect.value = "";
+        clearControlValidation(typeSelect);
         Array.from(typeSelect.options).forEach((option) => {
-            option.defaultSelected = option.value === "site_issue";
+            option.defaultSelected = option.value === "";
         });
 
         [nameInput, emailInput, subjectInput, messageInput].forEach((input) => {
             input.value = "";
             input.defaultValue = "";
+            clearControlValidation(input);
         });
 
         if (supportReferenceInput) {
             supportReferenceInput.value = "";
             supportReferenceInput.defaultValue = "";
+            clearControlValidation(supportReferenceInput);
         }
 
         attachmentsInput.value = "";

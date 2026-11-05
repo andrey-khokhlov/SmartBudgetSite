@@ -669,10 +669,10 @@ D1–D6 below are dependencies, not decisions made by this mapping.
 | R21 | Partial | Setup add-on selection and database amount exist; 60-minute/online/booking-after-payment explanation is missing. | Named platform needs validation; neutral copy can proceed; G10 |
 | R22 | Partial | Selected items, Total emphasis and email/payment form exist; Your order heading, language terminology and remaining hierarchy polish are missing. | None; G10 |
 | R23 | Required | Checkout email hint lacks approved protected-download and conditional booking explanation; standalone variant is absent. | G10 product copy; D3/G12 for standalone |
-| R24 | Partial | Attachment/drop behavior and form width exist; Feedback's loaded CSS does not supply its primary button treatment and file-picker styling is incomplete. | Preserve limits, keyboard and native file access; G3 |
-| R25 | Partial | Localized live success/error and optional private-enquiry email exist; approved post-submit guidance/success copy are incomplete. | Editorial success wording; G3 |
-| R26 | Partial | Paid product ownership verification and pre-purchase General question work; customers-only review category label is missing. | Preserve verified-purchase boundary; G3 |
-| R27 | Required | First topic and JS reset select `site_issue`; required empty initial topic is absent. | Preserve intentional support preselection; G3 |
+| R24 | Implemented | Full-width primary submit and contained native file picker with visible focus. | Attachment types, limits and retry retention preserved |
+| R25 | Implemented | Approved RU/EN post-submit guidance and prominent localized confirmation with message ID. | Existing status and alert announcements retained |
+| R26 | Implemented | Customers-only review label and pre-purchase General question available. | Verified purchase remains required for reviews, with optional email for general enquiries |
+| R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
 | R28 | Required | Landing review link is unconditional; product detail does not load publication counts. | Exact-SKU 0/1+ publication behavior; G4 |
 | R29 | Partial | Direct localized empty review page/family back link exist; repeated intro/heading/body need the approved single neutral message. | None; G4 |
 | R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
@@ -868,6 +868,32 @@ replacement remain separate. No G9/G10/G12/G14/G15 implementation, workbook/VBA,
 Working Queue, deployment, commit or push work was performed. Requirement
 definitions remain unchanged.
 
+### G3 Feedback polish and validation
+
+Implemented against `bce2a5e`. Fresh visits and successful submissions use the
+required empty topic. Download-support visits retain intentional preselection
+and prefill. The customers-only review label keeps the existing purchase
+verification, and General question remains available before purchase with
+optional email. The full-width submit, contained native picker, and approved
+post-submit guidance retain the existing response ID and status announcements.
+
+Focused validation passed **79 cases**: 11 Feedback prefill/render, 24 Feedback
+API, 27 rate-limit, and 17 Feedback Chromium cases. The browser cases covered
+RU/EN at 1280 px and 375 px, with eight form and confirmation screenshots
+inspected. They exercised native keyboard and pointer file selection, purchase
+verification, support prefill and reset, and file retention on 429 and 500
+responses. Browser API responses were stubbed for those flows. The existing
+Reviews case in the browser module was deselected. Final R45 review remains open.
+
+In a separate manual check after implementation, the owner submitted a real
+`general_question` with an empty email against local PostgreSQL. The response
+returned a real message ID and the form reset to the neutral topic. The owner
+accepted the desktop and 375 px mobile layouts, with no horizontal overflow
+observed at 375 px.
+
+The owner traced the initial HTTP 500 to PostgreSQL and Docker being stopped.
+After starting the database, the same local submission succeeded.
+
 ### Decision dependencies
 
 These accepted unresolved dependencies block only affected work. They do not
@@ -902,7 +928,7 @@ surface-specific slices, not duplicate requirements.
 | G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**; future Consultations navigation remains with R06/G12. |
 | G2A — Remove obsolete Telegram Landing block | R05 | **Implemented and validated**; complete heading/text/CTA removal, independently of D2; footer untouched. |
 | G2B — Final public contact boundary | R04 | Final footer/contact links; blocked by D2. |
-| G3 — Feedback polish | R24–R27 | Form styling, guidance, review label and empty initial topic; preserve verification, attachments and support prefill. |
+| G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
 | G4 — Reviews visibility | R28–R29 | SKU-scoped published-review visibility and concise empty state. |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 later surfaces with G9/G10. |
@@ -966,9 +992,6 @@ its documentation closeout. SmartBudgetSite is not declared release-ready.
 
 - strict one-time download completion and automatic completion detection
 - richer download-attempt audit data and backend file proxying
-- Feedback form UI polish: apply the project's primary button style to the
-  submit control and bring the file-selection control into the site design;
-  these are known non-blocking release-polish items
 - Landing consultation CTA refresh: replace the outdated direct Telegram contact
   flow with the finalized consultation journey and rewrite the section headline,
   supporting copy, CTA label, and destination to reflect the approved

@@ -59,13 +59,17 @@ def _assert_visibility(page: Page, selector: str, *, visible: bool) -> None:
 
 
 @pytest.mark.browser
-def test_feedback_form_initializes_and_switches_all_message_types() -> None:
+@pytest.mark.parametrize("lang", ["en", "ru"])
+@pytest.mark.parametrize("width", [1280, 375])
+def test_feedback_form_initializes_and_switches_all_message_types(
+    tmp_path, lang, width
+) -> None:
     page_errors: list[str] = []
     console_errors: list[str] = []
 
     with _running_app() as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, channel="chromium")
-        page = browser.new_page()
+        page = browser.new_page(viewport={"width": width, "height": 900})
         page.on("pageerror", lambda error: page_errors.append(str(error)))
         page.on(
             "console",
@@ -78,9 +82,44 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
             lambda route: route.fulfill(status=204, body=""),
         )
 
-        page.goto(f"{base_url}/feedback", wait_until="networkidle")
+        purchase_requests = []
+        submissions = []
 
-        expect(page.locator("script[src$='feedback.js?v=7']")).to_have_count(1)
+        def capture_purchase(route):
+            purchase_requests.append(route.request.post_data_json)
+            route.fulfill(
+                json={
+                    "verified": True,
+                    "purchases": [
+                        {
+                            "purchase_reference": "FP-one",
+                            "product_name": "SmartBudget",
+                            "edition": "Standard",
+                        }
+                    ],
+                }
+            )
+
+        def capture_submission(route):
+            submissions.append(route.request.post_data or "")
+            route.fulfill(json={"status": "ok", "id": 84})
+
+        page.route("**/v1/check-purchase", capture_purchase)
+        page.route("**/v1/feedback", capture_submission)
+        page.goto(f"{base_url}/feedback?lang={lang}", wait_until="networkidle")
+        expect(page.locator("html")).to_have_attribute("lang", lang)
+        topic = page.locator("#message_type")
+        expect(topic).to_have_value("")
+        expect(topic.locator("option:checked")).to_have_text(
+            "Select a topic" if lang == "en" else "Выберите тему обращения"
+        )
+        assert topic.evaluate("element => element.validity.valueMissing")
+        page.locator('button[type="submit"]').click()
+        expect(topic).to_have_attribute("aria-invalid", "true")
+        assert submissions == []
+        assert purchase_requests == []
+
+        expect(page.locator("script[src$='feedback.js?v=8']")).to_have_count(1)
         expect(page.locator("#email")).to_have_count(1)
         expect(page.locator("#contact_email")).to_have_count(0)
         expect(page.locator("#contactEmailGroup")).to_have_count(0)
@@ -159,6 +198,81 @@ def test_feedback_form_initializes_and_switches_all_message_types() -> None:
             else:
                 expect(submit).to_be_disabled()
 
+        topic.select_option("product_feedback")
+        expect(submit).to_be_disabled()
+        page.locator("#email").fill("buyer@example.com")
+        page.locator("#email").press("Enter")
+        expect(page.locator("#purchase_select")).to_have_value("FP-one")
+        expect(submit).to_be_enabled()
+        assert purchase_requests == [{"email": "buyer@example.com"}]
+
+        topic.select_option("general_question")
+        page.locator("#email").fill("")
+        expect(page.locator("#email")).not_to_have_attribute("required", "")
+        expect(page.locator("#purchase_select")).to_have_value("")
+        expect(page.locator("#purchase-status")).to_be_hidden()
+        page.locator("#subject").fill("Pre-purchase question")
+        message = "A general question without a contact email."
+        page.locator("#message").fill(message)
+        expect(page.locator("#messageCounter")).to_have_text(f"{len(message)} / 2000")
+
+        attachments = page.locator("#attachments")
+        page.locator("#message").press("Tab")
+        expect(attachments).to_be_focused()
+        assert page.locator("#feedbackDropzone").evaluate(
+            "element => getComputedStyle(element).outlineStyle === 'solid'"
+        )
+        with page.expect_file_chooser() as keyboard_picker:
+            page.keyboard.press("Space")
+        keyboard_picker.value.set_files(
+            {"name": "keyboard.pdf", "mimeType": "application/pdf", "buffer": b"pdf"}
+        )
+        expect(page.locator("#selectedFilesText")).to_have_text("keyboard.pdf")
+
+        with page.expect_file_chooser() as pointer_picker:
+            attachments.click()
+        pointer_picker.value.set_files(
+            {"name": "pointer.pdf", "mimeType": "application/pdf", "buffer": b"pdf"}
+        )
+        expect(page.locator("#selectedFilesText")).to_have_text("pointer.pdf")
+
+        form_box = page.locator("#feedback-form").bounding_box()
+        submit_box = submit.bounding_box()
+        assert abs(form_box["width"] - submit_box["width"]) < 1
+        assert (
+            submit.evaluate("element => getComputedStyle(element).backgroundColor")
+            == "rgb(37, 99, 235)"
+        )
+        attachments.press("Tab")
+        expect(submit).to_be_focused()
+        assert (
+            submit.evaluate("element => getComputedStyle(element).outlineStyle")
+            == "solid"
+        )
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.evaluate("window.scrollTo(0, 0)")
+        page.screenshot(
+            path=str(tmp_path / f"feedback-form-{lang}-{width}.png"), full_page=True
+        )
+        submit.click()
+        expect(page.locator("#feedback-status")).to_have_class(
+            "feedback-form__status feedback-form__status--success"
+        )
+        expect(page.locator("#feedback-status")).to_contain_text("84")
+        expect(page.locator("#feedback-status")).to_have_attribute("role", "status")
+        expect(topic).to_have_value("")
+        expect(topic).not_to_have_attribute("aria-invalid", "true")
+        assert attachments.evaluate("element => element.files.length") == 0
+        expect(page.locator("#messageCounter")).to_have_text("0 / 2000")
+        assert len(submissions) == 1
+        assert "general_question" in submissions[0]
+        assert 'name="purchase_reference"' not in submissions[0]
+        assert purchase_requests == [{"email": "buyer@example.com"}]
+        page.evaluate("window.scrollTo(0, 0)")
+        page.screenshot(
+            path=str(tmp_path / f"feedback-success-{lang}-{width}.png"), full_page=True
+        )
+
         browser.close()
 
     assert page_errors == []
@@ -192,6 +306,9 @@ def test_one_verified_product_purchase_is_selected_without_visible_selector() ->
 
         expect(page.locator("#purchase-status")).to_have_class(
             "feedback-purchase-status success"
+        )
+        expect(page.locator("#purchase-status")).to_have_css(
+            "background-color", "rgb(240, 253, 244)"
         )
         expect(page.locator("#subjectGroup")).to_be_visible()
         expect(page.locator("#messageGroup")).to_be_visible()
@@ -296,6 +413,9 @@ def test_unverified_or_failed_product_purchase_keeps_feedback_closed(
         expect(page.locator("#purchase-status")).to_have_class(
             "feedback-purchase-status error"
         )
+        expect(page.locator("#purchase-status")).to_have_css(
+            "background-color", "rgb(254, 242, 242)"
+        )
         expect(page.locator("#purchase-status")).to_have_attribute("role", "alert")
         expect(page.locator("#purchase-status")).to_have_attribute(
             "aria-atomic", "true"
@@ -380,6 +500,7 @@ def test_submission_rate_limit_does_not_retry_or_clear_attachments() -> None:
         page.route("**/v1/feedback", reject_submission)
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
+        page.locator("#message_type").select_option("site_issue")
         page.locator("#subject").fill("Rate limited submission")
         page.locator("#message").fill("A complete browser rate-limit message.")
         page.locator("#attachments").set_input_files(
@@ -545,7 +666,7 @@ def test_successful_download_prefill_submission_clears_active_context(
             assert 'name="support_reference"' in submissions[0]
             assert "DL-ABCDEFGH" in submissions[0]
 
-            expect(page.locator("#message_type")).to_have_value("site_issue")
+            expect(page.locator("#message_type")).to_have_value("")
             expect(page.locator("#email")).to_have_value("")
             expect(page.locator("#subject")).to_have_value("")
             expect(page.locator("#message")).to_have_value("")
@@ -667,6 +788,7 @@ def test_submission_progress_success_and_repeated_failure_are_announced() -> Non
                 childList: true
             });
             """)
+        page.locator("#message_type").select_option("general_question")
         page.locator("#subject").fill("Accessible status")
         page.locator("#message").fill("A complete feedback message")
         page.locator('button[type="submit"]').click()
@@ -693,6 +815,11 @@ def test_submission_progress_success_and_repeated_failure_are_announced() -> Non
             "aria-busy", "true"
         )
 
+        page.locator("#message_type").select_option("general_question")
+        attachments = page.locator("#attachments")
+        attachments.set_input_files(
+            {"name": "retry.pdf", "mimeType": "application/pdf", "buffer": b"pdf"}
+        )
         for _ in range(2):
             page.locator("#subject").fill("Retry status")
             page.locator("#message").fill("A repeated failed feedback message")
@@ -713,6 +840,9 @@ def test_submission_progress_success_and_repeated_failure_are_announced() -> Non
             )
             assert page.locator("#feedback-status").get_attribute("aria-live") is None
             expect(page.locator('button[type="submit"]')).to_be_enabled()
+
+            expect(page.locator("#selectedFilesText")).to_have_text("retry.pdf")
+            assert attachments.evaluate("element => element.files.length") == 1
 
         assert page.evaluate("window.feedbackStatusMutations") >= 6
         browser.close()
@@ -786,6 +916,7 @@ def test_hidden_controls_and_type_changes_clear_obsolete_invalid_state() -> None
         )
         page.goto(f"{base_url}/feedback", wait_until="networkidle")
 
+        page.locator("#message_type").select_option("site_issue")
         page.locator('button[type="submit"]').click()
         expect(page.locator("#subject")).to_have_attribute("aria-invalid", "true")
 

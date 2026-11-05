@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/feedback.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/feedback.css') }}?v=2">
 {% endblock %}
 
 {% block title %}{{ t("feedback_title") }}{% endblock %}
@@ -14,6 +14,7 @@
     <form class="feedback-form" id="feedback-form" enctype="multipart/form-data">
         <label class="feedback-form__label" for="message_type">{{ t("feedback_type_label") }}</label>
         <select class="feedback-form__control" id="message_type" name="message_type" required>
+            <option value="" disabled{% if not preselected_type %} selected{% endif %}>{{ t("feedback_type_placeholder") }}</option>
             <option value="site_issue">{{ t("feedback_type_site_issue") }}</option>
             <option value="general_question">{{ t("feedback_type_general_question") }}</option>
             <option value="product_feedback">{{ t("feedback_type_product_feedback") }}</option>
@@ -101,9 +102,9 @@
                 >
                 <div class="feedback-dropzone__content">
                     <div class="feedback-dropzone__title">{{ t("feedback_dropzone_title") }}</div>
-                    <button type="button" class="feedback-dropzone__button">
+                    <span class="feedback-dropzone__button" aria-hidden="true">
                         {{ t("feedback_dropzone_button") }}
-                    </button>
+                    </span>
                     <div class="feedback-dropzone__hint">{{ t("feedback_dropzone_hint") }}</div>
                     <div
                         class="feedback-dropzone__files"
@@ -128,6 +129,7 @@
             aria-atomic="true"
         ></p>
     </form>
+    <p class="feedback-form__guidance">{{ t("feedback_after_submit") }}</p>
 </section>
 
 <script>
@@ -148,6 +150,6 @@ window.feedbackTexts = {
     purchasePlaceholder: "{{ t('feedback_purchase_placeholder') }}",
 };
 </script>
-<script src="{{ url_for('static', path='js/feedback.js') }}?v=7"></script>
+<script src="{{ url_for('static', path='js/feedback.js') }}?v=8"></script>
 
 {% endblock %}

@@ -40,17 +40,65 @@
   resize: vertical;
 }
 
+.feedback-form .btn-primary {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feedback-form .btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.feedback-form .btn-primary:disabled {
+  background: #e2e8f0;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.feedback-form__control:focus-visible,
+.feedback-form .btn-primary:focus-visible,
+.feedback-dropzone:focus-within {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.feedback-form__guidance {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .feedback-form__status {
   font-size: 14px;
-  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.feedback-form__status--success,
+.feedback-form__status--error {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 8px;
+  margin-bottom: 16px;
 }
 
 .feedback-form__status--success {
-  color: #16a34a;
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #86ac92;
+  font-weight: 600;
 }
 
 .feedback-form__status--error {
-  color: #dc2626;
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #efb1b1;
 }
 
 .feedback-form__hint {
@@ -72,13 +120,13 @@
   background: #f9fafb;
 }
 
-.feedback-purchase-status--success {
+.feedback-purchase-status.success {
   border-color: #86efac;
   background: #f0fdf4;
   color: #166534;
 }
 
-.feedback-purchase-status--error {
+.feedback-purchase-status.error {
   border-color: #fca5a5;
   background: #fef2f2;
   color: #991b1b;
@@ -106,12 +154,24 @@
     color: #1f2937;
 }
 
+.feedback-dropzone__button {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    background: #fff;
+    color: #1e3a5f;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .feedback-dropzone__hint {
     font-size: 14px;
     color: #6b7280;
 }
 
 .feedback-dropzone__files {
+    overflow-wrap: anywhere;
     font-size: 14px;
     color: #374151;
 }

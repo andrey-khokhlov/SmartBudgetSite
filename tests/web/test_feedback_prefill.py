@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from html import unescape
 
 import pytest
 
@@ -274,4 +275,32 @@ def test_feedback_form_renders_localized_accessible_status_contract(
     assert 'role="alert"' not in response.text
     assert 'aria-describedby="attachments-hint selectedFilesText"' in response.text
     assert f'invalidFileType: "{invalid_file_message}"' in response.text
-    assert "feedback.js?v=7" in response.text
+    assert "feedback.js?v=8" in response.text
+    html = unescape(response.text)
+    placeholder, review, general, guidance = {
+        "en": (
+            "Select a topic",
+            "SmartBudget review (customers only)",
+            "General question",
+            "After submitting your message, you'll see a confirmation. If a reply is needed, we'll contact you at the email address provided.",
+        ),
+        "ru": (
+            "Выберите тему обращения",
+            "Отзыв о SmartBudget (для покупателей)",
+            "Общий вопрос",
+            "После отправки обращения вы увидите подтверждение. Если потребуется ответ, мы свяжемся с вами по указанному email.",
+        ),
+    }[lang]
+    assert f'<option value="" disabled selected>{placeholder}</option>' in html
+    assert 'id="message_type" name="message_type" required' in html
+    assert '<option value="site_issue" selected' not in html
+    assert f'<option value="product_feedback">{review}</option>' in html
+    assert f'<option value="general_question">{general}</option>' in html
+    assert guidance in html
+    assert html.count('type="submit"') == 1
+    assert 'accept=".png,.jpg,.jpeg,.webp,.pdf"' in html
+    assert (
+        "up to 20 MB each, max 5 files"
+        if lang == "en"
+        else "до 20 МБ каждый, максимум 5 файлов"
+    ) in html
