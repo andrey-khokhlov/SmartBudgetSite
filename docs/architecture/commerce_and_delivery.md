@@ -10,8 +10,9 @@ releases, download entitlements, and protected product delivery.
 - `family_slug` groups related SKUs into one product family.
 - `slug` identifies one exact sellable SKU.
 - `/products/{family_slug}/buy` bridges the product landing page and checkout.
-- The landing page explains the product; package selection and prices belong on
-  the buy page.
+- The Landing Hero stays price-free. Under approved D1, the concluding
+  commercial section may display the current database-owned product price
+  and currency and link to Buy. Buy remains responsible for package selection.
 - UI language and product package are separate. Package identity is derived from
   the selected product, not the current interface language.
 - Product and add-on prices come from the database, never query parameters or UI
@@ -56,12 +57,20 @@ budgeting in future years. The limited lifetime of a protected download link
 or `DownloadEntitlement` governs download access only: download-token expiry
 does not limit continued use of a legitimately purchased local workbook.
 
-Do not describe this solely as “Lifetime” or imply lifetime free upgrades,
-free access to all future major versions (including SmartBudget 2.0), unlimited
-support, unlimited free consultation, or an upgrade discount. None of those
-rights is approved. Update and support terms remain unresolved and must be
-agreed before public commercial release as recorded under `REL-001` in
-`../release_readiness.md`.
+### Release updates and support (D6)
+
+The purchase grants indefinite use of the specific purchased release. New
+commercial releases are purchased separately. Do not promise free minor
+updates, lifetime upgrades, automatic workbook updates, or upgrade discounts.
+SmartBudget runs as a local Excel workbook with no in-place update mechanism.
+A corrected file of the purchased release may be supplied to remedy a defect
+in that release. This does not confer access to future releases.
+
+Ordinary support through Feedback covers purchase, delivery and download,
+opening and access, and technical problems with the purchased release.
+Individual setup, review of a customer's budget or file, screen sharing, and
+personalized financial or product guidance belong to paid consultation.
+Apply the approved terms consistently before publication under REL-001.
 
 ## Sales and sale items
 
@@ -197,6 +206,18 @@ architectural goal is to isolate provider differences so migration has bounded
 impact. It is not guaranteed to be an adapter-only replacement: checkout
 behavior, refunds, disputes, supported currencies, webhook semantics, and
 operational procedures may differ between providers.
+
+### Standalone service routing (D3)
+
+The approved service-only checkout design extends provider routing with a
+separate mapping for standalone service offers. It resolves the purchased
+`ServiceAddon` with `usage_type=standalone` and creates a service-only Sale
+and service SaleItem. Provider mapping is routing configuration. SmartBudgetSite
+owns the service identity, catalog price and currency, purchased-item snapshot,
+and entitlement. Existing product `PaymentProviderOffer` rules remain
+product-specific. Do not create placeholder Products or make the service
+product-owned to reach hosted checkout. Mapping persistence, checkout
+initiation, and provider validation are pending G11/G12.
 
 ### Confirmed Lava.top account capabilities
 
@@ -415,6 +436,12 @@ includes its protected product-download access. A Sale containing a
 consultation entitlement includes the corresponding protected consultation
 access. A bundle may include both in the same purchase communication.
 
+Under approved D5, checkout or order creation must persist the resolved order
+language (`ru` or `en`) as a durable Sale-level snapshot. Webhook,
+reconciliation, and retry email rendering must use that stored value.
+A later browser request, webhook, currency, and SKU or package identity do
+not determine email language. Persistence and rendering changes are pending G13.
+
 Customer-facing delivery URLs must be generated from server-owned application
 configuration rather than inferred from an incoming Host header or browser
 request. Capability tokens and protected delivery URLs remain sensitive:
@@ -631,15 +658,17 @@ criteria justify them. Future admin reissue/reset must be explicit and auditable
 
 ## Refund architecture
 
-Refunds are administrative commerce operations. They are not customer-initiated
-self-service actions in the MVP.
+The current full-Sale refund workflow is administrative. The approved D4
+target separates customer request submission from operator-controlled money
+movement. The rules below describe the existing workflow until the bounded
+refund implementation is completed.
 
-### Authoritative business rules
+### Current full-Sale workflow rules
 
 - Only an administrator may start or confirm a refund.
 - Only a `Sale` whose payment status is `paid` is eligible for refund.
-- MVP supports full-Sale refunds only. Partial refunds and item-level refunds are
-  intentionally out of scope even if a payment provider supports them.
+- The implemented workflow supports full-Sale refunds only. The approved
+  consultation-only partial refund for a bundle requires separate implementation.
 - SmartBudgetSite must preserve the originating payment provider and provider
   payment identity for every historical Sale. Refund execution must route through
   that originating provider so a future Stripe migration does not break refunds
@@ -791,71 +820,98 @@ the immutable snapshot, reconciles access, and only then changes the operation
 to `confirmed` and the Sale to `refunded`. Any reconciliation failure rolls the
 whole transaction back.
 
-### Deferred customer refund requests and item-targeted refunds
+<a id="deferred-customer-refund-requests-and-item-targeted-refunds"></a>
 
-This is deferred post-release direction, not current MVP behavior. A future
-customer-facing `RefundRequest` lifecycle should be separate from the
-financial/provider `RefundOperation`. Requests may concern either a consultation
-or the SmartBudget product and should identify the exact purchased `SaleItem`.
+### Approved refund rules and customer requests (D4)
 
-Any item-targeted refund amount must derive from the immutable purchased
-`SaleItem` snapshot, not current catalog pricing or arbitrary SmartBudgetSite
-operator input. Where provider and business rules permit, refunding one item
-should cancel only its associated entitlement and preserve unaffected purchased
-rights, including access to an unrefunded product. Original successful purchase
-and entitlement history must remain preserved.
+SmartBudget offers a voluntary no-reason refund within 14 days of purchase
+for all customers. Mandatory defect and non-conformity rights remain
+unaffected. Troubleshooting may be offered and must never replace mandatory
+refund or remedy rights. Consultation cancellation is handled separately. If the
+consultation has not started, policy permits cancellation for a full refund of
+its price.
 
-Product refund eligibility, refund window and applicable legal requirements
-remain subject to the pre-sale decisions in R49–R53 of
-`../release_uiux_requirements.md`. R54 now records the accepted stop-use and delete-copies
-direction for a fully refunded digital product, subject to law, licence
-terms and final legal/editorial review; downloaded copies remain technically
-non-revocable. This does not implement item refunds or remote control. Refund
-requests should capture structured reason codes, optional customer comments, and
-operator/agent analysis
-where appropriate. This telemetry should support operational and product
-learning about capacity, expectation mismatch, accidental purchases, technical
-problems, product issues, and other causes.
+A bundle uses one Sale and one provider payment with separate SaleItems.
+Refund treatment uses the original purchased item amounts:
 
-Unresolved architecture decision:
+- If the customer cancels only an add-on consultation and keeps SmartBudget,
+  refund only the consultation SaleItem and preserve the product access. This
+  direction requires item-level accounting.
+- If the customer refunds SmartBudget from a bundle, refund the entire bundle.
+  This applies even when the consultation has already been delivered. The
+  add-on does not survive the product refund. If a consultation is wanted after
+  the refund, the customer must make a new standalone purchase at the then-current
+  standalone price. Do not retroactively convert or reprice the add-on.
 
-```text
-One SmartBudget Sale -> one Lava.top transaction -> at most one provider refund
-```
+Keep the single-payment bundle checkout. The Lava.top limit of one refund
+action per transaction constrains execution. It does not limit customer rights.
+If a later required refund cannot go through the original provider path, an
+alternative method may be used only with the customer's explicit agreement
+and appropriate evidence. Preserve original purchase, payment and entitlement
+history, including evidence of any consultation already delivered.
 
-After an item-targeted refund, handling a later request for another item from
-the same original Sale remains unresolved. Multiple provider refunds per Sale
-are not an accepted design. The relationship between Sale, provider transaction,
-refund target, and later requests requires an explicit decision before
-implementation; no solution is selected here.
+Provide a dedicated persisted online cancellation and refund request function
+for product, consultation and entire-order requests as applicable. Persist
+the request and operational acknowledgement/evidence and send the customer
+confirmation. Submission does not move money. Request intake and refund
+execution have separate lifecycles.
 
-Current behavior remains zero or one `RefundOperation` per Sale, enforced by
-`RefundOperation.sale_id` uniqueness. Removal of that constraint is not approved;
-it may align with the provider transaction limit. The future persistence model
-must explicitly address whole-Sale versus item-targeted refunds.
+Item accounting, handling later refunds, and the request function need
+bounded implementation and validation. The current paid-Sale capability
+checks and `RefundOperation.sale_id` uniqueness stay in force until the
+approved bounded refund changes are implemented and validated. Partial refund
+design must preserve unaffected access and account for amounts already refunded.
 
-The current access invariant also remains: both protected capability validators
-require the owning Sale to remain `paid`. Future item-level refund implementation
-must explicitly reconcile that invariant with keeping an unrefunded product
-usable; cancelling only one entitlement while marking the whole Sale `refunded`
-would still block the unaffected product. That design is not resolved here.
+#### Voluntary SmartBudget refund eligibility clock
+
+The pending refund capability requires a nullable `Sale.paid_at` as the
+authoritative paid timestamp. Set it exactly once in UTC in the same
+authoritative transition from pending to paid. Idempotent webhook replays
+and manual reconciliation must never overwrite it or extend the window.
+The current `NormalizedPaymentEvent` has no reliable provider payment
+timestamp. Use SmartBudgetSite's first authoritative confirmation time unless
+provider evidence is added under an explicitly approved design.
+`Sale.created_at` records pending-order creation and must not start the window.
+
+Calculate `voluntary_refund_deadline = paid_at + 14 days` and check eligibility
+against server-side UTC. Legacy paid Sales with `paid_at` NULL require manual
+eligibility review. Do not automatically reject them. Customer-facing copy
+should say “within 14 days of purchase” to reflect the timestamp-based deadline.
+
+Expiry affects only the voluntary no-reason SmartBudget refund. Continue to
+accept online requests after the deadline and let the operator distinguish an
+expired voluntary window from requests for defects, non-conformity, statutory
+rights or other applicable remedies that still require review.
 
 ### Public refund-policy and supply-consent boundary
 
-The detailed accepted planning requirements are R49–R55 in
-`../release_uiux_requirements.md`; the mandatory pre-sale publication/legal gate
-is in `../release_readiness.md`. The recovered policy is agreed commercial
-content requiring a new owner-approved publication revision, not final legal
-wording or evidence that all promised refund operations are implemented.
+R49–R55 define the public requirements and release readiness owns the pre-sale
+gate. The recovered policy needs a new owner-approved publication revision
+that matches Checkout, FAQ, purchase email and actual refund operations.
 
 Payment, email, protected access and downloading do not establish a universal
-waiver of mandatory rights. Product, consultation and mixed-order treatment
-must stay distinct. Any immediate digital-supply consent is conditional on legal
-applicability, never inferred from language or currency. Supply start, no-consent
-handling, durable confirmation and any evidence/persistence changes require a
-later explicit decision; the existing paid-fulfillment and post-commit email
-lifecycle remains unchanged. No checkbox or jurisdiction-selection system is
-prescribed here.
+waiver of mandatory rights. For orders containing SmartBudget, support a
+separate, initially unchecked express request for immediate digital delivery
+where legally applicable. Keep it separate from Privacy, Terms and marketing.
+The voluntary 14-day SmartBudget refund policy remains available even when
+statutory withdrawal consequences differ. Where applicable, separate early
+consultation-start consent from digital-content consent. Persist the evidence
+with the order and accurately reflect it in purchase communication. These
+consents address supply and service commencement. Do not present them as
+anti-abuse measures. Keep legal applicability,
+supply-start and no-consent handling, and durable confirmation in the bounded
+implementation and publication review. Do not infer legal applicability from
+locale, SKU, currency or payment method.
+
+International launch remains in scope. The owner has approved publication of
+the real full geographical seller address. Include a Seller Information /
+Сведения о продавце section in the Refund Policy with seller name, that same
+factual address in RU and EN, `support@neocitrix.com`, and applicable
+registration and tax details once seller status is finalized. Use the policy
+section as the public home for this information, with no separate seller page.
+A normal footer policy link may remain. Label the Checkout link
+“Политика возвратов и сведения о продавце” / “Refund Policy and Seller
+Information”. Avoid duplicating the full address in Checkout or the footer.
 
 R54 accepts that customers can retain autonomous local copies after refund;
 policy should explain the end of continued-use rights under applicable law and

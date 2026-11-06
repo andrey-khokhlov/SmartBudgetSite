@@ -637,7 +637,7 @@ bank/card settlement, or assume an API/webhook/lookup verification capability
 that Lava.top has not confirmed. Authoritative machine-readable refund
 verification/reconciliation is still pending provider response; this workflow
 does not establish such a capability. See the
-[commerce refund direction and unresolved decisions](architecture/commerce_and_delivery.md#deferred-customer-refund-requests-and-item-targeted-refunds).
+[approved commerce refund rules and pending implementation](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
 
 No-approval autonomous money movement requires a later explicit
 architecture/operations decision supported by real operating evidence.

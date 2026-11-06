@@ -36,6 +36,15 @@ the other active version in the same service-owned transaction. Currency and
 usage type are parts of the identity, so corresponding RUB/EUR and
 add-on/standalone offers remain independent.
 
+### Standalone checkout boundary (D3)
+
+A standalone consultation remains a separate `ServiceAddon` with
+`usage_type=standalone`. Use the approved
+[standalone service provider mapping](commerce_and_delivery.md#standalone-service-routing-d3)
+for a service-only Sale. This keeps routing separate from product
+`PaymentProviderOffer` mappings and preserves the paid confirmation boundary
+for booking. Public checkout and end-to-end validation remain pending.
+
 ### SmartBudget 1.0 launch consultation prices
 
 Owner-approved on 2026-10-26 for 60-minute consultations:
@@ -283,11 +292,14 @@ finalized formula. The exact workload definition, measurement window, warning
 threshold, hard limit, and re-enable behavior remain empirical decisions for
 implementation planning.
 
-### Deferred consultation refund requests
+### Consultation cancellation and refund requests (D4)
 
-Future consultation refund requests should refer to the purchased consultation
-`SaleItem` and use the commerce-owned
-[refund-request/refund-operation rules](commerce_and_delivery.md#deferred-customer-refund-requests-and-item-targeted-refunds).
-They remain subject to the unresolved architecture decision about later requests
-when Lava.top permits only one refund per provider transaction. These deferred
-directions do not change the currently implemented entitlement lifecycle.
+A consultation that has not started may be cancelled for a full refund of its
+price. The dedicated customer request identifies the purchased service item
+and follows the [approved commerce refund rules](commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
+An add-on-only cancellation preserves SmartBudget, while a SmartBudget refund
+covers the entire bundle even after consultation delivery. A later consultation
+requires a new standalone purchase at its current price. Preserve booking and
+delivery history. Consultation early-start consent, where applicable, is
+separate from immediate digital delivery consent. Request intake, item-level
+refund operations, and publication remain pending.

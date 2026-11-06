@@ -103,8 +103,9 @@ paid service, not a dependency for continued product use.
 This perpetual-use position does not promise lifetime free upgrades or access
 to future major versions. Do not describe it only as “Lifetime”. Exact launch
 prices and the distinction between product-use rights and protected download
-access belong in `architecture/commerce_and_delivery.md`; the unresolved
-update/support policy is a pre-publication requirement in `release_readiness.md`.
+access belong in `architecture/commerce_and_delivery.md`. The approved D6
+update and support terms are recorded there. Align customer-facing wording
+before publication under `release_readiness.md`.
 
 ## Entitlement-Based Platform Philosophy
 

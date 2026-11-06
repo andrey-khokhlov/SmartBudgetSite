@@ -38,6 +38,17 @@ This is a requirements source, not an implementation report or a second backlog.
   next bounded sprint belong to
   [current state](current_state.md#release-uiux-implementation-mapping).
 
+## Owner decision update — 2026-11-05
+
+[D1–D6 are decision-complete](current_state.md#decision-dependencies).
+Their approved rules supersede older audit positions on Landing pricing, public
+contacts, standalone provider routing, refund/withdrawal/seller information,
+purchase-email language, and updates/support. Commerce and consultation
+architecture own the approved domain rules. Implementation and verification
+remain tracked separately. Appendix A is preserved as the 2026-10-28 recovered
+policy. A new synchronized owner-approved revision is required before paid
+sales. The update records product and architecture approval.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
@@ -187,18 +198,18 @@ This is a requirements source, not an implementation report or a second backlog.
 | R40 · CONS-10/12 | Локализовать purchase email; 14 дней на запись, 60 минут и дальнейшие шаги. Purchase email и Calendly confirmation — два этапа; название платформы только после проверки | High; согласовано с проверкой | Письма 5.8 соответствуют трём составам покупки; ссылки управления не обещаются в ещё не назначенной встрече | B 176–184 |
 | R41 · FAQ-09, REF-01/02/06 | Отдельная политика RU/EN для всей линейки; FAQ, Checkout и Footer дают доступ до оплаты | High; согласовано по коммерческому содержанию | Полный текст приложения А; юридические/публикационные вопросы раздела 8 не скрыты | B 184–213; C |
 | R42 · REF: mixed orders | Проверить ручной полный/частичный возврат через Lava.top, последствия для продукта и консультации, подтверждение покупателю; один возврат на транзакцию — ограничение провайдера, не отмена прав | High; согласовано с проверкой | Операционный сценарий подтверждён; непроведённая консультация при полном возврате отменена; частичный случай рассмотрен отдельно | A 116–122; B 188–203; C |
-| R43 · REF-07/08 | Не публиковать домашний адрес. Общая политика без версии и фиксированных цен; ФИО, Москва/Троицк и официальный support | High; согласовано, юридический риск открыт | Домашний адрес отсутствует в публичных текстах; отложенная правовая проверка не объявляется выполненной | A 137–143; B 208–213; C |
+| R43 · REF-07/08 | D4: раздел «Сведения о продавце» в Политике возвратов. ФИО, полный географический адрес, официальный support и применимые регистрационные/налоговые сведения после уточнения статуса продавца | High; решение принято, публикация и проверка впереди | Один фактический адрес в RU/EN. Без отдельной страницы продавца и дублирования полного адреса в Checkout или footer | A 137–143; B 208–213; C; D4 |
 | R44 · сроки поддержки | Первый ответ — целевые 2 рабочих дня, обычное рассмотрение 5; банковское зачисление после возврата — до 10 рабочих дней по прежнему ответу Lava.top | High; сохранено в C; проверить операционную готовность | Сроки не подменяют законные; различаются ответ, решение и банковское зачисление | A 117–122; B 188–193; C |
 | R45 · процесс review | Сначала согласование desktop и реализация малыми связанными группами; затем повторный responsive/accessibility review | High для закрытия gate; согласовано | Проверен фактический обновлённый интерфейс, результаты сохранены по задачам | B 42–43, 74–76 |
 | R46 · сохранение результатов | Полные тексты и решения сохранять в постоянном документе; изменения версионировать, отмечать superseded/conditional | Организационное; требование настоящей передачи | Дорожная карта ссылается на этот документ; изменения публичной редакции не теряются в истории чата | A 143–150; текущий запрос |
 | R47 | ActiveX onboarding and customer guidance; full requirement below | Required pre-release; public copy/editorial and remaining Microsoft 365 validation pending | Acceptance and validation: see R47 below | Owner planning amendment, 2026-11-04 |
 | R48 | Updated RC / Walkthrough artifacts require review-release replacement; full requirement below | Required operational dependency; rebuilt materials ready, replacement/verification pending | Acceptance and validation: see R48 below | Owner planning amendment, 2026-11-04 |
-| R49 | No universal refund-right waiver; full requirement below | High; accepted principle, legal treatment pending | Acceptance and validation: see R49 below | Owner planning amendment, 2026-11-04 |
-| R50 | Conditional immediate-supply consent; full requirement below | High; legal/applicability decision before implementation | Acceptance and validation: see R50 below | Owner planning amendment, 2026-11-04 |
-| R51 | Product / consultation / bundle refund-consent separation; full requirement below | High; accepted boundary, legal treatment conditional | Acceptance and validation: see R51 below | Owner planning amendment, 2026-11-04 |
-| R52 | Refund Policy revision before paid sales; full requirement below | High; mandatory pre-sale policy/legal gate | Acceptance and validation: see R52 below | Owner planning amendment, 2026-11-04 |
-| R53 | Applicable online withdrawal/cancellation path; full requirement below | High where applicable; otherwise Not applicable with rationale | Acceptance and validation: see R53 below | Owner planning amendment, 2026-11-04 |
-| R54 | Full-refund consequences for digital-product use; full requirement below | Medium; accepted direction, legal wording pending | Acceptance and validation: see R54 below | Owner planning amendment, 2026-11-04 |
+| R49 | No universal refund-right waiver; full requirement below | High; approved no-universal-waiver boundary and disclosure pending | Acceptance and validation: see R49 below | Owner planning amendment, 2026-11-04 |
+| R50 | Conditional immediate-supply consent; full requirement below | High; D4 approved, applicable consent implementation pending | Acceptance and validation: see R50 below | Owner planning amendment, 2026-11-04 |
+| R51 | Product / consultation / bundle refund-consent separation; full requirement below | High; D4 approved, composition-specific implementation pending | Acceptance and validation: see R51 below | Owner planning amendment, 2026-11-04 |
+| R52 | Refund Policy revision before paid sales; full requirement below | High; D4 approved, synchronized publication gate open | Acceptance and validation: see R52 below | Owner planning amendment, 2026-11-04 |
+| R53 | Applicable online withdrawal/cancellation path; full requirement below | High; D4 approved, persisted request flow pending | Acceptance and validation: see R53 below | Owner planning amendment, 2026-11-04 |
+| R54 | Full-refund consequences for digital-product use; full requirement below | Medium; D4 approved, synchronized wording pending | Acceptance and validation: see R54 below | Owner planning amendment, 2026-11-04 |
 | R55 | Defer anti-abuse activation controls; full requirement below | Deferred post-release hypothesis; excluded from first release | Acceptance and validation: see R55 below | Owner planning amendment, 2026-11-04 |
 
 ### 4.1. Что не превращать в подтверждённый дефект
@@ -1500,7 +1511,10 @@ Location: Troitsk, Moscow, Russia.
 
 For purchase enquiries, product support, consultation cancellations, and refunds, please contact support@neocitrix.com or use the website's feedback form.
 
-Это согласованный публичный контактный блок. Полный частный адрес не включён ни в этот документ, ни в публикуемую политику. Юридическая достаточность блока для всех рынков не подтверждена.
+Это сохранённый контактный блок из аудита. D4 заменяет его для будущей
+публикации: Политика возвратов должна включать полный географический адрес
+и остальные согласованные сведения о продавце. Итоговые данные и проверка
+публикации остаются отдельной работой.
 
 
 
@@ -1619,11 +1633,13 @@ For purchase enquiries, product support, consultation cancellations, and refunds
 | Ссылки/маршруты | Официальные support/Feedback, требования/политика и Microsoft | Подставить реальные внутренние маршруты/якоря из текущего приложения; Microsoft URL добавлены при сборке |
 | Изображения | Источники и композиции выбраны | Подготовить/проверить финальные RU/EN файлы в релизном продукте |
 | Возвраты Lava.top | По прежнему ответу ручные, полный/частичный, один на транзакцию, до 10 рабочих дней банк | Реальный процесс, свидетельство результата, клиентские уведомления и текущие возможности сервиса |
-| Юридический статус/адрес | Владелец указал физлицо без НПД; домашний адрес не публиковать, публично город/ФИО/support | Юридическая допустимость выбранной модели для РФ/международных продаж остаётся открытым вопросом; решение отложить не равно подтверждению соответствия |
+| Юридический статус/адрес | D4: международный запуск в scope, публикация полного географического адреса одобрена | Уточнить статус и фактические сведения продавца, затем проверить синхронную RU/EN публикацию. Решение владельца не является независимой юридической сертификацией |
 | Сроки поддержки | В сохранённой политике 2/5 рабочих дней как целевые | Подтвердить соблюдаемость, в том числе при отсутствии владельца; не подменять обязательные сроки |
 | Текущий код | В переписке часть механизмов уже была частично реализована | Сверить актуальный main; не планировать заново выполненную работу и не считать старое наблюдение актуальной проверкой |
 
-Решение владельца завершить публичную политику без домашнего адреса и отложить дополнительное оформление зафиксировано. Документ не меняет это решение и не предписывает публиковать частный адрес. Ранее обозначенные правовые риски сохранены как открытые; основной чат должен различать бизнес-решение владельца и подтверждение юридической готовности.
+D4 заменяет прежнее решение о публикации без полного адреса. Сохранённый
+аудит и приложение A остаются материалами для новой редакции. Финализация
+данных продавца и проверка публикации остаются открытыми.
 
 ## 9. Передача в основной чат разработки
 
@@ -1923,39 +1939,22 @@ Status:
 
 ## R50 — Conditional immediate-supply consent
 
-Record:
+D4 approves a separate, initially unchecked express request for immediate
+digital delivery on orders containing SmartBudget where legally applicable.
+Keep it independent of Terms, Privacy, marketing and any applicable
+early-start consent for consultation. The voluntary 14-day refund remains
+available even where statutory withdrawal consequences differ. Preserve
+mandatory defect and non-conformity rights. This consent concerns supply.
 
-An explicit consent for immediate supply of digital content may be required or useful only where the applicable legal regime actually requires or permits such treatment.
-
-If such a consent mechanism is ultimately required:
-
-- the checkbox must initially be unchecked;
-- it must be a separate positive action;
-- it must not be bundled into Terms, Privacy, marketing consent, or another unrelated checkbox;
-- the wording must distinguish withdrawal without reason from rights relating to defects or non-conformity;
-- later email confirmation may need to preserve evidence of the consent actually obtained.
-
-Do NOT infer legal applicability merely from:
-
-- site language;
-- RU vs EN product;
-- RUB vs EUR currency;
-- customer citizenship;
-- payment method.
-
-Do not implement the checkbox until the following are resolved:
-
-1. which customer/legal scenarios require it;
-2. what constitutes legally relevant start of digital supply;
-3. what happens if the customer does not consent to immediate supply;
-4. what confirmation must be delivered on a durable medium;
-5. how the rule interacts with mixed product + consultation purchases.
-
-Do not claim that consent exists when it was not actually obtained.
+Persist the consent actually obtained with the order and reflect it in
+purchase communication. Implementation and validation must cover applicable
+scenarios, supply start, the no-consent path, and durable confirmation for
+each relevant order composition. Do not infer legal applicability from
+language, SKU, currency, citizenship or payment method.
 
 Status:
 
-`High; requires legal/applicability decision before implementation.`
+`High; D4 decision complete. Applicable implementation and validation pending.`
 
 ## R51 — Product / consultation / bundle refund-consent separation
 
@@ -1969,19 +1968,21 @@ SmartBudget sells three materially different order compositions:
 
 Digital-product supply rules and consultation-service cancellation rules must not be collapsed into one universal waiver.
 
-Any immediate-digital-supply consent, if ultimately required, applies only to the digital-product component.
-
-It must not automatically waive rights relating to the consultation component.
+Any applicable immediate-digital-supply consent applies only to the
+digital-product component. Applicable early-start consent for consultation is
+separate. Neither substitutes for the other component's rules.
 
 Customer-facing wording must reflect the actual composition of the order.
 
 For consultation-only purchases, use consultation cancellation/rescheduling/refund rules rather than digital-content waiver language.
 
-For bundles, explain that cancellation/refund treatment may differ between the product and consultation items.
+For bundles, explain the [approved refund directions](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
+An add-on-only refund preserves SmartBudget, while a SmartBudget refund covers
+the entire bundle even if the consultation was delivered.
 
 Status:
 
-`High; accepted UX/domain boundary. Exact legal treatment remains conditional.`
+`High; D4 decision complete. Implementation and synchronized publication pending.`
 
 ## R52 — Refund Policy revision before paid sales
 
@@ -2012,11 +2013,10 @@ Before paid public sales:
 
 Do not silently rewrite the policy into supposedly legally final wording in this sprint.
 
-The owner's privacy decision remains:
-
-Do not publish the seller's private home address unless the owner explicitly revisits that decision.
-
-The unresolved question of whether the currently proposed seller-information block is legally sufficient remains open.
+The owner now approves publication of the real full geographical seller
+address. Keep the seller section inside the Refund Policy and use the same
+factual address in RU and EN. Finalize seller status and applicable details
+before publication. Follow the approved [seller section and Checkout link](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
 
 Status:
 
@@ -2024,29 +2024,20 @@ Status:
 
 ## R53 — Applicable online withdrawal/cancellation path
 
-Record:
-
-The project must evaluate whether an explicitly available online withdrawal/cancellation mechanism is legally required for any intended EU customer flow.
-
-Do not automatically assume:
-
-- `support@neocitrix.com`;
-- the existing Feedback form;
-
-are sufficient for every intended legal regime.
-
-Do not implement a new withdrawal system merely from the advisory.
-
-First determine applicability.
-
-Possible result:
-
-- required -> design and implement a bounded customer flow;
-- not applicable -> record Not applicable with rationale.
+D4 approves a dedicated online request function for product, consultation
+and entire-order cancellation/refund as applicable. Accept requests after
+the voluntary no-reason SmartBudget refund deadline and show expiry to the
+operator without blocking review of defects, non-conformity, statutory rights
+or other applicable remedies. In customer-facing wording use “within 14 days
+of purchase”. The backend deadline follows the
+[approved paid timestamp](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock).
+Persist the request, acknowledgement and operational evidence. Confirm submission to the
+customer. Refund execution is a separate operator-controlled action.
+Feedback and support email remain available for ordinary support.
 
 Status:
 
-`High where applicable; otherwise Not applicable.`
+`High; D4 decision complete. Bounded request implementation and validation pending.`
 
 ## R54 — Full-refund consequences for digital-product use
 
@@ -2144,19 +2135,20 @@ After this documentation freeze:
 This is intended to stop uncontrolled pre-release scope expansion.
 
 
-## Architecture compatibility and decisions required before affected implementation
+## Architecture compatibility and remaining implementation
 
-This is a bounded high-level compatibility check, not the R01–R55 implementation
-mapping. The recovered copy is preserved; no conflict is silently resolved.
+This check separates the approved decisions from current behavior. The
+recovered copy remains available as source material.
 
-| Requirement | Current rule / evidence | Conflict or dependency | Implementation impact and decision required |
-| --- | --- | --- | --- |
-| R08/R34, section 5.1.7 | `architecture/commerce_and_delivery.md`, Product catalog and purchase path: package selection and prices belong on the buy page; Landing explains the product | Recovered Landing commercial offer explicitly contains a catalog price | Blocks the affected Landing offer implementation until owner approval reconciles price placement and exact SKU/currency selection with that rule; no replacement rule is chosen here |
-| R41/R42/R51/R52, Appendix A sections 3.4 and 4 | Commerce refund architecture: full-Sale refunds only; zero or one `RefundOperation` per Sale; both capability validators require a paid Sale | Recovered partial/item-targeted refund promises preserve other paid items, which current whole-Sale refund behavior cannot do | Blocks publishing those promises as supported operations. Decide the lawful release policy/operational treatment or approve a bounded item-refund design; do not silently advance the deferred post-release initiative |
-| R42/R51, Appendix A section 4 | Commerce deferred refund direction: one Lava.top transaction permits at most one refund; later requests after an item refund remain unresolved | A first partial refund cannot be assumed to permit a later refund for another item | Decide treatment of later requests, refund targets, Sale state and unaffected rights; do not remove `RefundOperation.sale_id` uniqueness or invent multiple provider refunds |
-| R06/R23/R38/R40/R51 | Consultation architecture approves separate standalone offers and service-item entitlements. Current public `app/web/routes.py` checkout and `app/services/payment_service.py` orchestration resolve a Product and its provider mapping | Standalone commercial direction is compatible with the domain, but its end-to-end public sales path is not established by the existing product checkout | Before implementing standalone purchase, agree service-only payment preparation/provider-offer routing and validation without inventing a product purchase or granting booking before paid confirmation |
-| R49–R53 | Payment confirmation atomically creates paid state and item entitlements; purchase email is post-commit, separately persisted and retryable | Conditional immediate supply/no-consent behavior and durable evidence of consent are not defined by that lifecycle | Legal applicability, supply-start event, no-consent path, order composition and durable confirmation must be settled first; then approve any persistence/lifecycle changes. Do not use language/currency as jurisdiction or add an assumed consent field |
-| R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | Rebuilt 1.0 archives differ from existing review 1.0 bytes; another upload cannot replace them in place | A later review-only task must inspect references first. Only if unreferenced and safe, define minimal reset/replacement; if referenced, stop and escalate preservation-compatible options. No version 1.1 workaround, R2 overwrite or immutability change |
+| Requirement | Approved boundary and current gap | Remaining work |
+| --- | --- | --- |
+| R08/R34, section 5.1.7 | D1 allows a database-owned price in the concluding Landing section. Hero is price-free and Buy owns package selection. | G9 priced offer and validation |
+| R41/R42/R51/R52, Appendix A sections 3.4 and 4 | D4 approves add-on-only item refunds and the full-bundle rule. Current operations support full-Sale refunds and paid-Sale capability checks. | Implement and verify item accounting and unaffected product access before publishing the new policy |
+| R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. Existing `RefundOperation.sale_id` uniqueness remains in force pending bounded implementation |
+| R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Existing public initiation is product-bound. | Implement G11/G12 and validate provider and paid entitlement behavior |
+| R35/R40 | D5 approves persisted Sale-level order language. Localized rendering from that snapshot is pending. | G13 persistence, delivery copy and end-to-end validation |
+| R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement applicable Checkout/confirmation flows and separate request intake. Synchronize the new policy with actual behavior |
+| R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | A later review-only task must inspect references first. Only if unreferenced and safe, define minimal reset/replacement; if referenced, stop and escalate preservation-compatible options. No version 1.1 workaround, R2 overwrite or immutability change |
 
 Product-release evidence checked in `app/models/product_release.py` (unique
 product/version identity), `app/services/product_release_service.py`
@@ -2172,14 +2164,11 @@ R39's required guest/platform/reschedule validation is not closed merely by the
 repository's earlier manual Google Meet/Calendly evidence. R55 preserves the
 existing local-first product boundary; it adds no activation dependency.
 
-Remaining editorial/validation questions from section 8 are retained, including
-missing microcopy, screenshot assets, real internal routes, platform/fallback and
-compatibility evidence. Commercial FAQ wording about each future release being
-sold separately (5.6.3 question 5) must be reconciled with the still-unresolved
-minor-update/bug-fix/support policy in `release_readiness.md`; it does not settle
-that policy. R04's final public-link choices remain subject to the existing
-`UX-001` approval/configuration boundary. R05's approved complete removal is not
-blocked by that decision; current grouping belongs in `current_state.md`.
+Remaining editorial and validation work includes missing microcopy, assets,
+internal routes and platform/fallback evidence. Apply [D6 terms](architecture/commerce_and_delivery.md#release-updates-and-support-d6)
+to the commercial FAQ and related copy. D2 sets the public-support boundary.
+G2B implements and validates the approved contact changes under UX-001.
+Implementation groups belong in `current_state.md`.
 
 ## Приложение А. Полный сохранённый текст политики отмены и возвратов
 

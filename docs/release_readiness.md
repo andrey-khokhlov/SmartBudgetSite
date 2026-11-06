@@ -655,14 +655,14 @@ defects.
 ### Pre-deployment release sequence
 
 The R01–R55 static repository mapping against `cd5190b` is complete and accepted.
-Its authoritative statuses, D1–D6 dependencies, implementation groups and separate
+Its authoritative statuses, approved D1–D6 outcomes, implementation groups and separate
 validation/operational work are in
 [current state](current_state.md#release-uiux-implementation-mapping). Completion
 of analysis is not runtime/provider validation or closure of a release gate.
 G1's accepted language/navigation scope is implemented and regression-validated
 as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
-scope are also implemented and regression/browser-validated. G9 remains separate
-and decision-dependent; full R07 and the overall UI/UX gate are not complete.
+scope are also implemented and regression/browser-validated. G9 and full R07
+remain implementation work under approved D1. The overall UI/UX gate remains open.
 G5 About/Products presentation is implemented and web/browser-validated. G6 now
 completes R18's compatibility link and implements the grouped FAQ foundation,
 R31 and R47. R30 remains Partial for later FAQ groups; R32 remains Partial for
@@ -734,8 +734,9 @@ covers exact-SKU Landing visibility and the single localized empty message.
 groups in [current state](current_state.md#accepted-implementation-groups). G1's
 accepted scope, G2A and the scoped G7/G8 work are implemented and validated. Future Consultations navigation stays
 with R06/G12; full-register R03 remains Partial only for that integration.
-D1–D6 block only affected work. G2A removed the obsolete Telegram block without
-waiting for D2; G2B/R04 remains untouched and awaits D2. The first five Landing
+[D1–D6 are approved](current_state.md#decision-dependencies). G2A removed the
+obsolete Telegram block. G2B/R04 still needs the approved support/contact
+implementation and UX-001 validation. The first five Landing
 sections use approved RU/EN copy and final supplied images with linked originals;
 G9 pricing/practical/commercial work is not implemented, and R07 remains Partial.
 The existing temporary Buy tail is not a G9 completion claim. G5 now uses the
@@ -754,10 +755,9 @@ implementation; concrete findings may justify later bounded changes. Execute
 required non-live validation, then repeat desktop/mobile/
 accessibility review against the actually updated interface and resolve
 release-blocking findings. The detailed source retains the full copy, image
-specifications, acceptance criteria and validation checklists. Conflicts recorded
-there (including Landing price placement and item refunds) require decisions
-before affected implementation; preserving the audit does not override domain
-architecture or claim those customer promises are supported today.
+specifications, acceptance criteria and validation checklists. Apply the approved
+D1–D6 rules in the affected bounded sprints. Validate the implemented behavior
+before publishing customer-facing commitments.
 
 #### Gate 4 — Production deployment and live integration validation
 
@@ -770,58 +770,56 @@ Completed engineering remediation history is unchanged by these gates.
 
 ### Refund / cancellation policy and consent — mandatory pre-sale gate
 
-**Open.** The full recovered 2026-10-28 Refund Policy remains agreed commercial
-content in the requirements' Appendix A, but is no longer final publication-ready
-legal wording. Before paid public sales:
+**Open for implementation, publication and validation.** The owner approved D4
+at product and architecture level. Use the [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
+and [supply-consent and seller-information boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
+The 2026-10-28 recovered policy is retained as source material for a new
+owner-approved publication revision.
 
-- Obtain a new owner-approved publication revision and reconcile R49–R54 with
-  actual checkout, delivery, refund operations, FAQ and purchase-email behavior.
-  Never describe payment, an email, a link, opening access or downloading as a
-  universal waiver of mandatory refund/withdrawal rights.
-- Resolve legal applicability of any immediate digital-supply consent, the legally
-  relevant supply-start event, the no-consent customer path and any durable-medium
-  confirmation. Do not infer legal regime from language, RU/EN product, currency,
-  citizenship or payment method. No jurisdiction-selection architecture is chosen.
-- If consent is required, use a separate initially unchecked positive action,
-  unbundled from Terms/Privacy/marketing. Distinguish withdrawal without reason
-  from defect/non-conformity rights. Any email confirmation must reflect consent
-  actually obtained; evidence/persistence design requires a later approved scope.
-- Keep product-only, consultation-only and bundle wording internally consistent.
-  Digital-content consent must not waive service rights. Reconcile recovered
-  item/partial-refund promises with current full-Sale-only operations and the
-  one-refund-per-provider-transaction constraint before publication; existing
-  deferred architecture is not silently promoted into current behavior.
-- Determine applicability of an online withdrawal/cancellation path (R53): if
-  required, approve a bounded flow; otherwise record Not applicable with rationale.
-  Do not assume support email or Feedback suffices for every intended regime.
-- Review Russian, EU/EEA and UK digital-product/service treatment and mixed orders
-  as issues raised by the advisory, without treating its conclusions as established
-  legal applicability. Seller-information sufficiency remains open. Do not publish
-  the private home address unless the owner explicitly revisits that decision.
-- Finalize R54's stop-use/delete-retained-copies direction under applicable law and
-  licence terms without limiting statutory rights or claiming remote deletion,
-  inspection, deletion verification or disabling downloaded workbooks.
-- Keep R55 activation/DRM controls deferred. Preserve one-time purchase, immediate
-  complete delivery and indefinite use of the paid version, subject to the resolved
-  legal supply conditions. A lawful refund request is not abuse.
+Before paid public sales:
 
-No legal compliance conclusion, final legal wording, checkbox, new persistence
-model or withdrawal workflow is approved by this planning record.
+- Implement and validate the approved R42 refund directions, including
+  consultation-only item accounting within a bundle and the full-bundle refund
+  when SmartBudget is refunded. Validate the pending `Sale.paid_at`-based
+  [voluntary refund clock](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock),
+  including idempotent confirmation and manual review of legacy paid Sales
+  without a timestamp. Keep the existing full-Sale implementation distinct
+  from this pending capability.
+- Before launch, document and review the operator procedure for a later
+  required refund when the original provider path cannot process it. Require
+  explicit customer agreement to the alternative method and preserve
+  appropriate evidence. On the first genuine customer case, follow the
+  procedure and record operational validation from that case. A real
+  alternative transfer is not a pre-release requirement. Do not create an
+  artificial customer or refund transaction to validate this edge case.
+- Deliver a separate persisted R53 online request and confirmation flow.
+  Accept requests after the voluntary deadline and show expiry to the
+  operator for review. Keep money movement under the refund operations boundary.
+- Implement the R50 initially unchecked digital delivery request where legally
+  applicable. Separate it from other agreements and any applicable consultation
+  early-start consent. Verify durable order evidence and purchase communication,
+  including applicability, supply-start, and no-consent handling for supported
+  flows. Preserve the voluntary 14-day policy and mandatory rights.
+- Finalize seller status and factual details. Publish the full geographical
+  address in the Refund Policy seller section in RU and EN. Use the approved
+  Checkout label and retain the footer policy link as appropriate.
+- Obtain the synchronized owner-approved policy revision and match Checkout,
+  FAQ, purchase email and actual refund operations to it. Validate applicable
+  rights and disclosure before publication. Finalize R54 stop-use/delete
+  wording under applicable law and licence terms, with the first-release R55
+  boundary against DRM or remote disablement intact.
+
+The approval records the owner’s product and architecture decisions. It does
+not establish legal compliance or external provider validation.
 
 ### Commercial terms consistency
 
-The owner-approved 2026-10-26 SmartBudget 1.0 launch prices and perpetual-use
-position are recorded in `architecture/commerce_and_delivery.md` and
-`product_positioning.md`. Before public commercial release, the owner must
-agree which SmartBudget 1.0 bug fixes and technical updates are provided without
-additional charge, whether minor functional updates are included, whether
-future major versions such as SmartBudget 2.0 are sold separately, whether
-existing customers receive an upgrade discount, what standard support includes,
-and what requires a paid consultation. This policy remains unresolved; approval
-of indefinite use of the purchased release does not settle these questions.
-
-The agreed policy must be consistent across the EULA / user licence terms,
-website copy, purchase terms, FAQ, and other customer-facing materials. This is an open pre-publication requirement, not completed work or an approved promise of upgrades, support, or consultation.
+D6 approves indefinite use of the purchased release, separate purchases for new
+commercial releases, and the ordinary-support and paid-consultation boundary.
+Apply the [approved commerce terms](architecture/commerce_and_delivery.md#release-updates-and-support-d6)
+consistently in the EULA/licence, website, purchase terms, FAQ and other
+customer-facing materials. Publication and validation of that wording remain
+pending. The owner-approved launch prices remain database-owned at runtime.
 
 ### Commerce and fulfillment (`REL-001`)
 
@@ -924,44 +922,16 @@ coverage, but still require deployed-environment validation. Remaining work is:
 
 ### Public contact and social-link boundary (`UX-001`)
 
-Before the first public commercial release, the final public-site and
-release-polish phase must include an explicit architecture and UX review of the
-footer and every other public contact or social link. The resulting policy must
-be approved, implemented, and validated across public pages before this release
-gap is complete. It must define:
+**D2 approved. Implementation and public-page validation remain open.**
+The official support path is SmartBudgetSite Feedback plus
+`support@neocitrix.com` where applicable. Paid consultation has a separate
+commercial entry point. Remove personal Telegram, WhatsApp, Facebook, VK,
+LinkedIn and personal email from public support and contact surfaces. Retain
+the normal Refund Policy link as appropriate.
 
-- how founder identity and informational professional-profile links are
-  presented;
-- whether official product social accounts exist and what role they serve;
-- the official customer-support and paid-consultation entry points;
-- whether any personal messaging account may be exposed by the product;
-- how inactive, empty, or abandoned product social channels are excluded;
-- ownership, configuration, localization, and future replacement of every
-  public link.
-
-The current direction for that review is provisional rather than final
-architecture:
-
-- customer support continues through the official Feedback/support process;
-- paid consultation requests continue through the approved Consultation →
-  Checkout → Calendly journey;
-- personal Telegram and WhatsApp links should not remain public product contact
-  channels unless a later explicit architecture decision justifies them;
-- LinkedIn may remain as an informational founder professional-profile link only
-  if the architecture and page wording make clear that it is not a support
-  channel;
-- Facebook requires review because a personal profile may provide insufficient
-  trust value relative to the weaker professional boundary it creates;
-- a Telegram product channel must not be created or linked merely to fill a
-  social-media slot; an empty or abandoned channel is worse than no channel;
-- the final link set is intentionally minimal and does not imply real-time
-  personal support.
-
-SmartBudgetSite is not release-ready while personal contact channels remain
-public without this explicit approved architecture and its corresponding
-implementation. This gap is final public-site and release-polish work; it does
-not change the order or current first incomplete item in the Official Release
-Backlog.
+Complete G2B by updating the footer and other public contact links, then check
+RU/EN destinations, ownership and configuration before public commercial
+release. UX-001 retains its place in Expected Release Gaps.
 
 ## 6. Completion Definition
 
