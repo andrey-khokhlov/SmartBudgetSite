@@ -735,10 +735,11 @@ groups in [current state](current_state.md#accepted-implementation-groups). G1's
 accepted scope, G2A and the scoped G7/G8 work are implemented and validated. Future Consultations navigation stays
 with R06/G12; full-register R03 remains Partial only for that integration.
 [D1–D6 are approved](current_state.md#decision-dependencies). G2A removed the
-obsolete Telegram block. G2B/R04 still needs the approved support/contact
-implementation and UX-001 validation. The first five Landing
-sections use approved RU/EN copy and final supplied images with linked originals;
-G9 pricing/practical/commercial work is not implemented, and R07 remains Partial.
+obsolete Telegram block. G2B/R04 is implemented and locally validated in RU/EN
+on desktop and mobile. UX-001 release-environment validation remains open.
+The first five Landing sections use approved RU/EN copy and final supplied
+images with linked originals. G9 pricing/practical/commercial work is not
+implemented, and R07 remains Partial.
 The existing temporary Buy tail is not a G9 completion claim. G5 now uses the
 complete approved About biography and a restrained catalog-driven Products card
 with three capabilities and Windows/local-data/one-time-purchase conditions.
@@ -922,16 +923,18 @@ coverage, but still require deployed-environment validation. Remaining work is:
 
 ### Public contact and social-link boundary (`UX-001`)
 
-**D2 approved. Implementation and public-page validation remain open.**
+**D2 approved. Implementation complete. Release-environment validation remains open.**
 The official support path is SmartBudgetSite Feedback plus
 `support@neocitrix.com` where applicable. Paid consultation has a separate
 commercial entry point. Remove personal Telegram, WhatsApp, Facebook, VK,
 LinkedIn and personal email from public support and contact surfaces. Retain
 the normal Refund Policy link as appropriate.
 
-Complete G2B by updating the footer and other public contact links, then check
-RU/EN destinations, ownership and configuration before public commercial
-release. UX-001 retains its place in Expected Release Gaps.
+G2B locally verified the shared RU/EN footer links to FAQ, Feedback and
+`support@neocitrix.com`, the removal of personal contact links, and desktop
+and mobile footer navigation. Before public commercial release, verify RU/EN
+destinations, ownership and configuration in the release environment. UX-001
+retains its place in Expected Release Gaps.
 
 ## 6. Completion Definition
 

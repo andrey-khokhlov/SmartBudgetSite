@@ -504,9 +504,16 @@ Hero, resilience levels, future expense, PLAN/ACTUAL and reconciliation use the
 approved RU/EN copy and supplied final assets. The obsolete Telegram block is
 removed. Only the existing temporary Buy tail remains; G9 practical/commercial
 content and Landing pricing remain G9 implementation work under approved D1.
-G2B/R04 remains implementation work under approved D2. The future Consultations
-entry is owned by R06/G12. Full-register R03 remains Partial for that integration,
-while all R03 behavior explicitly accepted for G1 is implemented.
+The future Consultations entry is owned by R06/G12. Full-register R03 remains
+Partial for that integration, while all R03 behavior explicitly accepted for
+G1 is implemented.
+
+**G2B/R04 is implemented and locally validated** under approved D2. The shared
+public footer links to FAQ, Feedback and `mailto:support@neocitrix.com`.
+The personal contact links were removed, and a repository search found no other
+public rendering of those destinations. RU/EN web tests verified the footer
+links, and Chromium verified footer navigation, locale persistence and fit at
+1280 px and 375 px. UX-001 release-environment validation remains open.
 
 **G5 About/Products presentation is implemented and validated** against
 `9aec0b7`. R17 and R19 are implemented; R18 has the approved catalog content and
@@ -653,8 +660,8 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R01 | Implemented | Shared RU/EN segments expose the active language as a non-link current state; inactive link supports keyboard/focus. | G1 focused/browser validation complete |
 | R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
 | R03 | Partial | G1 active About/Products semantics, locale continuity and booking-success cookie persistence are implemented; only the future Consultations entry remains outside G1. | R06/G12; G1 accepted end state complete |
-| R04 | Required | Personal contact links still appear publicly. D2 approves Feedback and the official support email as the public support path. | G2B removal/configuration and RU/EN validation under UX-001 |
-| R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete; R04/footer remains untouched |
+| R04 | Implemented | The shared RU/EN footer has FAQ, Feedback and the official support email. Personal contact links are removed. | G2B locally validated. UX-001 release-environment validation remains open |
+| R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete |
 | R06 | Required | Standalone catalog identity, service SaleItem and entitlement support exist. Service-only provider routing and public purchase remain absent. | G11 implementation then G12 public flow and validation |
 | R07 | Partial | The first five sections and on-page Hero CTA are implemented. The full seven-block requirement still awaits G9 practical and commercial sections. | G7/G8 scoped work complete. G9 follows approved D1 |
 | R08 | Required | Hero is price-free and purchase reaches Buy. The concluding database-priced offer allowed by D1 is absent. | G9 implementation and exact price/currency validation |
@@ -923,7 +930,7 @@ Implementation, publication and external validation remain separately tracked.
 | Decision | Owner-approved outcome | Remaining work |
 | --- | --- | --- |
 | D1 — Landing prices | **Decision complete.** Price-free Hero. The concluding section may show the current database-owned price and link to Buy. The approved 2,990 RUB / 49 EUR launch values are recorded in [commerce architecture](architecture/commerce_and_delivery.md#smartbudget-10-launch-pricing-and-product-use-rights). | G9 priced offer and catalog validation |
-| D2 — Public contact boundary | **Decision complete.** Feedback and `support@neocitrix.com` where applicable are the official support path. Personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email are excluded as public contact channels. Paid consultation remains separate. | G2B implementation and UX-001 validation |
+| D2 — Public contact boundary | **Decision complete.** Feedback and `support@neocitrix.com` where applicable are the official support path. Personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email are excluded as public contact channels. Paid consultation remains separate. | G2B locally validated. UX-001 release-environment validation remains open |
 | D3 — Standalone consultation checkout | **Architecture decision complete.** Standalone `ServiceAddon` and separate service provider mapping under [commerce architecture](architecture/commerce_and_delivery.md#standalone-service-routing-d3). | G11 routing and initiation, then G12 public flow and provider validation |
 | D4 — Refund, withdrawal and seller information | **Product and architecture decision complete.** [Approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4) and [consent and seller boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary) define the target. | Separate R42/R50/R53 capabilities, G15 synchronized publication, final seller details and operational validation |
 | D5 — Purchase-email language | **Architecture decision complete.** Persist the order language on Sale at creation and use it for asynchronous email rendering and retries. | G13 persistence, localized copy and delivery validation |
@@ -946,7 +953,7 @@ surface-specific slices, not duplicate requirements.
 | --- | --- | --- |
 | G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**; future Consultations navigation remains with R06/G12. |
 | G2A — Remove obsolete Telegram Landing block | R05 | **Implemented and validated**; complete heading/text/CTA removal, independently of D2; footer untouched. |
-| G2B — Final public contact boundary | R04 | Implement and validate the approved official-support links and remove personal contact links. |
+| G2B — Final public contact boundary | R04 | **Implemented and locally validated** in RU/EN on desktop and mobile. UX-001 release-environment validation remains open. |
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
 | G4 — Reviews visibility | R28–R29 | **Implemented and focused-validated.** See [G4 validation](#g4-reviews-visibility-and-validation). |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
@@ -1013,13 +1020,10 @@ its documentation closeout. SmartBudgetSite is not declared release-ready.
   supporting copy, CTA label, and destination to reflect the approved
   Consultation → Checkout → Calendly flow; complete this during the final landing
   page and release-polish pass
-- Public contact and social-link boundary: the current footer still exposes
-  personal contact and profile links, and no final public-link architecture has
-  been approved or implemented. Complete the mandatory architecture and UX
-  review during the final public-site and release-polish phase without changing
-  the current Official Release Backlog order; the authoritative release
-  requirement is in
-  [release readiness](release_readiness.md#public-contact-and-social-link-boundary-ux-001).
+- Public contact and social-link boundary: implementation under approved D2 is
+  complete. Verify RU/EN destinations, ownership and configuration in the
+  release environment under
+  [UX-001](release_readiness.md#public-contact-and-social-link-boundary-ux-001).
 - Administrative feedback deletion workflow: implement a protected admin-only
   workflow for permanently deleting Feedback messages together with their
   attachments. The implementation should preserve the approved attachment

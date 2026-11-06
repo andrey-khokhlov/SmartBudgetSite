@@ -44,41 +44,11 @@
 
       <div class="footer-center">
         <a class="footer-text-link" href="/faq">{{ t("footer_faq") }}</a>
-        <span class="footer-sep">·</span>
+        <span class="footer-sep" aria-hidden="true">·</span>
         <a class="footer-text-link" href="/feedback">{{ t("footer_feedback") }}</a>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <a class="footer-text-link" href="mailto:{{ t('footer_support_email') }}">{{ t("footer_support_email") }}</a>
       </div>
-
-      <div class="footer-right">
-          <a class="footer-link" href="{{ t('link_tg_url') }}" target="_blank" rel="noopener" aria-label="Telegram">
-            <img src="/static/img/icons/telegram.svg" alt="Telegram">
-          </a>
-
-          <a class="footer-link"
-             href="{{ t('link_wa_url') }}"
-             target="_blank"
-             rel="noopener"
-             title="Best on mobile"
-             aria-label="WhatsApp">
-            <img src="/static/img/icons/whatsapp.svg" alt="WhatsApp">
-          </a>
-
-          <a class="footer-link" href="{{ t('link_fb_url') }}" target="_blank" rel="noopener" aria-label="Facebook">
-            <img src="/static/img/icons/facebook.svg" alt="Facebook">
-          </a>
-
-          <a class="footer-link" href="{{ t('link_vk_url') }}" target="_blank" rel="noopener" aria-label="VK">
-            <img src="/static/img/icons/vk.svg" alt="VK">
-          </a>
-
-          <a class="footer-link" href="{{ t('link_email_url') }}" aria-label="Email">
-            <img src="/static/img/icons/email.svg" alt="Email">
-          </a>
-
-          <a class="footer-link" href="{{ t('link_li_url') }}" target="_blank" rel="noopener" aria-label="LinkedIn">
-            <img src="/static/img/icons/linkedin.svg" alt="LinkedIn">
-          </a>
-        </div>
-
     </div>
   </footer>
 

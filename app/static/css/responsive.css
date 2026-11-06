@@ -298,14 +298,12 @@ img {
   }
 
   .site-footer .footer-left,
-  .site-footer .footer-center,
-  .site-footer .footer-right {
+  .site-footer .footer-center {
     justify-content: center;
     width: 100%;
   }
 
-  .site-footer .footer-center,
-  .site-footer .footer-right {
+  .site-footer .footer-center {
     flex-wrap: wrap;
   }
 }

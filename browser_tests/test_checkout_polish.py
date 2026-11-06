@@ -153,6 +153,22 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(page.locator("html")).to_have_attribute("lang", lang)
             page.locator(".reviews-action").click()
             expect(page).to_have_url(f"{base_url}/products/smartbudget")
+
+            footer = page.locator("footer")
+            expect(footer.get_by_role("link")).to_have_count(3)
+            support = footer.get_by_role("link", name="support@neocitrix.com")
+            expect(support).to_be_visible()
+            expect(support).to_have_attribute("href", "mailto:support@neocitrix.com")
+            assert footer.evaluate(
+                "element => element.scrollWidth <= element.clientWidth"
+            )
+            footer.get_by_role("link", name="FAQ").click()
+            expect(page).to_have_url(f"{base_url}/faq")
+            expect(page.locator("html")).to_have_attribute("lang", lang)
+            feedback_label = "Feedback" if lang == "en" else "Обратная связь"
+            footer.get_by_role("link", name=feedback_label).click()
+            expect(page).to_have_url(f"{base_url}/feedback")
+            expect(page.locator("html")).to_have_attribute("lang", lang)
             page.wait_for_load_state("networkidle")
             browser.close()
         assert errors == []

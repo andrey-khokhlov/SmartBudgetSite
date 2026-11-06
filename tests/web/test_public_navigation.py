@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 from html.parser import HTMLParser
 from urllib.parse import parse_qsl, urljoin, urlsplit
@@ -130,6 +131,23 @@ def test_language_segments_preserve_query_values_and_persist_locale(
     assert switched.context["lang"] == alternate
     assert f"sb_lang={alternate};" in switched.headers["set-cookie"]
     assert client.get("/products").context["lang"] == alternate
+
+
+@pytest.mark.parametrize("path", ["/", "/products", "/faq", "/feedback"])
+@pytest.mark.parametrize(
+    "lang,feedback_label", [("en", "Feedback"), ("ru", "Обратная связь")]
+)
+def test_shared_footer_has_only_approved_links(client, path, lang, feedback_label):
+    response = client.get(path, params={"lang": lang})
+    assert response.status_code == 200
+    footer = re.search(r"<footer\b[^>]*>(.*?)</footer>", response.text, re.S)
+    assert footer is not None
+    assert "© Andrey Khokhlov" in footer[1]
+    assert re.findall(r'<a\b[^>]*\bhref="([^"]+)"[^>]*>(.*?)</a>', footer[1], re.S) == [
+        ("/faq", "FAQ"),
+        ("/feedback", feedback_label),
+        ("mailto:support@neocitrix.com", "support@neocitrix.com"),
+    ]
 
 
 @pytest.mark.parametrize("lang,alternate", [("ru", "en"), ("en", "ru")])
