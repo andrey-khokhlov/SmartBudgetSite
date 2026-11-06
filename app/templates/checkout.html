@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% from "_product_language.html" import product_language with context %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=2">
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=3">
 {% endblock %}
 
 {% block title %}{{ t("checkout.title") }} · SmartBudget{% endblock %}
@@ -14,58 +15,67 @@
         <div class="checkout-summary">
             <div class="checkout-row">
                 <span>{{ t("checkout.product") }}</span>
-                <span class="checkout-value">{{ product.name }}</span>
+                <span class="checkout-value">{{ product.name }} · {{ product.edition }}</span>
             </div>
 
             <div class="checkout-row">
-                <span>{{ t("checkout.package") }}</span>
-                <span class="checkout-value">{{ package }}</span>
+                <span>{{ t("product.language") }}</span>
+                <span class="checkout-value">{{ product_language(package) }}</span>
             </div>
 
-            <div class="checkout-row">
-                <span>{{ t("checkout.edition") }}</span>
-                <span class="checkout-value">{{ product.edition }}</span>
-            </div>
-
-            <div class="checkout-row">
+            <div class="checkout-row checkout-row--price">
                 <span>{{ t("checkout.price_product") }}</span>
                 <span class="checkout-value">{{ price.amount | money(lang) }} {{ price.currency_code }}</span>
             </div>
 
             {% if addon %}
-                <div class="checkout-row">
+                <div class="checkout-row checkout-row--price">
                     <span>{{ t("checkout.consultation") }}</span>
                     <span class="checkout-value">{{ addon.amount | money(lang) }} {{ addon.currency_code }}</span>
                 </div>
             {% endif %}
 
-            <div class="checkout-divider"></div>
-
-            <div class="checkout-total">
-                <span>{{ t("checkout.total") }}</span>
-                <strong>{{ total_amount | money(lang) }} {{ price.currency_code }}</strong>
-            </div>
+            {% if not consultation_unavailable %}
+                <div class="checkout-divider"></div>
+                <div class="checkout-total">
+                    <span>{{ t("checkout.total") }}</span>
+                    <strong>{{ total_amount | money(lang) }} {{ price.currency_code }}</strong>
+                </div>
+            {% endif %}
         </div>
 
-        <form class="checkout-form" method="post" action="/checkout/{{ product.slug }}">
-            <input type="hidden" name="currency" value="{{ price.currency_code }}">
-            <input type="hidden" name="consultation" value="{{ 1 if consultation else 0 }}">
+        {% if consultation_unavailable %}
+            <p>{{ t("checkout.consultation_unavailable") }}</p>
+            <p><a href="/checkout/{{ product.slug }}?currency={{ price.currency_code | urlencode }}">{{ t("checkout.continue_without_consultation") }}</a></p>
+        {% else %}
+            <form class="checkout-form" method="post" action="/checkout/{{ product.slug }}">
+                <input type="hidden" name="currency" value="{{ price.currency_code }}">
+                <input type="hidden" name="consultation" value="{{ 1 if consultation else 0 }}">
 
-            <label for="checkout-email">{{ t("checkout.email") }}</label>
-            <input
-                id="checkout-email"
-                name="customer_email"
-                type="email"
-                autocomplete="email"
-                maxlength="200"
-                required
-            >
-            <p class="checkout-hint">{{ t("checkout.email_hint") }}</p>
+                <label for="checkout-email">{{ t("checkout.email") }}</label>
+                <input
+                    id="checkout-email"
+                    name="customer_email"
+                    type="email"
+                    autocomplete="email"
+                    maxlength="200"
+                    aria-describedby="checkout-delivery"
+                    required
+                >
+                <p class="checkout-hint" id="checkout-delivery">
+                    {{ t("checkout.download_delivery") }}
+                    {% if addon %}{{ t("checkout.consultation_delivery") }}{% endif %}
+                </p>
 
-            <button class="payment-button payment-button-primary" type="submit">
-                {{ t("checkout.continue_payment") }}
-            </button>
-        </form>
+                {% if product.family_slug == "smartbudget" %}
+                    {% include "_purchase_compatibility.html" %}
+                {% endif %}
+
+                <button class="payment-button payment-button-primary" type="submit">
+                    {{ t("checkout.continue_payment") }}
+                </button>
+            </form>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

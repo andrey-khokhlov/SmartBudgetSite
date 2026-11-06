@@ -682,10 +682,10 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
 | R18 | Implemented | Approved catalog content and restrained G5 card retained; localized Full System Requirements link now targets `/faq#system-requirements`. | G6 link/anchor validated in RU/EN desktop/mobile; no price or Buy CTA |
 | R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
-| R20 | Partial | Priced Buy options/add-ons exist; Package RU/INT and locale-dependent Recommended badge remain. | Preserve catalog/payment routing; G10 |
-| R21 | Partial | Setup add-on selection and database amount exist; 60-minute/online/booking-after-payment explanation is missing. | Named platform needs validation; neutral copy can proceed; G10 |
-| R22 | Partial | Selected items, Total emphasis and email/payment form exist; Your order heading, language terminology and remaining hierarchy polish are missing. | None; G10 |
-| R23 | Required | Checkout email hint lacks the approved protected-download and conditional booking explanation. The standalone variant is absent. | G10 product copy and G12 standalone copy after G11 |
+| R20 | Implemented | Buy uses equal cards with localized product-language labels, the same-features explanation and catalog-owned prices. | G10 locally validated |
+| R21 | Implemented | Buy describes the optional 60-minute online setup session and booking instructions after payment. The add-on price and availability come from the catalog. | G10 locally validated. Booking platform validation remains separate |
+| R22 | Implemented | Checkout shows the selected product, language and item prices under Your order, emphasizes Total, and preserves email and hosted payment initiation. | G10 locally validated |
+| R23 | Partial | Product Checkout explains protected download delivery and adds booking instructions only for a bundle. | G12 standalone copy and release-environment delivery validation remain open |
 | R24 | Implemented | Full-width primary submit and contained native file picker with visible focus. | Attachment types, limits and retry retention preserved |
 | R25 | Implemented | Approved RU/EN post-submit guidance and prominent localized confirmation with message ID. | Existing status and alert announcements retained |
 | R26 | Implemented | Customers-only review label and pre-purchase General question available. | Verified purchase remains required for reviews, with optional email for general enquiries |
@@ -694,9 +694,9 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
-| R32 | Partial | Landing displays Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions. Products links to the FAQ, which includes Microsoft links and manual/restart guidance. | Remaining version-selection and Checkout disclosures belong to G10 |
+| R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Products, Buy and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated |
 | R33 | Required | Purchase/delivery FAQ is absent. The configured default download lifetime is 12 hours. | G14 wording follows approved D6 terms |
-| R34 | Partial | Landing reads the exact SKU's active ProductPrice. Buy/Checkout use ProductPrice/ServiceAddon dynamically. Landing pricing was verified with isolated catalog data. | G12 public Consultations and release-environment catalog validation remain open |
+| R34 | Partial | Landing reads the exact SKU's active ProductPrice. Buy and Checkout use catalog ProductPrice/ServiceAddon amounts in the selected currency. G9/G10 used isolated catalog data. | G12 public Consultations and release-environment catalog validation remain open |
 | R35 | Required | Purchase email supplies product links without the RU/EN 12-hour notice. | G13 durable Sale language snapshot under D5 and actual entitlement expiry |
 | R36 | Partial | Download expiry has date/minute and Moscow conversion; visible timezone label is missing. | Keep stored UTC/conversion semantics; G14 |
 | R37 | Partial | Download errors retain support reference/Feedback prefill; indefinite-use expiry explanation and real interrupted/repeat-download proof are missing. | Editorial expired-page copy and validation; G14 |
@@ -711,7 +711,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
-| R49 | Partial | Checkout lacks complete delivery and policy disclosure. The no-universal-waiver boundary remains in force. | G10/G15 disclosure and policy link under D4 |
+| R49 | Partial | G10 product Checkout displays composition-sensitive delivery information. The no-universal-waiver boundary remains in force. | G15 synchronized policy disclosure and link under D4 |
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
 | R51 | Partial | Separate product and service items/access exist. Current refunds are full-Sale and public service-only checkout is absent. | G11/G12, separate R42 capability, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | The recovered policy needs a new owner-approved publication revision synchronized with actual behavior. | G15 publication and validation before paid sales |
@@ -857,8 +857,8 @@ with new-tab/noopener behavior; RU retains official English targets.
 Products adds a catalog-driven localized requirements link beside its conditions
 to `/faq#system-requirements`, with sticky-header scroll clearance. G5 layout,
 price-free content and product-details CTA are retained. R18/R31/R47 are
-Implemented; R30 stays Partial for G12/G14/G15 content, and R32 stays Partial for
-G10 compatibility disclosures. The owner-verified Microsoft 365
+Implemented. R30 stays Partial for G12/G14/G15 content. G10 completes the
+remaining Buy and Checkout disclosures under R32. The owner-verified Microsoft 365
 environment is Excel 2608 Click-to-Run Current Channel on Windows, not an
 independent Codex product test. 32-bit Excel was not separately practically
 reproduced. These details stay internal: the public FAQ states support for both
@@ -927,6 +927,21 @@ cases used isolated SQLite fixtures and covered RU/EN at 1280 px and 375 px.
 Empty and populated Reviews screenshots and representative empty Landing
 screenshots were inspected. Final R45 review remains open.
 
+### G10 Product Buy / Checkout implementation and validation
+
+Buy presents the two language editions equally, describes the optional setup
+session and shows catalog-owned prices. Checkout displays the selected product
+and language, emphasizes Total and shows protected-download delivery with
+booking instructions for bundles. Both screens include the approved compact
+compatibility disclosure. When a requested add-on is unavailable, Checkout
+withholds payment and offers an explicit product-only continuation for the
+same SKU and currency.
+
+Local validation used isolated catalog data and covered SKU/currency/add-on
+preservation across RU/EN switches, unavailable selections and server-owned
+totals. Chromium Buy and Checkout renders were inspected at 1280 px and 375 px.
+Real hosted payments, email delivery and booking remain release-validation work.
+
 ### Decision dependencies
 
 The owner has completed D1–D6 at the product and architecture level.
@@ -962,11 +977,11 @@ surface-specific slices, not duplicate requirements.
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
 | G4 — Reviews visibility | R28–R29 | **Implemented and focused-validated.** See [G4 validation](#g4-reviews-visibility-and-validation). |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
-| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 version selection and Checkout remain with G10. |
+| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
 | G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, visible compatibility disclosure, database-priced concluding offer, Buy CTA and optional add-on note. |
-| G10 — Product Buy / Checkout | R20–R23, applicable R34/R49 | Equal language cards, add-on/order/delivery presentation; preserve server-authoritative commerce; final policy links follow G15. |
+| G10 — Product Buy / Checkout | R20–R23, applicable R32/R34/R49 | **Implemented and locally validated**: equal language cards, add-on terms, order summary, composition-sensitive delivery and compact compatibility disclosures. Policy publication remains with G15. |
 | G11 — Standalone payment boundary | R06, R38 | Implement separate standalone service provider mapping and service-only initiation. |
 | G12 — Public Consultations | R06, R23, R34, R38, applicable R51 | Implement public page/navigation/checkout after G11. Validate the platform and align applicable policy wording. |
 | G13 — Purchase email | R35, R40 | Implement durable Sale language and localized composition-specific delivery copy. Validate actual delivery. |
@@ -979,8 +994,8 @@ scopes. G15 owns synchronized publication. R39 and R45 remain validation
 work. R46 is complete, R48 is validated, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
-G6 foundation and the R18 requirements link are also implemented; R30/R32 remain
-Partial for later groups/surfaces. Further bounded tasks must
+G6 foundation and the R18 requirements link are also implemented. G10 completes
+R32, while R30 remains Partial for later FAQ groups. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 completes the seven-block Landing. G11 precedes
 G12. Gate 2 is complete. Continue with Gate 3 implementation

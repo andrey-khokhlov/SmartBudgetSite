@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% from "_product_language.html" import product_language with context %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/product_buy.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/product_buy.css') }}?v=2">
 {% endblock %}
 
 {% block content %}
 
-<div class="container">
+<div class="product-buy">
     <h1>{{ t("product_buy_title") }}</h1>
     <p>{{ t("product_buy_subtitle") }}</p>
 
@@ -15,34 +16,10 @@
             {% set product = option.product %}
             {% set price = option.price %}
             {% set consultation_addon = option.consultation_addon %}
-            {% set is_recommended = (lang == "ru" and "-ru-" in product.slug) or (lang == "en" and "-int-" in product.slug) %}
-            <div class="product-card {% if is_recommended %}recommended{% endif %}">
+            <div class="product-card">
                 <h2>{{ product.name }}</h2>
-
-                {% if is_recommended %}
-                    <div class="product-badge">
-                        {{ t("product.recommended") }}
-                    </div>
-                {% endif %}
-
-                <div class="product-package">
-                    <p>
-                        {{ t("checkout.package") }}:
-                        {% if "-ru-" in product.slug %}
-                            <strong>RU</strong><br>
-                            <span class="package-hint">{{ t("product.package_ru_hint") }}</span>
-                        {% elif "-int-" in product.slug %}
-                            <strong>INT</strong><br>
-                            <span class="package-hint">{{ t("product.package_int_hint") }}</span>
-                        {% else %}
-                            <strong>—</strong>
-                        {% endif %}
-                    </p>
-                </div>
-
-                <p>
-                    {{ t("product_buy_edition") }}: {{ product.edition }}<br>
-                </p>
+                <p>{{ t("product.language") }}: <strong>{{ product_language(option.package) }}</strong></p>
+                <p>{{ t("product_buy_edition") }}: {{ product.edition }}</p>
 
                 {% if price %}
                     <p>
@@ -67,6 +44,7 @@
                             {{ t("product_buy_add_consultation") }}
 
                             {% if consultation_addon %}
+                                <span>{{ t("product_buy_consultation_details") }}</span>
                                 <span class="product-addon__price">
                                     {{ t("product_buy_addon_special_price") }}:
                                     <span class="product-addon__amount">
@@ -94,6 +72,9 @@
             </div>
         {% endfor %}
     </div>
+    {% if family_slug == "smartbudget" %}
+        {% include "_purchase_compatibility.html" %}
+    {% endif %}
 </div>
 
 <script>

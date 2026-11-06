@@ -6,7 +6,6 @@
 }
 
 .product-card {
-    position: relative;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -15,10 +14,6 @@
     border-radius: 20px;
     background: #ffffff;
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-}
-
-.product-card.recommended {
-    border-color: #2563eb;
 }
 
 .product-card h2 {
@@ -30,25 +25,6 @@
     margin: 0;
     color: #475569;
     line-height: 1.55;
-}
-
-.package-hint {
-    display: inline-block;
-    margin-top: 4px;
-    color: #64748b;
-    font-size: 0.95rem;
-}
-
-.product-badge {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: #eff6ff;
-    color: #1d4ed8;
-    font-size: 0.8rem;
-    font-weight: 600;
 }
 
 .product-addon {
@@ -82,8 +58,17 @@
     white-space: nowrap;
 }
 
-.product-package {
-    min-height: 90px;
+.product-buy .purchase-compatibility {
+    max-width: 720px;
+    margin: 28px auto 0;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    color: #475569;
+}
+
+.product-buy .purchase-compatibility h2 {
+    font-size: 1.1rem;
+    color: #172033;
 }
 
 .checkout-link {
@@ -139,15 +124,9 @@
     }
 
     .product-card p,
-    .product-addon__text,
-    .package-hint {
+    .product-addon__text {
         font-size: 0.95rem;
         line-height: 1.45;
-    }
-
-    .product-badge {
-        font-size: 0.72rem;
-        padding: 5px 9px;
     }
 
     .product-addon__text {
@@ -162,13 +141,13 @@
 }
 
 @media (max-width: 900px) {
-    .container h1 {
+    .product-buy h1 {
         font-size: 2.2rem;
         line-height: 1.15;
         text-align: center;
     }
 
-    .container > p {
+    .product-buy > p {
         max-width: 460px;
         margin-left: auto;
         margin-right: auto;
@@ -188,21 +167,11 @@
         padding: 22px;
     }
 
-    .product-badge {
-        position: static;
-        width: fit-content;
-        order: -1;
-    }
-
-    .product-package {
-        min-height: 0;
-    }
-
-    .container h1 {
+    .product-buy h1 {
         font-size: 2rem;
     }
 
-    .container > p {
+    .product-buy > p {
         max-width: 460px;
         margin-left: auto;
         margin-right: auto;
@@ -212,34 +181,34 @@
 }
 
 @media (max-width: 640px) {
-    .container h1 {
+    .product-buy h1 {
         font-size: 1.65rem;
         line-height: 1.18;
     }
 
-    .container > p {
+    .product-buy > p {
         font-size: 0.98rem;
     }
 }
 
 @media (max-width: 560px) {
-    .container h1 {
+    .product-buy h1 {
         font-size: 1.45rem;
         line-height: 1.2;
     }
 
-    .container > p {
+    .product-buy > p {
         font-size: 0.9rem;
     }
 }
 
 @media (max-width: 500px) {
-    .container h1 {
+    .product-buy h1 {
         font-size: 1.2rem;
         line-height: 1.22;
     }
 
-    .container > p {
+    .product-buy > p {
         font-size: 0.88rem;
     }
 
@@ -247,11 +216,11 @@
         padding: 20px;
     }
 
-    .container > p {
+    .product-buy > p {
         max-width: 300px;
     }
 
-    .container {
+    .product-buy {
         padding-left: 14px;
         padding-right: 14px;
     }
@@ -262,7 +231,6 @@
     }
 
     .product-card p,
-    .package-hint,
     .product-addon__text {
         font-size: 0.88rem;
         line-height: 1.4;

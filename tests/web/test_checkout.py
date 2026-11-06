@@ -1,5 +1,6 @@
 import re
 from decimal import Decimal
+from html import unescape
 
 import pytest
 
@@ -11,8 +12,8 @@ from app.models.service_addon import ServiceAddon
 @pytest.mark.parametrize(
     "lang,package,currency,amount,addon_amount,total,title",
     [
-        ("en", "int", "EUR", "49.00", "69.00", "118.00 EUR", "Checkout"),
-        ("ru", "ru", "RUB", "2990.00", "3900.00", "6 890,00 RUB", "Оплата"),
+        ("en", "int", "EUR", "49.00", "69.00", "118.00 EUR", "Your order"),
+        ("ru", "ru", "RUB", "2990.00", "3900.00", "6 890,00 RUB", "Ваш заказ"),
     ],
 )
 @pytest.mark.parametrize("explicit_language", [True, False])
@@ -71,6 +72,9 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
 
     assert buy.status_code == 200
     assert f'<html lang="{lang}">' in buy.text
+    assert ("English" if lang == "en" else "Русский") in buy.text
+    assert ("60-minute online" if lang == "en" else "60 минут онлайн") in buy.text
+    assert "product-badge" not in buy.text
     if explicit_language:
         assert f"sb_lang={lang};" in buy.headers["set-cookie"]
     link = re.search(r'data-base-url="([^"]+)"', buy.text)
@@ -80,7 +84,7 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
 
     assert checkout.status_code == 200
     assert f'<html lang="{lang}">' in checkout.text
-    assert title in checkout.text
+    assert f'<h1 class="checkout-title">{title}</h1>' in checkout.text
     assert total in checkout.text
     assert 'name="consultation" value="1"' in checkout.text
     summary = checkout.text.split('<div class="checkout-summary">', 1)[1].split(
@@ -89,7 +93,32 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
     )[0]
     assert summary.count("<strong>") == 1
     assert f"<strong>{total}</strong>" in summary
-    assert summary.count('class="checkout-value"') == 5
+    assert summary.count('class="checkout-value"') == 4
+    download, booking, heading = (
+        (
+            "After payment, we'll email you a secure link to download SmartBudget.",
+            "If you've purchased a consultation, you'll also receive instructions to book your session.",
+            "Important Before Purchasing",
+        )
+        if lang == "en"
+        else (
+            "После оплаты мы отправим на вашу электронную почту защищённую ссылку для скачивания SmartBudget.",
+            "Если вы приобрели консультацию, вы также получите инструкцию по записи.",
+            "Важно перед покупкой",
+        )
+    )
+    assert download in unescape(checkout.text)
+    assert booking in unescape(checkout.text)
+    product_only = client.get(link.group(1))
+    assert product_only.status_code == 200
+    assert download in unescape(product_only.text)
+    assert booking not in unescape(product_only.text)
+    assert 'name="consultation" value="0"' in product_only.text
+    for response in (buy, checkout):
+        assert f'id="purchase-compatibility-heading">{heading}</h2>' in response.text
+        assert 'href="/faq#system-requirements"' in response.text
+        for requirement in ("Windows 10/11", "2019", "VBA", "ActiveX", "Excel", "Mac"):
+            assert requirement in response.text
 
 
 def test_checkout_with_consultation_shows_product_addon_and_total(client, db_session):
@@ -164,7 +193,8 @@ def test_checkout_with_consultation_does_not_fall_back_to_another_currency(
 
     What we verify:
     - An otherwise matching offer in another currency is not selected.
-    - The product checkout remains usable without the unavailable add-on.
+    - The unavailable selection cannot be submitted.
+    - The customer can explicitly continue with the same product and currency.
     """
 
     product = Product(
@@ -207,8 +237,19 @@ def test_checkout_with_consultation_does_not_fall_back_to_another_currency(
     )
 
     assert response.status_code == 200
-    assert "Личная консультация" not in response.text
-    assert 'name="currency" value="RUB"' in response.text
+    assert "The selected consultation is unavailable for this order." in response.text
+    assert 'class="checkout-total"' not in response.text
+    assert 'class="checkout-form"' not in response.text
+    product_only_url = f"/checkout/{product.slug}?currency=RUB"
+    assert (
+        f'href="{product_only_url}">Continue without the consultation</a>'
+        in response.text
+    )
+    product_only = client.get(product_only_url)
+    assert product_only.status_code == 200
+    assert "3,900.00 RUB" in product_only.text
+    assert 'name="currency" value="RUB"' in product_only.text
+    assert 'name="consultation" value="0"' in product_only.text
 
 
 def test_checkout_with_consultation_uses_addon_usage_type_only(client, db_session):

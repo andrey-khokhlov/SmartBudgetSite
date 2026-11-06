@@ -665,8 +665,9 @@ scope are also implemented and regression/browser-validated. G9 completes R07
 under approved D1 and is locally validated. The overall UI/UX gate remains open.
 G5 About/Products presentation is implemented and web/browser-validated. G6 now
 completes R18's compatibility link and implements the grouped FAQ foundation,
-R31 and R47. R30 remains Partial for later FAQ groups; R32 remains Partial for
-G10 pre-purchase surfaces. No empty future FAQ groups are rendered.
+R31 and R47. R30 remains Partial for later FAQ groups. G10 completes the
+pre-purchase compatibility disclosures under R32. No empty future FAQ groups
+are rendered.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -748,9 +749,13 @@ Products card with three capabilities and Windows/local-data/one-time-purchase c
 R17/R18/R19 are implemented, including the G6 link to the actual FAQ compatibility
 section. G6 renders the approved four-question overview and seven-question
 Before You Buy group with final manual ActiveX/restart guidance and approved
-Microsoft links. R31/R47 are implemented; R30 still awaits G12/G14/G15 FAQ groups,
-and R32 still awaits applicable G10 compatibility disclosures. Owner-verified
-Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
+Microsoft links. R31/R47 are implemented. R30 still awaits G12/G14/G15 FAQ groups.
+G10 is implemented and locally validated for the product purchase flow. Buy
+shows equal language cards and the optional add-on terms. Checkout shows the
+selected items and composition-sensitive delivery information. Both surfaces
+include the compact compatibility disclosure. R23, R34 and R49 retain their
+standalone, catalog validation or policy dependencies as recorded in current state.
+Owner-verified Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
 on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses
 and R55's first-release exclusion. Keep validation/operational tasks separate from

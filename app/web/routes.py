@@ -1221,6 +1221,7 @@ def checkout_page(
             "price": price,
             "total_amount": total_amount,
             "consultation": consultation == 1,
+            "consultation_unavailable": consultation == 1 and addon is None,
             "package": package,
             "lang": get_lang(request),
         },
@@ -1334,6 +1335,7 @@ def product_buy_page(
         product_options.append(
             {
                 "product": product,
+                "package": package,
                 "price": price,
                 "consultation_addon": consultation_addon,
             }

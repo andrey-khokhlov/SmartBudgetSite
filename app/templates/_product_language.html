@@ -1,0 +1,9 @@
+{% macro product_language(package) -%}
+    {% if package == "RU" -%}
+        {{ t("product.language_ru") }}
+    {%- elif package == "INT" -%}
+        {{ t("product.language_en") }}
+    {%- else -%}
+        —
+    {%- endif %}
+{%- endmacro %}

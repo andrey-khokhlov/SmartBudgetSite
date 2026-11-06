@@ -15,10 +15,10 @@ from browser_tests.test_feedback_form import _running_app
 @pytest.mark.browser
 @pytest.mark.parametrize("width", [1280, 375])
 @pytest.mark.parametrize(
-    "lang,package,currency,amount,addon_amount,total",
+    "lang,package,currency,total",
     [
-        ("en", "int", "EUR", "49.00", "69.00", "118.00 EUR"),
-        ("ru", "ru", "RUB", "2990.00", "3900.00", "6 890,00 RUB"),
+        ("en", "int", "EUR", "118.00 EUR"),
+        ("ru", "ru", "RUB", "6 890,00 RUB"),
     ],
 )
 def test_localized_buy_checkout_and_review_navigation(
@@ -28,43 +28,44 @@ def test_localized_buy_checkout_and_review_navigation(
     lang,
     package,
     currency,
-    amount,
-    addon_amount,
     total,
 ):
     with review_sessions() as db:
         Base.metadata.create_all(db.get_bind())
-        product = Product(
-            family_slug="smartbudget",
-            slug=f"smartbudget-{package}-standard",
-            name="SmartBudget",
-            edition="Standard",
-            archive_path="",
-            status="in_sale",
-        )
-        db.add(product)
-        db.flush()
-        db.add_all(
-            [
-                ProductPrice(
-                    product_id=product.id,
-                    currency_code=currency,
-                    amount=Decimal(amount),
-                    is_active=True,
-                ),
-                ServiceAddon(
-                    code=f"consultation-{package}",
-                    name="Consultation",
-                    service_type="consultation",
-                    usage_type="addon",
-                    family_slug="smartbudget",
-                    package_code=package.upper(),
-                    currency_code=currency,
-                    amount=Decimal(addon_amount),
-                    is_active=True,
-                ),
-            ]
-        )
+        for edition, code, amount, addon_amount in (
+            ("ru", "RUB", "2990.00", "3900.00"),
+            ("int", "EUR", "49.00", "69.00"),
+        ):
+            product = Product(
+                family_slug="smartbudget",
+                slug=f"smartbudget-{edition}-standard",
+                name="SmartBudget",
+                edition="Standard",
+                archive_path="",
+                status="in_sale",
+            )
+            db.add(product)
+            db.flush()
+            db.add_all(
+                [
+                    ProductPrice(
+                        product_id=product.id,
+                        currency_code=code,
+                        amount=Decimal(amount),
+                    ),
+                    ServiceAddon(
+                        code=f"consultation-{edition}",
+                        name="Consultation",
+                        service_type="consultation",
+                        usage_type="addon",
+                        family_slug="smartbudget",
+                        package_code=edition.upper(),
+                        currency_code=code,
+                        amount=Decimal(addon_amount),
+                        is_active=True,
+                    ),
+                ]
+            )
         db.commit()
 
     errors = []
@@ -83,12 +84,47 @@ def test_localized_buy_checkout_and_review_navigation(
             opposite = "ru" if lang == "en" else "en"
             page.goto(f"{base_url}/products/smartbudget?lang={opposite}")
             page.goto(f"{base_url}/products/smartbudget/buy?lang={lang}")
-            page.locator(".product-addon__checkbox").check()
-            page.locator(".checkout-link").click()
+            cards = page.locator(".product-card")
+            expect(cards).to_have_count(2)
+            expect(
+                page.locator(".product-badge, .product-card.recommended")
+            ).to_have_count(0)
+            languages = (
+                ("Русский", "Английский") if lang == "ru" else ("Russian", "English")
+            )
+            for label in languages:
+                expect(cards.get_by_text(label, exact=True)).to_be_visible()
+            assert page.evaluate(
+                "document.documentElement.scrollWidth <= window.innerWidth"
+            )
+            expect(page.locator(".purchase-compatibility a")).to_have_attribute(
+                "href", "/faq#system-requirements"
+            )
+            page.screenshot(path=str(tmp_path / "buy.png"), full_page=True)
+            checkout_path = f"/checkout/smartbudget-{package}-standard"
+            link = page.locator(f'.checkout-link[data-base-url^="{checkout_path}?"]')
+            selected_card = cards.filter(has=link)
+            link.click()
+            expect(page.locator('input[name="consultation"]')).to_have_value("0")
+            expect(page.locator(".checkout-row--price")).to_have_count(1)
+            expect(page.locator("#checkout-delivery")).not_to_contain_text(
+                "Если вы приобрели консультацию"
+                if lang == "ru"
+                else "If you've purchased"
+            )
+            page.go_back()
+            selected_card.locator(".product-addon__checkbox").check()
+            link.click()
             expect(page.locator("html")).to_have_attribute("lang", lang)
+            expect(page.locator(".checkout-title")).to_have_text(
+                "Ваш заказ" if lang == "ru" else "Your order"
+            )
+            expect(page.locator(".purchase-compatibility a")).to_have_attribute(
+                "href", "/faq#system-requirements"
+            )
             expect(page.locator(".checkout-total strong")).to_have_text(total)
             expect(page.locator(".checkout-summary strong")).to_have_count(1)
-            expect(page.locator(".checkout-value")).to_have_count(5)
+            expect(page.locator(".checkout-value")).to_have_count(4)
             value_weight = page.locator(".checkout-value").first.evaluate(
                 "element => Number(getComputedStyle(element).fontWeight)"
             )
@@ -126,6 +162,9 @@ def test_localized_buy_checkout_and_review_navigation(
             }
             switched_total = "118,00 EUR" if lang == "en" else "6,890.00 RUB"
             expect(page.locator(".checkout-total strong")).to_have_text(switched_total)
+            expect(page.locator(".checkout-value").nth(1)).to_have_text(
+                "Английский" if lang == "en" else "Russian"
+            )
             expect(page.locator('input[name="currency"]')).to_have_value(currency)
             expect(page.locator('input[name="consultation"]')).to_have_value("1")
             expect(page.locator("#checkout-email")).to_have_value("")
