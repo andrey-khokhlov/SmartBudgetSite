@@ -162,6 +162,30 @@ def test_localized_buy_checkout_and_review_navigation(
             assert footer.evaluate(
                 "element => element.scrollWidth <= element.clientWidth"
             )
+            footer_links = footer.locator(".footer-center")
+            expect(footer_links.locator(".footer-sep")).to_have_count(2)
+            expect(support).to_have_css("font-size", "13px" if width == 375 else "14px")
+            expect(footer_links).to_have_css(
+                "column-gap", "4px" if width == 375 else "8px"
+            )
+            bounds = footer_links.locator(":scope > *").evaluate_all(
+                "items => items.map(item => item.getBoundingClientRect().toJSON())"
+            )
+            centers = [box["y"] + box["height"] / 2 for box in bounds]
+            assert max(centers) - min(centers) <= 1
+            if width == 375:
+                links_center = (bounds[0]["left"] + bounds[-1]["right"]) / 2
+                assert abs(links_center - width / 2) <= 1
+                page.set_viewport_size({"width": 320, "height": 900})
+                assert page.evaluate(
+                    "document.documentElement.scrollWidth <= window.innerWidth"
+                )
+                assert footer_links.evaluate(
+                    "element => element.scrollWidth <= element.clientWidth"
+                )
+                page.set_viewport_size({"width": width, "height": 900})
+            support.focus()
+            expect(support).to_be_focused()
             footer.get_by_role("link", name="FAQ").click()
             expect(page).to_have_url(f"{base_url}/faq")
             expect(page.locator("html")).to_have_attribute("lang", lang)

@@ -305,5 +305,11 @@ img {
 
   .site-footer .footer-center {
     flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .site-footer .footer-text-link,
+  .site-footer .footer-sep {
+    font-size: 13px;
   }
 }

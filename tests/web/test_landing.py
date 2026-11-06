@@ -178,7 +178,7 @@ def test_landing_offer_uses_exact_catalog_price_and_keeps_buy_route(
     assert f'<p class="sb-offer__price">{price_text}</p>' in offer
     other_price = "73.50 EUR" if lang == "ru" else "3 217,25 RUB"
     assert other_price not in offer
-    assert 'href="/faq#system-requirements"' in before_offer
+    assert "#system-requirements" not in response.text
     assert 'href="/products/smartbudget/buy"' in offer
     assert client.get("/products/smartbudget/buy").status_code == 200
 

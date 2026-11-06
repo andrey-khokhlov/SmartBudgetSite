@@ -508,8 +508,8 @@ which links to Buy and contains the short optional consultation add-on note.
 The Hero remains price-free. Landing reads the active catalog price and currency
 for the exact locale SKU and omits the price when no single usable active price
 can be established. Focused web and RU/EN Chromium checks covered the seven-block
-Landing, price changes, FAQ/Buy links, language switching and desktop/mobile fit
-using isolated catalog data.
+Landing, price changes, compatibility disclosure, Buy navigation, language
+switching and desktop/mobile fit using isolated catalog data.
 The future Consultations entry is owned by R06/G12. Full-register R03 remains
 Partial for that integration, while all R03 behavior explicitly accepted for
 G1 is implemented.
@@ -678,7 +678,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R13 | Implemented | Approved future-expense copy/caption and exact supplied warning screenshot render in RU/EN. | Supplied numerical data unchanged; G8 browser checks complete |
 | R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
-| R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure with a link to the FAQ requirements group. | G9 locally validated |
+| R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure. | G9 locally validated |
 | R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
 | R18 | Implemented | Approved catalog content and restrained G5 card retained; localized Full System Requirements link now targets `/faq#system-requirements`. | G6 link/anchor validated in RU/EN desktop/mobile; no price or Buy CTA |
 | R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
@@ -694,7 +694,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
-| R32 | Partial | Landing displays Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions. Landing and Products link to the FAQ, which includes Microsoft links and manual/restart guidance. | Remaining version-selection and Checkout disclosures belong to G10 |
+| R32 | Partial | Landing displays Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions. Products links to the FAQ, which includes Microsoft links and manual/restart guidance. | Remaining version-selection and Checkout disclosures belong to G10 |
 | R33 | Required | Purchase/delivery FAQ is absent. The configured default download lifetime is 12 hours. | G14 wording follows approved D6 terms |
 | R34 | Partial | Landing reads the exact SKU's active ProductPrice. Buy/Checkout use ProductPrice/ServiceAddon dynamically. Landing pricing was verified with isolated catalog data. | G12 public Consultations and release-environment catalog validation remain open |
 | R35 | Required | Purchase email supplies product links without the RU/EN 12-hour notice. | G13 durable Sale language snapshot under D5 and actual entitlement expiry |
@@ -965,7 +965,7 @@ surface-specific slices, not duplicate requirements.
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 version selection and Checkout remain with G10. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
-| G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, FAQ requirements link, database-priced concluding offer, Buy CTA and optional add-on note. |
+| G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, visible compatibility disclosure, database-priced concluding offer, Buy CTA and optional add-on note. |
 | G10 — Product Buy / Checkout | R20–R23, applicable R34/R49 | Equal language cards, add-on/order/delivery presentation; preserve server-authoritative commerce; final policy links follow G15. |
 | G11 — Standalone payment boundary | R06, R38 | Implement separate standalone service provider mapping and service-only initiation. |
 | G12 — Public Consultations | R06, R23, R34, R38, applicable R51 | Implement public page/navigation/checkout after G11. Validate the platform and align applicable policy wording. |
