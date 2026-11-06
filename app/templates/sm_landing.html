@@ -16,7 +16,7 @@
 {% block title %}SmartBudget{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=4">
+<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=5">
 {% endblock %}
 
 {% block content %}
@@ -81,11 +81,43 @@
     <p class="sb-caption">{{ t("sb_reconciliation_caption") }}</p>
   </section>
 
-  {# Existing temporary purchase tail; G9 owns the future commercial offer. #}
-  <section class="sb-final-cta">
-    <div class="sb-final-cta__inner">
-      <h2>{{ t("sb_final_cta_title") }}</h2>
+  <section class="sb-section" id="sb-practical" aria-labelledby="sb-practical-heading">
+    <div class="sb-section__text">
+      <h2 id="sb-practical-heading">{{ t("sb_practical_title") }}</h2>
+      <p>{{ t("sb_practical_intro") }}</p>
+      <div class="sb-practical-benefits">
+        {% for title, description in (
+          ("sb_practical_excel_title", "sb_practical_excel_text"),
+          ("sb_practical_local_title", "sb_practical_local_text"),
+          ("sb_one_time_purchase", "sb_practical_license_text"),
+          ("sb_practical_guide_title", "sb_practical_guide_text")
+        ) %}
+          <div>
+            <h3>{{ t(title) }}</h3>
+            <p>{{ t(description) }}</p>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="sb-compatibility">
+        <h3>{{ t("sb_before_purchasing_title") }}</h3>
+        {% for number in (1, 2, 3, 4) %}<p>{{ t("faq_before_a1_" ~ number) }}</p>{% endfor %}
+        <p><a href="/faq#system-requirements">{{ t("product_requirements_label") }}</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sb-section sb-offer" id="sb-offer" aria-labelledby="sb-offer-heading">
+    <div class="sb-section__text">
+      <h2 id="sb-offer-heading">{{ t("sb_final_cta_title") }}</h2>
+      <h3>SmartBudget 1.0</h3>
+      {% if product_price is not none %}
+        <p class="sb-offer__price">{{ product_price.amount | money(lang) }} {{ product_price.currency_code }}</p>
+      {% endif %}
+      <p><strong>{{ t("sb_one_time_purchase") }}</strong></p>
+      <p>{{ t("sb_offer_description") }}</p>
+      <p>{{ t("sb_offer_license") }}</p>
       <a class="btn btn-primary btn-large" href="/products/smartbudget/buy">{{ t("sb_landing_cta_buy") }}</a>
+      <p class="sb-offer__consultation">{{ t("sb_offer_consultation_note") }}</p>
     </div>
   </section>
 </div>

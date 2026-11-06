@@ -661,12 +661,12 @@ validation/operational work are in
 of analysis is not runtime/provider validation or closure of a release gate.
 G1's accepted language/navigation scope is implemented and regression-validated
 as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
-scope are also implemented and regression/browser-validated. G9 and full R07
-remain implementation work under approved D1. The overall UI/UX gate remains open.
+scope are also implemented and regression/browser-validated. G9 completes R07
+under approved D1 and is locally validated. The overall UI/UX gate remains open.
 G5 About/Products presentation is implemented and web/browser-validated. G6 now
 completes R18's compatibility link and implements the grouped FAQ foundation,
 R31 and R47. R30 remains Partial for later FAQ groups; R32 remains Partial for
-G9/G10 pre-purchase surfaces. No empty future FAQ groups are rendered.
+G10 pre-purchase surfaces. No empty future FAQ groups are rendered.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -737,17 +737,19 @@ with R06/G12; full-register R03 remains Partial only for that integration.
 [D1–D6 are approved](current_state.md#decision-dependencies). G2A removed the
 obsolete Telegram block. G2B/R04 is implemented and locally validated in RU/EN
 on desktop and mobile. UX-001 release-environment validation remains open.
-The first five Landing sections use approved RU/EN copy and final supplied
-images with linked originals. G9 pricing/practical/commercial work is not
-implemented, and R07 remains Partial.
-The existing temporary Buy tail is not a G9 completion claim. G5 now uses the
-complete approved About biography and a restrained catalog-driven Products card
-with three capabilities and Windows/local-data/one-time-purchase conditions.
+Landing now has all seven approved RU/EN sections. G9 adds the practical
+conditions and visible compatibility disclosure, then the concluding offer
+with catalog-owned price and currency, the Buy link and the short optional
+add-on note. Local validation used isolated catalog data in RU/EN Chromium
+at 1280 px and 375 px. Release-environment catalog validation remains open.
+
+G5 uses the complete approved About biography and a restrained catalog-driven
+Products card with three capabilities and Windows/local-data/one-time-purchase conditions.
 R17/R18/R19 are implemented, including the G6 link to the actual FAQ compatibility
 section. G6 renders the approved four-question overview and seven-question
 Before You Buy group with final manual ActiveX/restart guidance and approved
 Microsoft links. R31/R47 are implemented; R30 still awaits G12/G14/G15 FAQ groups,
-and R32 still awaits applicable G9/G10 compatibility disclosures. Owner-verified
+and R32 still awaits applicable G10 compatibility disclosures. Owner-verified
 Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
 on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses

@@ -3,6 +3,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
+from sqlalchemy import event, text
 
 from app.models.product import Product
 from app.models.product_price import ProductPrice
@@ -56,23 +57,25 @@ class LandingParser(HTMLParser):
 
 def approved_paragraphs(number, lang):
     source = Path("docs/release_uiux_requirements.md").read_text(encoding="utf-8")
-    block = source.split(f"#### 5.1.{number}.", 1)[1].split(
-        f"#### 5.1.{number + 1}.", 1
-    )[0]
+    next_heading = "### 5.2." if number == 7 else f"#### 5.1.{number + 1}."
+    block = source.split(f"#### 5.1.{number}.", 1)[1].split(next_heading, 1)[0]
     copy = block.split(f"##### {lang.upper()}\n\n", 1)[1]
     if lang == "ru":
         copy = copy.split("##### EN", 1)[0]
     copy = copy.split("**Подписи к изображению:**", 1)[0]
     copy = copy.split("Текст и смысл подписи выше", 1)[0]
+    copy = copy.split("**Обязательное дополнение:**", 1)[0]
+    copy = copy.split("Версия 1.0 в этом блоке", 1)[0]
     return [
         paragraph.strip().removeprefix("- ")
         for paragraph in copy.strip().split("\n\n")
-        if paragraph.strip() not in {"Подпись к изображению", "Image caption"}
+        if paragraph.strip()
+        not in {"Подпись к изображению", "Image caption", "{{ product_price }}"}
     ]
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
-@pytest.mark.parametrize("number", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("number", [1, 2, 3, 4, 5, 6, 7])
 def test_landing_preserves_approved_copy(client, lang, number):
     response = client.get(f"/products/smartbudget?lang={lang}")
     assert response.status_code == 200
@@ -119,7 +122,8 @@ def test_landing_uses_final_localized_original_images_and_demo_anchor(client, la
         "sb-future-expense",
         "sb-plan-actual",
         "sb-reconciliation",
-        None,
+        "sb-practical",
+        "sb-offer",
     ]
     assert all(
         "sb-consult" not in section.get("class", "") for section in landing.sections
@@ -134,11 +138,10 @@ def test_landing_uses_final_localized_original_images_and_demo_anchor(client, la
     assert "g8_05_reconciliation_after" in expected[4]
 
 
-@pytest.mark.parametrize("lang", ["ru", "en"])
-def test_existing_temporary_purchase_tail_reaches_buy_route(client, db_session, lang):
+def add_catalog_price(db_session, package, currency, amount, *, active=True):
     product = Product(
         family_slug="smartbudget",
-        slug="smartbudget-int-standard",
+        slug=f"smartbudget-{package}-standard",
         name="SmartBudget",
         edition="Standard",
         archive_path="",
@@ -146,16 +149,92 @@ def test_existing_temporary_purchase_tail_reaches_buy_route(client, db_session, 
     )
     db_session.add(product)
     db_session.flush()
-    db_session.add(
-        ProductPrice(
-            product_id=product.id,
-            currency_code="EUR",
-            amount=Decimal("49.00"),
-            is_active=True,
-        )
+    price = ProductPrice(
+        product_id=product.id,
+        currency_code=currency,
+        amount=Decimal(amount),
+        is_active=active,
     )
+    db_session.add(price)
+    return price
+
+
+@pytest.mark.parametrize(
+    "lang,price_text,updated_text",
+    [("ru", "3 217,25 RUB", "4 321,75 RUB"), ("en", "73.50 EUR", "4,321.75 EUR")],
+)
+def test_landing_offer_uses_exact_catalog_price_and_keeps_buy_route(
+    client, db_session, lang, price_text, updated_text
+):
+    prices = {
+        "ru": add_catalog_price(db_session, "ru", "RUB", "3217.25"),
+        "en": add_catalog_price(db_session, "int", "EUR", "73.50"),
+    }
     db_session.commit()
     response = client.get(f"/products/smartbudget?lang={lang}")
-    links = LandingParser(response.text).links
-    buy = next(link for link in links if link["href"] == "/products/smartbudget/buy")
-    assert client.get(buy["href"]).status_code == 200
+    assert response.status_code == 200
+    before_offer, offer = response.text.split('id="sb-offer"', 1)
+    assert price_text not in before_offer
+    assert f'<p class="sb-offer__price">{price_text}</p>' in offer
+    other_price = "73.50 EUR" if lang == "ru" else "3 217,25 RUB"
+    assert other_price not in offer
+    assert 'href="/faq#system-requirements"' in before_offer
+    assert 'href="/products/smartbudget/buy"' in offer
+    assert client.get("/products/smartbudget/buy").status_code == 200
+
+    prices[lang].amount = Decimal("4321.75")
+    db_session.commit()
+    refreshed = client.get("/products/smartbudget")
+    assert refreshed.context["lang"] == lang
+    assert f'<p class="sb-offer__price">{updated_text}</p>' in refreshed.text
+
+
+@pytest.mark.parametrize(
+    "condition", ["missing", "inactive", "nonpositive", "ambiguous"]
+)
+def test_landing_hides_unusable_price_but_keeps_buy_link(client, db_session, condition):
+    add_catalog_price(db_session, "int", "EUR", "73.50")
+    if condition != "missing":
+        price = add_catalog_price(
+            db_session,
+            "ru",
+            "RUB",
+            "0.00" if condition == "nonpositive" else "3217.25",
+            active=condition != "inactive",
+        )
+    if condition == "ambiguous":
+        db_session.add(
+            ProductPrice(
+                product_id=price.product_id,
+                currency_code="EUR",
+                amount=Decimal("73.50"),
+            )
+        )
+    db_session.commit()
+    response = client.get("/products/smartbudget?lang=ru")
+    assert response.status_code == 200
+    assert 'class="sb-offer__price"' not in response.text
+    assert 'href="/products/smartbudget/buy"' in response.text
+
+
+def test_landing_rolls_back_failed_price_query_and_renders(client, monkeypatch):
+    rolled_back = []
+
+    def record_rollback(session):
+        rolled_back.append(session)
+
+    def fail_price_lookup(repository, slug):
+        event.listen(repository.db, "after_rollback", record_rollback)
+        repository.db.execute(text("SELECT 1 FROM missing_landing_price_test_table"))
+
+    monkeypatch.setattr(
+        "app.web.routes.ProductsRepository.get_product_with_active_price_by_slug",
+        fail_price_lookup,
+    )
+
+    response = client.get("/products/smartbudget?lang=ru")
+
+    assert len(rolled_back) == 1
+    assert response.status_code == 200
+    assert 'class="sb-offer__price"' not in response.text
+    assert 'href="/products/smartbudget/buy"' in response.text

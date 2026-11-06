@@ -502,8 +502,14 @@ language does not navigate or clear typed input. No R04+ functionality was added
 **G2A and the accepted G7/G8 Landing scope are implemented** against `7034dcb`:
 Hero, resilience levels, future expense, PLAN/ACTUAL and reconciliation use the
 approved RU/EN copy and supplied final assets. The obsolete Telegram block is
-removed. Only the existing temporary Buy tail remains; G9 practical/commercial
-content and Landing pricing remain G9 implementation work under approved D1.
+removed. **G9 is implemented and locally validated** under approved D1. The
+practical conditions and compatibility disclosure precede the concluding offer,
+which links to Buy and contains the short optional consultation add-on note.
+The Hero remains price-free. Landing reads the active catalog price and currency
+for the exact locale SKU and omits the price when no single usable active price
+can be established. Focused web and RU/EN Chromium checks covered the seven-block
+Landing, price changes, FAQ/Buy links, language switching and desktop/mobile fit
+using isolated catalog data.
 The future Consultations entry is owned by R06/G12. Full-register R03 remains
 Partial for that integration, while all R03 behavior explicitly accepted for
 G1 is implemented.
@@ -663,16 +669,16 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R04 | Implemented | The shared RU/EN footer has FAQ, Feedback and the official support email. Personal contact links are removed. | G2B locally validated. UX-001 release-environment validation remains open |
 | R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete |
 | R06 | Required | Standalone catalog identity, service SaleItem and entitlement support exist. Service-only provider routing and public purchase remain absent. | G11 implementation then G12 public flow and validation |
-| R07 | Partial | The first five sections and on-page Hero CTA are implemented. The full seven-block requirement still awaits G9 practical and commercial sections. | G7/G8 scoped work complete. G9 follows approved D1 |
-| R08 | Required | Hero is price-free and purchase reaches Buy. The concluding database-priced offer allowed by D1 is absent. | G9 implementation and exact price/currency validation |
-| R09 | Implemented | Landing uses a shared screenshot macro, consistent semantic sections, localized copy keys and locale-specific asset paths; maintenance convention recorded below. | G7 foundation complete; future G9 content remains separate |
-| R10 | Partial | Obsolete large consultation block removed under G2A; no new consultation marketing or optional add-on wording was introduced. | Remaining purchase-side mention belongs to G9 |
+| R07 | Implemented | All seven Landing sections render in the approved RU/EN order. The Hero CTA opens the on-page demonstrations. | G7–G9 locally validated |
+| R08 | Implemented | Hero is price-free. The concluding offer displays the exact locale SKU's usable active catalog price and currency and links to Buy. | G9 locally validated with isolated catalog data |
+| R09 | Implemented | Landing uses a shared screenshot macro, consistent semantic sections, localized copy keys and locale-specific asset paths; maintenance convention recorded below. | G7 foundation complete |
+| R10 | Implemented | The obsolete consultation block is gone. The concluding offer contains only the approved optional add-on note. | G9 locally validated |
 | R11 | Implemented | All ten owner-supplied final assets are used by locale without byte changes; linked originals, meaningful localized alt text and keyboard-pannable viewports are implemented. | Scoped G7/G8 browser checks complete; independent release/workbook validation and R45 remain open |
 | R12 | Implemented | First five Landing sections use text-led hierarchy, wide readable demonstrations and a responsive reconciliation pair instead of uniform feature cards. | Scoped G7/G8 desktop/mobile checks complete; repeat R45 review remains open |
 | R13 | Implemented | Approved future-expense copy/caption and exact supplied warning screenshot render in RU/EN. | Supplied numerical data unchanged; G8 browser checks complete |
 | R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
-| R16 | Partial | Local Excel/no-subscription note exists; four practical benefits, guide, indefinite-use wording and compatibility disclosure are incomplete. | G6/G9; no unapproved update/support promises |
+| R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure with a link to the FAQ requirements group. | G9 locally validated |
 | R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
 | R18 | Implemented | Approved catalog content and restrained G5 card retained; localized Full System Requirements link now targets `/faq#system-requirements`. | G6 link/anchor validated in RU/EN desktop/mobile; no price or Buy CTA |
 | R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
@@ -688,9 +694,9 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven grouped native accordions implemented; only ready About SmartBudget (4) and Before You Buy (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G14/G15 |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
-| R32 | Partial | FAQ and Products disclose Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions; official Microsoft links and manual/restart guidance implemented. | Remaining applicable Landing/version-selection/Checkout disclosures belong to G9/G10; R47 no longer pending |
+| R32 | Partial | Landing displays Windows/desktop Excel/VBA/ActiveX requirements, unsupported platforms and corporate restrictions. Landing and Products link to the FAQ, which includes Microsoft links and manual/restart guidance. | Remaining version-selection and Checkout disclosures belong to G10 |
 | R33 | Required | Purchase/delivery FAQ is absent. The configured default download lifetime is 12 hours. | G14 wording follows approved D6 terms |
-| R34 | Partial | Buy/Checkout use ProductPrice/ServiceAddon dynamically. Landing/FAQ have no price context and public Consultations is absent. Actual DB amounts were not checked. | G9/G12 implementation under D1/D3. Source prices and currencies from the database on all applicable surfaces |
+| R34 | Partial | Landing reads the exact SKU's active ProductPrice. Buy/Checkout use ProductPrice/ServiceAddon dynamically. Landing pricing was verified with isolated catalog data. | G12 public Consultations and release-environment catalog validation remain open |
 | R35 | Required | Purchase email supplies product links without the RU/EN 12-hour notice. | G13 durable Sale language snapshot under D5 and actual entitlement expiry |
 | R36 | Partial | Download expiry has date/minute and Moscow conversion; visible timezone label is missing. | Keep stored UTC/conversion semantics; G14 |
 | R37 | Partial | Download errors retain support reference/Feedback prefill; indefinite-use expiry explanation and real interrupted/repeat-download proof are missing. | Editorial expired-page copy and validation; G14 |
@@ -795,8 +801,7 @@ pytest temp/cache paths:
 No full suite, live-provider/customer journey, screen-reader audit or independent
 verification of workbook financial calculations was performed. Assets were
 supplied as final by the owner, not regenerated. Final owner/editorial and repeat
-R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks;
-The concluding offer remains G9 implementation work under approved D1. No commit or push was made.
+R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks.
 
 ### G5 About / Products implementation and validation
 
@@ -853,7 +858,7 @@ Products adds a catalog-driven localized requirements link beside its conditions
 to `/faq#system-requirements`, with sticky-header scroll clearance. G5 layout,
 price-free content and product-details CTA are retained. R18/R31/R47 are
 Implemented; R30 stays Partial for G12/G14/G15 content, and R32 stays Partial for
-G9/G10 cross-surface compatibility disclosures. The owner-verified Microsoft 365
+G10 compatibility disclosures. The owner-verified Microsoft 365
 environment is Excel 2608 Click-to-Run Current Channel on Windows, not an
 independent Codex product test. 32-bit Excel was not separately practically
 reproduced. These details stay internal: the public FAQ states support for both
@@ -929,7 +934,7 @@ Implementation, publication and external validation remain separately tracked.
 
 | Decision | Owner-approved outcome | Remaining work |
 | --- | --- | --- |
-| D1 — Landing prices | **Decision complete.** Price-free Hero. The concluding section may show the current database-owned price and link to Buy. The approved 2,990 RUB / 49 EUR launch values are recorded in [commerce architecture](architecture/commerce_and_delivery.md#smartbudget-10-launch-pricing-and-product-use-rights). | G9 priced offer and catalog validation |
+| D1 — Landing prices | **Decision complete.** Price-free Hero. The concluding section may show the current database-owned price and link to Buy. The approved 2,990 RUB / 49 EUR launch values are recorded in [commerce architecture](architecture/commerce_and_delivery.md#smartbudget-10-launch-pricing-and-product-use-rights). | G9 offer locally validated. Release-environment catalog validation remains open |
 | D2 — Public contact boundary | **Decision complete.** Feedback and `support@neocitrix.com` where applicable are the official support path. Personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email are excluded as public contact channels. Paid consultation remains separate. | G2B locally validated. UX-001 release-environment validation remains open |
 | D3 — Standalone consultation checkout | **Architecture decision complete.** Standalone `ServiceAddon` and separate service provider mapping under [commerce architecture](architecture/commerce_and_delivery.md#standalone-service-routing-d3). | G11 routing and initiation, then G12 public flow and provider validation |
 | D4 — Refund, withdrawal and seller information | **Product and architecture decision complete.** [Approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4) and [consent and seller boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary) define the target. | Separate R42/R50/R53 capabilities, G15 synchronized publication, final seller details and operational validation |
@@ -957,10 +962,10 @@ surface-specific slices, not duplicate requirements.
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
 | G4 — Reviews visibility | R28–R29 | **Implemented and focused-validated.** See [G4 validation](#g4-reviews-visibility-and-validation). |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
-| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 later surfaces with G9/G10. |
+| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15; R32 version selection and Checkout remain with G10. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
-| G9 — Practical/commercial Landing | R08, R10, R16, Landing portion of R34 | Implement practical benefits and the approved database-priced concluding offer. Link standalone consultation when its destination is available. |
+| G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, FAQ requirements link, database-priced concluding offer, Buy CTA and optional add-on note. |
 | G10 — Product Buy / Checkout | R20–R23, applicable R34/R49 | Equal language cards, add-on/order/delivery presentation; preserve server-authoritative commerce; final policy links follow G15. |
 | G11 — Standalone payment boundary | R06, R38 | Implement separate standalone service provider mapping and service-only initiation. |
 | G12 — Public Consultations | R06, R23, R34, R38, applicable R51 | Implement public page/navigation/checkout after G11. Validate the platform and align applicable policy wording. |
@@ -977,8 +982,8 @@ G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
 G6 foundation and the R18 requirements link are also implemented; R30/R32 remain
 Partial for later groups/surfaces. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
-for unrelated decisions. G9 was not implemented. G7–G9 split Landing work
-and G11 precedes G12. Gate 2 is complete. Continue with Gate 3 implementation
+for unrelated decisions. G9 completes the seven-block Landing. G11 precedes
+G12. Gate 2 is complete. Continue with Gate 3 implementation
 and repeat review against the updated interface before the deployment and
 live-validation gates.
 

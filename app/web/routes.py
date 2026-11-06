@@ -542,14 +542,15 @@ async def product_detail(
         "sm_landing.html" if slug == "smartbudget" else "product_detail.html"
     )
     show_reviews_link = False
+    product_price = None
     if slug == "smartbudget":
-        review_slug = _smartbudget_reviews_slug(get_lang(request))
+        sku = _smartbudget_locale_sku(get_lang(request))
         try:
-            show_reviews_link = has_public_reviews(db, product_slug=review_slug)
+            show_reviews_link = has_public_reviews(db, product_slug=sku)
         except SQLAlchemyError as exc:
             logger.warning(
                 "Landing review visibility check failed for %s (%s)",
-                review_slug,
+                sku,
                 type(exc).__name__,
             )
             try:
@@ -557,7 +558,31 @@ async def product_detail(
             except SQLAlchemyError as rollback_error:
                 logger.warning(
                     "Landing review visibility rollback failed for %s (%s)",
-                    review_slug,
+                    sku,
+                    type(rollback_error).__name__,
+                )
+        try:
+            repository = ProductsRepository(db)
+            catalog_product, price = repository.get_product_with_active_price_by_slug(sku)
+            if (
+                catalog_product is not None
+                and catalog_product.family_slug == slug
+                and catalog_product.status == "in_sale"
+                and price is not None
+                and price.amount.is_finite()
+                and price.amount > 0
+            ):
+                product_price = price
+        except SQLAlchemyError as exc:
+            logger.warning(
+                "Landing price lookup failed for %s (%s)", sku, type(exc).__name__
+            )
+            try:
+                db.rollback()
+            except SQLAlchemyError as rollback_error:
+                logger.warning(
+                    "Landing price lookup rollback failed for %s (%s)",
+                    sku,
                     type(rollback_error).__name__,
                 )
 
@@ -567,6 +592,7 @@ async def product_detail(
         {
             "product": product,
             "show_reviews_link": show_reviews_link,
+            "product_price": product_price,
         },
     )
 
@@ -743,14 +769,14 @@ async def reviews_page(
     )
 
 
-def _smartbudget_reviews_slug(lang: str) -> str:
+def _smartbudget_locale_sku(lang: str) -> str:
     return "smartbudget-ru-standard" if lang == "ru" else "smartbudget-int-standard"
 
 
 @router.get("/reviews")
 async def reviews_redirect(request: Request):
     lang = get_lang(request)
-    slug = _smartbudget_reviews_slug(lang)
+    slug = _smartbudget_locale_sku(lang)
     return RedirectResponse(url=f"/reviews/{slug}?lang={lang}", status_code=307)
 
 

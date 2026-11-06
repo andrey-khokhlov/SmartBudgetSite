@@ -1,4 +1,4 @@
-/* Landing-only foundation: text first, full-width demonstrations, then the existing tail. */
+/* Landing layout for text, demonstrations, and the concluding offer. */
 .sb-landing {
   color: #172033;
 }
@@ -70,8 +70,7 @@
   max-width: 780px;
 }
 
-.sb-section h2,
-.sb-final-cta h2 {
+.sb-section h2 {
   font-size: clamp(24px, 3vw, 30px);
   line-height: 1.25;
   margin-bottom: 22px;
@@ -153,9 +152,36 @@
   font-weight: 600;
 }
 
-.sb-final-cta {
-  padding: 36px 0 24px;
-  border-top: 1px solid #e2e8f0;
+.sb-practical-benefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+  margin-block: 24px;
+}
+
+.sb-practical-benefits h3,
+.sb-compatibility h3,
+.sb-offer h3 {
+  margin-bottom: 8px;
+}
+
+.sb-practical-benefits p {
+  margin-bottom: 0;
+}
+
+.sb-compatibility {
+  padding-inline-start: 16px;
+  border-inline-start: 2px solid #d7dee8;
+}
+
+.sb-offer .sb-offer__price {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.sb-offer .sb-offer__consultation {
+  margin-top: 16px;
+  color: #475569;
 }
 
 .sb-landing a:focus-visible,
@@ -205,6 +231,10 @@
   .sb-reconciliation-pair {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
+  }
+
+  .sb-practical-benefits {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

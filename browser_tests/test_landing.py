@@ -1,16 +1,45 @@
+from decimal import Decimal
 from urllib.parse import urlsplit
 
 import pytest
 from playwright.sync_api import expect, sync_playwright
 
+from app.models.product import Product
+from app.models.product_price import ProductPrice
+from app.models.service_addon import ServiceAddon
 from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
-@pytest.mark.usefixtures("review_sessions")
 @pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("width", [1280, 375])
-def test_landing_demos_are_readable_accessible_and_localized(tmp_path, lang, width):
+def test_landing_demos_are_readable_accessible_and_localized(
+    tmp_path, review_sessions, lang, width
+):
+    with review_sessions() as db:
+        ServiceAddon.__table__.create(db.get_bind())
+        for package, currency, amount in (
+            ("ru", "RUB", "3217.25"),
+            ("int", "EUR", "73.50"),
+        ):
+            product = Product(
+                family_slug="smartbudget",
+                slug=f"smartbudget-{package}-standard",
+                name="SmartBudget",
+                edition="Standard",
+                archive_path="",
+                status="in_sale",
+            )
+            db.add(product)
+            db.flush()
+            db.add(
+                ProductPrice(
+                    product_id=product.id,
+                    currency_code=currency,
+                    amount=Decimal(amount),
+                )
+            )
+        db.commit()
     errors = []
     with _running_app() as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, channel="chromium")
@@ -85,5 +114,29 @@ def test_landing_demos_are_readable_accessible_and_localized(tmp_path, lang, wid
         page.screenshot(
             path=str(tmp_path / f"landing-{lang}-{width}.png"), full_page=True
         )
+        price = "3 217,25 RUB" if lang == "ru" else "73.50 EUR"
+        expect(page.locator(".sb-hero")).not_to_contain_text(price)
+        offer = page.locator("#sb-offer")
+        expect(offer.locator(".sb-offer__price")).to_have_text(price)
+        expect(offer.locator(".sb-offer__price")).to_be_visible()
+        compatibility = page.locator("#sb-practical .sb-compatibility")
+        expect(compatibility).to_contain_text("VBA")
+        expect(compatibility).to_contain_text("ActiveX")
+        compatibility.get_by_role("link").click()
+        expect(page).to_have_url(f"{base_url}/faq#system-requirements")
+        expect(page.locator("#system-requirements")).to_be_in_viewport()
+        expect(page.locator("html")).to_have_attribute("lang", lang)
+        page.go_back()
+        offer.get_by_role("link").click()
+        expect(page).to_have_url(f"{base_url}/products/smartbudget/buy")
+        expect(page.locator("html")).to_have_attribute("lang", lang)
+        page.go_back()
+        page.locator(".language-switch a").click()
+        alternate = "en" if lang == "ru" else "ru"
+        expect(page.locator("html")).to_have_attribute("lang", alternate)
+        expect(offer.locator(".sb-offer__price")).to_have_text(
+            "73.50 EUR" if alternate == "en" else "3 217,25 RUB"
+        )
+        page.wait_for_load_state("networkidle")
         browser.close()
     assert errors == []

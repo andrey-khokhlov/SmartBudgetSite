@@ -8,6 +8,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.models.feedback import FeedbackMessage
 from app.models.product import Product
+from app.models.product_price import ProductPrice
 
 
 @pytest.fixture
@@ -19,7 +20,8 @@ def review_sessions(monkeypatch):
         poolclass=StaticPool,
     )
     Base.metadata.create_all(
-        engine, tables=[Product.__table__, FeedbackMessage.__table__]
+        engine,
+        tables=[Product.__table__, ProductPrice.__table__, FeedbackMessage.__table__],
     )
     sessions = sessionmaker(bind=engine)
 
