@@ -32,8 +32,8 @@ This is a requirements source, not an implementation report or a second backlog.
 - R47 supplements the older security-sheet guidance; final public RU/EN ActiveX
   wording remains pending editorial approval. Excel 2021 validation does not
   establish the complete Microsoft 365 scenario.
-- R48 records owner-complete workbook/Walkthrough/ZIP revisions. Existing review
-  `ProductRelease 1.0` bytes are stale; replacement and verification remain open.
+- R48 records owner-complete workbook/Walkthrough/ZIP revisions. Replacement
+  and artifact verification are complete in the dedicated review environment.
 - Implementation status, completed mapping against `cd5190b` and the current
   next bounded sprint belong to
   [current state](current_state.md#release-uiux-implementation-mapping).
@@ -203,7 +203,7 @@ sales. The update records product and architecture approval.
 | R45 · процесс review | Сначала согласование desktop и реализация малыми связанными группами; затем повторный responsive/accessibility review | High для закрытия gate; согласовано | Проверен фактический обновлённый интерфейс, результаты сохранены по задачам | B 42–43, 74–76 |
 | R46 · сохранение результатов | Полные тексты и решения сохранять в постоянном документе; изменения версионировать, отмечать superseded/conditional | Организационное; требование настоящей передачи | Дорожная карта ссылается на этот документ; изменения публичной редакции не теряются в истории чата | A 143–150; текущий запрос |
 | R47 | ActiveX onboarding and customer guidance; full requirement below | Required pre-release; public copy/editorial and remaining Microsoft 365 validation pending | Acceptance and validation: see R47 below | Owner planning amendment, 2026-11-04 |
-| R48 | Updated RC / Walkthrough artifacts require review-release replacement; full requirement below | Required operational dependency; rebuilt materials ready, replacement/verification pending | Acceptance and validation: see R48 below | Owner planning amendment, 2026-11-04 |
+| R48 | Updated RC / Walkthrough artifacts require review-release replacement; full requirement below | Validated in review; Gate 2 complete | Acceptance and validation: see R48 below | Owner planning amendment, 2026-11-04 |
 | R49 | No universal refund-right waiver; full requirement below | High; approved no-universal-waiver boundary and disclosure pending | Acceptance and validation: see R49 below | Owner planning amendment, 2026-11-04 |
 | R50 | Conditional immediate-supply consent; full requirement below | High; D4 approved, applicable consent implementation pending | Acceptance and validation: see R50 below | Owner planning amendment, 2026-11-04 |
 | R51 | Product / consultation / bundle refund-consent separation; full requirement below | High; D4 approved, composition-specific implementation pending | Acceptance and validation: see R51 below | Owner planning amendment, 2026-11-04 |
@@ -1819,7 +1819,7 @@ Therefore the remaining release-material work is no longer:
 
 Those steps are owner-confirmed complete.
 
-The remaining requirement is:
+The approved replacement requirement was:
 
 1. safely replace the previously published review-environment `ProductRelease 1.0` artifacts with the newly rebuilt archives;
 2. verify that the review environment points to the new archive bytes;
@@ -1846,7 +1846,7 @@ the fact that the rebuilt archives use the same customer-visible filenames is NO
 
 The important conflict is:
 
-the existing review `ProductRelease 1.0` rows represent older bytes while the rebuilt customer archives are still commercially SmartBudget version `1.0`.
+the previous review `ProductRelease 1.0` rows represented older bytes while the rebuilt customer archives were still commercially SmartBudget version `1.0`.
 
 Do NOT work around this by inventing a commercial version such as `1.1`.
 
@@ -1854,7 +1854,7 @@ Do NOT weaken the current immutable/idempotent `ProductRelease` architecture mer
 
 Do NOT overwrite an existing R2 object in place.
 
-Before replacement, a later bounded operational task must:
+The approved pre-replacement procedure required these safeguards:
 
 - inspect the dedicated `smartbudget_review` database;
 - identify the current RU and EN `ProductRelease 1.0` rows;
@@ -1894,20 +1894,20 @@ Current status:
 - revised EN Walkthrough: owner-confirmed complete;
 - rebuilt RU ZIP: owner-confirmed complete;
 - rebuilt EN ZIP: owner-confirmed complete;
-- replacement of existing review `ProductRelease 1.0` artifacts: pending;
-- verification of new R2 bytes / SHA-256 / active state: pending.
+- replacement of existing review `ProductRelease 1.0` artifacts: complete;
+- verification of new R2 bytes, SHA-256, size and active state: passed for
+  RU release 3 and EN release 4, both version 1.0.
 
-Do not modify the review database.
+See [Gate 2 closeout](release_readiness.md#gate-2--review-productrelease-artifact-replacement)
+for the dedicated review evidence.
 
-Do not delete existing releases.
-
-Do not upload the new archives.
-
-Do not touch R2 in this documentation-only sprint.
+The original documentation sprint authorized no review database changes,
+release deletion, uploads or R2 changes. The reset and replacement were
+completed in separately approved review-only operational tasks.
 
 Status:
 
-`Required pre-release operational dependency; rebuilt artifacts are ready, review-environment replacement and verification remain pending.`
+`Validated in the dedicated review environment. Gate 2 complete.`
 
 ## R49 — No universal refund-right waiver
 
@@ -2148,7 +2148,7 @@ recovered copy remains available as source material.
 | R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Existing public initiation is product-bound. | Implement G11/G12 and validate provider and paid entitlement behavior |
 | R35/R40 | D5 approves persisted Sale-level order language. Localized rendering from that snapshot is pending. | G13 persistence, delivery copy and end-to-end validation |
 | R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement applicable Checkout/confirmation flows and separate request intake. Synchronize the new policy with actual behavior |
-| R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | A later review-only task must inspect references first. Only if unreferenced and safe, define minimal reset/replacement; if referenced, stop and escalate preservation-compatible options. No version 1.1 workaround, R2 overwrite or immutability change |
+| R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | Review replacement and verification completed at version 1.0 after zero-reference inspection. Retain immutable identity and distinct R2 keys for later releases |
 
 Product-release evidence checked in `app/models/product_release.py` (unique
 product/version identity), `app/services/product_release_service.py`

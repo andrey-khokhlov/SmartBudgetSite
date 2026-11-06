@@ -692,32 +692,32 @@ release-validation evidence; the public supported product matrix includes both
 32-bit and 64-bit Excel without claiming independent reproduction of every
 supported combination during G6. No guarantee of future Excel releases is inferred.
 
-**Open validation obligations:** final validation of the new artifacts and Gate 2
-replacement/verification. ZIP rebuilding alone does not close this gate; the
-current review R2 bytes remain stale.
+**Review artifact validation:** the rebuilt RU/EN ZIPs passed the Gate 2
+artifact checks below.
 
 #### Gate 2 — Review ProductRelease artifact replacement
 
-**Open.** R48 requires a later bounded review-only operational task:
+**Completed on 2026-11-06 for `smartbudget_review` (R48).** PostgreSQL catalog
+inspection found only SaleItem and DownloadEntitlement inbound foreign keys,
+with zero references to either old row. A complete rollback snapshot was saved
+outside the repository before both old rows were removed in one review-only
+transaction. The rebuilt archives were uploaded and published through the
+normal Admin workflows under `product-releases-review-20261026`.
 
-- Inspect the dedicated `smartbudget_review` database's RU/EN release 1.0 rows
-  and all persistent references, including SaleItems and download entitlements,
-  before any destructive cleanup. If referenced, stop and escalate; do not delete
-  or mutate release history.
-- Only if unreferenced and safe, define the smallest review-only reset/replacement
-  procedure, preserving the isolated `product-releases-review-20261026` prefix.
-  Production and unrelated objects must remain outside its scope.
-- Preserve commercial version **1.0**, immutable/idempotent `(product_id, version)`
-  identity and unique opaque keys. Do not overwrite existing R2 objects or invent
-  version 1.1 to bypass conflicts.
-- Upload the rebuilt archives and publish using the normal Admin workflows.
-- Separately for RU and EN, match the local ZIP SHA-256 and size to persisted
-  `ProductRelease.sha256_hash` and size, verify the represented R2 object's
-  metadata and served new object, and confirm active/current publication with
-  only one active release per SKU. An unchanged ZIP filename is not evidence.
+Independent read-only verification passed for active RU release **3** and EN
+release **4**, both version **1.0**. Each SKU has exactly one release and one
+active release. Size and SHA-256 matched from each local rebuilt ZIP through
+the persisted row, R2 HEAD metadata, and actual downloaded bytes.
+See [current-state artifact evidence](current_state.md#1-rebuilt-review-releases-verified).
 
-No database cleanup, upload, publication or R2 mutation is authorized by this
-documentation sprint. The reset procedure is not selected here.
+After independent verification that both old review objects had zero
+`ProductRelease` references, the owner confirmed targeted manual deletion of
+both objects (fingerprints `9d9dc76b9c29aa53` and `c6796b51c7675889`) through
+the Cloudflare R2 Dashboard. The broad `--delete-orphans` mode was not used.
+The verified active RU and EN version 1.0 objects remain current.
+
+Gate 3 is the next open pre-deployment gate. This evidence covers the dedicated
+review environment.
 
 #### Gate 3 — SmartBudgetSite UI/UX implementation and repeat review
 

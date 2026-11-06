@@ -448,6 +448,11 @@ delete. It never deletes database-owned objects, repairs or deletes rows, or
 runs automatically at application startup. A failed or uncertain delete remains
 reported for manual follow-up.
 
+After the [Gate 2 review reset](release_readiness.md#gate-2--review-productrelease-artifact-replacement),
+independent verification confirmed zero `ProductRelease` references for both old
+review objects. The owner confirmed targeted manual deletion of both through
+the Cloudflare R2 Dashboard without using `--delete-orphans`.
+
 ## Product checkout configuration
 
 Use the protected product Admin workflow for normal Lava.top checkout setup:

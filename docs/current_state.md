@@ -441,7 +441,7 @@ infrastructure.
 
 ## Next active phase and release sequence
 
-### 1. Updated release materials ready; review releases stale
+### 1. Rebuilt review releases verified
 
 As of the 2026-11-04 owner update, the SmartBudget workbook has been revised for
 ActiveX onboarding and blocked-state guidance. The RU Walkthrough and EN
@@ -462,25 +462,27 @@ Experimental SendKeys navigation is abandoned and is not public guidance.
 remains internal; the supported product matrix includes both 32-bit and 64-bit
 Excel and does not claim independent reproduction of every supported combination.
 
-The previously uploaded review-environment RU/EN `ProductRelease 1.0` archives
-contain earlier bytes and are now stale. Safely replacing them and verifying the
-new bytes remain pending under R48. The commercial version stays **1.0**.
-Customer-visible ZIP filenames may remain unchanged and are not replacement
-proof. Required proof for each language is local SHA-256 and size matched to
-persisted release metadata, verified R2 object metadata and the served object,
-plus active/current state and one active release per SKU.
+**R48 is complete in the dedicated review environment.** On 2026-11-06, final
+independent read-only verification passed against `smartbudget_review` and
+`product-releases-review-20261026`. Both rebuilt archives are published as
+version **1.0**, with exactly one release and one active release per SKU.
 
-A later bounded operational task must first inspect `smartbudget_review` release
-references, including `SaleItem`, `DownloadEntitlement` and any other persistent
-owners. Referenced releases must trigger a stop and escalation. Only if safe and
-unreferenced may a minimal review-only reset/replacement procedure be defined,
-followed by normal Admin upload/publication under the isolated review prefix.
-Do not weaken immutable/idempotent release identity, overwrite an R2 object or
-invent version 1.1. No review database or storage operation was performed here.
+| SKU | Product / ProductRelease ID | Archive | Size (bytes) | SHA-256 |
+| --- | --- | --- | ---: | --- |
+| `smartbudget-ru-standard` | 2 / 3 | `SmartBudget_v1.0_RU.zip` | 7,787,741 | `f51c7caccb66361bedf30e2954ce6695afd70d3e0a3b40407e11ee250e456bbf` |
+| `smartbudget-int-standard` | 1 / 4 | `SmartBudget_v1.0_EN.zip` | 7,519,274 | `04a73ae37b3a002be7982b292f4cd58e3f9707ae9f62366f6a7095573ac41a45` |
+
+For each language, local rebuilt ZIP size and SHA-256 matched persisted
+`ProductRelease` metadata, R2 HEAD metadata, and downloaded R2 bytes. After
+independent verification of zero `ProductRelease` references, the owner
+confirmed manual removal of both old review objects through the Cloudflare R2
+Dashboard without using `--delete-orphans`.
+See [Gate 2 closeout](release_readiness.md#gate-2--review-productrelease-artifact-replacement)
+for the reset and publication evidence.
 
 A separate Product Description remains intentionally excluded: the bilingual
-Walkthrough is the accepted detailed customer guide. Rebuilt materials alone
-do not close release-material validation or make SmartBudgetSite release-ready.
+Walkthrough is the accepted detailed customer guide. Gate 3 remains open for
+UI/UX implementation and repeat review.
 
 ### 2. G1, G2A, G5 presentation and scoped Landing G7/G8 implemented
 
@@ -531,9 +533,8 @@ published through the existing Admin/R2 workflow under the isolated
 `product-releases-review-20261026` prefix. Review consultation offers are RU
 `addon` 3,900 RUB / `standalone` 5,900 RUB and EN `addon` 69 EUR / `standalone`
 99 EUR; bundle checkout totals were verified as 6,890 RUB and 118 EUR.
-Those earlier R2 uploads/publications remain integration evidence for upload,
-private storage and publication; they do not establish that the currently
-uploaded archive bytes are the rebuilt customer release artifacts.
+The current rebuilt review archives are the verified R48 releases recorded
+above.
 
 Four defects discovered during this review are corrected with focused
 regression coverage: default reviews navigation selects the resolved UI
@@ -634,14 +635,17 @@ G1 and scoped Landing updates recorded below; it is not a new requirements regis
 The original analysis inspected repository code, templates, translations, CSS/JS,
 models, services, repositories, tests, migrations and existing images. It read
 tests without running them and performed no runtime/browser/provider validation,
-database inspection or release operation. Subsequent G1 checks are recorded below. Workbook/Walkthrough/ZIP completion is owner-reported;
-repository evidence does not independently verify the workbook's VBA or current
-review R2 bytes. No architecture/business/legal decision was resolved.
+database inspection, release operation, or architecture/business/legal decision.
+Later implementation and validation evidence is recorded separately.
+Workbook and Walkthrough completion is
+owner-reported. The independent R48 archive checks above establish review
+artifact integrity.
 
 Statuses distinguish existing behavior (`Implemented`), incomplete behavior
-(`Partial`), missing approved implementation (`Required`), runtime/provider proof
-(`Requires validation`), unresolved approval (`Requires decision`), and work
-outside first release (`Deferred`). None was established as `Not applicable`.
+(`Partial`), missing approved implementation (`Required`), pending runtime or
+provider proof (`Requires validation`), completed operational verification
+(`Validated`), unresolved approval (`Requires decision`), and work outside
+first release (`Deferred`). None was established as `Not applicable`.
 The owner-approved D1–D6 outcomes below guide the remaining work.
 
 | ID | Current status | Current state / remaining gap | Decision or validation dependency |
@@ -693,7 +697,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
-| R48 | Requires validation | Rebuilt RU/EN ZIPs are owner-complete; review ProductRelease 1.0 bytes remain stale; immutable release/upload/publication mechanisms exist. | Reference inspection, safe replacement and hash/size/R2/active-current verification; operations only |
+| R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
 | R49 | Partial | Checkout lacks complete delivery and policy disclosure. The no-universal-waiver boundary remains in force. | G10/G15 disclosure and policy link under D4 |
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
 | R51 | Partial | Separate product and service items/access exist. Current refunds are full-Sale and public service-only checkout is absent. | G11/G12, separate R42 capability, applicable early-start consent and G15 composition-specific wording |
@@ -863,8 +867,9 @@ formatting is preserved. `git diff --check` passes. Initial new-test assertion a
 changing-selector issues were corrected before the passing final run.
 
 No full suite, screen-reader audit, live Microsoft-link availability test or
-independent workbook/VBA test was performed. Final R45 review and R48 artifact
-replacement remain separate. No G9/G10/G12/G14/G15 implementation, workbook/VBA,
+independent workbook/VBA test was performed. G6 validation did not cover
+final R45 review or R48 artifact replacement. No G9/G10/G12/G14/G15
+implementation, workbook/VBA,
 Working Queue, deployment, commit or push work was performed. Requirement
 definitions remain unchanged.
 
@@ -958,16 +963,17 @@ surface-specific slices, not duplicate requirements.
 
 R42 remains a separate refund capability and operational implementation topic.
 R50 applicable consent and R53 persisted request intake need their own bounded
-scopes. G15 owns synchronized publication. R39, R45 and R48 remain validation
-or operational work. R46 is complete and R55 remains deferred.
+scopes. G15 owns synchronized publication. R39 and R45 remain validation
+work. R46 is complete, R48 is validated, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
 G6 foundation and the R18 requirements link are also implemented; R30/R32 remain
 Partial for later groups/surfaces. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
-for unrelated decisions. G9 was not implemented. G7–G9 split Landing work; G11 precedes G12. Complete required material
-replacement before treating review artifacts as current, repeat review against
-the updated interface, then follow the later deployment/live-validation gates.
+for unrelated decisions. G9 was not implemented. G7–G9 split Landing work
+and G11 precedes G12. Gate 2 is complete. Continue with Gate 3 implementation
+and repeat review against the updated interface before the deployment and
+live-validation gates.
 
 ### Validation-only and operational dependencies
 
@@ -978,11 +984,6 @@ speculative code changes or provider operations:
   Click-to-Run, Current Channel on Windows; it is not a pending R47 requirement.
   Both Excel bitnesses are not independently established by that evidence, and
   no future-release guarantee is inferred.
-- Review ProductRelease 1.0 reference inspection and safe replacement. Stop if
-  persistently referenced; preserve version 1.0, immutable identity and isolated
-  review prefix. Rebuilt RU/EN archives are ready, but current review bytes are stale.
-- Separate RU/EN local/persisted SHA-256 and size, R2 object and active/current
-  publication verification; filenames alone are not proof.
 - Calendly first-booking, confirmation, reschedule/cancellation and post-window
   end-to-end validation. Existing pre-linked-event tests do not prove this;
   collect integration evidence before deciding whether architecture must change.
