@@ -755,6 +755,10 @@ shows equal language cards and the optional add-on terms. Checkout shows the
 selected items and composition-sensitive delivery information. Both surfaces
 include the compact compatibility disclosure. R23, R34 and R49 retain their
 standalone, catalog validation or policy dependencies as recorded in current state.
+G11 is implemented and locally validated for server-side standalone consultation
+payment initiation and paid reconciliation. The separate service/provider
+mapping was verified on isolated PostgreSQL. G12 still owns public integration
+and real provider validation. R06 and R38 remain Partial.
 Owner-verified Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
 on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses

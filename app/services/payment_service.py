@@ -17,12 +17,19 @@ from app.repositories.payment_provider_offer_repository import (
 from app.repositories.product_release_repository import ProductReleaseRepository
 from app.repositories.products_repository import ProductsRepository
 from app.repositories.service_addon_repository import ServiceAddonRepository
+from app.repositories.service_payment_provider_offer_repository import (
+    ServicePaymentProviderOfferRepository,
+)
 from app.services import mail_service
+from app.services.consultation_offer_admin_service import (
+    ALLOWED_CONSULTATION_CURRENCIES,
+)
 from app.services.lava_top.client import LavaTopProviderError, create_invoice
 from app.services.sale_service import (
     calculate_sale_total,
     create_product_sale,
     create_service_sale_item,
+    create_standalone_service_sale,
 )
 from app.utils.product_utils import get_product_package
 
@@ -53,6 +60,18 @@ LAVA_TOP_PROVIDER = "lava_top"
 EMAIL_ADAPTER = TypeAdapter(EmailStr)
 
 
+def _normalize_checkout_email(customer_email: str) -> str:
+    try:
+        normalized_email = str(
+            EMAIL_ADAPTER.validate_python(customer_email.strip().lower())
+        )
+    except ValidationError as exc:
+        raise CheckoutValidationError("A valid customer email is required.") from exc
+    if len(normalized_email) > 200:
+        raise CheckoutValidationError("A valid customer email is required.")
+    return normalized_email
+
+
 def initiate_lava_top_product_checkout(
     db: Session,
     *,
@@ -67,14 +86,7 @@ def initiate_lava_top_product_checkout(
     if not normalized_currency:
         raise CheckoutValidationError("Currency is required.")
 
-    try:
-        normalized_email = str(
-            EMAIL_ADAPTER.validate_python(customer_email.strip().lower())
-        )
-    except ValidationError as exc:
-        raise CheckoutValidationError("A valid customer email is required.") from exc
-    if len(normalized_email) > 200:
-        raise CheckoutValidationError("A valid customer email is required.")
+    normalized_email = _normalize_checkout_email(customer_email)
 
     products_repository = ProductsRepository(db)
     product = products_repository.get_by_slug(product_slug)
@@ -143,6 +155,65 @@ def initiate_lava_top_product_checkout(
         raise
 
 
+def initiate_lava_top_standalone_consultation_checkout(
+    db: Session,
+    *,
+    service_addon_id: int,
+    customer_email: str,
+    currency: str,
+) -> str:
+    """Start hosted checkout for one exact standalone consultation catalog record."""
+    normalized_currency = currency.strip().upper()
+    if normalized_currency not in ALLOWED_CONSULTATION_CURRENCIES:
+        raise CheckoutValidationError("Select a supported consultation currency.")
+    normalized_email = _normalize_checkout_email(customer_email)
+
+    try:
+        service = ServiceAddonRepository.get_consultation_offer_by_id(
+            db, service_addon_id
+        )
+        if (
+            service is None
+            or not service.is_active
+            or service.service_type != "consultation"
+            or service.usage_type != "standalone"
+            or service.currency_code != normalized_currency
+            or not service.amount.is_finite()
+            or service.amount <= 0
+        ):
+            raise CheckoutValidationError(
+                "The selected standalone consultation is unavailable."
+            )
+
+        mapping = ServicePaymentProviderOfferRepository(db).get_by_service_and_provider(
+            service_addon_id=service.id, provider=LAVA_TOP_PROVIDER
+        )
+        if mapping is None or not mapping.external_offer_id.strip():
+            raise CheckoutValidationError(
+                "No Lava.top offer is configured for this consultation."
+            )
+
+        sale = create_standalone_service_sale(
+            db,
+            service_addon_id=service.id,
+            service_name=service.name,
+            customer_email=normalized_email,
+            amount=service.amount,
+            currency=service.currency_code,
+            payment_provider=LAVA_TOP_PROVIDER,
+        )
+        db.flush()
+        sale.amount = calculate_sale_total(list(sale.items))
+        db.flush()
+    except (CheckoutValidationError, SQLAlchemyError):
+        db.rollback()
+        raise
+
+    return _create_and_persist_lava_top_invoice(
+        db, sale=sale, external_offer_id=mapping.external_offer_id
+    )
+
+
 def prepare_product_payment(
     db: Session,
     *,
@@ -209,19 +280,27 @@ def create_lava_top_checkout(db: Session, *, sale: Sale) -> str:
             "Sale is not prepared for Lava.top product checkout."
         )
 
+    mapping = PaymentProviderOfferRepository(db).get_by_product_and_provider(
+        product_id=sale.product_id,
+        provider=LAVA_TOP_PROVIDER,
+    )
+    return _create_and_persist_lava_top_invoice(
+        db, sale=sale, external_offer_id=mapping.external_offer_id if mapping else None
+    )
+
+
+def _create_and_persist_lava_top_invoice(
+    db: Session, *, sale: Sale, external_offer_id: str | None
+) -> str:
     try:
-        mapping = PaymentProviderOfferRepository(db).get_by_product_and_provider(
-            product_id=sale.product_id,
-            provider=LAVA_TOP_PROVIDER,
-        )
-        if mapping is None:
+        if external_offer_id is None:
             raise PaymentCheckoutError(
                 "No Lava.top offer is configured for the selected product."
             )
 
         invoice = create_invoice(
             email=sale.customer_email,
-            offer_id=mapping.external_offer_id,
+            offer_id=external_offer_id,
             currency=sale.currency,
             amount=sale.amount,
         )

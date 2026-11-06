@@ -13,6 +13,10 @@ from app.repositories.payment_provider_offer_repository import (
 )
 from app.repositories.product_release_repository import ProductReleaseRepository
 from app.repositories.products_repository import ProductsRepository
+from app.repositories.service_addon_repository import ServiceAddonRepository
+from app.repositories.service_payment_provider_offer_repository import (
+    ServicePaymentProviderOfferRepository,
+)
 
 LAVA_TOP_PROVIDER = "lava_top"
 MAX_EXTERNAL_OFFER_ID_LENGTH = 200
@@ -123,4 +127,54 @@ def set_lava_top_product_offer(
         db.rollback()
         raise PaymentProviderOfferPersistenceError from exc
 
+    return change
+
+
+def set_lava_top_standalone_offer(
+    db: Session,
+    *,
+    service_addon_id: int,
+    external_offer_id: str,
+) -> PaymentProviderOfferChange:
+    """Configure routing for one standalone consultation without contacting Lava.top."""
+    external_offer_id = external_offer_id.strip()
+    if not external_offer_id:
+        raise PaymentProviderOfferInputError("External offer ID must not be empty.")
+    if len(external_offer_id) > MAX_EXTERNAL_OFFER_ID_LENGTH:
+        raise PaymentProviderOfferInputError("External offer ID is too long.")
+
+    repository = ServicePaymentProviderOfferRepository(db)
+    try:
+        service = ServiceAddonRepository.get_consultation_offer_by_id(
+            db, service_addon_id
+        )
+        if (
+            service is None
+            or service.service_type != "consultation"
+            or service.usage_type != "standalone"
+        ):
+            raise PaymentProviderOfferInputError(
+                "Select an existing standalone consultation."
+            )
+        mapping = repository.get_by_service_and_provider(
+            service_addon_id=service.id, provider=LAVA_TOP_PROVIDER
+        )
+        if mapping is None:
+            repository.create(
+                service_addon_id=service.id,
+                provider=LAVA_TOP_PROVIDER,
+                external_offer_id=external_offer_id,
+            )
+            change: PaymentProviderOfferChange = "created"
+        elif mapping.external_offer_id != external_offer_id:
+            repository.update_external_offer_id(
+                mapping, external_offer_id=external_offer_id
+            )
+            change = "updated"
+        else:
+            return "unchanged"
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise PaymentProviderOfferPersistenceError from exc
     return change

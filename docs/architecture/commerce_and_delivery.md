@@ -209,15 +209,25 @@ operational procedures may differ between providers.
 
 ### Standalone service routing (D3)
 
-The approved service-only checkout design extends provider routing with a
-separate mapping for standalone service offers. It resolves the purchased
-`ServiceAddon` with `usage_type=standalone` and creates a service-only Sale
-and service SaleItem. Provider mapping is routing configuration. SmartBudgetSite
-owns the service identity, catalog price and currency, purchased-item snapshot,
-and entitlement. Existing product `PaymentProviderOffer` rules remain
-product-specific. Do not create placeholder Products or make the service
-product-owned to reach hosted checkout. Mapping persistence, checkout
-initiation, and provider validation are pending G11/G12.
+G11 implements separate `ServicePaymentProviderOffer` routing keyed by
+`(service_addon_id, provider)`. The server-side entry point resolves the exact
+active standalone consultation and selected currency. It creates a pending Sale
+with no Product and one service SaleItem at the catalog amount and currency.
+Existing product `PaymentProviderOffer` rules remain product-specific.
+
+From the target environment, a founder with database operator access can use
+`python -m scripts.set_service_payment_provider_offer --service-addon-id ID --external-offer-id OFFER_ID`.
+This configures the mapping for that catalog record without contacting Lava.top
+or modifying catalog prices. A replacement catalog record needs its own mapping.
+
+Missing or invalid offer selection or mapping fails before invoice creation.
+Once prepared, a provider failure commits a failed Sale without an invoice ID.
+A successful invoice is returned only after its ID is committed to the pending
+Sale. If that commit fails, the transaction rolls back and the reconciliation
+error retains the provider invoice ID. Authoritative paid reconciliation
+creates the consultation entitlement from the service SaleItem.
+
+Public integration and provider validation remain with G12.
 
 ### Confirmed Lava.top account capabilities
 

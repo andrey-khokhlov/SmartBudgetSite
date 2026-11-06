@@ -6,6 +6,7 @@ from app.models.product_qna import ProductQnA
 from app.models.sale import Sale
 from app.models.product_price import ProductPrice
 from app.models.service_addon import ServiceAddon
+from app.models.service_payment_provider_offer import ServicePaymentProviderOffer
 from app.models.sale_item import SaleItem
 from app.models.consultation_entitlement import (
     ConsultationEntitlement,
