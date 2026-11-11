@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("nav_consultations") }} · SmartBudget{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', path='css/consultations.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="consultations-page">
+    <h1>{{ t("consultations_title") }}</h1>
+    {% for key in ("intro", "topics", "screen", "broader", "format", "duration", "standalone") %}
+        <p>{{ t("consultations_" ~ key) }}</p>
+    {% endfor %}
+
+    <section class="consultations-offer" aria-labelledby="consultation-offer-heading">
+        <h2 id="consultation-offer-heading">{{ t("consultations_offer_title") }}</h2>
+        <p>{{ t("consultations_offer_format") }}</p>
+        {% if offer %}
+            <p class="consultations-price"><strong>{{ offer.amount | money(lang) }} {{ offer.currency_code }}</strong></p>
+        {% endif %}
+        <p>{{ t("consultations_offer_description") }}</p>
+        <p>{{ t("consultations_offer_screen") }}</p>
+        {% if can_purchase %}
+            <a class="payment-button payment-button-primary" href="/consultations/checkout/{{ offer.id }}?currency={{ offer.currency_code | urlencode }}">{{ t("consultations_buy") }}</a>
+        {% else %}
+            <p>{{ t("consultations_unavailable") }}</p>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="consultation-booking-heading">
+        <h2 id="consultation-booking-heading">{{ t("consultations_booking_title") }}</h2>
+        <p>{{ t("consultations_booking") }}</p>
+        {% if addon %}
+            <p class="consultations-addon">{{ t("consultations_addon").format(price=(addon.amount | money(lang)) ~ " " ~ addon.currency_code) }}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

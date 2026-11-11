@@ -200,6 +200,8 @@ def test_checkout_language_switch_preserves_exact_order_composition(
         ("/products/smartbudget", "/products", 200),
         ("/products/smartbudget/buy", "/products", 200),
         ("/checkout/smartbudget-int-standard?currency=EUR", "/products", 200),
+        ("/consultations", "/consultations", 200),
+        ("/consultations/checkout/0?currency=EUR", "/consultations", 404),
         ("/faq", None, 200),
         ("/feedback", None, 200),
         ("/reviews/smartbudget-int-standard", None, 200),
@@ -214,7 +216,7 @@ def test_primary_navigation_marks_only_the_current_section(
     response = client.get(path)
     assert response.status_code == status
     links = HeaderParser(response.text).primary_links
-    assert [link["href"] for link in links] == ["/", "/products"]
+    assert [link["href"] for link in links] == ["/", "/products", "/consultations"]
     assert [link["href"] for link in links if link.get("aria-current") == "page"] == (
         [current_href] if current_href else []
     )

@@ -11,6 +11,8 @@ from app.core.config import settings
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.sale import Sale
+from app.models.service_addon import ServiceAddon
+from app.models.service_payment_provider_offer import ServicePaymentProviderOffer
 from app.repositories.payment_provider_offer_repository import (
     PaymentProviderOfferRepository,
 )
@@ -155,6 +157,40 @@ def initiate_lava_top_product_checkout(
         raise
 
 
+def resolve_standalone_consultation_checkout(
+    db: Session,
+    *,
+    service_addon_id: int,
+    currency: str,
+) -> tuple[ServiceAddon, ServicePaymentProviderOffer]:
+    """Read the exact service and provider mapping without starting checkout."""
+    normalized_currency = currency.strip().upper()
+    if normalized_currency not in ALLOWED_CONSULTATION_CURRENCIES:
+        raise CheckoutValidationError("Select a supported consultation currency.")
+    service = ServiceAddonRepository.get_consultation_offer_by_id(db, service_addon_id)
+    if (
+        service is None
+        or not service.is_active
+        or service.service_type != "consultation"
+        or service.usage_type != "standalone"
+        or service.currency_code != normalized_currency
+        or not service.amount.is_finite()
+        or service.amount <= 0
+    ):
+        raise CheckoutValidationError(
+            "The selected standalone consultation is unavailable."
+        )
+
+    mapping = ServicePaymentProviderOfferRepository(db).get_by_service_and_provider(
+        service_addon_id=service.id, provider=LAVA_TOP_PROVIDER
+    )
+    if mapping is None or not mapping.external_offer_id.strip():
+        raise CheckoutValidationError(
+            "No Lava.top offer is configured for this consultation."
+        )
+    return service, mapping
+
+
 def initiate_lava_top_standalone_consultation_checkout(
     db: Session,
     *,
@@ -163,36 +199,11 @@ def initiate_lava_top_standalone_consultation_checkout(
     currency: str,
 ) -> str:
     """Start hosted checkout for one exact standalone consultation catalog record."""
-    normalized_currency = currency.strip().upper()
-    if normalized_currency not in ALLOWED_CONSULTATION_CURRENCIES:
-        raise CheckoutValidationError("Select a supported consultation currency.")
     normalized_email = _normalize_checkout_email(customer_email)
-
     try:
-        service = ServiceAddonRepository.get_consultation_offer_by_id(
-            db, service_addon_id
+        service, mapping = resolve_standalone_consultation_checkout(
+            db, service_addon_id=service_addon_id, currency=currency
         )
-        if (
-            service is None
-            or not service.is_active
-            or service.service_type != "consultation"
-            or service.usage_type != "standalone"
-            or service.currency_code != normalized_currency
-            or not service.amount.is_finite()
-            or service.amount <= 0
-        ):
-            raise CheckoutValidationError(
-                "The selected standalone consultation is unavailable."
-            )
-
-        mapping = ServicePaymentProviderOfferRepository(db).get_by_service_and_provider(
-            service_addon_id=service.id, provider=LAVA_TOP_PROVIDER
-        )
-        if mapping is None or not mapping.external_offer_id.strip():
-            raise CheckoutValidationError(
-                "No Lava.top offer is configured for this consultation."
-            )
-
         sale = create_standalone_service_sale(
             db,
             service_addon_id=service.id,

@@ -227,7 +227,9 @@ Sale. If that commit fails, the transaction rolls back and the reconciliation
 error retains the provider invoice ID. Authoritative paid reconciliation
 creates the consultation entitlement from the service SaleItem.
 
-Public integration and provider validation remain with G12.
+G12 exposes standalone Checkout under `/consultations/checkout/{offer_id}`.
+Its POST shares the existing product Checkout per-IP rate limit. Live provider
+validation remains open.
 
 ### Confirmed Lava.top account capabilities
 

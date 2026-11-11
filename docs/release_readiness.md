@@ -733,8 +733,8 @@ covers exact-SKU Landing visibility and the single localized empty message.
 
 **Open; mapping complete.** Proceed through the accepted bounded implementation
 groups in [current state](current_state.md#accepted-implementation-groups). G1's
-accepted scope, G2A and the scoped G7/G8 work are implemented and validated. Future Consultations navigation stays
-with R06/G12; full-register R03 remains Partial only for that integration.
+accepted scope, G2A and the scoped G7/G8 work are implemented and validated.
+G12 adds Consultations navigation and completes R03.
 [D1–D6 are approved](current_state.md#decision-dependencies). G2A removed the
 obsolete Telegram block. G2B/R04 is implemented and locally validated in RU/EN
 on desktop and mobile. UX-001 release-environment validation remains open.
@@ -757,8 +757,12 @@ include the compact compatibility disclosure. R23, R34 and R49 retain their
 standalone, catalog validation or policy dependencies as recorded in current state.
 G11 is implemented and locally validated for server-side standalone consultation
 payment initiation and paid reconciliation. The separate service/provider
-mapping was verified on isolated PostgreSQL. G12 still owns public integration
-and real provider validation. R06 and R38 remain Partial.
+mapping was verified on isolated PostgreSQL. G12 implements the RU/EN public
+Consultations catalog and standalone Checkout on that boundary. R06 is
+implemented. R38 remains Partial pending real booking and meeting validation.
+Before release, verify Lava.top payment, purchase-email receipt and the
+protected booking link, first Calendly booking, confirmation and meeting link,
+rescheduling, cancellation, guest access, screen sharing and platform fallback.
 Owner-verified Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
 on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
 checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses

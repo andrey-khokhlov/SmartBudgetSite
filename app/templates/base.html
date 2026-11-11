@@ -17,6 +17,7 @@
       <nav class="nav site-nav" aria-label="{{ t('nav_label') }}">
           <a class="nav-link" href="/"{% if public_navigation_section == "about" %} aria-current="page"{% endif %}>{{ t("nav_about") }}</a>
           <a class="nav-link" href="/products"{% if public_navigation_section == "products" %} aria-current="page"{% endif %}>{{ t("nav_products") }}</a>
+          <a class="nav-link" href="/consultations"{% if public_navigation_section == "consultations" %} aria-current="page"{% endif %}>{{ t("nav_consultations") }}</a>
 
           <div class="language-switch" role="group" aria-label="{{ t('language_switch_label') }}">
             {% for locale in ("ru", "en") %}

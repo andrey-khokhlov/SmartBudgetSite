@@ -1,0 +1,37 @@
+.consultations-page {
+    max-width: 46rem;
+    margin-inline: auto;
+}
+
+.consultations-page h1 {
+    font-size: clamp(1.65rem, 4vw, 2rem);
+    line-height: 1.25;
+}
+
+.consultations-page p {
+    margin-block: 0.75rem;
+}
+
+.consultations-page section {
+    margin-top: 2rem;
+}
+
+.consultations-offer {
+    padding: clamp(1rem, 4vw, 1.75rem);
+    border: 1px solid #e3e6ea;
+    border-radius: 0.75rem;
+}
+
+.consultations-price {
+    font-size: 1.25rem;
+}
+
+.consultations-offer .payment-button {
+    display: inline-block;
+}
+
+.consultation-checkout .checkout-summary h2 {
+    margin-bottom: 0.35rem;
+    font-size: 1rem;
+    line-height: 1.4;
+}

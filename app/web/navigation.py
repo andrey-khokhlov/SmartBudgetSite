@@ -9,6 +9,8 @@ def public_navigation_context(request: Request) -> dict[str, object]:
         section = "about"
     elif path == "/products" or path.startswith(("/products/", "/checkout/")):
         section = "products"
+    elif path == "/consultations" or path.startswith("/consultations/checkout/"):
+        section = "consultations"
     else:
         section = None
 

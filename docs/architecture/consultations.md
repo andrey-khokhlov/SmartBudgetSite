@@ -43,7 +43,8 @@ A standalone consultation remains a separate `ServiceAddon` with
 [standalone service provider mapping](commerce_and_delivery.md#standalone-service-routing-d3)
 for a service-only Sale. This keeps routing separate from product
 `PaymentProviderOffer` mappings and preserves the paid confirmation boundary
-for booking. Public checkout and end-to-end validation remain pending.
+for booking. Public Checkout is implemented. End-to-end payment, email and
+booking validation remain open.
 
 ### SmartBudget 1.0 launch consultation prices
 

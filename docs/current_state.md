@@ -510,9 +510,8 @@ for the exact locale SKU and omits the price when no single usable active price
 can be established. Focused web and RU/EN Chromium checks covered the seven-block
 Landing, price changes, compatibility disclosure, Buy navigation, language
 switching and desktop/mobile fit using isolated catalog data.
-The future Consultations entry is owned by R06/G12. Full-register R03 remains
-Partial for that integration, while all R03 behavior explicitly accepted for
-G1 is implemented.
+G12 adds the Consultations entry and completes the public navigation portion of
+R03.
 
 **G2B/R04 is implemented and locally validated** under approved D2. The shared
 public footer links to FAQ, Feedback and `mailto:support@neocitrix.com`.
@@ -665,10 +664,10 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | --- | --- | --- | --- |
 | R01 | Implemented | Shared RU/EN segments expose the active language as a non-link current state; inactive link supports keyboard/focus. | G1 focused/browser validation complete |
 | R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
-| R03 | Partial | G1 active About/Products semantics, locale continuity and booking-success cookie persistence are implemented; only the future Consultations entry remains outside G1. | R06/G12; G1 accepted end state complete |
+| R03 | Implemented | About, Products and Consultations use the shared active-state navigation. Locale continuity and the segmented switch are locally validated. | Final R45 review remains open |
 | R04 | Implemented | The shared RU/EN footer has FAQ, Feedback and the official support email. Personal contact links are removed. | G2B locally validated. UX-001 release-environment validation remains open |
 | R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete |
-| R06 | Partial | G11 implements standalone provider routing and server-side service-only checkout. | G12 public navigation, purchase and validation |
+| R06 | Implemented | G12 adds public Consultations navigation, catalog and standalone Checkout on the G11 payment boundary. | Real payment and booking validation remain open |
 | R07 | Implemented | All seven Landing sections render in the approved RU/EN order. The Hero CTA opens the on-page demonstrations. | G7–G9 locally validated |
 | R08 | Implemented | Hero is price-free. The concluding offer displays the exact locale SKU's usable active catalog price and currency and links to Buy. | G9 locally validated with isolated catalog data |
 | R09 | Implemented | Landing uses a shared screenshot macro, consistent semantic sections, localized copy keys and locale-specific asset paths; maintenance convention recorded below. | G7 foundation complete |
@@ -685,7 +684,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R20 | Implemented | Buy uses equal cards with localized product-language labels, the same-features explanation and catalog-owned prices. | G10 locally validated |
 | R21 | Implemented | Buy describes the optional 60-minute online setup session and booking instructions after payment. The add-on price and availability come from the catalog. | G10 locally validated. Booking platform validation remains separate |
 | R22 | Implemented | Checkout shows the selected product, language and item prices under Your order, emphasizes Total, and preserves email and hosted payment initiation. | G10 locally validated |
-| R23 | Partial | Product Checkout explains protected download delivery and adds booking instructions only for a bundle. | G12 standalone copy and release-environment delivery validation remain open |
+| R23 | Partial | Product Checkout explains download delivery and bundle booking. Standalone Checkout explains only booking instructions and the protected booking link. | Release-environment delivery validation remains open |
 | R24 | Implemented | Full-width primary submit and contained native file picker with visible focus. | Attachment types, limits and retry retention preserved |
 | R25 | Implemented | Approved RU/EN post-submit guidance and prominent localized confirmation with message ID. | Existing status and alert announcements retained |
 | R26 | Implemented | Customers-only review label and pre-purchase General question available. | Verified purchase remains required for reviews, with optional email for general enquiries |
@@ -696,11 +695,11 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Products, Buy and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated |
 | R33 | Required | Purchase/delivery FAQ is absent. The configured default download lifetime is 12 hours. | G14 wording follows approved D6 terms |
-| R34 | Partial | Landing reads the exact SKU's active ProductPrice. Buy and Checkout use catalog ProductPrice/ServiceAddon amounts in the selected currency. G9/G10 used isolated catalog data. | G12 public Consultations and release-environment catalog validation remain open |
+| R34 | Partial | Landing, Buy, Checkout and Consultations use catalog prices. Consultations shows matching add-on pricing for information. | Remaining applicable FAQ disclosures and release-environment catalog validation |
 | R35 | Required | Purchase email supplies product links without the RU/EN 12-hour notice. | G13 durable Sale language snapshot under D5 and actual entitlement expiry |
 | R36 | Partial | Download expiry has date/minute and Moscow conversion; visible timezone label is missing. | Keep stored UTC/conversion semantics; G14 |
 | R37 | Partial | Download errors retain support reference/Feedback prefill; indefinite-use expiry explanation and real interrupted/repeat-download proof are missing. | Editorial expired-page copy and validation; G14 |
-| R38 | Partial | Add-on and standalone offers have separate catalog identities. G11 resolves standalone pricing and routing by the exact service record. | G12 public presentation, purchase and platform validation |
+| R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
 | R39 | Requires validation | Booking/token/webhook lifecycle exists; tests pre-link provider event URI and do not establish first-booking end-to-end behavior. | Real integration evidence first; no speculative architecture change |
 | R40 | Partial | Item-specific links and durable email retries exist. The renderer is English-only and omits approved 60-minute/14-day/next-step consultation content. | G13 localization from stored Sale language, editorial subjects and Calendly confirmation validation |
 | R41 | Required | The recovered policy is preserved. A synchronized public policy page and pre-payment links are absent. | G15 new owner-approved publication revision under D4 |
@@ -713,7 +712,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
 | R49 | Partial | G10 product Checkout displays composition-sensitive delivery information. The no-universal-waiver boundary remains in force. | G15 synchronized policy disclosure and link under D4 |
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
-| R51 | Partial | Standalone server-side checkout and separate product/service items and access exist. Current refunds remain full-Sale. | G12 public integration, separate R42 capability, applicable early-start consent and G15 composition-specific wording |
+| R51 | Partial | Public product, bundle and standalone checkout use composition-specific delivery and item-owned access. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | The recovered policy needs a new owner-approved publication revision synchronized with actual behavior. | G15 publication and validation before paid sales |
 | R53 | Required | Dedicated persisted cancellation/refund request and customer confirmation are absent. | Separate bounded D4 implementation with request evidence and operator-controlled money movement |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |
@@ -955,7 +954,25 @@ resolution, no discounted add-on fallback, recoverable invoice failure,
 reconciliation-required commit failure and idempotent consultation-only
 fulfillment. Migration `4b1e9d62c730` was upgraded, downgraded and re-upgraded
 on isolated PostgreSQL 16, and `alembic check` reported no schema drift.
-G12 public checkout and real provider validation remain open.
+G12 now connects this boundary to public Checkout. Real provider validation
+remains open.
+
+### G12 public Consultations and standalone Checkout
+
+The public catalog selects the active offer for the current language's package
+and displays its catalog currency. A matching add-on price is informational.
+When the standalone offer is missing, ambiguous or unmapped, the catalog
+withholds its purchase link. Checkout preserves the exact service and currency
+on language switches and shares the product Checkout per-IP POST rate limit.
+
+Local tests use isolated catalog data and stubbed Lava.top invoices. They cover
+RU/EN catalog and Checkout, service-only Sale snapshots, rejected selections,
+provider and reconciliation failures, and unchanged product and bundle checkout
+behavior. Chromium covers RU/EN navigation and both purchase pages at 1280 px
+and 375 px. External validation still covers hosted payment, purchase-email
+receipt with the protected booking link, first Calendly booking, confirmation
+and meeting link, rescheduling, cancellation, guest access, screen sharing and
+the meeting-platform fallback. R39 remains open for booking validation.
 
 ### Decision dependencies
 
@@ -966,7 +983,7 @@ Implementation, publication and external validation remain separately tracked.
 | --- | --- | --- |
 | D1 — Landing prices | **Decision complete.** Price-free Hero. The concluding section may show the current database-owned price and link to Buy. The approved 2,990 RUB / 49 EUR launch values are recorded in [commerce architecture](architecture/commerce_and_delivery.md#smartbudget-10-launch-pricing-and-product-use-rights). | G9 offer locally validated. Release-environment catalog validation remains open |
 | D2 — Public contact boundary | **Decision complete.** Feedback and `support@neocitrix.com` where applicable are the official support path. Personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email are excluded as public contact channels. Paid consultation remains separate. | G2B locally validated. UX-001 release-environment validation remains open |
-| D3 — Standalone consultation checkout | **Architecture decision complete.** Standalone `ServiceAddon` and separate service provider mapping under [commerce architecture](architecture/commerce_and_delivery.md#standalone-service-routing-d3). | G11 implemented and locally validated. G12 public flow and provider validation remain open |
+| D3 — Standalone consultation checkout | **Architecture decision complete.** Standalone `ServiceAddon` and separate service provider mapping under [commerce architecture](architecture/commerce_and_delivery.md#standalone-service-routing-d3). | G11 and G12 implemented locally. Real provider validation remains open |
 | D4 — Refund, withdrawal and seller information | **Product and architecture decision complete.** [Approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4) and [consent and seller boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary) define the target. | Separate R42/R50/R53 capabilities, G15 synchronized publication, final seller details and operational validation |
 | D5 — Purchase-email language | **Architecture decision complete.** Persist the order language on Sale at creation and use it for asynchronous email rendering and retries. | G13 persistence, localized copy and delivery validation |
 | D6 — Updates and support | **Decision complete.** Indefinite use of the purchased release, separately purchased new releases, possible corrected file as a defect remedy, and separate ordinary support and paid consultation. See [commerce terms](architecture/commerce_and_delivery.md#release-updates-and-support-d6). | G14 and synchronized customer-facing terms |
@@ -986,7 +1003,7 @@ surface-specific slices, not duplicate requirements.
 
 | Group | R-IDs | Scope and dependencies |
 | --- | --- | --- |
-| G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**; future Consultations navigation remains with R06/G12. |
+| G1 — Language/navigation | R01–R03 | **Accepted G1 scope implemented and validated**. G12 adds Consultations navigation. |
 | G2A — Remove obsolete Telegram Landing block | R05 | **Implemented and validated**; complete heading/text/CTA removal, independently of D2; footer untouched. |
 | G2B — Final public contact boundary | R04 | **Implemented and locally validated** in RU/EN on desktop and mobile. UX-001 release-environment validation remains open. |
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
@@ -998,7 +1015,7 @@ surface-specific slices, not duplicate requirements.
 | G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, visible compatibility disclosure, database-priced concluding offer, Buy CTA and optional add-on note. |
 | G10 — Product Buy / Checkout | R20–R23, applicable R32/R34/R49 | **Implemented and locally validated**: equal language cards, add-on terms, order summary, composition-sensitive delivery and compact compatibility disclosures. Policy publication remains with G15. |
 | G11 — Standalone payment boundary | R06, R38 | **Implemented and locally validated**: separate provider mapping, operator configuration, service-only initiation and existing paid reconciliation. |
-| G12 — Public Consultations | R06, R23, R34, R38, applicable R51 | Implement public page/navigation/checkout after G11. Validate the platform and align applicable policy wording. |
+| G12 — Public Consultations | R03, R06, R23, R34, R38, applicable R51 | **Public catalog, navigation and standalone Checkout implemented and locally validated**. Real provider, email, booking and meeting validation remain open. |
 | G13 — Purchase email | R35, R40 | Implement durable Sale language and localized composition-specific delivery copy. Validate actual delivery. |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implement delivery FAQ, timezone and expired-link guidance using approved D6 terms. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the new owner-approved policy and seller section. Synchronize summaries with implemented Checkout, FAQ, email and refund operations. |

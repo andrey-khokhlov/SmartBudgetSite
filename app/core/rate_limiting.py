@@ -30,6 +30,7 @@ LAVA_TOP_WEBHOOK_PATH = "/v1/webhooks/lava-top/payment-result"
 DOWNLOAD_PATH_PATTERN = re.compile(r"^/download/([^/]+)(/.*)?$")
 CONSULTATION_PATH_PATTERN = re.compile(r"^/consultation/book/([^/]+)(/.*)?$")
 CHECKOUT_PATH_PATTERN = re.compile(r"^/checkout/[^/]+$")
+CONSULTATION_CHECKOUT_PATH_PATTERN = re.compile(r"^/consultations/checkout/[^/]+$")
 
 logger = logging.getLogger(__name__)
 
@@ -549,7 +550,10 @@ class RateLimitMiddleware:
             )
             return
 
-        if CHECKOUT_PATH_PATTERN.match(normalized_path) and method == "POST":
+        if method == "POST" and (
+            CHECKOUT_PATH_PATTERN.match(normalized_path)
+            or CONSULTATION_CHECKOUT_PATH_PATTERN.match(normalized_path)
+        ):
             _enforce(
                 request,
                 rules=(
@@ -561,7 +565,11 @@ class RateLimitMiddleware:
                         identity_key=ip_identity,
                     ),
                 ),
-                route_template="/checkout/{slug}",
+                route_template=(
+                    "/consultations/checkout/{offer_id}"
+                    if normalized_path.startswith("/consultations/")
+                    else "/checkout/{slug}"
+                ),
                 response_kind="html",
             )
             return

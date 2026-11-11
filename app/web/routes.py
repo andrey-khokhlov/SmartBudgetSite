@@ -78,6 +78,8 @@ from app.services.payment_service import (
     PaymentReconciliationRequiredError,
     ProductReleaseUnavailableError,
     initiate_lava_top_product_checkout,
+    initiate_lava_top_standalone_consultation_checkout,
+    resolve_standalone_consultation_checkout,
 )
 from app.services.payment_provider_offer_service import (
     PaymentProviderOfferInputError,
@@ -1275,6 +1277,97 @@ def initiate_checkout(
         )
 
     return RedirectResponse(url=payment_url, status_code=303)
+
+
+@router.get("/consultations", response_class=HTMLResponse)
+def consultations_page(request: Request, db: Session = Depends(get_db)):
+    package = "RU" if get_lang(request) == "ru" else "INT"
+    offers = [
+        offer
+        for offer in ServiceAddonRepository.list_consultation_offers(db)
+        if offer.family_slug == "smartbudget"
+        and offer.package_code == package
+        and offer.is_active
+        and offer.amount.is_finite()
+        and offer.amount > 0
+    ]
+    standalone = [offer for offer in offers if offer.usage_type == "standalone"]
+    offer = standalone[0] if len(standalone) == 1 else None
+    addons = [
+        addon
+        for addon in offers
+        if addon.usage_type == "addon"
+        and (offer is None or addon.currency_code == offer.currency_code)
+    ]
+    can_purchase = False
+    if offer is not None:
+        try:
+            resolve_standalone_consultation_checkout(
+                db, service_addon_id=offer.id, currency=offer.currency_code
+            )
+        except CheckoutValidationError:
+            pass
+        else:
+            can_purchase = True
+    return render(
+        request,
+        "consultations.html",
+        {
+            "offer": offer,
+            "addon": addons[0] if len(addons) == 1 else None,
+            "can_purchase": can_purchase,
+        },
+    )
+
+
+@router.get("/consultations/checkout/{offer_id}", response_class=HTMLResponse)
+def consultation_checkout_page(
+    offer_id: int,
+    request: Request,
+    currency: str = "",
+    db: Session = Depends(get_db),
+):
+    try:
+        offer, _ = resolve_standalone_consultation_checkout(
+            db, service_addon_id=offer_id, currency=currency
+        )
+    except CheckoutValidationError:
+        return render(
+            request, "payment_result.html", {"result_state": "error"}, status_code=404
+        )
+    return render(request, "consultation_checkout.html", {"offer": offer})
+
+
+@router.post("/consultations/checkout/{offer_id}", response_class=HTMLResponse)
+def initiate_consultation_checkout(
+    offer_id: int,
+    request: Request,
+    customer_email: str = Form(default=""),
+    currency: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    try:
+        payment_url = initiate_lava_top_standalone_consultation_checkout(
+            db, service_addon_id=offer_id, customer_email=customer_email, currency=currency
+        )
+    except CheckoutValidationError:
+        status_code = 400
+    except PaymentReconciliationRequiredError as exc:
+        logger.error(
+            "Lava.top consultation checkout requires reconciliation provider_invoice_id=%s",
+            exc.provider_invoice_id,
+        )
+        status_code = 503
+    except PaymentCheckoutError:
+        status_code = 503
+    else:
+        return RedirectResponse(url=payment_url, status_code=303)
+    return render(
+        request,
+        "payment_result.html",
+        {"result_state": "error"},
+        status_code=status_code,
+    )
 
 
 @router.get("/payment/result", response_class=HTMLResponse)

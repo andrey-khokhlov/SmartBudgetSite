@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("checkout.title") }} · SmartBudget{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', path='css/consultations.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="checkout-page consultation-checkout">
+    <div class="checkout-card">
+        <h1 class="checkout-title">{{ t("checkout.title") }}</h1>
+        <div class="checkout-summary">
+            <h2>{{ t("consultations_offer_title") }}</h2>
+            <p class="checkout-row">{{ t("consultations_service") }} · {{ t("consultations_offer_format") }}</p>
+            <div class="checkout-divider"></div>
+            <div class="checkout-total">
+                <span>{{ t("checkout.total") }}</span>
+                <strong>{{ offer.amount | money(lang) }} {{ offer.currency_code }}</strong>
+            </div>
+        </div>
+        <form class="checkout-form" method="post" action="/consultations/checkout/{{ offer.id }}">
+            <input type="hidden" name="currency" value="{{ offer.currency_code }}">
+            <label for="checkout-email">{{ t("checkout.email") }}</label>
+            <input id="checkout-email" name="customer_email" type="email" autocomplete="email"
+                   maxlength="200" required aria-describedby="checkout-delivery">
+            <p class="checkout-hint" id="checkout-delivery">{{ t("consultations_booking") }}</p>
+            <button class="payment-button payment-button-primary" type="submit">{{ t("checkout.continue_payment") }}</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
