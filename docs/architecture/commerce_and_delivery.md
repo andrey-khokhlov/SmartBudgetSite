@@ -449,10 +449,17 @@ consultation entitlement includes the corresponding protected consultation
 access. A bundle may include both in the same purchase communication.
 
 Under approved D5, checkout or order creation must persist the resolved order
-language (`ru` or `en`) as a durable Sale-level snapshot. Webhook,
+language (`ru` or `en`) in durable `Sale.purchase_language`. Webhook,
 reconciliation, and retry email rendering must use that stored value.
 A later browser request, webhook, currency, and SKU or package identity do
-not determine email language. Persistence and rendering changes are pending G13.
+not determine email language. G13 implements the approved localized renderer for
+product-only, bundle and consultation-only orders with focused tests. It
+preserves payment confirmation, atomic fulfillment, Resend transport,
+idempotency, and retry and reconciliation behavior.
+
+G13 must prevent delivery of known-expired download links. Download expiry
+continues to follow the entitlement. Controlled reissue is a separate
+[pre-release Admin operation](../release_readiness.md#g13c--reissue-download-access).
 
 Customer-facing delivery URLs must be generated from server-owned application
 configuration rather than inferred from an incoming Host header or browser

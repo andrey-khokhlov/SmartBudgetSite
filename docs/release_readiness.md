@@ -911,6 +911,26 @@ coverage, but still require deployed-environment validation. Remaining work is:
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.
 
+#### G13B — Customer Email Correction
+
+**Open. Required before public sales.** Provide a protected Admin operation to
+correct the email of a paid Sale after verifying purchase ownership. Record the
+change in the audit history, handle previously issued capability tokens safely,
+and use a separate controlled redelivery. The redelivery requires its own Resend
+idempotency key. Preserve the payment and order composition.
+
+#### G13C — Reissue Download Access
+
+**Open. Required before public sales.** After verifying that the order was paid
+and remains unrefunded, provide a protected Admin operation to reissue access to
+the exact purchased release for the standard 12 hours. Invalidate the previous
+token, retain its download-attempt history, and record the reason. Use a separate
+controlled redelivery procedure and keep the global TTL independent of this
+operation.
+
+The current `DownloadEntitlement` and purchase-email delivery lifecycle provide
+neither Admin operation.
+
 ### Production deployment (`REL-002`)
 
 - production application and VPS deployment definition;

@@ -1431,11 +1431,13 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 ### 5.8. Письма после покупки · R35/R40 · B 176–180
 
-#### 5.8.1. Покупка консультации — полный предложенный текст RU/EN
+**Статус:** владелец утвердил тексты и темы для всех трёх составов заказа в RU и EN. Реализация G13 и проверка доставки остаются открытыми.
 
-**Статус:** правки включены в согласованный пакет; окончательная проверка email-цепочки и переносов остаётся обязательной. В исходнике нет окончательно согласованных тем письма RU/EN: их нужно подготовить при локализации. Старое “Your SmartBudget purchase access” — название прежнего шаблона, а не утверждённая новая тема.
+#### 5.8.1. Только консультация
 
-**RU:**
+##### RU
+
+**Subject:** SmartBudget — запись на оплаченную консультацию
 
 Здравствуйте!
 
@@ -1455,7 +1457,9 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 С уважением, Команда SmartBudget
 
-**EN:**
+##### EN
+
+**Subject:** SmartBudget — book your purchased consultation
 
 Hello,
 
@@ -1475,17 +1479,144 @@ If you have any questions or experience difficulties booking your consultation, 
 
 Best regards, The SmartBudget Team
 
-#### 5.8.2. Различия по составу заказа
+#### 5.8.2. Только SmartBudget
 
-| Состав заказа | Блок получения файла | Блок консультации |
-|---|---|---|
-| Только SmartBudget | Персональная ссылка скачивания и 12 часов | Отсутствует |
-| SmartBudget + консультация | Отдельный блок скачивания и 12 часов | Отдельная ссылка записи и 14 дней; инструкция из 5.8.1 |
-| Только консультация | Отсутствует | Ссылка записи и 14 дней; инструкция из 5.8.1 |
+##### RU
 
-До бронирования письмо SmartBudgetSite не обязано содержать видеоссылку и управление ещё не назначенной встречей. После бронирования фактическое подтверждение Calendly должно дать дату/время, рабочую видеоссылку и проверенные функции управления.
+**Subject:** SmartBudget — ваша покупка готова к скачиванию
 
-**Не создавать ложный дословный оригинал:** полный новый текст письма только о скачивании и отдельные новые subject-строки в исходном обсуждении не утверждены. Согласованы требования R35/R40 и приведённое письмо консультации. При реализации сформировать недостающие строки на этих условиях и проверить их редакционно.
+Здравствуйте!
+
+Спасибо за покупку SmartBudget. Ваша оплата успешно подтверждена.
+
+**Ваша покупка:** {{ product_name }}
+
+**Скачать SmartBudget:**
+
+[Персональная защищённая ссылка для скачивания]
+
+**Важно:** ссылка для скачивания действует в течение **12 часов после подтверждения оплаты**.
+
+Это ограничение относится только к скачиванию файла. Приобретённой версией SmartBudget вы можете пользоваться бессрочно.
+
+Рекомендуем скачать файл и сохранить его на своём устройстве.
+
+Если у вас возникнут вопросы или сложности со скачиванием, обратитесь через форму обратной связи на сайте или напишите нам на support@neocitrix.com.
+
+С уважением,\
+Команда SmartBudget
+
+##### EN
+
+**Subject:** SmartBudget — your purchase is ready to download
+
+Hello,
+
+Thank you for purchasing SmartBudget. Your payment has been successfully confirmed.
+
+**Your purchase:** {{ product_name }}
+
+**Download SmartBudget:**
+
+[Personal secure download link]
+
+**Important:** your download link remains valid for **12 hours after payment confirmation**.
+
+This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
+
+We recommend downloading the file and saving it to your device.
+
+If you have any questions or experience difficulties downloading your purchase, please use the feedback form on our website or contact us at support@neocitrix.com.
+
+Best regards,\
+The SmartBudget Team
+
+#### 5.8.3. SmartBudget + консультация
+
+##### RU
+
+**Subject:** SmartBudget — ваша покупка и запись на консультацию
+
+Здравствуйте!
+
+Спасибо за покупку SmartBudget и персональной консультации. Ваша оплата успешно подтверждена.
+
+**Ваша покупка:** {{ product_name }} + персональная консультация (60 минут).
+
+**1. Скачать SmartBudget**
+
+[Персональная защищённая ссылка для скачивания]
+
+**Важно:** ссылка для скачивания действует в течение **12 часов после подтверждения оплаты**.
+
+Это ограничение относится только к скачиванию файла. Приобретённой версией SmartBudget вы можете пользоваться бессрочно.
+
+Рекомендуем скачать файл и сохранить его на своём устройстве.
+
+**2. Записаться на консультацию**
+
+**Продолжительность:** 60 минут.\
+**Формат:** индивидуальная онлайн-консультация.
+
+[Персональная защищённая ссылка для записи]
+
+Пожалуйста, выберите удобное время среди доступных слотов. Запись необходимо выполнить в течение **14 дней после покупки**. Сама консультация может состояться позднее.
+
+После бронирования вы получите отдельное подтверждение с датой, временем и информацией для подключения к онлайн-встрече.
+
+Если вам потребуется изменить время уже забронированной консультации, воспользуйтесь ссылкой для переноса в подтверждении записи.
+
+Если у вас возникнут вопросы, сложности со скачиванием SmartBudget или записью на консультацию, обратитесь через форму обратной связи на сайте или напишите нам на support@neocitrix.com.
+
+С уважением,\
+Команда SmartBudget
+
+##### EN
+
+**Subject:** SmartBudget — your purchase and consultation booking
+
+Hello,
+
+Thank you for purchasing SmartBudget and a personal consultation. Your payment has been successfully confirmed.
+
+**Your purchase:** {{ product_name }} + personal consultation (60 minutes).
+
+**1. Download SmartBudget**
+
+[Personal secure download link]
+
+**Important:** your download link remains valid for **12 hours after payment confirmation**.
+
+This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
+
+We recommend downloading the file and saving it to your device.
+
+**2. Book your consultation**
+
+**Duration:** 60 minutes.\
+**Format:** individual online consultation.
+
+[Personal secure booking link]
+
+Please select a convenient time from the available slots. You must book your consultation within **14 days of purchase**. The consultation itself may take place later.
+
+Once your booking is confirmed, you will receive a separate confirmation with the date, time, and instructions for joining the online meeting.
+
+If you need to change your appointment, use the rescheduling link in your booking confirmation.
+
+If you have any questions or experience difficulties downloading SmartBudget or booking your consultation, please use the feedback form on our website or contact us at support@neocitrix.com.
+
+Best regards,\
+The SmartBudget Team
+
+#### 5.8.4. Общие требования к шаблонам
+
+- Показывать только купленные позиции. Для HTML использовать отдельные кнопки скачивания и записи для соответствующих позиций. В plain text указывать полные защищённые URL.
+- Руководство входит в ZIP. Отдельная ссылка на User Guide в письме не нужна.
+- Срок 12 часов относится к download entitlement. Для скачивания использовать точный приобретённый релиз.
+- Срок 14 дней относится к первичному бронированию. Фактическое подтверждение записи содержит дату, время, данные для подключения и проверенные функции управления встречей.
+- Конкретную платформу видеосвязи указывать после её проверки.
+- G13 должен исключить отправку заведомо истёкших ссылок на скачивание. Автоматическое продление доступа не входит в G13.
 
 ### 5.9. Страница скачивания и поддержка · R36/R37 · B 165–167
 

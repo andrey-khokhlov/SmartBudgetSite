@@ -701,7 +701,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R37 | Partial | Download errors retain support reference/Feedback prefill; indefinite-use expiry explanation and real interrupted/repeat-download proof are missing. | Editorial expired-page copy and validation; G14 |
 | R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
 | R39 | Requires validation | Booking/token/webhook lifecycle exists; tests pre-link provider event URI and do not establish first-booking end-to-end behavior. | Real integration evidence first; no speculative architecture change |
-| R40 | Partial | Item-specific links and durable email retries exist. The renderer is English-only and omits approved 60-minute/14-day/next-step consultation content. | G13 localization from stored Sale language, editorial subjects and Calendly confirmation validation |
+| R40 | Partial | Item-specific links and durable email retries exist. The renderer is English-only and omits approved 60-minute/14-day/next-step consultation content. | G13 implementation of the approved copy and subjects using stored Sale language, plus Calendly confirmation validation |
 | R41 | Required | The recovered policy is preserved. A synchronized public policy page and pre-payment links are absent. | G15 new owner-approved publication revision under D4 |
 | R42 | Partial | Founder full-Sale refunds exist. D4 requires pending `Sale.paid_at` persistence for the [voluntary refund clock](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock), add-on-only item accounting, handling later required refunds, and customer confirmation. | Separate bounded capability and operational validation. Preserve unaffected product access |
 | R43 | Required | Seller information is not published. D4 approves the full geographical address in the policy seller section. | G15 finalize seller details/status and publish identical factual address in RU/EN |
@@ -1016,7 +1016,9 @@ surface-specific slices, not duplicate requirements.
 | G10 — Product Buy / Checkout | R20–R23, applicable R32/R34/R49 | **Implemented and locally validated**: equal language cards, add-on terms, order summary, composition-sensitive delivery and compact compatibility disclosures. Policy publication remains with G15. |
 | G11 — Standalone payment boundary | R06, R38 | **Implemented and locally validated**: separate provider mapping, operator configuration, service-only initiation and existing paid reconciliation. |
 | G12 — Public Consultations | R03, R06, R23, R34, R38, applicable R51 | **Public catalog, navigation and standalone Checkout implemented and locally validated**. Real provider, email, booking and meeting validation remain open. |
-| G13 — Purchase email | R35, R40 | Implement durable Sale language and localized composition-specific delivery copy. Validate actual delivery. |
+| G13 — Purchase email | R35, R40 | RU/EN copy and subjects are [approved for all three order compositions](release_uiux_requirements.md#58-письма-после-покупки--r35r40--b-176180). Durable `Sale.purchase_language`, localized rendering, expiry handling, tests and delivery validation remain open. |
+| G13B — Customer Email Correction | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13b--customer-email-correction). |
+| G13C — Reissue Download Access | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13c--reissue-download-access). |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implement delivery FAQ, timezone and expired-link guidance using approved D6 terms. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the new owner-approved policy and seller section. Synchronize summaries with implemented Checkout, FAQ, email and refund operations. |
 
