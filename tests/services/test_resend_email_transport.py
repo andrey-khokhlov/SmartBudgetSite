@@ -4,7 +4,10 @@ import pytest
 from app.core.config import settings
 from app.services.email_transport import (
     EmailTransportAmbiguousError,
+    EmailTransportDefinitiveError,
     EmailTransportIdempotencyConflictError,
+    EmailTransportPermanentError,
+    EmailTransportTransientError,
     TransactionalEmail,
 )
 from app.services.resend_email_transport import ResendEmailTransport
@@ -46,6 +49,41 @@ def test_resend_uses_configured_sender_and_stable_idempotency_key(monkeypatch):
         {"name": "purchase_email_delivery_id", "value": "42"}
     ]
     assert captured["headers"]["Authorization"] == "Bearer private-api-key"
+
+
+@pytest.mark.parametrize(
+    ("status", "name", "expected"),
+    [
+        (429, "rate_limit_exceeded", EmailTransportTransientError),
+        (429, "daily_quota_exceeded", EmailTransportDefinitiveError),
+        (429, "monthly_quota_exceeded", EmailTransportDefinitiveError),
+        (429, "unknown", EmailTransportDefinitiveError),
+        (422, "validation_error", EmailTransportPermanentError),
+        (401, "missing_api_key", EmailTransportPermanentError),
+        (503, "service_unavailable", EmailTransportAmbiguousError),
+    ],
+)
+def test_resend_classifies_only_explicit_transient_rejection(
+    monkeypatch, status, name, expected
+):
+    monkeypatch.setattr(settings, "RESEND_API_KEY", "private-api-key")
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.httpx.post",
+        lambda *args, **kwargs: httpx.Response(status, json={"name": name}),
+    )
+    with pytest.raises(expected) as error:
+        ResendEmailTransport().send(
+            TransactionalEmail(
+                recipient="buyer@example.test",
+                sender_email="support@example.test",
+                sender_name="SmartBudget",
+                subject="Purchase",
+                text_body="protected",
+                html_body="<p>protected</p>",
+                idempotency_key="purchase-email/42",
+            )
+        )
+    assert type(error.value) is expected
 
 
 @pytest.mark.parametrize(

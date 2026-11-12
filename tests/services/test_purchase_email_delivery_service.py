@@ -1,7 +1,10 @@
+from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import event
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
 from app.models.consultation_entitlement import ConsultationEntitlement
@@ -13,6 +16,7 @@ from app.models.purchase_email_delivery import (
     PurchaseEmailDelivery,
     PurchaseEmailDeliveryStatus,
 )
+from app.models.resend_webhook_event import ResendWebhookEvent
 from app.models.sale import Sale
 from app.models.service_addon import ServiceAddon
 from app.schemas.webhooks import NormalizedPaymentEvent, PaymentOutcome
@@ -20,6 +24,7 @@ from app.services.email_transport import (
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
     EmailTransportIdempotencyConflictError,
+    EmailTransportTransientError,
     EmailTransportResult,
     TransactionalEmail,
 )
@@ -35,6 +40,7 @@ from app.services.purchase_email_delivery_service import (
     deliver_purchase_email_after_payment_commit,
 )
 from app.services.purchase_email_renderer import PurchaseEmailRenderError
+from app.services import purchase_email_recovery_service as recovery
 from app.services.sale_service import (
     create_product_sale,
     create_service_sale_item,
@@ -640,3 +646,344 @@ def test_reconciliation_resend_requires_explicit_operator_authorization(
     )
     assert result == PurchaseEmailAttemptResult.SENT
     assert len(authorized_transport.messages) == 1
+
+
+@pytest.fixture
+def email_recovery(monkeypatch):
+    configure_email(monkeypatch)
+    monkeypatch.setattr(
+        recovery, "lock_recovery_pass", lambda engine, **kwargs: nullcontext(True)
+    )
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_RECOVERY_PENDING_DELAY_MINUTES", 5)
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", False)
+    return datetime.now(UTC)
+
+
+def prepare_recovery_delivery(db, now, **overrides):
+    sale = create_pending_sale(db, kind="product")
+    reconcile_payment_event(db, payment_event(sale))
+    delivery = sale.purchase_email_delivery
+    delivery.created_at = now - timedelta(minutes=5)
+    for field, value in overrides.items():
+        setattr(delivery, field, value)
+    delivery_id = delivery.id
+    db.commit()
+    return delivery_id
+
+
+def recover(db, now, transport, **kwargs):
+    return recovery.run_purchase_email_recovery(
+        db, clock=lambda: now, transport=transport, **kwargs
+    )
+
+
+def test_recovery_pending_delay_dry_run_and_no_resend(db_session, email_recovery):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+
+    def check_no_transaction():
+        assert not db_session.in_transaction()
+
+    transport = RecordingTransport(on_send=check_no_transaction)
+    assert recover(db_session, now - timedelta(microseconds=1), transport)["due"] == 0
+    preview = recover(db_session, now, transport, dry_run=True)
+    assert (preview["status"], preview["due"], preview["processed"]) == (
+        "dry_run",
+        1,
+        0,
+    )
+    assert transport.messages == []
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert (delivery.status, delivery.attempt_count) == ("pending", 0)
+    db_session.rollback()
+
+    assert recover(db_session, now, transport)["by_result"] == {"sent": 1}
+    assert recover(db_session, now + timedelta(hours=1), transport)["due"] == 0
+    assert [message.idempotency_key for message in transport.messages] == [
+        f"purchase-email/{delivery_id}"
+    ]
+
+
+def test_transient_failure_is_persisted_and_retries_only_when_due(
+    db_session, email_recovery
+):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    throttled = RecordingTransport(
+        failure=EmailTransportTransientError("private failure")
+    )
+    assert recover(db_session, now, throttled)["by_result"] == {"failed": 1}
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert delivery.failure_classification == "transient"
+    assert "private failure" not in delivery.last_error
+    db_session.rollback()
+
+    success = RecordingTransport()
+    retry_at = now + timedelta(minutes=10)
+    assert (
+        recover(db_session, retry_at - timedelta(microseconds=1), success)["due"] == 0
+    )
+    assert recover(db_session, retry_at, success)["by_result"] == {"sent": 1}
+    assert success.messages[0].idempotency_key == throttled.messages[0].idempotency_key
+    assert (
+        db_session.get(PurchaseEmailDelivery, delivery_id).failure_classification
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"status": "failed", "failure_classification": "permanent"},
+        {"status": "failed", "failure_classification": "unknown"},
+        {"status": "failed", "failure_classification": None},
+        {"status": "failed", "failure_classification": "transient", "attempt_count": 3},
+        {"status": "sent"},
+        {"status": "reconciliation_required"},
+        {"provider_message_id": "known-provider-id"},
+        *(
+            {"provider_delivery_status": value}
+            for value in (
+                "sent",
+                "delivered",
+                "delivery_delayed",
+                "bounced",
+                "failed",
+                "suppressed",
+            )
+        ),
+        {"complaint_event_id": "msg_complaint"},
+    ],
+)
+def test_ineligible_recovery_states(db_session, email_recovery, changes):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(
+        db_session, now, last_attempt_at=now - timedelta(minutes=10)
+    )
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    for field, value in changes.items():
+        setattr(delivery, field, value)
+    if delivery.complaint_event_id:
+        delivery.complaint_at = now
+    db_session.commit()
+    transport = RecordingTransport()
+    assert recover(db_session, now, transport)["due"] == 0
+    assert transport.messages == []
+
+
+@pytest.mark.parametrize(
+    "payment_status", [PaymentStatus.REFUNDED, PaymentStatus.PENDING]
+)
+def test_recovery_excludes_ineligible_sales(db_session, email_recovery, payment_status):
+    now = email_recovery
+    delivery = db_session.get(
+        PurchaseEmailDelivery, prepare_recovery_delivery(db_session, now)
+    )
+    delivery.sale.payment_status = payment_status
+    db_session.commit()
+    assert recover(db_session, now, RecordingTransport())["due"] == 0
+
+
+def test_exhausted_ambiguous_send_escalates_at_original_boundary(
+    db_session, email_recovery
+):
+    now = email_recovery
+    started = now - timedelta(hours=23)
+    delivery_id = prepare_recovery_delivery(
+        db_session,
+        now,
+        status="sending",
+        attempt_count=3,
+        sending_started_at=started,
+        last_attempt_at=now - timedelta(hours=2),
+    )
+    transport = RecordingTransport()
+    assert recover(db_session, now - timedelta(microseconds=1), transport)["due"] == 0
+    assert recover(db_session, now, transport)["by_result"] == {
+        "reconciliation_required": 1
+    }
+    assert transport.messages == []
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == started
+    assert delivery.attempt_count == 3
+
+
+def test_expired_access_is_permanent_and_never_sent(db_session, email_recovery):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    delivery.sale.items[0].download_entitlement.expires_at = now - timedelta(seconds=1)
+    db_session.commit()
+    transport = RecordingTransport()
+    assert recover(db_session, now, transport)["by_result"] == {"failed": 1}
+    assert recover(db_session, now + timedelta(minutes=10), transport)["due"] == 0
+    assert transport.messages == []
+    assert (
+        db_session.get(PurchaseEmailDelivery, delivery_id).failure_classification
+        == "permanent"
+    )
+
+
+def test_recovery_handles_crash_after_claim_with_paced_stable_key_retry(
+    db_session, email_recovery
+):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    interrupted = RecordingTransport(failure=RuntimeError("unexpected process failure"))
+    with pytest.raises(RuntimeError, match="unexpected process failure"):
+        recover(db_session, now, interrupted)
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert (delivery.status, delivery.attempt_count) == ("sending", 1)
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == now
+    db_session.rollback()
+    success = RecordingTransport()
+    assert recover(db_session, now + timedelta(minutes=9), success)["due"] == 0
+    assert recover(db_session, now + timedelta(minutes=10), success)["by_result"] == {
+        "sent": 1
+    }
+    assert (
+        success.messages[0].idempotency_key == interrupted.messages[0].idempotency_key
+    )
+
+
+def test_recovery_revalidates_after_selection_and_prevents_overlap(
+    db_session, email_recovery, monkeypatch
+):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    transport = RecordingTransport()
+    original_lock = recovery.lock_recovery_pass
+    monkeypatch.setattr(
+        recovery, "lock_recovery_pass", lambda engine, **kwargs: nullcontext(False)
+    )
+    assert recover(db_session, now, transport)["status"] == "already_running"
+    monkeypatch.setattr(recovery, "lock_recovery_pass", original_lock)
+    attempt = recovery.attempt_purchase_email_delivery
+
+    def record_provider_evidence(db, **kwargs):
+        delivery = db.get(PurchaseEmailDelivery, delivery_id)
+        delivery.provider_delivery_status = "delivery_delayed"
+        db.commit()
+        return attempt(db, **kwargs)
+
+    monkeypatch.setattr(
+        recovery, "attempt_purchase_email_delivery", record_provider_evidence
+    )
+    assert recover(db_session, now, transport)["by_result"] == {"skipped": 1}
+    assert transport.messages == []
+    assert db_session.get(PurchaseEmailDelivery, delivery_id).attempt_count == 0
+
+
+def test_recovery_conflict_stops_automatic_attempts(db_session, email_recovery):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    conflict = RecordingTransport(failure=EmailTransportIdempotencyConflictError())
+    assert recover(db_session, now, conflict)["by_result"] == {
+        "reconciliation_required": 1
+    }
+    assert recover(db_session, now + timedelta(hours=1), conflict)["due"] == 0
+    assert len(conflict.messages) == 1
+    assert db_session.get(PurchaseEmailDelivery, delivery_id).attempt_count == 1
+
+
+def test_recovery_rolls_back_failed_database_claim(db_session, email_recovery):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(db_session, now)
+    transport = RecordingTransport()
+
+    def fail_flush(*args):
+        raise SQLAlchemyError("claim failed")
+
+    event.listen(db_session, "before_flush", fail_flush, once=True)
+    with pytest.raises(SQLAlchemyError, match="claim failed"):
+        recover(db_session, now, transport)
+    assert transport.messages == []
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert (delivery.status, delivery.attempt_count) == ("pending", 0)
+
+
+def test_unconfirmed_provider_receipt_blocks_retry_without_binding(
+    db_session, email_recovery
+):
+    now = email_recovery
+    delivery_id = prepare_recovery_delivery(
+        db_session,
+        now,
+        status="sending",
+        attempt_count=1,
+        sending_started_at=now - timedelta(minutes=15),
+        last_attempt_at=now - timedelta(minutes=15),
+    )
+    db_session.add(
+        ResendWebhookEvent(
+            svix_id="msg_awaiting",
+            delivery_id=delivery_id,
+            provider_email_id="unbound",
+            event_type="email.sent",
+            provider_event_at=now,
+            first_received_at=now,
+            outcome="awaiting_provider_confirmation",
+        )
+    )
+    db_session.commit()
+    transport = RecordingTransport()
+    assert recover(db_session, now, transport)["due"] == 0
+    assert transport.messages == []
+    delivery = db_session.get(PurchaseEmailDelivery, delivery_id)
+    assert delivery.provider_message_id is None
+    assert delivery.provider_delivery_status is None
+
+
+def test_recovery_pass_is_bounded_and_orders_equal_timestamps_by_id(
+    db_session, email_recovery
+):
+    now = email_recovery
+    for _ in range(21):
+        db_session.add(
+            PurchaseEmailDelivery(
+                sale=Sale(
+                    customer_email="private@example.test",
+                    amount=50,
+                    currency="EUR",
+                    payment_status=PaymentStatus.PAID,
+                ),
+                created_at=now - timedelta(minutes=5),
+            )
+        )
+    db_session.commit()
+    # Empty fulfillment fails during rendering, so the provider is never called.
+    transport = RecordingTransport()
+    result = recover(db_session, now, transport)
+    assert (result["due"], result["processed"], result["deferred"]) == (21, 20, 1)
+    assert result["by_result"] == {"failed": 20}
+    rows = (
+        db_session.query(PurchaseEmailDelivery).order_by(PurchaseEmailDelivery.id).all()
+    )
+    assert [row.attempt_count for row in rows] == [1] * 20 + [0]
+    assert transport.messages == []
+
+
+def test_ambiguity_expiring_during_rendering_stops_before_transport(
+    db_session, email_recovery
+):
+    now = email_recovery
+    expiry = now + timedelta(seconds=1)
+    delivery_id = prepare_recovery_delivery(
+        db_session,
+        now,
+        status="sending",
+        attempt_count=1,
+        sending_started_at=expiry - timedelta(hours=23),
+        last_attempt_at=now - timedelta(minutes=10),
+    )
+    times = iter((now, now, now, expiry))
+    transport = RecordingTransport()
+    result = recovery.run_purchase_email_recovery(
+        db_session, transport=transport, clock=lambda: next(times)
+    )
+    assert result["by_result"] == {"reconciliation_required": 1}
+    assert transport.messages == []
+    assert (
+        db_session.get(PurchaseEmailDelivery, delivery_id).status
+        == "reconciliation_required"
+    )

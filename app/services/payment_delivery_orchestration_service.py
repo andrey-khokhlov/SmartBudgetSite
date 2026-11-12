@@ -6,6 +6,7 @@ from app.schemas.webhooks import NormalizedPaymentEvent, PaymentOutcome
 from app.services.email_transport import EmailTransport
 from app.services.payment_reconciliation_service import (
     PaymentReconciliationOutcome,
+    PaymentReconciliationResult,
     reconcile_payment_event,
 )
 from app.services.purchase_email_delivery_service import (
@@ -29,11 +30,15 @@ def reconcile_payment_and_deliver(
         expected_sale_id=expected_sale_id,
     )
     db.commit()
-    if event.outcome == PaymentOutcome.SUCCESS:
+    if (
+        event.outcome == PaymentOutcome.SUCCESS
+        and outcome.result == PaymentReconciliationResult.APPLIED
+    ):
         deliver_purchase_email_after_payment_commit(
             db,
             sale_id=outcome.sale_id,
             transport=transport,
             now=now,
+            initial_only=True,
         )
     return outcome

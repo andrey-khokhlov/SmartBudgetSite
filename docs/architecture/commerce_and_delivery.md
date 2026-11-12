@@ -625,6 +625,34 @@ Healthchecks.io monitors our monitoring infrastructure. Establish successful
 Resend-to-application delivery separately through the
 [Dashboard delivery history](../operations.md#g13d-2b-resend-webhook-operations).
 
+#### G13D-2c safe automatic purchase-email recovery
+
+Only a newly applied successful payment starts immediate dispatch. Idempotent
+payment replays leave email delivery to the recovery command or explicit
+operator action. The recovery command uses the existing attempt service and
+rechecks the paid Sale, due time, attempt count and provider evidence while
+holding the delivery row lock. It commits the claim before contacting Resend.
+The stable key and original ambiguous-send timestamp govern every retry.
+
+Pending deliveries become eligible after the configured delay. A failed
+delivery is automatically retryable only with a persisted `transient`
+classification. The Resend adapter classifies an explicit
+`rate_limit_exceeded` rejection as transient. Configuration, rendering,
+expired download access and definitive request validation failures require
+correction. Historical and unclassified failures are unknown. Ambiguous
+provider outcomes remain in `sending`. Provider acceptance or other recorded
+delivery or complaint evidence blocks automatic sending. A verified receipt
+awaiting confirmation also suppresses automatic sending while leaving
+provider-message binding to the authoritative send response.
+
+Automatic recovery processes at most 20 deliveries per pass, with a
+ten-minute minimum interval and a three-attempt ceiling using the existing
+counter, including initial dispatch. The original 23-hour boundary still
+moves exhausted ambiguous deliveries to `reconciliation_required` without a
+provider request. An idempotency conflict also stops automatic attempts.
+Explicit operator retries and reconciliation authorization remain separate.
+See the [recovery command](../operations.md#g13d-2c-purchase-email-recovery).
+
 #### Purchase email transport and protected URLs
 
 Customer-facing delivery URLs must be generated from server-owned application

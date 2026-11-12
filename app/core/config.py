@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str | None = None
     RESEND_WEBHOOK_SIGNING_SECRET: str | None = None
     PURCHASE_EMAIL_DELIVERY_ENABLED: bool = False
+    PURCHASE_EMAIL_RECOVERY_PENDING_DELAY_MINUTES: int = Field(default=5, gt=0)
     PUBLIC_BASE_URL: str | None = None
 
     MAIL_SMTP_HOST: str = ""

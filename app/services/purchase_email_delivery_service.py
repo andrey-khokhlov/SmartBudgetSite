@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
@@ -6,8 +7,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.enums import PaymentStatus
-from app.models.purchase_email_delivery import PurchaseEmailDeliveryStatus
+from app.models.purchase_email_delivery import (
+    PurchaseEmailDeliveryStatus,
+    PurchaseEmailFailureClassification,
+)
 from app.repositories.purchase_email_delivery_repository import (
+    RecoveryCutoffs,
+    email_recovery_is_due,
     get_delivery_by_sale_id_for_update,
     get_delivery_for_update,
     get_delivery_with_fulfillment,
@@ -17,6 +23,8 @@ from app.services.email_transport import (
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
     EmailTransportIdempotencyConflictError,
+    EmailTransportPermanentError,
+    EmailTransportTransientError,
     TransactionalEmail,
 )
 from app.services.purchase_email_renderer import (
@@ -30,6 +38,8 @@ from app.services.webhooks.resend_webhook_service import apply_pending_resend_re
 logger = logging.getLogger(__name__)
 
 AMBIGUOUS_RETRY_WINDOW = timedelta(hours=23)
+RECOVERY_RETRY_INTERVAL = timedelta(minutes=10)
+MAX_AUTOMATIC_ATTEMPTS = 3
 DEFINITIVE_FAILURE_DIAGNOSTIC = "Purchase email transport definitively failed."
 AMBIGUOUS_FAILURE_DIAGNOSTIC = "Purchase email provider outcome is ambiguous."
 EXPIRED_DOWNLOAD_DIAGNOSTIC = "Purchase email blocked because download access expired."
@@ -49,6 +59,20 @@ class PurchaseEmailAttemptResult(StrEnum):
     RECONCILIATION_REQUIRED = "reconciliation_required"
     DISABLED = "disabled"
     UNAVAILABLE = "unavailable"
+    SKIPPED = "skipped"
+
+
+def purchase_email_recovery_cutoffs(
+    now: datetime, *, allow_sends: bool
+) -> RecoveryCutoffs:
+    return RecoveryCutoffs(
+        pending_before=now
+        - timedelta(minutes=settings.PURCHASE_EMAIL_RECOVERY_PENDING_DELAY_MINUTES),
+        retry_before=now - RECOVERY_RETRY_INTERVAL,
+        ambiguous_before=now - AMBIGUOUS_RETRY_WINDOW,
+        max_attempts=MAX_AUTOMATIC_ATTEMPTS,
+        allow_sends=allow_sends,
+    )
 
 
 def deliver_purchase_email_after_payment_commit(
@@ -57,6 +81,7 @@ def deliver_purchase_email_after_payment_commit(
     sale_id: int,
     transport: EmailTransport | None = None,
     now: datetime | None = None,
+    initial_only: bool = False,
 ) -> PurchaseEmailAttemptResult:
     """Attempt delivery without allowing email failure to alter payment truth."""
 
@@ -69,6 +94,7 @@ def deliver_purchase_email_after_payment_commit(
             sale_id=sale_id,
             transport=transport or ResendEmailTransport(),
             now=now,
+            initial_only=initial_only,
         )
     except Exception:
         # Payment is already committed. Keep an unexpected delivery outcome
@@ -87,14 +113,33 @@ def attempt_purchase_email_delivery(
     sale_id: int,
     transport: EmailTransport,
     now: datetime | None = None,
+    initial_only: bool = False,
+    recovery_allow_sends: bool | None = None,
+    clock: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> PurchaseEmailAttemptResult:
     """Claim, commit, send, and persist one purchase-email attempt."""
 
-    attempted_at = now or datetime.now(UTC)
     delivery = get_delivery_by_sale_id_for_update(db, sale_id=sale_id)
     if delivery is None:
         db.rollback()
+        if recovery_allow_sends is not None:
+            return PurchaseEmailAttemptResult.SKIPPED
         raise RuntimeError("Purchase email delivery record does not exist.")
+
+    attempted_at = now or clock()
+    if recovery_allow_sends is not None:
+        cutoffs = purchase_email_recovery_cutoffs(
+            attempted_at, allow_sends=recovery_allow_sends
+        )
+        if not email_recovery_is_due(db, delivery.id, cutoffs):
+            db.commit()
+            return PurchaseEmailAttemptResult.SKIPPED
+    if initial_only and (
+        delivery.status != PurchaseEmailDeliveryStatus.PENDING.value
+        or delivery.attempt_count != 0
+    ):
+        db.commit()
+        return PurchaseEmailAttemptResult.SKIPPED
 
     if delivery.status == PurchaseEmailDeliveryStatus.SENT.value:
         db.commit()
@@ -103,8 +148,9 @@ def attempt_purchase_email_delivery(
         db.commit()
         return PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
     previously_ambiguous = delivery.status == PurchaseEmailDeliveryStatus.SENDING.value
+    original_start = delivery.sending_started_at
     if previously_ambiguous:
-        if _ambiguous_attempt_is_old(delivery.sending_started_at, now=attempted_at):
+        if _ambiguous_attempt_is_old(original_start, now=attempted_at):
             delivery.status = PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
             delivery.last_error = RECONCILIATION_DIAGNOSTIC
             db.commit()
@@ -122,14 +168,32 @@ def attempt_purchase_email_delivery(
     delivery.attempt_count += 1
     delivery.last_attempt_at = attempted_at
     delivery.last_error = None
+    delivery.failure_classification = None
     delivery_id = delivery.id
     db.commit()
 
     try:
         message = _build_transactional_email(
-            db, delivery_id=delivery_id, now=now or datetime.now(UTC)
+            db, delivery_id=delivery_id, now=now or clock()
         )
         db.commit()
+        if previously_ambiguous and _ambiguous_attempt_is_old(
+            original_start, now=now or clock()
+        ):
+            current = get_delivery_for_update(db, delivery_id=delivery_id)
+            result_at_boundary = PurchaseEmailAttemptResult.SKIPPED
+            if (
+                current is not None
+                and current.status == PurchaseEmailDeliveryStatus.SENDING.value
+                and current.sending_started_at == original_start
+            ):
+                current.status = (
+                    PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+                )
+                current.last_error = RECONCILIATION_DIAGNOSTIC
+                result_at_boundary = PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
+            db.commit()
+            return result_at_boundary
         result = transport.send(message)
     except EmailTransportIdempotencyConflictError:
         db.rollback()
@@ -148,19 +212,30 @@ def attempt_purchase_email_delivery(
         db.rollback()
         if previously_ambiguous:
             _record_ambiguous_failure(
-                db, delivery_id=delivery_id, diagnostic=EXPIRED_DOWNLOAD_DIAGNOSTIC
+                db,
+                delivery_id=delivery_id,
+                diagnostic=EXPIRED_DOWNLOAD_DIAGNOSTIC,
+                classification=PurchaseEmailFailureClassification.PERMANENT,
             )
             return PurchaseEmailAttemptResult.AMBIGUOUS
         _record_definitive_failure(
-            db, delivery_id=delivery_id, diagnostic=EXPIRED_DOWNLOAD_DIAGNOSTIC
+            db,
+            delivery_id=delivery_id,
+            diagnostic=EXPIRED_DOWNLOAD_DIAGNOSTIC,
+            classification=PurchaseEmailFailureClassification.PERMANENT,
         )
         return PurchaseEmailAttemptResult.FAILED
-    except (PurchaseEmailRenderError, EmailTransportDefinitiveError):
+    except (PurchaseEmailRenderError, EmailTransportDefinitiveError) as exc:
         db.rollback()
+        classification = _classify_definitive_failure(exc)
         if previously_ambiguous:
-            _record_ambiguous_failure(db, delivery_id=delivery_id)
+            _record_ambiguous_failure(
+                db, delivery_id=delivery_id, classification=classification
+            )
             return PurchaseEmailAttemptResult.AMBIGUOUS
-        _record_definitive_failure(db, delivery_id=delivery_id)
+        _record_definitive_failure(
+            db, delivery_id=delivery_id, classification=classification
+        )
         return PurchaseEmailAttemptResult.FAILED
     except EmailTransportAmbiguousError:
         db.rollback()
@@ -179,6 +254,7 @@ def attempt_purchase_email_delivery(
     current.sent_at = attempted_at
     current.provider_message_id = result.provider_message_id
     current.last_error = None
+    current.failure_classification = None
     apply_pending_resend_receipts(db, current, now=datetime.now(UTC))
     db.commit()
     return PurchaseEmailAttemptResult.SENT
@@ -211,8 +287,12 @@ def authorize_reconciliation_resend(
 
     delivery.status = PurchaseEmailDeliveryStatus.FAILED.value
     delivery.last_error = None
+    delivery.failure_classification = PurchaseEmailFailureClassification.UNKNOWN
     delivery.sending_started_at = None
     db.commit()
+    logger.info(
+        "Purchase email resend explicitly authorized", extra={"sale_id": sale_id}
+    )
     return deliver_purchase_email_after_payment_commit(
         db,
         sale_id=sale_id,
@@ -256,8 +336,20 @@ def _build_transactional_email(
     )
 
 
+def _classify_definitive_failure(exc: Exception) -> PurchaseEmailFailureClassification:
+    if isinstance(exc, EmailTransportTransientError):
+        return PurchaseEmailFailureClassification.TRANSIENT
+    if isinstance(exc, (EmailTransportPermanentError, PurchaseEmailRenderError)):
+        return PurchaseEmailFailureClassification.PERMANENT
+    return PurchaseEmailFailureClassification.UNKNOWN
+
+
 def _record_definitive_failure(
-    db: Session, *, delivery_id: int, diagnostic: str = DEFINITIVE_FAILURE_DIAGNOSTIC
+    db: Session,
+    *,
+    delivery_id: int,
+    diagnostic: str = DEFINITIVE_FAILURE_DIAGNOSTIC,
+    classification: PurchaseEmailFailureClassification,
 ) -> None:
     delivery = get_delivery_for_update(db, delivery_id=delivery_id)
     if delivery is None:
@@ -269,12 +361,17 @@ def _record_definitive_failure(
     }:
         delivery.status = PurchaseEmailDeliveryStatus.FAILED.value
         delivery.last_error = diagnostic
+        delivery.failure_classification = classification
         delivery.sending_started_at = None
     db.commit()
 
 
 def _record_ambiguous_failure(
-    db: Session, *, delivery_id: int, diagnostic: str = AMBIGUOUS_FAILURE_DIAGNOSTIC
+    db: Session,
+    *,
+    delivery_id: int,
+    diagnostic: str = AMBIGUOUS_FAILURE_DIAGNOSTIC,
+    classification: PurchaseEmailFailureClassification | None = None,
 ) -> None:
     delivery = get_delivery_for_update(db, delivery_id=delivery_id)
     if delivery is None:
@@ -286,6 +383,7 @@ def _record_ambiguous_failure(
     }:
         delivery.status = PurchaseEmailDeliveryStatus.SENDING.value
         delivery.last_error = diagnostic
+        delivery.failure_classification = classification
     db.commit()
 
 

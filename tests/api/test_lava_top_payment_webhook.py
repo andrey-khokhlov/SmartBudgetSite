@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import httpx
+import pytest
 
 from app.core.config import settings
 from app.models.download_entitlement import DownloadEntitlement
@@ -12,6 +13,7 @@ from app.models.purchase_email_delivery import (
     PurchaseEmailDeliveryStatus,
 )
 from app.services.email_transport import (
+    EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
     EmailTransportResult,
 )
@@ -142,17 +144,25 @@ def test_success_sends_once_after_commit_and_replay_does_not_resend(
     assert sent_messages[0].subject == "SmartBudget — ваша покупка готова к скачиванию"
 
 
-def test_email_transport_failure_does_not_fail_payment_webhook(
-    client, db_session, monkeypatch
+@pytest.mark.parametrize("delivery_status", ["pending", "failed", "sending"])
+def test_idempotent_webhook_replay_cannot_send_pending_or_failed_email(
+    client, db_session, monkeypatch, delivery_status
 ):
     sale = create_sale(db_session)
     monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
-    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    monkeypatch.setattr(
+        settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", delivery_status != "pending"
+    )
     monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
     monkeypatch.setattr(settings, "MAIL_FROM_EMAIL", "support@example.test")
     monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
 
+    attempted_keys = []
+
     def fail_send(_transport, message):
+        attempted_keys.append(message.idempotency_key)
+        if delivery_status == "sending":
+            raise EmailTransportAmbiguousError("private provider failure")
         raise EmailTransportDefinitiveError("private provider failure")
 
     monkeypatch.setattr(
@@ -160,18 +170,20 @@ def test_email_transport_failure_does_not_fail_payment_webhook(
         fail_send,
     )
 
-    response = client.post(
-        WEBHOOK_URL,
-        headers={"X-Api-Key": "inbound-secret"},
-        json=payload(),
-    )
+    headers = {"X-Api-Key": "inbound-secret"}
+    assert client.post(WEBHOOK_URL, headers=headers, json=payload()).status_code == 204
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    assert client.post(WEBHOOK_URL, headers=headers, json=payload()).status_code == 204
 
     db_session.expire_all()
     delivery = db_session.query(PurchaseEmailDelivery).one()
-    assert response.status_code == 204
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
     assert db_session.query(DownloadEntitlement).count() == 1
-    assert delivery.status == PurchaseEmailDeliveryStatus.FAILED.value
+    assert delivery.status == delivery_status
+    assert attempted_keys == (
+        [] if delivery_status == "pending" else [f"purchase-email/{delivery.id}"]
+    )
+    assert delivery.attempt_count == len(attempted_keys)
 
 
 def test_resend_idempotency_conflict_blocks_webhook_replay_and_opens_incident(

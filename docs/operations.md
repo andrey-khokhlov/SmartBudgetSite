@@ -600,6 +600,35 @@ Before rollout, review unresolved pre-tag sends. Retrying one with the new tag
 can produce an idempotency conflict and require operator reconciliation under
 the existing stable-key policy.
 
+## G13D-2c purchase email recovery
+
+Apply the Alembic migration, then use the configured PostgreSQL environment
+and interpreter from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.recover_purchase_emails --dry-run
+.\.venv\Scripts\python.exe -m scripts.recover_purchase_emails
+```
+
+The dry run reports candidates without contacting Resend or changing delivery
+state. It previews sending eligibility even when delivery is disabled and
+reports the configured sending state. A live pass can still escalate expired
+ambiguity while sending is disabled. Exit 0 prints sanitized JSON with due,
+selected, deferred and processed counts and outcomes. An overlapping
+invocation reports `already_running`. Operational failure exits 1 with a
+sanitized error.
+
+`PURCHASE_EMAIL_RECOVERY_PENDING_DELAY_MINUTES` defaults to five minutes.
+Each pass selects at most 20 deliveries. It prioritizes expired ambiguity,
+then orders by the oldest attempt or creation timestamp and delivery ID.
+Retries wait at least ten minutes and use the existing three-attempt ceiling
+for automatic recovery. The 23-hour ambiguity boundary applies regardless
+of attempts remaining. Explicit operator authorization remains available
+through the existing protected flow and emits a sanitized authorization log.
+
+The command is unscheduled. Validate live recovery and include it in the
+G13D-3 operational integration before public sales.
+
 ## G13 purchase email template cutover
 
 On the legacy release, inspect unfinished deliveries using the target

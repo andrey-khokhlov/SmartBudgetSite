@@ -19,6 +19,12 @@ class PurchaseEmailDeliveryStatus(str, enum.Enum):
     RECONCILIATION_REQUIRED = "reconciliation_required"
 
 
+class PurchaseEmailFailureClassification(str, enum.Enum):
+    TRANSIENT = "transient"
+    PERMANENT = "permanent"
+    UNKNOWN = "unknown"
+
+
 class PurchaseEmailDelivery(Base):
     """Durable delivery state for one Sale's purchase email."""
 
@@ -54,6 +60,7 @@ class PurchaseEmailDelivery(Base):
     complaint_event_id: Mapped[str | None] = mapped_column(String(128))
     # Store only bounded, sanitized diagnostics; never secrets or delivery URLs.
     last_error: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    failure_classification: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -72,6 +79,10 @@ class PurchaseEmailDelivery(Base):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "failure_classification IN ('transient', 'permanent', 'unknown')",
+            name="ck_purchase_email_deliveries_failure_classification",
+        ),
         CheckConstraint(
             status.in_([state.value for state in PurchaseEmailDeliveryStatus]),
             name="ck_purchase_email_deliveries_status",

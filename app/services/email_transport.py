@@ -27,6 +27,14 @@ class EmailTransportDefinitiveError(EmailTransportError):
     """The provider definitively rejected or could not accept the request."""
 
 
+class EmailTransportTransientError(EmailTransportDefinitiveError):
+    """The provider definitively declined the request for a temporary reason."""
+
+
+class EmailTransportPermanentError(EmailTransportDefinitiveError):
+    """The request requires correction before it can be retried."""
+
+
 class EmailTransportIdempotencyConflictError(EmailTransportDefinitiveError):
     """The provider rejected a changed request under the existing key."""
 

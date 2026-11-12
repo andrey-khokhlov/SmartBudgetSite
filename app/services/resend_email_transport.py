@@ -5,7 +5,9 @@ from app.services.email_transport import (
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
     EmailTransportIdempotencyConflictError,
+    EmailTransportPermanentError,
     EmailTransportResult,
+    EmailTransportTransientError,
     TransactionalEmail,
 )
 
@@ -18,7 +20,7 @@ class ResendEmailTransport:
     def send(self, email: TransactionalEmail) -> EmailTransportResult:
         api_key = (settings.RESEND_API_KEY or "").strip()
         if not api_key:
-            raise EmailTransportDefinitiveError(
+            raise EmailTransportPermanentError(
                 "Transactional email transport is not configured."
             )
 
@@ -51,22 +53,35 @@ class ResendEmailTransport:
                 "Transactional email provider outcome is ambiguous."
             ) from exc
 
-        if response.status_code == 409:
+        if response.status_code in {409, 429}:
             try:
                 error = response.json()
             except ValueError:
                 error = None
             if (
-                isinstance(error, dict)
+                response.status_code == 409
+                and isinstance(error, dict)
                 and error.get("name") == "invalid_idempotent_request"
             ):
                 raise EmailTransportIdempotencyConflictError(
                     "Transactional email idempotency conflict requires reconciliation."
                 )
+            if (
+                response.status_code == 429
+                and isinstance(error, dict)
+                and error.get("name") == "rate_limit_exceeded"
+            ):
+                raise EmailTransportTransientError(
+                    "Transactional email provider rate limit was reached."
+                )
 
         if response.status_code >= 500 or response.status_code == 409:
             raise EmailTransportAmbiguousError(
                 "Transactional email provider outcome is ambiguous."
+            )
+        if response.status_code in {400, 401, 403, 422}:
+            raise EmailTransportPermanentError(
+                "Transactional email provider rejected the request."
             )
         if response.status_code >= 400:
             raise EmailTransportDefinitiveError(

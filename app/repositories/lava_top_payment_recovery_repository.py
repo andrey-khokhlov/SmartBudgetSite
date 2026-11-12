@@ -18,14 +18,16 @@ COOLDOWN_ID = 1
 
 
 @contextmanager
-def lock_recovery_pass(engine: Engine) -> Iterator[bool]:
+def lock_recovery_pass(
+    engine: Engine, *, lock_id: int = RECOVERY_LOCK_ID
+) -> Iterator[bool]:
     if engine.dialect.name != "postgresql":
-        raise RuntimeError("Automatic payment recovery requires PostgreSQL.")
+        raise RuntimeError("Automatic recovery requires PostgreSQL.")
 
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         try:
             acquired = conn.scalar(
-                text("SELECT pg_try_advisory_lock(:key)"), {"key": RECOVERY_LOCK_ID}
+                text("SELECT pg_try_advisory_lock(:key)"), {"key": lock_id}
             )
             conn.commit()
             try:
@@ -34,7 +36,7 @@ def lock_recovery_pass(engine: Engine) -> Iterator[bool]:
                 if acquired:
                     conn.execute(
                         text("SELECT pg_advisory_unlock(:key)"),
-                        {"key": RECOVERY_LOCK_ID},
+                        {"key": lock_id},
                     )
                     conn.commit()
         except BaseException:
