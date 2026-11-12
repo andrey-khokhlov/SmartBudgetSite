@@ -352,8 +352,19 @@ Infrastructure and quality:
 - Production reverse-proxy access-log suppression, CDN cache bypass, and
   provider telemetry behavior remain release-environment validation obligations;
   no proxy technology or deployment configuration was introduced by `SEC-009`.
-- A Vultr VPS in Amsterdam is provisioned and operational for secure external
-  connectivity and future production-like integration validation.
+- The existing Vultr VPS in Amsterdam remains dedicated to VPN
+  connectivity and is separate from the SmartBudgetSite production host.
+- On 2026-11-12, a dedicated SmartBudgetSite production VPS was
+  provisioned on Vultr in Amsterdam (Ubuntu 24.04 LTS, 2 vCPU,
+  4 GB RAM, 80 GB SSD). Initial cloud-init checks, SSH key
+  authentication, administrative sudo access, SSH hardening, and
+  restricted Vultr Firewall access were verified. Automatic instance
+  backups are enabled, but recovery has not been tested.
+  Ubuntu package upgrades remain pending after an aborted upgrade.
+  Docker, application deployment, PostgreSQL, public HTTPS,
+  monitoring, and production integration validation have not been
+  completed. Deployment remains deferred under the approved
+  pre-deployment release gates. See `operations.md` for details.
 - The Windows workstation uses Hiddify with XRay/VLESS Reality as the primary
   censorship-resistant connection and AmneziaVPN with AmneziaWG2 as the
   fallback. The XRay server configuration was independently validated through

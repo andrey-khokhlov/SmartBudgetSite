@@ -663,6 +663,103 @@ govern eligibility, amounts, item access and customer confirmations.
 requires separate evidence. Authoritative machine-readable refund verification
 remains unconfirmed. Optional assisted tooling can be reviewed separately.
 
+## Production VPS provisioning (2026-11-12)
+
+### Status and infrastructure
+
+A dedicated Vultr VPS has been provisioned for the future
+SmartBudgetSite production environment.
+
+This is infrastructure preparation only, not an application deployment
+or evidence of production readiness.
+
+- Provider: Vultr.
+- Instance label: `SmartBudgetSite Production`.
+- Hostname: `smartbudgetsite-prod`.
+- Region: Amsterdam, Netherlands.
+- Plan: Regular Cloud Compute, 2 vCPU, 4 GB RAM, 80 GB SSD.
+- Operating system: Ubuntu 24.04 LTS.
+- Automatic Vultr instance backups: enabled; restore not yet tested.
+- Expected monthly infrastructure cost at provisioning: USD 24
+  (USD 20 server + USD 4 backups).
+- The production VPS is separate from the existing VPN server.
+
+Infrastructure access details and credentials are stored privately in
+KeePassXC and must not be committed to the repository.
+
+### Verified initial configuration
+
+The following checks and configuration steps were completed:
+
+- `cloud-init status --long` reported `done` with no errors.
+- The server's ED25519 SSH host fingerprint was independently
+  verified through the Vultr console before the first SSH connection.
+- The administrative user `andrey` was created.
+- SSH public-key authentication for `andrey` was verified.
+- `sudo` access was verified successfully.
+- SSH hardening was configured through
+  `/etc/ssh/sshd_config.d/00-smartbudget-hardening.conf`:
+  - `PermitRootLogin no`
+  - `PasswordAuthentication no`
+  - `PubkeyAuthentication yes`
+  - `KbdInteractiveAuthentication no`
+- `sshd -t` passed and effective settings were checked with `sshd -T`.
+- The SSH service was reloaded successfully and remained active.
+- A fresh SSH connection as `andrey` succeeded after hardening.
+- Original SSH configuration was backed up under
+  `/root/ssh-hardening-backup/`.
+
+### Network access
+
+The Vultr Firewall group `SmartBudgetSite Production` restricts
+inbound connections:
+
+- TCP 22: allowed only from the existing VPN server's public
+  egress address, `95.179.135.13/32`.
+- TCP 80 and 443: allowed from all IPv4 addresses for future
+  public HTTP/HTTPS service.
+- Other unsolicited inbound traffic: blocked by the Vultr Firewall.
+- PostgreSQL port 5432 is not publicly exposed.
+
+The host-level firewall configuration has not yet been validated.
+
+Administrative SSH access currently depends on the VPN egress IP.
+If that IP changes or the VPN becomes unavailable, update the
+Vultr Firewall rule through the Vultr control panel before
+attempting a new SSH connection.
+
+The Vultr web console is an alternative administrative access path.
+Do not disable or alter emergency access without validating recovery.
+
+### System updates
+
+- `apt update` completed successfully on 2026-11-12.
+- 26 upgradable packages were reported.
+- The subsequent `apt upgrade` was aborted before package installation.
+- Security and kernel upgrades therefore remain pending.
+- No successful package upgrade or reboot has been verified.
+
+### Pending deployment work
+
+The following work has not been completed:
+
+- Installation and configuration of the container runtime.
+- Production PostgreSQL provisioning and database backups.
+- Application deployment and process lifecycle configuration.
+- Reverse proxy, DNS, HTTPS, and production perimeter validation.
+- Production migrations, health checks, monitoring, and recovery tests.
+- End-to-end production payment and delivery validation.
+
+Vultr instance backups alone are not considered sufficient evidence
+of application/database recovery readiness.
+
+Production application deployment remains deferred until the
+applicable pre-deployment release gates are satisfied, as defined
+in `release_readiness.md`.
+
+This infrastructure preparation does not complete `REL-002`,
+`OPS-001`, `SEC-012`, or any live integration validation gate.
+
 ## Deployment and external integration validation
 
 Before production deployment, complete the production environment variables,
