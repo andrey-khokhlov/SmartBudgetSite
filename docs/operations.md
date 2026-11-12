@@ -503,9 +503,10 @@ writes only monitoring incidents and makes no provider calls. Development and
 review test Sales can produce expected incidents.
 
 Detection depends on when this command runs. Five-minute stall warnings plus
-scan cadence and execution time determine detection latency. Provider-side
-payment and final email delivery outcomes, automatic scheduling, critical
-alerts, and external heartbeat checks are deferred.
+scan cadence and execution time determine detection latency. The
+[approved G13D architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
+covers scheduled monitoring, provider polling, safe recovery, critical alerts,
+and the external heartbeat. Those capabilities remain open.
 
 ## G13 purchase email template cutover
 
@@ -894,8 +895,11 @@ notes.
 Review payment-provider readiness, download delivery, support workflow, backup,
 recovery, and production configuration.
 
-Verify timely purchase-delivery alerts and external heartbeat coverage under
-G13D. Walk through refund intake, operator execution, confirmation, and recovery.
+Verify G13D's five-minute schedule, bounded polling, safe recovery and operator
+escalation, critical alerts, and Healthchecks.io heartbeat. Validate the
+30-minute critical detection SLO against observable evidence and record
+provider visibility limits. Walk through refund intake, operator execution,
+confirmation, and recovery.
 Verify consultation capacity warnings, purchase availability at the approved
 limit, and restoration of availability under the approved rules. Confirm
 operators can handle routine work and exceptions without jeopardizing customer

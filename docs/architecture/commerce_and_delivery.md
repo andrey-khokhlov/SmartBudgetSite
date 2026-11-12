@@ -319,9 +319,11 @@ No Lava.top browser return to SmartBudgetSite is currently integrated; after
 payment, the buyer may remain on Lava.top. `/payment/result` provides only a
 neutral verification state if opened directly or used by a future supported
 redirect. Browser navigation is never proof of payment. Payment completion is
-confirmed automatically only by the authenticated provider webhook. Explicit
-server-to-server payment verification is the founder-operated fallback for
-known invoices and live validation, not the normal production completion path.
+currently confirmed automatically by the authenticated provider webhook.
+Explicit server-to-server payment verification is available to the founder for
+known invoices and live validation. G13D adds an
+[approved automatic recovery path](#purchase-delivery-monitoring-g13d) for
+unresolved invoices.
 
 While backend confirmation is pending, the payment result page may display a
 payment-confirmation state. Only confirmed payment may:
@@ -466,22 +468,53 @@ to `RECONCILIATION_REQUIRED`. Controlled reissue is a separate
 
 ### Purchase delivery monitoring (G13D)
 
-Monitor payment confirmation, entitlement fulfillment, purchase email dispatch,
-and delivery outcomes reported by the email provider. Check approximately every
-five minutes and target detection of critical failures within ten minutes.
-Use an external heartbeat capable of detecting outages of the website or the
-monitoring service itself.
+Normal customer fulfillment runs immediately after authoritative payment
+confirmation. Monitor payment confirmation, entitlement fulfillment, purchase
+email dispatch, and provider-reported delivery outcomes. The critical incident
+detection SLO is 30 minutes, subject to when external providers expose reliable
+evidence. Dispatch critical notifications without intentional delay after
+detection. The SLO covers detection only.
 
-The primary operational email recipient is
-[khokhlov.a.a@gmail.com](mailto:khokhlov.a.a@gmail.com). Send critical alerts
-also through the official Telegram Bot API. Credentials and recipient identifiers
-must be configurable. Critical alert delivery must have a path independent of
-Resend. Notifications must exclude customer PII, capability tokens, protected
-URLs, and credentials.
+Run monitoring approximately every five minutes via an Ubuntu `systemd timer`.
+Use selective, bounded Lava.top and Resend API polling, PostgreSQL incident
+persistence and operational metrics, critical email independent of Resend,
+and Telegram Bot API notifications. Use an external Healthchecks.io heartbeat
+to cover outages of the website or monitoring service.
+The initial commercial release requires neither Celery nor Redis. Keep provider
+credentials, recipient identifiers, API limits, and monitoring settings in
+environment-owned configuration. The primary recipient for critical operational
+email alerts is `khokhlov.a.a@gmail.com`. Application code must read the address
+from that configuration.
 
-Monitoring preserves authoritative payment confirmation, safe purchase-email
-idempotency, the existing 23-hour ambiguous retry boundary, and the 14-day
-consultation booking window.
+Safe automatic recovery is required before public sales. Keep detection separate
+from recovery orchestration and preserve the G13D-1 scanner's read-only access
+to commerce and delivery records. Recovery may change those records only
+through approved domain services:
+
+- Verify unresolved Lava.top invoices through bounded API polling. A provider
+  response of `COMPLETED` must match the stored invoice identity, amount, and
+  currency before recovery invokes the existing authoritative payment
+  reconciliation and fulfillment workflow.
+- Attempt eligible pending purchase emails automatically. Retry eligible failed
+  or ambiguous attempts only under existing idempotency guarantees. Preserve
+  the 23-hour ambiguous-send boundary. Reuse a Resend idempotency key only when
+  the provider request is byte-equivalent to the original, using a durable
+  fingerprint or equivalent safety mechanism where necessary.
+
+Recovery must never create a replacement payment or invoice, mark a Sale paid
+without authoritative provider evidence, bypass payment or fulfillment
+invariants, or reset email idempotency history. It must never reissue expired
+download tokens without separately approved G13C rules, resend past the safe
+retry window without the required provider reconciliation, change refunded
+purchases, or restore revoked access.
+
+Prevent overlapping recovery attempts and bound retries. Record recovery
+attempts and outcomes. Keep customer PII, capability tokens, protected URLs,
+and credentials out of diagnostics and notifications. Conditions that cannot
+be resolved safely with the available evidence require operator intervention.
+Persist incidents and alert the operator on unresolved problems. Track
+measurable indicators of polling behavior so operators can decide when the
+architecture needs revision.
 
 G13D-1 scans committed data for every paid Sale, including historical test
 transactions. Missing SaleItems, missing or incompatible entitlements, a
@@ -492,10 +525,8 @@ downloads, and booked consultations do not signal a missing entitlement.
 
 Email states `pending` and `sending` are warnings at five minutes or more.
 Measure pending age from record creation and sending age from the start of the
-ambiguous send, falling back to record creation if the start is absent. Five
-minutes gives normal inline sending time to finish and allows a subsequent
-five-minute scheduled pass to detect a stall around the ten-minute objective.
-The warning leaves the 23-hour retry boundary intact. The `sent` state records
+ambiguous send, falling back to record creation if the start is absent. The
+warning leaves the 23-hour retry boundary intact. The `sent` state records
 Resend acceptance of the send request.
 
 PostgreSQL stores one open incident per rule and Sale or SaleItem. A pass
