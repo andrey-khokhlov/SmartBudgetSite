@@ -733,11 +733,16 @@ Do not disable or alter emergency access without validating recovery.
 
 ### System updates
 
-- `apt update` completed successfully on 2026-11-12.
-- 26 upgradable packages were reported.
-- The subsequent `apt upgrade` was aborted before package installation.
-- Security and kernel upgrades therefore remain pending.
-- No successful package upgrade or reboot has been verified.
+- Ubuntu package indexes were refreshed on 2026-11-12.
+- Available security and system updates were installed.
+- Kernel `6.8.0-149-generic` was installed through `apt-get full-upgrade`.
+- The VPS was rebooted successfully.
+- SSH connectivity as `andrey` was verified after the reboot.
+- `uname -r` confirmed the running kernel is `6.8.0-149-generic`.
+- `systemctl is-active ssh` returned `active`.
+- `apt-get check` completed without dependency errors.
+- Three packages were deferred by Ubuntu phased updates;
+  no forced installation was attempted.
 
 ### Pending deployment work
 

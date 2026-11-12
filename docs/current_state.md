@@ -360,7 +360,10 @@ Infrastructure and quality:
   authentication, administrative sudo access, SSH hardening, and
   restricted Vultr Firewall access were verified. Automatic instance
   backups are enabled, but recovery has not been tested.
-  Ubuntu package upgrades remain pending after an aborted upgrade.
+  Ubuntu security and system updates were installed on 2026-11-12.
+  Kernel 6.8.0-149-generic is running after a verified reboot.
+  SSH access and package dependency checks succeeded.
+  Three Ubuntu phased updates remain deferred.
   Docker, application deployment, PostgreSQL, public HTTPS,
   monitoring, and production integration validation have not been
   completed. Deployment remains deferred under the approved
