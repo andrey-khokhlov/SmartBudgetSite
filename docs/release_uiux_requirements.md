@@ -105,7 +105,7 @@ sales. The update records product and architecture approval.
 | Новые релизы | Каждый новый релиз предлагается к покупке отдельно | Заменяет раннее «политика обновлений пока не определена» |
 | RU/EN | Возможности одинаковы; различаются язык интерфейса и руководства, предложения/валюты/региональные цены | Язык интерфейса сайта и язык купленного продукта не смешивать |
 | Получение файла | Email с защищённой ссылкой после подтверждения оплаты | Проверить весь реальный сценарий |
-| Срок скачивания | 12 часов | Не 14 дней; техническая временная ссылка на файл 15 минут — другой механизм |
+| Срок скачивания | 24 часа после подтверждения оплаты по умолчанию | Ранее выданные ссылки сохраняют исходный срок. Техническая временная ссылка на файл действует отдельно |
 | Повторные попытки | Техническая защита выдачи файла; обсуждалось 3 попытки | Не выводить как лицензионное ограничение в FAQ; проверить прерванную загрузку |
 | Запись на консультацию | 14 дней после покупки на выбор/бронирование слота | Сама встреча может состояться позже |
 | Продолжительность | 60 минут, онлайн, демонстрация экрана | В позднем FAQ одинаковые формат и продолжительность для standalone и add-on |
@@ -188,9 +188,9 @@ sales. The update records product and architecture approval.
 | R30 · FAQ-01/02/03 | Пять разделов FAQ, обычные заголовки и существующий аккордеон; RU Частые вопросы, EN Frequently Asked Questions; FAQ допустимо в меню | High / Medium / Low; согласовано | Все вопросы раздела 5.6 присутствуют; не дублируют руководство пользователя | B 54–55, 58, 70 |
 | R31 · FAQ-04 | Сохранить четыре вопроса О SmartBudget, третий — с последним расширением о финансовых возможностях и планах | Medium; согласовано | Нет ранней узкой формулировки только о накоплениях | B 137–139 |
 | R32 · COMP-01, FAQ-05/06 | Раскрывать совместимость до оплаты: Products, практические условия и покупка Landing, выбор версии, Checkout, FAQ. Excel 2019+ для Windows; возможность включить VBA/ActiveX; Mac/web и корпоративные блокировки | High; согласовано | Единый стандарт 5.4 и официальные ссылки Microsoft; ограничения не спрятаны только в FAQ | B 148–156; A 80–89 |
-| R33 · FAQ-07 | Семь вопросов покупки: состав, доставка, бессрочность, следующий год, новые релизы отдельно, 12 часов, поддержка | High; согласовано | Последний ответ о сроке без «трёх попыток»; рабочие ссылки Feedback/support | B 157–167 |
+| R33 · FAQ-07 | Семь вопросов покупки: состав, доставка, бессрочность, следующий год, новые релизы отдельно, 24 часа, поддержка | High; согласовано | Ответ о сроке указывает 24 часа после подтверждения оплаты; рабочие ссылки Feedback/support | B 157–167 и решение владельца о сроке скачивания |
 | R34 · FAQ-08 | Все публикуемые цены — из действующего каталога/БД, формат и валюта соответствуют предложению | High; согласовано | Изменение каталога отражается на Landing/выборе/консультациях/FAQ/Checkout без редактирования текста | A 99–101; B 170–175 |
-| R35 · DL-01 | В purchase email сообщать 12-часовой срок скачивания | High; согласовано | RU/EN письмо с продуктом содержит срок рядом со ссылкой; после покупки только консультации блока скачивания нет | B 165–167, 180 |
+| R35 · DL-01 | В purchase email сообщать о 24 часах на скачивание после подтверждения оплаты | High; согласовано | RU/EN письмо с продуктом содержит срок рядом со ссылкой; после покупки только консультации блока скачивания нет | B 165–167, 180 и решение владельца о сроке скачивания |
 | R36 · DL-02 | На странице скачивания точная дата/время окончания и явно часовой пояс | Medium; согласовано | Ранее отображалось московское время без подписи; теперь дата однозначна для RU/EN | B 166 |
 | R37 · DL-03 | Истечение ссылки не отменяет бессрочное использование продукта; заметная помощь, форма и reference заказа | High; согласовано | Сохраняются обращение/автозаполнение данных; проверены истечение и прерванная/повторная загрузка | B 166–167 |
 | R38 · CONS-02/03/04/05/06 | Standalone и add-on: 60 минут, онлайн, работа с файлом и экраном; первое — отдельная покупка, второе — настройка вместе с продуктом; стоимость из каталога | High; согласовано с проверкой платформы | Страница 5.7 и карточки/FAQ соответствуют реальным предложениям | B 126–135, 172–184 |
@@ -990,7 +990,8 @@ Important: Only enable active content in files from trusted sources. On company-
 
 #### 5.6.3. Покупка и получение / Purchase and Delivery · R33 · B 160–167
 
-**Статус:** семь вопросов с окончательным ответом № 6. Отменённые 14 дней и три попытки в публичном ответе исключены.
+**Статус:** согласованы семь вопросов. Ответ № 6 отражает утверждённый срок
+скачивания. Публикация относится к G14.
 
 ##### RU — Покупка и получение продукта
 
@@ -1028,7 +1029,7 @@ Important: Only enable active content in files from trusted sources. On company-
 
 ###### 6. Как долго доступна ссылка для скачивания?
 
-Защищённая ссылка для скачивания SmartBudget действует в течение 12 часов.
+Защищённая ссылка для скачивания SmartBudget действует в течение 24 часов после подтверждения оплаты.
 
 Это ограничение распространяется только на скачивание файла. Приобретённой версией SmartBudget 1.0 вы можете пользоваться бессрочно.
 
@@ -1078,7 +1079,7 @@ Each new release will be offered as a separate purchase. You can continue using 
 
 ###### 6. How long is the download link available?
 
-Your secure SmartBudget download link is valid for 12 hours.
+Your secure SmartBudget download link is valid for 24 hours after payment confirmation.
 
 This limit applies only to downloading the file. You can continue using your purchased SmartBudget 1.0 version indefinitely.
 
@@ -1431,7 +1432,7 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 ### 5.8. Письма после покупки · R35/R40 · B 176–180
 
-**Статус:** владелец утвердил тексты и темы для всех трёх составов заказа в RU и EN. Реализация G13 и проверка доставки остаются открытыми.
+**Статус:** владелец утвердил тексты и темы для всех трёх составов заказа в RU и EN. G13 реализован и проверен локально. Проверка доставки в релизном окружении остаётся открытой.
 
 #### 5.8.1. Только консультация
 
@@ -1495,7 +1496,7 @@ Best regards, The SmartBudget Team
 
 [Персональная защищённая ссылка для скачивания]
 
-**Важно:** ссылка для скачивания действует в течение **12 часов после подтверждения оплаты**.
+**Важно:** ссылка для скачивания действует в течение **24 часов после подтверждения оплаты**.
 
 Это ограничение относится только к скачиванию файла. Приобретённой версией SmartBudget вы можете пользоваться бессрочно.
 
@@ -1520,7 +1521,7 @@ Thank you for purchasing SmartBudget. Your payment has been successfully confirm
 
 [Personal secure download link]
 
-**Important:** your download link remains valid for **12 hours after payment confirmation**.
+**Important:** your download link remains valid for **24 hours after payment confirmation**.
 
 This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
 
@@ -1547,7 +1548,7 @@ The SmartBudget Team
 
 [Персональная защищённая ссылка для скачивания]
 
-**Важно:** ссылка для скачивания действует в течение **12 часов после подтверждения оплаты**.
+**Важно:** ссылка для скачивания действует в течение **24 часов после подтверждения оплаты**.
 
 Это ограничение относится только к скачиванию файла. Приобретённой версией SmartBudget вы можете пользоваться бессрочно.
 
@@ -1585,7 +1586,7 @@ Thank you for purchasing SmartBudget and a personal consultation. Your payment h
 
 [Personal secure download link]
 
-**Important:** your download link remains valid for **12 hours after payment confirmation**.
+**Important:** your download link remains valid for **24 hours after payment confirmation**.
 
 This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
 
@@ -1613,7 +1614,7 @@ The SmartBudget Team
 
 - Показывать только купленные позиции. Для HTML использовать отдельные кнопки скачивания и записи для соответствующих позиций. В plain text указывать полные защищённые URL.
 - Руководство входит в ZIP. Отдельная ссылка на User Guide в письме не нужна.
-- Срок 12 часов относится к download entitlement. Для скачивания использовать точный приобретённый релиз.
+- Срок 24 часа после подтверждения оплаты относится к новым download entitlements. Для скачивания использовать точный приобретённый релиз. Ранее выданные ссылки сохраняют исходный срок.
 - Срок 14 дней относится к первичному бронированию. Фактическое подтверждение записи содержит дату, время, данные для подключения и проверенные функции управления встречей.
 - Конкретную платформу видеосвязи указывать после её проверки.
 - G13 должен исключить отправку заведомо истёкших ссылок на скачивание. Автоматическое продление доступа не входит в G13.
@@ -1717,7 +1718,7 @@ For purchase enquiries, product support, consultation cancellations, and refunds
 - [ ] Смена языка сайта не выбирает автоматически другой продукт или валюту.
 - [ ] Обработаны три состава заказа: продукт / продукт+консультация / консультация.
 - [ ] После подтверждения оплаты приходит локализованное письмо с корректными персональными ссылками и только купленными позициями.
-- [ ] Срок скачивания в письме — 12 часов; срок бронирования — 14 дней. Они визуально разделены.
+- [ ] Срок скачивания в письме — 24 часа после подтверждения оплаты. Срок первичного бронирования — 14 дней. Сроки визуально разделены.
 - [ ] Страница скачивания показывает конкретное окончание и часовой пояс; ссылка доступна в пределах действующего entitlement.
 - [ ] Проверены истечение срока, ошибочная ссылка, прерванное скачивание и повторная попытка; внутренний лимит не создаёт неожиданной безвыходной потери доступа.
 - [ ] Переход к support после истечения понятен; reference и данные заказа сохраняются/передаются согласно существующему механизму.
@@ -2277,7 +2278,7 @@ recovered copy remains available as source material.
 | R41/R42/R51/R52, Appendix A sections 3.4 and 4 | D4 approves add-on-only item refunds and the full-bundle rule. Current operations support full-Sale refunds and paid-Sale capability checks. | Implement and verify item accounting and unaffected product access before publishing the new policy |
 | R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. Existing `RefundOperation.sale_id` uniqueness remains in force pending bounded implementation |
 | R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Existing public initiation is product-bound. | Implement G11/G12 and validate provider and paid entitlement behavior |
-| R35/R40 | D5 approves persisted Sale-level order language. Localized rendering from that snapshot is pending. | G13 persistence, delivery copy and end-to-end validation |
+| R35/R40 | D5 approves persisted Sale-level order language. G13 uses that snapshot for localized rendering. | Release-environment delivery validation |
 | R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement applicable Checkout/confirmation flows and separate request intake. Synchronize the new policy with actual behavior |
 | R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | Review replacement and verification completed at version 1.0 after zero-reference inspection. Retain immutable identity and distinct R2 keys for later releases |
 

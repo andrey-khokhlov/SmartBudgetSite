@@ -7,7 +7,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.models.download_entitlement import (
     DownloadEntitlement,
     DownloadEntitlementStatus,
@@ -414,11 +414,16 @@ def test_record_download_attempt_rejects_attempt_limit(db_session, monkeypatch):
     assert entitlement.attempt_count == 3
 
 
-def test_creation_uses_configured_twelve_hour_lifetime(db_session, monkeypatch):
-    monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 12)
+@pytest.mark.parametrize("override,expected_hours", [(None, 24), (12, 12)])
+def test_creation_uses_default_or_configured_lifetime(
+    db_session, monkeypatch, override, expected_hours
+):
+    default_hours = Settings.model_fields["DOWNLOAD_TOKEN_TTL_HOURS"].default
+    hours = default_hours if override is None else override
+    monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", hours)
     sale_item, _ = create_product_item(db_session)
 
     entitlement = create_download_entitlement(db_session, sale_item)
     lifetime = entitlement.expires_at - entitlement.created_at
 
-    assert lifetime == timedelta(hours=12)
+    assert lifetime == timedelta(hours=expected_hours)

@@ -20,7 +20,7 @@
                 <strong>{{ offer.amount | money(lang) }} {{ offer.currency_code }}</strong>
             </div>
         </div>
-        <form class="checkout-form" method="post" action="/consultations/checkout/{{ offer.id }}">
+        <form class="checkout-form" method="post" action="/consultations/checkout/{{ offer.id }}?lang={{ lang }}">
             <input type="hidden" name="currency" value="{{ offer.currency_code }}">
             <label for="checkout-email">{{ t("checkout.email") }}</label>
             <input id="checkout-email" name="customer_email" type="email" autocomplete="email"

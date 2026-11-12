@@ -1256,6 +1256,7 @@ def initiate_checkout(
             customer_email=customer_email,
             currency=currency,
             include_consultation=consultation == "1",
+            purchase_language=get_lang(request),
         )
     except CheckoutValidationError:
         return render(
@@ -1348,7 +1349,11 @@ def initiate_consultation_checkout(
 ):
     try:
         payment_url = initiate_lava_top_standalone_consultation_checkout(
-            db, service_addon_id=offer_id, customer_email=customer_email, currency=currency
+            db,
+            service_addon_id=offer_id,
+            customer_email=customer_email,
+            currency=currency,
+            purchase_language=get_lang(request),
         )
     except CheckoutValidationError:
         status_code = 400

@@ -457,9 +457,33 @@ product-only, bundle and consultation-only orders with focused tests. It
 preserves payment confirmation, atomic fulfillment, Resend transport,
 idempotency, and retry and reconciliation behavior.
 
-G13 must prevent delivery of known-expired download links. Download expiry
-continues to follow the entitlement. Controlled reissue is a separate
+G13 blocks transport when a download link has expired. With no ambiguous prior
+attempt, delivery records a safe diagnostic and enters `FAILED`. For an
+ambiguous attempt, delivery retains `SENDING` and its original
+`sending_started_at`. The existing 23-hour window still governs transition
+to `RECONCILIATION_REQUIRED`. Controlled reissue is a separate
 [pre-release Admin operation](../release_readiness.md#g13c--reissue-download-access).
+
+### Purchase delivery monitoring (G13D)
+
+Monitor payment confirmation, entitlement fulfillment, purchase email dispatch,
+and delivery outcomes reported by the email provider. Check approximately every
+five minutes and target detection of critical failures within ten minutes.
+Use an external heartbeat capable of detecting outages of the website or the
+monitoring service itself.
+
+The primary operational email recipient is
+[khokhlov.a.a@gmail.com](mailto:khokhlov.a.a@gmail.com). Send critical alerts
+also through the official Telegram Bot API. Credentials and recipient identifiers
+must be configurable. Critical alert delivery must have a path independent of
+Resend. Notifications must exclude customer PII, capability tokens, protected
+URLs, and credentials.
+
+Monitoring preserves authoritative payment confirmation, safe purchase-email
+idempotency, the existing 23-hour ambiguous retry boundary, and the 14-day
+consultation booking window. A separate G13D architecture review will select
+scheduling infrastructure, an alert email provider, and an external monitoring
+vendor.
 
 Customer-facing delivery URLs must be generated from server-owned application
 configuration rather than inferred from an incoming Host header or browser
@@ -634,7 +658,9 @@ MVP rules:
 - one product item has at most one entitlement;
 - service items never receive download entitlements;
 - tokens are secure, unique, and expire after a configured lifetime;
-- current default token lifetime is 12 hours;
+- newly issued download entitlements default to 24 hours after payment
+  confirmation. Issuance uses `DOWNLOAD_TOKEN_TTL_HOURS`. Previously issued
+  entitlements retain their stored expiry;
 - every GET/POST access is validated before storage access is exposed;
 - signed URLs are short-lived; the current default is 900 seconds;
 - capability responses use `Cache-Control: private, no-store, max-age=0`,

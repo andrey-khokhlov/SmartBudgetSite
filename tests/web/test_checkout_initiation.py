@@ -89,10 +89,12 @@ def install_successful_provider(monkeypatch, captured: dict) -> str:
     return payment_url
 
 
+@pytest.mark.parametrize("language", ["ru", "en"])
 def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     client,
     db_session,
     monkeypatch,
+    language,
 ):
     product = create_checkout_catalog(
         db_session,
@@ -101,8 +103,14 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     captured = {}
     payment_url = install_successful_provider(monkeypatch, captured)
 
+    path = f"/checkout/{product.slug}"
+    checkout = client.get(path, params={"currency": "EUR", "lang": language})
+    assert checkout.status_code == 200
+    action = f"{path}?lang={language}"
+    assert f'action="{action}"' in checkout.text
+    client.cookies.set("sb_lang", "en" if language == "ru" else "ru")
     response = client.post(
-        f"/checkout/{product.slug}",
+        action,
         data={
             "customer_email": " Buyer@Example.com ",
             "currency": " eur ",
@@ -120,6 +128,10 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     sale = db_session.query(Sale).one()
     items = db_session.query(SaleItem).filter_by(sale_id=sale.id).all()
     assert sale.customer_email == "buyer@example.com"
+    assert sale.purchase_language == language
+    client.get("/faq", params={"lang": "en" if language == "ru" else "ru"})
+    db_session.refresh(sale)
+    assert sale.purchase_language == language
     assert sale.amount == Decimal("39.00")
     assert sale.currency == "EUR"
     assert sale.payment_provider == "lava_top"

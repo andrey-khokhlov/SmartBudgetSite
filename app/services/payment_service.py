@@ -81,6 +81,7 @@ def initiate_lava_top_product_checkout(
     customer_email: str,
     currency: str,
     include_consultation: bool,
+    purchase_language: str = "en",
 ) -> str:
     """Resolve checkout data, prepare its sale snapshots, and create checkout."""
 
@@ -124,6 +125,7 @@ def initiate_lava_top_product_checkout(
             db,
             product=product,
             customer_email=normalized_email,
+            purchase_language=purchase_language,
             amount=price.amount,
             currency=normalized_currency,
             payment_provider=LAVA_TOP_PROVIDER,
@@ -197,6 +199,7 @@ def initiate_lava_top_standalone_consultation_checkout(
     service_addon_id: int,
     customer_email: str,
     currency: str,
+    purchase_language: str = "en",
 ) -> str:
     """Start hosted checkout for one exact standalone consultation catalog record."""
     normalized_email = _normalize_checkout_email(customer_email)
@@ -209,6 +212,7 @@ def initiate_lava_top_standalone_consultation_checkout(
             service_addon_id=service.id,
             service_name=service.name,
             customer_email=normalized_email,
+            purchase_language=purchase_language,
             amount=service.amount,
             currency=service.currency_code,
             payment_provider=LAVA_TOP_PROVIDER,
@@ -233,6 +237,7 @@ def prepare_product_payment(
     amount: Decimal,
     currency: str,
     payment_provider: str,
+    purchase_language: str = "en",
 ) -> Sale:
     """
     Prepare a pending product sale before payment-provider interaction.
@@ -271,6 +276,7 @@ def prepare_product_payment(
         product=product,
         product_release=active_release,
         customer_email=customer_email,
+        purchase_language=purchase_language,
         amount=amount,
         currency=currency,
         payment_provider=payment_provider,

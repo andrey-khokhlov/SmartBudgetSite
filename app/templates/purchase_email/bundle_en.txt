@@ -1,0 +1,35 @@
+SmartBudget — your purchase and consultation booking
+
+Hello,
+
+Thank you for purchasing SmartBudget and a personal consultation. Your payment has been successfully confirmed.
+
+**Your purchase:** {{ product_name }} + personal consultation (60 minutes).
+
+**1. Download SmartBudget**
+
+[[download:Personal secure download link]]
+
+**Important:** your download link remains valid for **24 hours after payment confirmation**.
+
+This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
+
+We recommend downloading the file and saving it to your device.
+
+**2. Book your consultation**
+
+**Duration:** 60 minutes.\
+**Format:** individual online consultation.
+
+[[booking:Personal secure booking link]]
+
+Please select a convenient time from the available slots. You must book your consultation within **14 days of purchase**. The consultation itself may take place later.
+
+Once your booking is confirmed, you will receive a separate confirmation with the date, time, and instructions for joining the online meeting.
+
+If you need to change your appointment, use the rescheduling link in your booking confirmation.
+
+If you have any questions or experience difficulties downloading SmartBudget or booking your consultation, please use the feedback form on our website or contact us at support@neocitrix.com.
+
+Best regards,\
+The SmartBudget Team

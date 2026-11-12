@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import sqlalchemy as sa
+import pytest
 from sqlalchemy.dialects import postgresql
 
 from app.models.consultation_entitlement import ConsultationEntitlement
@@ -23,12 +24,12 @@ REFUND_TIMESTAMP_COLUMNS = (
 )
 
 
-def _load_migration():
+def _load_migration(filename="2f6a9d7c4e10_restore_db_schema_parity.py"):
     migration_path = (
         Path(__file__).parents[1]
         / "alembic"
         / "versions"
-        / "2f6a9d7c4e10_restore_db_schema_parity.py"
+        / filename
     )
     spec = importlib.util.spec_from_file_location(
         "restore_db_schema_parity_migration",
@@ -38,6 +39,24 @@ def _load_migration():
     migration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(migration)
     return migration
+
+
+def test_purchase_language_cutover_checks_legacy_sending_before_switching_schema():
+    migration = _load_migration("eb63c5a92f10_add_sale_purchase_language.py")
+    with (
+        patch.object(
+            migration.op,
+            "execute",
+            side_effect=[None, RuntimeError("legacy cutover blocked")],
+        ) as execute,
+        patch.object(migration.op, "add_column") as add_column,
+    ):
+        with pytest.raises(RuntimeError, match="legacy cutover blocked"):
+            migration.upgrade()
+
+    assert "LOCK TABLE purchase_email_deliveries" in execute.call_args_list[0].args[0]
+    assert "WHERE status = 'sending'" in execute.call_args_list[1].args[0]
+    add_column.assert_not_called()
 
 
 def _active_price_index() -> sa.Index:

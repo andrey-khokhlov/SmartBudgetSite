@@ -17,6 +17,7 @@ def create_product_sale(
     customer_email: str,
     amount: Decimal,
     currency: str,
+    purchase_language: str = "en",
     payment_provider: str | None = None,
     external_payment_id: str | None = None,
     payment_status: str = PaymentStatus.PENDING,
@@ -48,6 +49,7 @@ def create_product_sale(
     sale = Sale(
         product_id=product.id,  # temporary legacy compatibility
         customer_email=customer_email,
+        purchase_language=purchase_language,
         amount=amount,
         currency=currency,
         payment_provider=payment_provider,
@@ -146,6 +148,7 @@ def create_standalone_service_sale(
     customer_email: str,
     amount: Decimal,
     currency: str,
+    purchase_language: str = "en",
     payment_provider: str | None = None,
     external_payment_id: str | None = None,
     payment_status: str = PaymentStatus.PENDING,
@@ -170,6 +173,7 @@ def create_standalone_service_sale(
     sale = Sale(
         product_id=None,
         customer_email=customer_email,
+        purchase_language=purchase_language,
         amount=amount,
         currency=currency,
         payment_provider=payment_provider,

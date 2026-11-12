@@ -486,6 +486,31 @@ Public checkout continues to resolve the exact active price, active release,
 and Product/provider mapping server-side and fails closed when configuration is
 missing.
 
+## G13 purchase email template cutover
+
+On the legacy release, inspect unfinished deliveries using the target
+environment's database.
+
+```sql
+SELECT id, sale_id, status, sending_started_at
+FROM purchase_email_deliveries
+WHERE status IN ('sending', 'reconciliation_required')
+ORDER BY id;
+```
+
+Resolve any `sending` entries through the existing reconciliation process
+before upgrading. Once the 23-hour window has elapsed, the existing Admin retry
+action transitions an unresolved attempt to `reconciliation_required` without
+contacting Resend. Leave those records subject to the existing explicit
+provider reconciliation and resend authorization. An existing delivery keeps
+its original idempotency key.
+
+After reconciliation, stop application processes that can start email delivery
+and repeat the query. With zero `sending` entries, apply migration
+`eb63c5a92f10` and start the G13 application. The migration locks the delivery
+table during the check and refuses to change the schema while a `sending`
+entry exists. Apply the same operational check before rolling back the renderer.
+
 ## Manual Lava.top checkout smoke test
 
 The Lava.top checkout smoke command is a deliberate live-provider operation.

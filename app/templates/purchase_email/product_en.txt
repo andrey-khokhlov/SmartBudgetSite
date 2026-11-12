@@ -1,0 +1,22 @@
+SmartBudget — your purchase is ready to download
+
+Hello,
+
+Thank you for purchasing SmartBudget. Your payment has been successfully confirmed.
+
+**Your purchase:** {{ product_name }}
+
+**Download SmartBudget:**
+
+[[download:Personal secure download link]]
+
+**Important:** your download link remains valid for **24 hours after payment confirmation**.
+
+This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
+
+We recommend downloading the file and saving it to your device.
+
+If you have any questions or experience difficulties downloading your purchase, please use the feedback form on our website or contact us at support@neocitrix.com.
+
+Best regards,\
+The SmartBudget Team

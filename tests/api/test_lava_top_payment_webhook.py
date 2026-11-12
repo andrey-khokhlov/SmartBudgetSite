@@ -18,7 +18,7 @@ from app.services.sale_service import create_product_sale
 WEBHOOK_URL = "/v1/webhooks/lava-top/payment-result"
 
 
-def create_sale(db_session):
+def create_sale(db_session, *, purchase_language="en"):
     product = Product(
         family_slug="smartbudget",
         slug="lava-webhook-product",
@@ -44,6 +44,7 @@ def create_sale(db_session):
         product=product,
         product_release=release,
         customer_email="private-buyer@example.com",
+        purchase_language=purchase_language,
         amount=Decimal("50.00"),
         currency="RUB",
         payment_provider="lava_top",
@@ -104,7 +105,8 @@ def test_wrong_or_missing_key_is_rejected_before_domain_processing(
 def test_success_sends_once_after_commit_and_replay_does_not_resend(
     client, db_session, monkeypatch
 ):
-    sale = create_sale(db_session)
+    sale = create_sale(db_session, purchase_language="ru")
+    client.cookies.set("sb_lang", "en")
     monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
     monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
     monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
@@ -132,6 +134,8 @@ def test_success_sends_once_after_commit_and_replay_does_not_resend(
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
     assert delivery.status == PurchaseEmailDeliveryStatus.SENT.value
     assert len(sent_messages) == 1
+    assert sale.purchase_language == "ru"
+    assert sent_messages[0].subject == "SmartBudget — ваша покупка готова к скачиванию"
 
 
 def test_email_transport_failure_does_not_fail_payment_webhook(

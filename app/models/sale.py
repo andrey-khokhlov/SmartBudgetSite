@@ -38,6 +38,9 @@ class Sale(Base):
     )
 
     customer_email: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    purchase_language: Mapped[str] = mapped_column(
+        String(2), nullable=False, default="en", server_default="en"
+    )
 
     items: Mapped[list["SaleItem"]] = relationship(
         "SaleItem",
@@ -89,6 +92,9 @@ class Sale(Base):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "purchase_language IN ('ru', 'en')", name="ck_sales_purchase_language"
+        ),
         CheckConstraint(
             "(payment_last_checked_at IS NULL AND payment_last_check_result IS NULL) "
             "OR (payment_last_checked_at IS NOT NULL "

@@ -1,6 +1,8 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+import pytest
+
 from app.core.config import settings
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.download_entitlement import DownloadEntitlement
@@ -23,11 +25,14 @@ from app.services.email_transport import (
 from app.services.payment_delivery_orchestration_service import (
     reconcile_payment_and_deliver,
 )
+from app.services.payment_reconciliation_service import reconcile_payment_event
 from app.services.purchase_email_delivery_service import (
+    EXPIRED_DOWNLOAD_DIAGNOSTIC,
     PurchaseEmailAttemptResult,
     authorize_reconciliation_resend,
     deliver_purchase_email_after_payment_commit,
 )
+from app.services.purchase_email_renderer import PurchaseEmailRenderError
 from app.services.sale_service import (
     create_product_sale,
     create_service_sale_item,
@@ -56,7 +61,7 @@ def configure_email(monkeypatch) -> None:
     monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
 
 
-def create_pending_sale(db_session, *, kind: str) -> Sale:
+def create_pending_sale(db_session, *, kind: str, language: str = "en") -> Sale:
     product = None
     release = None
     if kind in {"product", "bundle"}:
@@ -103,6 +108,7 @@ def create_pending_sale(db_session, *, kind: str) -> Sale:
             service_addon_id=addon.id,
             service_name=addon.name,
             customer_email="buyer@example.test",
+            purchase_language=language,
             amount=Decimal("35.00"),
             currency="EUR",
             payment_provider="lava_top",
@@ -114,6 +120,7 @@ def create_pending_sale(db_session, *, kind: str) -> Sale:
             product=product,
             product_release=release,
             customer_email="buyer@example.test",
+            purchase_language=language,
             amount=Decimal("74.00" if kind == "bundle" else "39.00"),
             currency="EUR",
             payment_provider="lava_top",
@@ -222,7 +229,7 @@ def test_definitive_failure_preserves_payment_and_retries_successfully(
 
 def test_ambiguous_retry_window_and_lazy_reconciliation(db_session, monkeypatch):
     configure_email(monkeypatch)
-    sale = create_pending_sale(db_session, kind="product")
+    sale = create_pending_sale(db_session, kind="consultation")
     initial_time = datetime(2026, 8, 11, 10, 0, tzinfo=UTC)
     ambiguous = RecordingTransport(
         failure=EmailTransportAmbiguousError("secret download-token-value")
@@ -266,9 +273,61 @@ def test_ambiguous_retry_window_and_lazy_reconciliation(db_session, monkeypatch)
     assert blocked_transport.messages == []
 
 
+@pytest.mark.parametrize("failure", ["render", "transport"])
+def test_later_definitive_failure_preserves_prior_ambiguity(
+    db_session, monkeypatch, failure
+):
+    configure_email(monkeypatch)
+    sale = create_pending_sale(db_session, kind="consultation")
+    started_at = datetime(2026, 8, 11, 10, tzinfo=UTC)
+    first = RecordingTransport(failure=EmailTransportAmbiguousError("unknown"))
+    reconcile_payment_and_deliver(
+        db_session, payment_event(sale), transport=first, now=started_at
+    )
+    delivery = sale.purchase_email_delivery
+    assert delivery.status == PurchaseEmailDeliveryStatus.SENDING.value
+
+    retry = RecordingTransport(failure=EmailTransportDefinitiveError("rejected"))
+    if failure == "render":
+
+        def fail_render(*args, **kwargs):
+            raise PurchaseEmailRenderError("render failed")
+
+        monkeypatch.setattr(
+            "app.services.purchase_email_delivery_service.render_purchase_email",
+            fail_render,
+        )
+    result = deliver_purchase_email_after_payment_commit(
+        db_session,
+        sale_id=sale.id,
+        transport=retry,
+        now=started_at + timedelta(hours=22),
+    )
+    assert result == PurchaseEmailAttemptResult.AMBIGUOUS
+    assert delivery.status == PurchaseEmailDeliveryStatus.SENDING.value
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == started_at
+    assert sale.payment_status == PaymentStatus.PAID
+    if failure == "render":
+        assert retry.messages == []
+    else:
+        assert retry.messages == first.messages
+
+    blocked = RecordingTransport()
+    result = deliver_purchase_email_after_payment_commit(
+        db_session,
+        sale_id=sale.id,
+        transport=blocked,
+        now=started_at + timedelta(hours=23),
+    )
+    assert result == PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
+    assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == started_at
+    assert blocked.messages == []
+
+
 def test_safe_retries_do_not_extend_original_ambiguous_window(db_session, monkeypatch):
     configure_email(monkeypatch)
-    sale = create_pending_sale(db_session, kind="product")
+    sale = create_pending_sale(db_session, kind="consultation")
     initial_time = datetime(2026, 8, 11, 10, 0, tzinfo=UTC)
     ambiguous = RecordingTransport(failure=EmailTransportAmbiguousError("ambiguous"))
     reconcile_payment_and_deliver(
@@ -302,28 +361,120 @@ def test_safe_retries_do_not_extend_original_ambiguous_window(db_session, monkey
     assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
 
 
-def test_product_consultation_and_bundle_content(db_session, monkeypatch):
+@pytest.mark.parametrize(
+    "kind,language,subject",
+    [
+        ("product", "en", "your purchase is ready to download"),
+        ("product", "ru", "ваша покупка готова к скачиванию"),
+        ("bundle", "en", "your purchase and consultation booking"),
+        ("bundle", "ru", "ваша покупка и запись на консультацию"),
+        ("consultation", "en", "book your purchased consultation"),
+        ("consultation", "ru", "запись на оплаченную консультацию"),
+    ],
+)
+def test_product_consultation_and_bundle_content(
+    db_session, monkeypatch, kind, language, subject
+):
     configure_email(monkeypatch)
-    for kind, expected_paths in [
-        ("product", ["/download/"]),
-        ("consultation", ["/consultation/book/"]),
-        ("bundle", ["/download/", "/consultation/book/"]),
-    ]:
-        sale = create_pending_sale(db_session, kind=kind)
-        transport = RecordingTransport()
-        reconcile_payment_and_deliver(
-            db_session,
-            payment_event(sale),
-            transport=transport,
-        )
-        assert len(transport.messages) == 1
-        for path in expected_paths:
-            assert path in transport.messages[0].text_body
-        assert transport.messages[0].sender_email == "support@example.test"
-        assert transport.messages[0].sender_name == "SmartBudget"
+    sale = create_pending_sale(db_session, kind=kind, language=language)
+    product = next((item for item in sale.items if item.item_type == "product"), None)
+    if product:
+        product.item_name = "SmartBudget <script> & Standard"
+    transport = RecordingTransport()
+    reconcile_payment_and_deliver(db_session, payment_event(sale), transport=transport)
+    (message,) = transport.messages
+    assert message.subject == f"SmartBudget — {subject}"
+    assert message.sender_email == "support@example.test"
+    assert message.sender_name == "SmartBudget"
+    assert sale.purchase_language == language
+    assert db_session.query(DownloadEntitlement).count() == int(kind != "consultation")
+    assert db_session.query(ConsultationEntitlement).count() == int(kind != "product")
+    download_notice = "24 часов" if language == "ru" else "24 hours"
+    booking_notice = "14 дней" if language == "ru" else "14 days"
+    for body in (message.text_body, message.html_body):
+        assert ("/download/" in body) == (kind != "consultation")
+        assert ("/consultation/book/" in body) == (kind != "product")
+        assert (download_notice in body) == (kind != "consultation")
+        assert (booking_notice in body) == (kind != "product")
+        assert "support@neocitrix.com" in body
+        assert "{{ product_name }}" not in body and "[[" not in body
+    for item in sale.items:
+        if item.item_type == "product":
+            url = f"https://app.example.test/download/{item.download_entitlement.download_token}"
+        else:
+            url = f"https://app.example.test/consultation/book/{item.consultation_entitlement.booking_token}"
+        assert url in message.text_body
+        assert f'href="{url}"' in message.html_body
+    if product:
+        assert "SmartBudget <script> & Standard" in message.text_body
+        assert "SmartBudget &lt;script&gt; &amp; Standard" in message.html_body
+        assert "<script>" not in message.html_body
 
-    assert db_session.query(DownloadEntitlement).count() == 2
-    assert db_session.query(ConsultationEntitlement).count() == 2
+
+@pytest.mark.parametrize("status", ["pending", "failed"])
+def test_expired_download_blocks_definitive_delivery(db_session, monkeypatch, status):
+    configure_email(monkeypatch)
+    sale = create_pending_sale(db_session, kind="bundle")
+    reconcile_payment_event(db_session, payment_event(sale))
+    entitlement = db_session.query(DownloadEntitlement).one()
+    expires_at = entitlement.expires_at.replace(tzinfo=UTC)
+    sale.purchase_email_delivery.status = status
+    db_session.commit()
+    transport = RecordingTransport()
+    result = deliver_purchase_email_after_payment_commit(
+        db_session, sale_id=sale.id, transport=transport, now=expires_at
+    )
+    assert result == PurchaseEmailAttemptResult.FAILED
+    assert transport.messages == []
+    assert sale.payment_status == PaymentStatus.PAID
+    assert sale.purchase_email_delivery.last_error == EXPIRED_DOWNLOAD_DIAGNOSTIC
+    assert sale.purchase_email_delivery.sending_started_at is None
+    assert entitlement.expires_at.replace(tzinfo=UTC) == expires_at
+
+
+def test_expired_download_preserves_ambiguity_until_original_window_ends(
+    db_session, monkeypatch
+):
+    configure_email(monkeypatch)
+    monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 12)
+    sale = create_pending_sale(db_session, kind="product")
+    started_at = datetime.now(UTC)
+    reconcile_payment_and_deliver(
+        db_session,
+        payment_event(sale),
+        transport=RecordingTransport(failure=EmailTransportAmbiguousError("unknown")),
+        now=started_at,
+    )
+    transport = RecordingTransport()
+    expires_at = (
+        db_session.query(DownloadEntitlement).one().expires_at.replace(tzinfo=UTC)
+    )
+    for retry_time in (expires_at, started_at + timedelta(hours=22)):
+        result = deliver_purchase_email_after_payment_commit(
+            db_session, sale_id=sale.id, transport=transport, now=retry_time
+        )
+        assert result == PurchaseEmailAttemptResult.AMBIGUOUS
+        assert (
+            sale.purchase_email_delivery.status
+            == PurchaseEmailDeliveryStatus.SENDING.value
+        )
+        assert (
+            sale.purchase_email_delivery.sending_started_at.replace(tzinfo=UTC)
+            == started_at
+        )
+        assert sale.purchase_email_delivery.last_error == EXPIRED_DOWNLOAD_DIAGNOSTIC
+    result = deliver_purchase_email_after_payment_commit(
+        db_session,
+        sale_id=sale.id,
+        transport=transport,
+        now=started_at + timedelta(hours=23),
+    )
+    assert result == PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
+    assert (
+        sale.purchase_email_delivery.status
+        == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+    )
+    assert transport.messages == []
 
 
 def test_missing_configuration_fails_delivery_without_changing_payment(

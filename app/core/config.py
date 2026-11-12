@@ -62,7 +62,7 @@ class Settings(BaseSettings):
         gt=0,
     )
 
-    DOWNLOAD_TOKEN_TTL_HOURS: int = 12
+    DOWNLOAD_TOKEN_TTL_HOURS: int = 24
     DOWNLOAD_SIGNED_URL_TTL_SECONDS: int = 900
     DOWNLOAD_MAX_ATTEMPTS: int = 3
 

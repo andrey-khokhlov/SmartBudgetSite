@@ -176,7 +176,7 @@ def test_checkout_with_consultation_shows_product_addon_and_total(client, db_ses
     assert "7,400.00 RUB" in response.text
     assert 'method="post"' in response.text
     assert (
-        'action="/checkout/smartbudget-ru-standard-checkout-addon-test"'
+        'action="/checkout/smartbudget-ru-standard-checkout-addon-test?lang=en"'
         in response.text
     )
     assert 'name="customer_email"' in response.text

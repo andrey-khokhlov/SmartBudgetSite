@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.config import settings
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
@@ -90,11 +91,14 @@ def event(sale: Sale, outcome: PaymentOutcome) -> NormalizedPaymentEvent:
     )
 
 
-def test_success_fulfills_product_once_and_replay_is_idempotent(db_session):
+def test_success_fulfills_product_once_and_replay_is_idempotent(db_session, monkeypatch):
     sale = create_pending_sale(db_session)
 
+    monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 12)
     first = reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
     db_session.commit()
+    original_expiry = db_session.query(DownloadEntitlement).one().expires_at
+    monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 24)
     second = reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
     db_session.commit()
 
@@ -102,7 +106,7 @@ def test_success_fulfills_product_once_and_replay_is_idempotent(db_session):
     assert first.result == PaymentReconciliationResult.APPLIED
     assert second.result == PaymentReconciliationResult.IDEMPOTENT
     assert sale.payment_status == PaymentStatus.PAID
-    assert db_session.query(DownloadEntitlement).count() == 1
+    assert db_session.query(DownloadEntitlement).one().expires_at == original_expiry
     assert db_session.query(ConsultationEntitlement).count() == 0
     assert db_session.query(PurchaseEmailDelivery).count() == 1
 

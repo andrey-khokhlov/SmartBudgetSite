@@ -64,7 +64,7 @@ def test_localized_catalog_and_checkout(
     assert checkout.status_code == 200
     assert price in checkout.text and addon not in checkout.text
     assert f'<html lang="{lang}">' in checkout.text
-    assert f'action="{path}"' in checkout.text
+    assert f'action="{path}?lang={lang}"' in checkout.text
     assert (
         "защищённую ссылку для записи" if lang == "ru" else "secure booking link"
     ) in checkout.text
@@ -101,10 +101,19 @@ def provider(monkeypatch):
     return stub
 
 
-def test_post_creates_only_pending_service_sale(client, db_session, catalog, provider):
+@pytest.mark.parametrize("language", ["ru", "en"])
+def test_post_creates_only_pending_service_sale(
+    client, db_session, catalog, provider, language
+):
     offer_id = catalog["EUR"]
+    path = f"/consultations/checkout/{offer_id}"
+    checkout = client.get(path, params={"currency": "EUR", "lang": language})
+    assert checkout.status_code == 200
+    action = f"{path}?lang={language}"
+    assert f'action="{action}"' in checkout.text
+    client.cookies.set("sb_lang", "en" if language == "ru" else "ru")
     response = client.post(
-        f"/consultations/checkout/{offer_id}",
+        action,
         data={
             "currency": " eur ",
             "customer_email": " BUYER@example.com ",
@@ -122,6 +131,7 @@ def test_post_creates_only_pending_service_sale(client, db_session, catalog, pro
     )
     sale = db_session.query(Sale).one()
     assert sale.payment_status == PaymentStatus.PENDING
+    assert sale.purchase_language == language
     assert sale.external_payment_id == "private-invoice"
     (item,) = sale.items
     assert sale.product_id is item.product_id is item.product_release_id is None

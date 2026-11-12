@@ -1,12 +1,26 @@
 from decimal import Decimal
 
+from app.core.config import settings
 from app.models.enums import PaymentStatus
 from app.models.purchase_email_delivery import (
     PurchaseEmailDelivery,
     PurchaseEmailDeliveryStatus,
 )
 from app.models.sale import Sale
+from app.services.email_transport import (
+    EmailTransportDefinitiveError,
+    EmailTransportResult,
+)
+from app.services.payment_delivery_orchestration_service import (
+    reconcile_payment_and_deliver,
+)
 from app.services.purchase_email_delivery_service import PurchaseEmailAttemptResult
+from tests.services.test_purchase_email_delivery_service import (
+    RecordingTransport,
+    configure_email,
+    create_pending_sale,
+    payment_event,
+)
 
 
 def create_sale_with_delivery(db_session, *, status: str) -> Sale:
@@ -67,6 +81,35 @@ def test_admin_retry_delegates_to_delivery_service(
     assert response.status_code == 303
     assert response.headers["location"] == "/admin/sales?email_result=sent"
     assert called_sale_ids == [sale.id]
+
+
+def test_admin_retry_uses_saved_language_and_original_key(
+    auth_client, db_session, monkeypatch
+):
+    configure_email(monkeypatch)
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    sale = create_pending_sale(db_session, kind="bundle", language="ru")
+    first = RecordingTransport(failure=EmailTransportDefinitiveError("rejected"))
+    reconcile_payment_and_deliver(db_session, payment_event(sale), transport=first)
+    retried = []
+
+    def fake_send(_transport, message):
+        retried.append(message)
+        return EmailTransportResult(provider_message_id="retried")
+
+    monkeypatch.setattr(
+        "app.services.resend_email_transport.ResendEmailTransport.send", fake_send
+    )
+    response = auth_client.post(
+        f"/admin/sales/{sale.id}/purchase-email/retry?lang=en", follow_redirects=False
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin/sales?email_result=sent"
+    assert retried == first.messages
+    assert retried[0].subject == "SmartBudget — ваша покупка и запись на консультацию"
+    db_session.refresh(sale)
+    assert sale.purchase_language == "ru"
+    assert sale.payment_status == PaymentStatus.PAID
 
 
 def test_admin_reconciliation_resend_requires_separate_confirmation(

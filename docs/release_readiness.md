@@ -911,6 +911,17 @@ coverage, but still require deployed-environment validation. Remaining work is:
 - production validation of the RUB and EUR payment flow, including Solo Bank
   compatibility for the currently planned foreign EUR payout destination.
 
+G13 implements the RU/EN purchase emails and durable order language. Before
+switching templates, follow the [G13 cutover check](operations.md#g13-purchase-email-template-cutover).
+Actual release-environment delivery remains open under REL-001.
+
+New SmartBudget download entitlements default to 24 hours after payment
+confirmation. The product and bundle emails, configuration example, tests,
+approved G14 FAQ copy, and G13C requirement use this duration. Before public
+sales, verify the effective TTL in the release environment, follow the
+[template cutover check](operations.md#g13-purchase-email-template-cutover),
+and publish the G14 FAQ. Previously issued entitlements keep their expiry.
+
 #### G13B — Customer Email Correction
 
 **Open. Required before public sales.** Provide a protected Admin operation to
@@ -923,13 +934,22 @@ idempotency key. Preserve the payment and order composition.
 
 **Open. Required before public sales.** After verifying that the order was paid
 and remains unrefunded, provide a protected Admin operation to reissue access to
-the exact purchased release for the standard 12 hours. Invalidate the previous
-token, retain its download-attempt history, and record the reason. Use a separate
-controlled redelivery procedure and keep the global TTL independent of this
-operation.
+the exact purchased release for the approved standard of 24 hours from reissue.
+Invalidate the previous token, retain its download-attempt history, and record
+the reason. Use a separate controlled redelivery procedure and keep the global
+TTL independent of this operation.
 
 The current `DownloadEntitlement` and purchase-email delivery lifecycle provide
 neither Admin operation.
+
+#### G13D — Purchase Delivery Monitoring
+
+**Open. Required before public sales.** G13D is a separate workstream from G13
+purchase email localization. Implement and validate the
+[approved monitoring requirements](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
+for the complete purchase delivery chain, critical alert delivery, and external
+heartbeat coverage. Scheduling infrastructure, the alert email provider, and
+the external monitoring vendor require a separate G13D architecture review.
 
 ### Production deployment (`REL-002`)
 
