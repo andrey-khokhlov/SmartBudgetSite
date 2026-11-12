@@ -972,14 +972,17 @@ incident history are complete. G13D-2a Lava.top recovery is implemented and
 locally validated. G13D-2b Resend webhook delivery monitoring is implemented
 and locally validated. Live endpoint registration and provider validation
 remain open. G13D-2c safe automatic purchase-email recovery is implemented and
-locally validated. Live recovery validation and G13D-3 operational integration
-remain open. The
+locally validated. Live recovery validation remains open. G13D-3 operational
+monitoring is architecturally approved and awaits implementation. The
 [approved architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 requires release-environment validation of bounded Lava.top recovery, Resend
 webhook monitoring and replay, safe automatic purchase-email recovery,
-five-minute scheduled scans and Lava.top recovery, independent SMTP and
-Telegram alerts, Healthchecks.io heartbeat coverage, operational metrics, and
-the 30-minute critical detection SLO under the documented evidence limits.
+and the 30-minute critical detection SLO under the documented evidence limits.
+Validate the four [G13D-3 scheduled jobs](operations.md#g13d-3-operational-monitoring-target),
+their execution metrics, PostgreSQL outbox delivery with independent SMTP and
+Telegram retry outcomes, external Healthchecks.io job heartbeats, independent
+public availability checks, and VPS, PostgreSQL, and public application
+monitoring.
 G13D and REL-001 remain open.
 
 ### Production deployment (`REL-002`)

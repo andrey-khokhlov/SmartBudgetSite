@@ -581,7 +581,6 @@ restore it and re-enable it in the Dashboard before replaying events. Do not
 create or use a Full Access key for management or replay. See
 [Resend's retry and replay documentation](https://resend.com/docs/webhooks/retries-and-replays).
 
-The five-minute timer is for incident scanning and Lava.top payment recovery.
 Resend delivery monitoring uses webhooks. During release validation, verify
 live webhook delivery and the Dashboard fallback separately from the
 Healthchecks.io heartbeat.
@@ -628,6 +627,46 @@ through the existing protected flow and emits a sanitized authorization log.
 
 The command is unscheduled. Validate live recovery and include it in the
 G13D-3 operational integration before public sales.
+
+## G13D-3 operational monitoring target
+
+The architecture is approved and awaits implementation. The existing scanner
+and recovery commands are available for one-pass execution. The following
+service/timer pairs and the alert dispatcher are release targets.
+
+| Job | Target interval |
+| --- | --- |
+| Incident Scanner | 5 minutes |
+| Lava.top Recovery | 5 minutes |
+| Purchase Email Recovery | 5 minutes |
+| Alert Dispatcher | 1 minute |
+
+Stagger the scheduled runs, prevent overlapping executions of each job, and
+keep their failures independent. Use Healthchecks.io for external scheduled-job
+heartbeats and an independent check for public HTTP/HTTPS availability. Verify
+that missed-job and availability failures can be detected even when the local
+Alert Dispatcher is unavailable.
+
+Measure execution duration, last successful execution, failed, missed, and
+overlapping executions, due and deferred work counts, backlog size and oldest
+item age, retry and provider-error outcomes, and notification delivery
+failures. Record execution outcomes and sanitized diagnostics.
+
+| Surface | Required measurements |
+| --- | --- |
+| VPS | CPU, RAM and swap, free disk space, disk I/O and I/O wait |
+| PostgreSQL | Active connections, long-running queries, locks and deadlocks, database growth |
+| Public application | External HTTP/HTTPS availability, response latency, HTTP 5xx errors |
+
+Inspect the VPS provider's monitoring capabilities and evaluate operational
+trade-offs before selecting tooling, including Netdata or a paid service.
+Previously discussed CPU, RAM, and disk thresholds are provisional examples.
+Production thresholds remain open.
+
+The Telegram bot `@SmartBudgetOpsAlertBot` was created and a direct Bot API
+message succeeded from the local environment. Application integration and
+production validation remain open. Keep the bot token and chat ID in
+server-owned configuration and out of documentation and Git.
 
 ## G13 purchase email template cutover
 
@@ -1016,9 +1055,10 @@ notes.
 Review payment-provider readiness, download delivery, support workflow, backup,
 recovery, and production configuration.
 
-Verify G13D's five-minute schedule, bounded Lava.top polling, Resend webhook
-delivery and replay, safe recovery and operator escalation, critical alerts,
-and Healthchecks.io heartbeat. Validate the 30-minute critical detection SLO
+Verify the [G13D-3 job schedules, measurements, and independent checks](#g13d-3-operational-monitoring-target),
+bounded Lava.top polling, Resend webhook delivery and replay, safe recovery
+and operator escalation, and independent SMTP and Telegram delivery. Validate
+the 30-minute critical detection SLO
 against observable evidence and record
 provider visibility limits. Walk through refund intake, operator execution,
 confirmation, and recovery.

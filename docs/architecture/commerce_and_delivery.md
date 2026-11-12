@@ -472,16 +472,12 @@ Normal customer fulfillment runs immediately after authoritative payment
 confirmation. Monitor payment confirmation, entitlement fulfillment, purchase
 email dispatch, and provider-reported delivery outcomes. The critical incident
 detection SLO is 30 minutes, subject to when external providers expose reliable
-evidence. Dispatch critical notifications without intentional delay after
-detection. The SLO covers detection only.
+evidence. Make critical notifications eligible for dispatch as soon as the
+incident is detected. The SLO covers detection only.
 
-Run incident scanning and selective, bounded Lava.top payment recovery
-approximately every five minutes via an Ubuntu `systemd timer`. Use Resend
-Webhooks as the primary source of provider email delivery events, replacing
-Resend delivery API polling. Keep PostgreSQL incident persistence and
-operational metrics, independent SMTP critical alerts, and Telegram Bot API
-notifications. Use an external Healthchecks.io heartbeat
-to cover outages of the website or monitoring service.
+Use Resend Webhooks as the primary source of provider email delivery events.
+G13D-3 defines the scheduled jobs, independent alert delivery, and external
+monitoring for the first commercial release.
 The initial commercial release requires neither Celery nor Redis. Keep provider
 credentials, recipient identifiers, API limits, and monitoring settings in
 environment-owned configuration. The primary recipient for critical operational
@@ -652,6 +648,30 @@ moves exhausted ambiguous deliveries to `reconciliation_required` without a
 provider request. An idempotency conflict also stops automatic attempts.
 Explicit operator retries and reconciliation authorization remain separate.
 See the [recovery command](../operations.md#g13d-2c-purchase-email-recovery).
+
+#### G13D-3 operational monitoring
+
+Run four independent Ubuntu systemd service/timer pairs. The Incident Scanner,
+Lava.top Recovery, and Purchase Email Recovery each target a five-minute
+interval. The Alert Dispatcher targets one minute. Stagger the schedules,
+prevent overlapping runs of each job, and isolate failures so a failed job
+does not stop the others. Each execution is short-lived and bounded and
+records its outcome and sanitized diagnostics.
+
+Use a PostgreSQL notification outbox with independent delivery state and
+deduplication for each incident and channel. The Incident Scanner detects and
+records incidents. The Alert Dispatcher owns network delivery through
+independent SMTP and the Telegram Bot API. Repeated scans must leave existing
+notification identities intact. The dispatcher retries temporary failures
+with backoff and uses at-least-once delivery. An interruption after provider
+acceptance can result in a duplicate. Keep customer PII, payment information,
+capability tokens, protected URLs, and credentials out of notifications.
+
+Use Healthchecks.io to monitor scheduled job heartbeats externally. Monitor
+public HTTP/HTTPS availability with a separate external check. Detection of
+monitoring failures must remain possible when local jobs or the Alert
+Dispatcher are unavailable. See the
+[operational targets and measurements](../operations.md#g13d-3-operational-monitoring-target).
 
 #### Purchase email transport and protected URLs
 
