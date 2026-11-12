@@ -505,9 +505,10 @@ review test Sales can produce expected incidents.
 Detection depends on when this command runs. Five-minute stall warnings plus
 scan cadence and execution time determine detection latency. The
 [approved G13D architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
-covers scheduled monitoring, provider polling, safe recovery, critical alerts,
-and the external heartbeat. Lava.top recovery has a separate one-pass command.
-Scheduled execution and subsequent integration remain open.
+covers scheduled monitoring, Lava.top polling, Resend webhook delivery events,
+safe recovery, critical alerts, and the external heartbeat. Lava.top recovery
+has a separate one-pass command. Scheduled execution and subsequent
+integration remain open.
 
 ## G13D-2a Lava.top payment recovery
 
@@ -552,6 +553,33 @@ The 30-minute detection SLO applies to actively monitored recent purchases
 when provider evidence is available and polling capacity is sufficient. Aged
 invoices use best-effort detection. Backlogs, provider cooldowns and pauses
 for operator review can extend latency. This command is unscheduled.
+
+## G13D-2b Resend webhook operations
+
+The externally verified Resend Forge configuration for `neocitrix.com` has
+domain status **Verified** and Forge status **Ready**. Sending is enabled and
+receiving is disabled. The sending region is Ireland (`eu-west-1`). The
+Return-Path is `mail.neocitrix.com`, with CNAME `mail` pointing to
+`send.forge.rmta.net`, proxy mode **DNS Only**, and TTL **Auto**. The existing
+production API key remains at **Sending access**. No further DNS or Forge
+changes are required. Ireland is the sending region. Resend stores webhook
+payloads, message content, delivery logs and account records in the US.
+See [Resend's GDPR and data storage policy](https://resend.com/security/gdpr/).
+
+When the public HTTPS endpoint is available, register it through Resend
+Dashboard using the [approved event subscription and signing requirements](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring).
+Use the Dashboard for endpoint management, delivery history and manual replay.
+Webhook event history and replay are limited to the account's plan retention
+window.
+Resend retries failed webhook deliveries. If Resend disables the endpoint,
+restore it and re-enable it in the Dashboard before replaying events. Do not
+create or use a Full Access key for management or replay. See
+[Resend's retry and replay documentation](https://resend.com/docs/webhooks/retries-and-replays).
+
+The five-minute timer is for incident scanning and Lava.top payment recovery.
+Resend delivery monitoring uses webhooks. During release validation, verify
+live webhook delivery and the Dashboard fallback separately from the
+Healthchecks.io heartbeat.
 
 ## G13 purchase email template cutover
 
@@ -940,9 +968,10 @@ notes.
 Review payment-provider readiness, download delivery, support workflow, backup,
 recovery, and production configuration.
 
-Verify G13D's five-minute schedule, bounded polling, safe recovery and operator
-escalation, critical alerts, and Healthchecks.io heartbeat. Validate the
-30-minute critical detection SLO against observable evidence and record
+Verify G13D's five-minute schedule, bounded Lava.top polling, Resend webhook
+delivery and replay, safe recovery and operator escalation, critical alerts,
+and Healthchecks.io heartbeat. Validate the 30-minute critical detection SLO
+against observable evidence and record
 provider visibility limits. Walk through refund intake, operator execution,
 confirmation, and recovery.
 Verify consultation capacity warnings, purchase availability at the approved

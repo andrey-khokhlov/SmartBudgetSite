@@ -475,10 +475,12 @@ detection SLO is 30 minutes, subject to when external providers expose reliable
 evidence. Dispatch critical notifications without intentional delay after
 detection. The SLO covers detection only.
 
-Run monitoring approximately every five minutes via an Ubuntu `systemd timer`.
-Use selective, bounded Lava.top and Resend API polling, PostgreSQL incident
-persistence and operational metrics, critical email independent of Resend,
-and Telegram Bot API notifications. Use an external Healthchecks.io heartbeat
+Run incident scanning and selective, bounded Lava.top payment recovery
+approximately every five minutes via an Ubuntu `systemd timer`. Use Resend
+Webhooks as the primary source of provider email delivery events, replacing
+Resend delivery API polling. Keep PostgreSQL incident persistence and
+operational metrics, independent SMTP critical alerts, and Telegram Bot API
+notifications. Use an external Healthchecks.io heartbeat
 to cover outages of the website or monitoring service.
 The initial commercial release requires neither Celery nor Redis. Keep provider
 credentials, recipient identifiers, API limits, and monitoring settings in
@@ -526,17 +528,7 @@ Persist incidents and alert the operator on unresolved problems. Track
 measurable indicators of polling behavior so operators can decide when the
 architecture needs revision.
 
-G13D-2a keeps automatic lookup outcomes and scheduling separate from Sales
-Admin's explicit payment-check fields. A PostgreSQL session advisory lock
-prevents overlapping passes without keeping a database transaction open during
-provider calls. After lookup, recovery locks and revalidates the Sale. An
-existing terminal Sale takes precedence over the lookup. A validated
-`COMPLETED` result uses the existing reconciliation and initial email
-orchestration. `NEW` and `IN_PROGRESS` keep the Sale pending. An uncertain
-`FAILED` result, invalid invoice evidence, or a domain reconciliation failure
-pauses automatic attempts for operator review. The webhook and manual
-reconciliation remain available. See the
-[recovery command and polling schedule](../operations.md#g13d-2a-lavatop-payment-recovery).
+#### G13D-1 local incident detection
 
 G13D-1 scans committed data for every paid Sale, including historical test
 transactions. Missing SaleItems, missing or incompatible entitlements, a
@@ -558,6 +550,68 @@ A later pass resolves the episode when the rule no longer matches, including
 when the Sale is outside the paid population. A recurring condition creates a
 new episode under the same identity and preserves the resolved episode.
 Monitoring leaves commerce and email-delivery records read-only.
+
+#### G13D-2a Lava.top payment recovery
+
+G13D-2a keeps automatic lookup outcomes and scheduling separate from Sales
+Admin's explicit payment-check fields. A PostgreSQL session advisory lock
+prevents overlapping passes without keeping a database transaction open during
+provider calls. After lookup, recovery locks and revalidates the Sale. An
+existing terminal Sale takes precedence over the lookup. A validated
+`COMPLETED` result uses the existing reconciliation and initial email
+orchestration. `NEW` and `IN_PROGRESS` keep the Sale pending. An uncertain
+`FAILED` result, invalid invoice evidence, or a domain reconciliation failure
+pauses automatic attempts for operator review. The webhook and manual
+reconciliation remain available. See the
+[recovery command and polling schedule](../operations.md#g13d-2a-lavatop-payment-recovery).
+
+#### G13D-2b Resend webhook delivery monitoring
+
+After a public HTTPS endpoint is available, register and manage it in the
+Resend Dashboard. Keep the existing production API key at Sending access and
+prohibit Full Access keys. Store the dedicated webhook signing secret as
+server-owned configuration. Use the official Svix verification library to
+verify the original raw body before JSON processing, validate `svix-id`,
+`svix-timestamp` and `svix-signature`, and enforce timestamp tolerance and
+replay protection. Keep signing secrets, signatures and raw payloads out of
+logs. See [Resend's verification documentation](https://resend.com/docs/webhooks/verify-webhooks-requests).
+
+Subscribe to these events and exclude open and click tracking:
+
+| Event | Meaning and handling |
+| --- | --- |
+| `email.sent` | Resend accepted the message for delivery. |
+| `email.delivered` | The recipient's mail server accepted the message. |
+| `email.delivery_delayed` | Resend is still attempting delivery. Suppress application resend. |
+| `email.bounced`, `email.failed`, `email.suppressed` | Require operator attention. |
+| `email.complained` | Create a separate complaint incident and preserve any successful delivery history. |
+
+Use the provider email ID and the dedicated `purchase_email_delivery_id`
+Resend tag as correlation evidence for `PurchaseEmailDelivery`. Persist only
+the provider email ID, internal delivery ID, event type, provider event
+timestamp and Svix message ID, with receipt timestamp and processing outcome
+where required. Exclude raw payloads, recipient addresses, subject, HTML or
+text content, bounce messages and other unnecessary PII from persistence.
+
+Deduplicate deliveries by Svix message ID and apply state updates
+idempotently, including on manual replay. Use the webhook's top-level
+`created_at` as the authoritative provider event timestamp for ordering.
+The nested `data.created_at` records when the email record was created.
+Older events must leave newer provider state intact. Track
+complaints separately from delivery status, and keep provider delivery status
+distinct from the existing `PurchaseEmailDelivery` dispatch lifecycle. The
+exact event-receipt persistence model and retention period remain open.
+
+G13D-2b observes and escalates delivery events. Sending and retries are
+outside its scope. Safe automatic purchase-email recovery belongs to G13D-2c.
+The 30-minute critical detection SLO applies when reliable provider evidence
+reaches the endpoint. Provider outages, failed delivery attempts and endpoint
+disablement can extend detection latency despite automatic webhook retries.
+Healthchecks.io monitors our monitoring infrastructure. Establish successful
+Resend-to-application delivery separately through the
+[Dashboard delivery history](../operations.md#g13d-2b-resend-webhook-operations).
+
+#### Purchase email transport and protected URLs
 
 Customer-facing delivery URLs must be generated from server-owned application
 configuration rather than inferred from an incoming Host header or browser
