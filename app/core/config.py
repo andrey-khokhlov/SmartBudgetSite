@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     MAIL_SMTP_TLS: bool = True
     ADMIN_NOTIFICATION_EMAIL: str = ""
 
+    TELEGRAM_BOT_TOKEN: str | None = None
+    TELEGRAM_CHAT_ID: str | None = None
+
     CALENDLY_CONSULTATION_URL: str | None = None
     CALENDLY_WEBHOOK_SIGNING_SECRET: str | None = None
     CALENDLY_PERSONAL_ACCESS_TOKEN: str | None = None
