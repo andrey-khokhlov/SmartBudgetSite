@@ -506,7 +506,52 @@ Detection depends on when this command runs. Five-minute stall warnings plus
 scan cadence and execution time determine detection latency. The
 [approved G13D architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 covers scheduled monitoring, provider polling, safe recovery, critical alerts,
-and the external heartbeat. Those capabilities remain open.
+and the external heartbeat. Lava.top recovery has a separate one-pass command.
+Scheduled execution and subsequent integration remain open.
+
+## G13D-2a Lava.top payment recovery
+
+After migrating PostgreSQL, run one pass with the server-owned Lava.top
+configuration:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.recover_lava_top_payments
+```
+
+The first lookup is due five minutes after Sale creation. After `NEW` or
+`IN_PROGRESS`, check again in five minutes before age one hour, 15 minutes
+from one hour to 24 hours, one hour from 24 hours to seven days, and one day
+from seven days onward. Age alone never stops polling or changes payment state.
+
+`LAVA_TOP_RECOVERY_MAX_LOOKUPS` defaults to 20.
+`LAVA_TOP_RECOVERY_REQUEST_WINDOW_SECONDS` defaults to 120 and limits when new
+lookups can start. An in-flight request can finish after that window. Each
+pass reserves four slots for Sales aged 24 hours or more at the default
+budget, with unused capacity shared between age groups. It processes the
+earliest due invoices within each group. HTTP 429 stops the pass and persists
+a provider-wide cooldown using `Retry-After` or 15 minutes when unavailable.
+Timeouts and provider outages stop the pass and back off globally for
+5, 10, 20, then up to 30 minutes.
+
+Exit code 0 returns aggregate JSON for due, processed and deferred lookups by
+age, plus sanitized outcome counts. An overlapping invocation skips the pass
+and reports `already_running`. An operational failure exits 1 and returns a
+sanitized JSON error. Parked invoices stay pending and are excluded from the
+automatic due count. Find their internal Sale IDs and review reasons with
+this read-only query, then use Sales Admin and the manual verification path:
+
+```sql
+SELECT r.sale_id, r.last_checked_at, r.last_outcome
+FROM lava_top_payment_recovery AS r
+JOIN sales AS s ON s.id = r.sale_id
+WHERE s.payment_status = 'pending' AND r.next_check_at IS NULL
+ORDER BY r.last_checked_at;
+```
+
+The 30-minute detection SLO applies to actively monitored recent purchases
+when provider evidence is available and polling capacity is sufficient. Aged
+invoices use best-effort detection. Backlogs, provider cooldowns and pauses
+for operator review can extend latency. This command is unscheduled.
 
 ## G13 purchase email template cutover
 

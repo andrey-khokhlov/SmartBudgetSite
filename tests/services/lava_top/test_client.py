@@ -147,3 +147,16 @@ def test_get_invoice_rejects_changed_provider_identity(monkeypatch):
 
     with pytest.raises(LavaTopResponseError):
         get_invoice("invoice-123")
+
+
+def test_get_invoice_preserves_http_408_as_request_error(monkeypatch):
+    def fake_get(url, **kwargs):
+        return httpx.Response(408, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(settings, "LAVA_TOP_API_KEY", "outbound-api-key")
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(LavaTopRequestError) as error:
+        get_invoice("invoice-123")
+
+    assert error.value.status_code == 408

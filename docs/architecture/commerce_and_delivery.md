@@ -321,9 +321,9 @@ neutral verification state if opened directly or used by a future supported
 redirect. Browser navigation is never proof of payment. Payment completion is
 currently confirmed automatically by the authenticated provider webhook.
 Explicit server-to-server payment verification is available to the founder for
-known invoices and live validation. G13D adds an
-[approved automatic recovery path](#purchase-delivery-monitoring-g13d) for
-unresolved invoices.
+known invoices and live validation. G13D-2a implements an
+[automatic recovery pass](#purchase-delivery-monitoring-g13d) for unresolved
+invoices. Scheduled execution remains open.
 
 While backend confirmation is pending, the payment result page may display a
 payment-confirmation state. Only confirmed payment may:
@@ -515,6 +515,18 @@ be resolved safely with the available evidence require operator intervention.
 Persist incidents and alert the operator on unresolved problems. Track
 measurable indicators of polling behavior so operators can decide when the
 architecture needs revision.
+
+G13D-2a keeps automatic lookup outcomes and scheduling separate from Sales
+Admin's explicit payment-check fields. A PostgreSQL session advisory lock
+prevents overlapping passes without keeping a database transaction open during
+provider calls. After lookup, recovery locks and revalidates the Sale. An
+existing terminal Sale takes precedence over the lookup. A validated
+`COMPLETED` result uses the existing reconciliation and initial email
+orchestration. `NEW` and `IN_PROGRESS` keep the Sale pending. An uncertain
+`FAILED` result, invalid invoice evidence, or a domain reconciliation failure
+pauses automatic attempts for operator review. The webhook and manual
+reconciliation remain available. See the
+[recovery command and polling schedule](../operations.md#g13d-2a-lavatop-payment-recovery).
 
 G13D-1 scans committed data for every paid Sale, including historical test
 transactions. Missing SaleItems, missing or incompatible entitlements, a

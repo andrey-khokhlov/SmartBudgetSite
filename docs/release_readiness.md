@@ -967,8 +967,10 @@ neither Admin operation.
 
 #### G13D — Purchase Delivery Monitoring
 
-**Open. Required before public sales.** G13D-1 is complete. G13D-2 and subsequent
-operational integration remain open. The
+**Open. Required before public sales.** G13D-1 is complete. G13D-2a implements
+bounded Lava.top recovery with a one-pass command. G13D-2 and subsequent
+operational integration remain open, including release-environment validation
+of Lava.top recovery and safe automatic purchase-email recovery. The
 [approved architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 requires safe automatic recovery, bounded Lava.top and Resend polling,
 scheduled scans, independent email and Telegram alerts, Healthchecks.io

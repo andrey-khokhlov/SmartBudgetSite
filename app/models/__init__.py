@@ -14,6 +14,10 @@ from app.models.consultation_entitlement import (
 )
 from app.models.product_release import ProductRelease
 from app.models.purchase_delivery_incident import PurchaseDeliveryIncident
+from app.models.lava_top_payment_recovery import (
+    LavaTopPaymentRecovery,
+    LavaTopRecoveryCooldown,
+)
 from app.models.purchase_email_delivery import (
     PurchaseEmailDelivery,
     PurchaseEmailDeliveryStatus,

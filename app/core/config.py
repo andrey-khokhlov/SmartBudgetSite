@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     LAVA_TOP_API_KEY: str | None = None
     LAVA_TOP_WEBHOOK_SECRET: str | None = None
     LAVA_TOP_API_BASE_URL: str = "https://gate.lava.top"
+    LAVA_TOP_RECOVERY_MAX_LOOKUPS: int = Field(default=20, gt=0)
+    LAVA_TOP_RECOVERY_REQUEST_WINDOW_SECONDS: int = Field(default=120, gt=0, le=120)
 
     ADMIN_TOKEN: str = ""
 
