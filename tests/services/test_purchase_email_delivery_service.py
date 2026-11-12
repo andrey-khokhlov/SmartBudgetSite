@@ -19,6 +19,7 @@ from app.schemas.webhooks import NormalizedPaymentEvent, PaymentOutcome
 from app.services.email_transport import (
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
+    EmailTransportIdempotencyConflictError,
     EmailTransportResult,
     TransactionalEmail,
 )
@@ -28,6 +29,7 @@ from app.services.payment_delivery_orchestration_service import (
 from app.services.payment_reconciliation_service import reconcile_payment_event
 from app.services.purchase_email_delivery_service import (
     EXPIRED_DOWNLOAD_DIAGNOSTIC,
+    IDEMPOTENCY_CONFLICT_DIAGNOSTIC,
     PurchaseEmailAttemptResult,
     authorize_reconciliation_resend,
     deliver_purchase_email_after_payment_commit,
@@ -271,6 +273,73 @@ def test_ambiguous_retry_window_and_lazy_reconciliation(db_session, monkeypatch)
     assert old_result == PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
     assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
     assert blocked_transport.messages == []
+
+
+def test_idempotency_conflict_preserves_original_history(db_session, monkeypatch):
+    configure_email(monkeypatch)
+    sale = create_pending_sale(db_session, kind="bundle")
+    started_at = datetime(2026, 8, 11, 10, tzinfo=UTC)
+    initial = RecordingTransport(failure=EmailTransportAmbiguousError("unknown"))
+    reconcile_payment_and_deliver(
+        db_session, payment_event(sale), transport=initial, now=started_at
+    )
+    delivery = sale.purchase_email_delivery
+    retry = RecordingTransport(
+        failure=EmailTransportIdempotencyConflictError(
+            "private@example.test private-token"
+        )
+    )
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://updated.example.test")
+    retry_at = started_at + timedelta(hours=1)
+
+    result = deliver_purchase_email_after_payment_commit(
+        db_session, sale_id=sale.id, transport=retry, now=retry_at
+    )
+
+    assert result == PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
+    assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+    assert delivery.last_error == IDEMPOTENCY_CONFLICT_DIAGNOSTIC
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == started_at
+    assert delivery.last_attempt_at.replace(tzinfo=UTC) == retry_at
+    assert delivery.attempt_count == 2
+    assert retry.messages[0].idempotency_key == initial.messages[0].idempotency_key
+    assert retry.messages[0].idempotency_key == f"purchase-email/{delivery.id}"
+    assert retry.messages[0].text_body != initial.messages[0].text_body
+    assert sale.payment_status == PaymentStatus.PAID
+    assert db_session.query(DownloadEntitlement).count() == 1
+    assert db_session.query(ConsultationEntitlement).count() == 1
+
+
+def test_in_flight_definitive_failure_cannot_clear_idempotency_conflict(
+    db_session, monkeypatch
+):
+    configure_email(monkeypatch)
+    sale = create_pending_sale(db_session, kind="consultation")
+    sale_id = sale.id
+    started_at = datetime(2026, 8, 11, 10, tzinfo=UTC)
+
+    def record_conflict():
+        result = deliver_purchase_email_after_payment_commit(
+            db_session,
+            sale_id=sale_id,
+            transport=RecordingTransport(
+                failure=EmailTransportIdempotencyConflictError()
+            ),
+            now=started_at + timedelta(seconds=1),
+        )
+        assert result == PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
+
+    first = RecordingTransport(
+        on_send=record_conflict, failure=EmailTransportDefinitiveError("late rejection")
+    )
+    reconcile_payment_and_deliver(
+        db_session, payment_event(sale), transport=first, now=started_at
+    )
+
+    delivery = sale.purchase_email_delivery
+    assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+    assert delivery.last_error == IDEMPOTENCY_CONFLICT_DIAGNOSTIC
+    assert delivery.sending_started_at.replace(tzinfo=UTC) == started_at
 
 
 @pytest.mark.parametrize("failure", ["render", "transport"])

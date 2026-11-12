@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.services.email_transport import (
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
+    EmailTransportIdempotencyConflictError,
     EmailTransportResult,
     TransactionalEmail,
 )
@@ -41,6 +42,19 @@ class ResendEmailTransport:
             raise EmailTransportAmbiguousError(
                 "Transactional email provider outcome is ambiguous."
             ) from exc
+
+        if response.status_code == 409:
+            try:
+                error = response.json()
+            except ValueError:
+                error = None
+            if (
+                isinstance(error, dict)
+                and error.get("name") == "invalid_idempotent_request"
+            ):
+                raise EmailTransportIdempotencyConflictError(
+                    "Transactional email idempotency conflict requires reconciliation."
+                )
 
         if response.status_code >= 500 or response.status_code == 409:
             raise EmailTransportAmbiguousError(

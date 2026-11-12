@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+import httpx
+
 from app.core.config import settings
 from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
@@ -13,6 +15,8 @@ from app.services.email_transport import (
     EmailTransportDefinitiveError,
     EmailTransportResult,
 )
+from app.services.purchase_delivery_monitoring_service import scan_purchase_delivery
+from app.services.purchase_email_delivery_service import IDEMPOTENCY_CONFLICT_DIAGNOSTIC
 from app.services.sale_service import create_product_sale
 
 WEBHOOK_URL = "/v1/webhooks/lava-top/payment-result"
@@ -168,6 +172,55 @@ def test_email_transport_failure_does_not_fail_payment_webhook(
     assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
     assert db_session.query(DownloadEntitlement).count() == 1
     assert delivery.status == PurchaseEmailDeliveryStatus.FAILED.value
+
+
+def test_resend_idempotency_conflict_blocks_webhook_replay_and_opens_incident(
+    client, db_session, monkeypatch, caplog
+):
+    sale_id = create_sale(db_session).id
+    monkeypatch.setattr(settings, "LAVA_TOP_WEBHOOK_SECRET", "inbound-secret")
+    monkeypatch.setattr(settings, "PURCHASE_EMAIL_DELIVERY_ENABLED", True)
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://app.example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_EMAIL", "support@example.test")
+    monkeypatch.setattr(settings, "MAIL_FROM_NAME", "SmartBudget")
+    monkeypatch.setattr(settings, "RESEND_API_KEY", "test-api-key")
+    calls = []
+
+    def reject_send(url, *, headers, json, timeout):
+        calls.append(headers["Idempotency-Key"])
+        return httpx.Response(
+            409,
+            json={
+                "name": "invalid_idempotent_request",
+                "message": "private-buyer@example.com private-capability-token",
+            },
+        )
+
+    monkeypatch.setattr("app.services.resend_email_transport.httpx.post", reject_send)
+    for _ in range(2):
+        response = client.post(
+            WEBHOOK_URL, headers={"X-Api-Key": "inbound-secret"}, json=payload()
+        )
+        assert response.status_code == 204
+
+    delivery = db_session.query(PurchaseEmailDelivery).one()
+    assert calls == [f"purchase-email/{delivery.id}"]
+    assert delivery.status == PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+    assert delivery.last_error == IDEMPOTENCY_CONFLICT_DIAGNOSTIC
+    assert delivery.attempt_count == 1
+    assert delivery.sale.id == sale_id
+    assert delivery.sale.payment_status == PaymentStatus.PAID
+    assert db_session.query(DownloadEntitlement).count() == 1
+    for secret in (
+        "private-buyer@example.com",
+        "private-capability-token",
+        "test-api-key",
+    ):
+        assert secret not in caplog.text
+    db_session.rollback()
+    assert scan_purchase_delivery(db_session)["by_kind"] == {
+        "email_reconciliation_required": 1
+    }
 
 
 def test_malformed_json_and_unknown_invoice_are_controlled(

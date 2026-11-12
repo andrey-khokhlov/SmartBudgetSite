@@ -26,6 +26,10 @@ class EmailTransportDefinitiveError(EmailTransportError):
     """The provider definitively rejected or could not accept the request."""
 
 
+class EmailTransportIdempotencyConflictError(EmailTransportDefinitiveError):
+    """The provider rejected a changed request under the existing key."""
+
+
 class EmailTransportAmbiguousError(EmailTransportError):
     """The provider may have accepted the request; stable-key retry is required."""
 

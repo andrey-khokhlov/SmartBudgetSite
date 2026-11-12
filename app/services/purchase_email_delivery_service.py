@@ -16,6 +16,7 @@ from app.services.email_transport import (
     EmailTransport,
     EmailTransportAmbiguousError,
     EmailTransportDefinitiveError,
+    EmailTransportIdempotencyConflictError,
     TransactionalEmail,
 )
 from app.services.purchase_email_renderer import (
@@ -33,6 +34,9 @@ AMBIGUOUS_FAILURE_DIAGNOSTIC = "Purchase email provider outcome is ambiguous."
 EXPIRED_DOWNLOAD_DIAGNOSTIC = "Purchase email blocked because download access expired."
 RECONCILIATION_DIAGNOSTIC = (
     "Ambiguous purchase email attempt exceeded the safe retry window."
+)
+IDEMPOTENCY_CONFLICT_DIAGNOSTIC = (
+    "Purchase email idempotency conflict requires reconciliation."
 )
 
 
@@ -126,6 +130,19 @@ def attempt_purchase_email_delivery(
         )
         db.commit()
         result = transport.send(message)
+    except EmailTransportIdempotencyConflictError:
+        db.rollback()
+        current = get_delivery_for_update(db, delivery_id=delivery_id)
+        if current is None:
+            db.rollback()
+            raise RuntimeError("Purchase email delivery record disappeared.")
+        if current.status == PurchaseEmailDeliveryStatus.SENT.value:
+            db.commit()
+            return PurchaseEmailAttemptResult.ALREADY_SENT
+        current.status = PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value
+        current.last_error = IDEMPOTENCY_CONFLICT_DIAGNOSTIC
+        db.commit()
+        return PurchaseEmailAttemptResult.RECONCILIATION_REQUIRED
     except PurchaseEmailExpiredDownloadError:
         db.rollback()
         if previously_ambiguous:
@@ -243,7 +260,10 @@ def _record_definitive_failure(
     if delivery is None:
         db.rollback()
         raise RuntimeError("Purchase email delivery record disappeared.")
-    if delivery.status != PurchaseEmailDeliveryStatus.SENT.value:
+    if delivery.status not in {
+        PurchaseEmailDeliveryStatus.SENT.value,
+        PurchaseEmailDeliveryStatus.RECONCILIATION_REQUIRED.value,
+    }:
         delivery.status = PurchaseEmailDeliveryStatus.FAILED.value
         delivery.last_error = diagnostic
         delivery.sending_started_at = None

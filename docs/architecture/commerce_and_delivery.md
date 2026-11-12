@@ -497,9 +497,19 @@ through approved domain services:
   reconciliation and fulfillment workflow.
 - Attempt eligible pending purchase emails automatically. Retry eligible failed
   or ambiguous attempts only under existing idempotency guarantees. Preserve
-  the 23-hour ambiguous-send boundary. Reuse a Resend idempotency key only when
-  the provider request is byte-equivalent to the original, using a durable
-  fingerprint or equivalent safety mechanism where necessary.
+  the 23-hour ambiguous-send boundary and the stable Resend idempotency key
+  `purchase-email/{delivery_id}`. Retries may render the currently approved
+  template with current application configuration. This supersedes the
+  byte-equivalent request requirement. Recovery requires no original email body
+  snapshots, immutable HTML or text copies, or request fingerprints solely for
+  idempotency verification. Validate URLs and application configuration through
+  deployment and configuration checks.
+- If Resend returns `invalid_idempotent_request`, stop automatic attempts for
+  that delivery, preserve its idempotency history, and set
+  `reconciliation_required`. The existing G13D incident check escalates this
+  state for operator review. Never generate a replacement key to bypass the
+  conflict. `concurrent_idempotent_requests` and unclassified HTTP 409 responses
+  retain the existing ambiguous-send handling and retry safeguards.
 
 Recovery must never create a replacement payment or invoice, mark a Sale paid
 without authoritative provider evidence, bypass payment or fulfillment
