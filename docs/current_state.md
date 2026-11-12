@@ -571,30 +571,25 @@ public DNS and HTTPS, then resume the still-open Expected Release Gaps and live
 validation in `release_readiness.md`. This sequencing defers those obligations;
 it does not close or abandon them.
 
-### Post-release priority: Consultation Capacity & Refund Operations
+### Pre-release operational readiness
 
-This initiative is deferred until after the first public commercial release and
-is not a current release blocker. It is deliberately the first planned
-post-release SmartBudgetSite enhancement, with this sequence:
+G13D Purchase Delivery Monitoring is the next implementation priority. Follow
+it with bounded refund operations and consultation capacity work. These
+capabilities must be ready before the first public commercial release. After
+launch, SmartBudgetSite moves to maintenance and the primary development focus
+returns to SmartBudget Excel.
 
-`Public release -> short production stabilization -> Consultation Capacity &
-Refund Operations -> SmartBudgetSite becomes maintenance-first -> primary
-development focus returns to SmartBudget Excel`.
+Operational readiness means minimizing routine manual administration, alerting
+the operator in time to act, providing safe recovery procedures, and reliably
+meeting customer obligations. Use the approved
+[R42 and R53 refund and request rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4),
+the [operator workflow](operations.md#pre-release-refund-operations), and the
+[consultation capacity boundary](architecture/consultations.md#operational-capacity).
+Lava.top refund initiation requires manual provider action. Routine preparation,
+tracking and follow-up can be supported within the approved workflow.
 
-The objective is to make refunds, criticism/support handling, and consultation
-workload operationally predictable before development focus returns to Excel.
-
-Current provider research, confirmed directly by Lava.top support: refund API
-initiation is unavailable; only one refund is possible per provider transaction;
-Lava.top processes its side immediately, while bank/card settlement may take up
-to 10 business days. Authoritative machine-readable refund
-verification/reconciliation remains pending a provider-support response.
-
-The approved refund rules and pending capability work are recorded in
-[refund architecture](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
-Separate deferred operational topics are recorded in
-[consultation capacity](architecture/consultations.md#deferred-operational-capacity),
-and [assisted refund operations](operations.md#deferred-assisted-refund-operations).
+Keep optional enhancements outside the release gate unless they address a
+demonstrated release-critical gap.
 
 ### Later application work: Smart Feedback support flow
 

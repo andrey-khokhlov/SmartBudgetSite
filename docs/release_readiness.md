@@ -784,6 +784,29 @@ Readiness Review. Existing `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`
 `UX-001` and other Expected Release Gaps retain their own completion criteria.
 Completed engineering remediation history is unchanged by these gates.
 
+### Operational readiness — mandatory pre-sale gate
+
+The first public commercial release requires operations that minimize routine
+manual administration, give timely alerts, support safe recovery, and reliably
+meet customer obligations. G13D Purchase Delivery Monitoring is the next
+implementation priority. Follow it with bounded work on the approved refund
+and request capabilities and on consultation capacity.
+
+- Validate [G13D](#g13d--purchase-delivery-monitoring), including the external
+  heartbeat and critical alert paths.
+- Validate [refund operations](operations.md#pre-release-refund-operations)
+  under R42 and R53, including request evidence, accurate amounts, verified
+  provider outcomes, and customer follow-up. The operator performs Lava.top
+  refund initiation manually.
+- Validate [consultation capacity management](architecture/consultations.md#operational-capacity),
+  including timely warnings and control of new purchases at the approved
+  limit. Finalize the capacity rules in the bounded implementation review.
+- Rehearse recovery and confirm that routine operator work is supported by
+  the approved automation and procedures.
+
+Speculative tooling and optional enhancements remain outside this gate. After
+launch, primary development returns to SmartBudget Excel.
+
 ### Refund / cancellation policy and consent — mandatory pre-sale gate
 
 **Open for implementation, publication and validation.** The owner approved D4
@@ -1015,6 +1038,9 @@ of the following are true:
    data-recovery blocker remains.
 9. A final Release Readiness Review defined in `operations.md` has been
    completed.
+10. The [operational readiness gate](#operational-readiness--mandatory-pre-sale-gate)
+    has been validated, including monitoring, refund operations, consultation
+    capacity, and recovery procedures.
 
 Passing tests alone does not satisfy this definition. Release readiness requires
 the architectural, operational, provider, documentation, and end-to-end

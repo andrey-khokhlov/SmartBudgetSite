@@ -271,10 +271,10 @@ synchronization have been validated. Some users in Russia may require VPN access
 to Calendly; a customer-facing fallback support option remains desirable before
 launch.
 
-### Deferred operational capacity
+### Operational capacity
 
-This is deferred post-release direction. Operational capacity must be separate
-from catalog activation:
+Operational capacity management is required before the first public commercial
+release. Operational capacity is separate from catalog activation:
 
 ```text
 Catalog offer active AND operational capacity available
@@ -282,16 +282,16 @@ Catalog offer active AND operational capacity available
 ```
 
 `ServiceAddon.is_active` remains catalog/versioning state and must not be
-repurposed as temporary capacity state. Exhausted operational capacity should
-eventually suppress or disable new consultation add-on purchases without
-rewriting catalog history.
+repurposed as temporary capacity state. Exhausted operational capacity must
+suppress or disable new consultation add-on purchases while preserving catalog
+history and access already granted to customers.
 
-Outstanding consultation liability is the preferred future direction/candidate
+Outstanding consultation liability is the preferred candidate
 signal rather than raw weekly sales. It may include available consultation
 entitlements and relevant future booked consultations, but this is not a
 finalized formula. The exact workload definition, measurement window, warning
-threshold, hard limit, and re-enable behavior remain empirical decisions for
-implementation planning.
+threshold, hard limit, and re-enable behavior remain open for the bounded
+pre-release capacity review.
 
 ### Consultation cancellation and refund requests (D4)
 
