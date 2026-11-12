@@ -968,11 +968,12 @@ neither Admin operation.
 #### G13D — Purchase Delivery Monitoring
 
 **Open. Required before public sales.** G13D is a separate workstream from G13
-purchase email localization. Implement and validate the
+purchase email localization. G13D-1 implements local checks and incident
+persistence for the committed fulfillment and email dispatch state. The
 [approved monitoring requirements](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
-for the complete purchase delivery chain, critical alert delivery, and external
-heartbeat coverage. Scheduling infrastructure, the alert email provider, and
-the external monitoring vendor require a separate G13D architecture review.
+still require scheduled scans, bounded Lava.top and Resend polling, independent
+SMTP and Telegram alerts, external heartbeat coverage, operational metrics,
+and validation of the ten-minute detection objective.
 
 ### Production deployment (`REL-002`)
 

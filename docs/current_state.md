@@ -1028,7 +1028,7 @@ surface-specific slices, not duplicate requirements.
 | G13 — Purchase email | R35, R40 | **Implemented and locally validated.** Stores `Sale.purchase_language`, uses `en` for historical orders, renders the approved HTML/plain-text emails and blocks expired download links. Migration checks unresolved sends before switching templates. Release-environment delivery validation remains open. |
 | G13B — Customer Email Correction | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13b--customer-email-correction). |
 | G13C — Reissue Download Access | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13c--reissue-download-access). |
-| G13D — Purchase Delivery Monitoring | REL-001 | [Open, mandatory pre-release workstream](release_readiness.md#g13d--purchase-delivery-monitoring). Scheduling, alert email provider, and external heartbeat vendor decisions remain open for architecture review. |
+| G13D — Purchase Delivery Monitoring | REL-001 | G13D-1 implements local detection, PostgreSQL incident history, and a [one-pass CLI](operations.md#g13d-1-purchase-delivery-monitoring). [The release gate remains open](release_readiness.md#g13d--purchase-delivery-monitoring). |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implement delivery FAQ, timezone and expired-link guidance using approved D6 terms. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the new owner-approved policy and seller section. Synchronize summaries with implemented Checkout, FAQ, email and refund operations. |
 

@@ -13,6 +13,7 @@ from app.models.consultation_entitlement import (
     ConsultationEntitlementStatus,
 )
 from app.models.product_release import ProductRelease
+from app.models.purchase_delivery_incident import PurchaseDeliveryIncident
 from app.models.purchase_email_delivery import (
     PurchaseEmailDelivery,
     PurchaseEmailDeliveryStatus,

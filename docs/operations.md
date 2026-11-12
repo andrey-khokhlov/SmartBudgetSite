@@ -486,6 +486,27 @@ Public checkout continues to resolve the exact active price, active release,
 and Product/provider mapping server-side and fails closed when configuration is
 missing.
 
+## G13D-1 purchase delivery monitoring
+
+After applying Alembic migrations, run one pass from the repository root
+using the configured interpreter and database:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.monitor_purchase_delivery
+```
+
+Exit code 0 means the scan committed, including when it found incidents.
+Standard output contains JSON counts for paid Sales scanned, open, opened and
+resolved incidents, and open incidents by rule and severity. An operational
+failure exits 1 and prints a sanitized JSON error to standard error. The scan
+writes only monitoring incidents and makes no provider calls. Development and
+review test Sales can produce expected incidents.
+
+Detection depends on when this command runs. Five-minute stall warnings plus
+scan cadence and execution time determine detection latency. Provider-side
+payment and final email delivery outcomes, automatic scheduling, critical
+alerts, and external heartbeat checks are deferred.
+
 ## G13 purchase email template cutover
 
 On the legacy release, inspect unfinished deliveries using the target

@@ -481,9 +481,30 @@ URLs, and credentials.
 
 Monitoring preserves authoritative payment confirmation, safe purchase-email
 idempotency, the existing 23-hour ambiguous retry boundary, and the 14-day
-consultation booking window. A separate G13D architecture review will select
-scheduling infrastructure, an alert email provider, and an external monitoring
-vendor.
+consultation booking window.
+
+G13D-1 scans committed data for every paid Sale, including historical test
+transactions. Missing SaleItems, missing or incompatible entitlements, a
+download entitlement for the wrong release, a missing purchase-email record,
+and email states `failed` and `reconciliation_required` are immediate errors.
+Entitlement checks cover fulfillment structure. Normal expiry, completed
+downloads, and booked consultations do not signal a missing entitlement.
+
+Email states `pending` and `sending` are warnings at five minutes or more.
+Measure pending age from record creation and sending age from the start of the
+ambiguous send, falling back to record creation if the start is absent. Five
+minutes gives normal inline sending time to finish and allows a subsequent
+five-minute scheduled pass to detect a stall around the ten-minute objective.
+The warning leaves the 23-hour retry boundary intact. The `sent` state records
+Resend acceptance of the send request.
+
+PostgreSQL stores one open incident per rule and Sale or SaleItem. A pass
+serializes incident writes, reads fulfillment in one statement, and commits
+incident updates together. It records first detection and last observation.
+A later pass resolves the episode when the rule no longer matches, including
+when the Sale is outside the paid population. A recurring condition creates a
+new episode under the same identity and preserves the resolved episode.
+Monitoring leaves commerce and email-delivery records read-only.
 
 Customer-facing delivery URLs must be generated from server-owned application
 configuration rather than inferred from an incoming Host header or browser
