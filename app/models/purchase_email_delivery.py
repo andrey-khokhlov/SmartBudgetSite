@@ -47,6 +47,11 @@ class PurchaseEmailDelivery(Base):
         DateTime(timezone=True), nullable=True
     )
     provider_message_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    provider_delivery_status: Mapped[str | None] = mapped_column(String(32))
+    provider_event_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    provider_event_id: Mapped[str | None] = mapped_column(String(128))
+    complaint_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    complaint_event_id: Mapped[str | None] = mapped_column(String(128))
     # Store only bounded, sanitized diagnostics; never secrets or delivery URLs.
     last_error: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

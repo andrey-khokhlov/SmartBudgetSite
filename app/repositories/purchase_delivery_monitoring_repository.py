@@ -36,6 +36,9 @@ def read_paid_fulfillment(db: Session):
             DownloadEntitlement.release_id.label("download_release_id"),
             ConsultationEntitlement.id.label("consultation_id"),
             PurchaseEmailDelivery.status.label("email_status"),
+            PurchaseEmailDelivery.id.label("email_delivery_id"),
+            PurchaseEmailDelivery.provider_delivery_status,
+            PurchaseEmailDelivery.provider_event_id,
             PurchaseEmailDelivery.created_at.label("email_created_at"),
             PurchaseEmailDelivery.sending_started_at,
         )
@@ -54,6 +57,26 @@ def read_paid_fulfillment(db: Session):
 def read_open_incidents(db: Session):
     return db.scalars(
         select(PurchaseDeliveryIncident).where(
-            PurchaseDeliveryIncident.resolved_at.is_(None)
+            PurchaseDeliveryIncident.resolved_at.is_(None),
+            PurchaseDeliveryIncident.requires_operator.is_(False),
         )
+    )
+
+
+def read_open_operator_incidents(db: Session):
+    return db.execute(
+        select(PurchaseDeliveryIncident.kind, PurchaseDeliveryIncident.severity).where(
+            PurchaseDeliveryIncident.resolved_at.is_(None),
+            PurchaseDeliveryIncident.requires_operator.is_(True),
+        )
+    ).all()
+
+
+def get_incident_for_update(
+    db: Session, incident_id: int
+) -> PurchaseDeliveryIncident | None:
+    return db.scalar(
+        select(PurchaseDeliveryIncident)
+        .where(PurchaseDeliveryIncident.id == incident_id)
+        .with_for_update()
     )

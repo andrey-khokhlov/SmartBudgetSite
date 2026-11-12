@@ -35,12 +35,16 @@ def test_resend_uses_configured_sender_and_stable_idempotency_key(monkeypatch):
             text_body="protected link",
             html_body="<p>protected link</p>",
             idempotency_key="purchase-email/42",
+            purchase_email_delivery_id=42,
         )
     )
 
     assert result.provider_message_id == "resend-id-123"
     assert captured["headers"]["Idempotency-Key"] == "purchase-email/42"
     assert captured["json"]["from"] == "SmartBudget <support@example.test>"
+    assert captured["json"]["tags"] == [
+        {"name": "purchase_email_delivery_id", "value": "42"}
+    ]
     assert captured["headers"]["Authorization"] == "Bearer private-api-key"
 
 

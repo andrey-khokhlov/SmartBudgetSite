@@ -25,6 +25,7 @@ from app.services.purchase_email_renderer import (
     render_purchase_email,
 )
 from app.services.resend_email_transport import ResendEmailTransport
+from app.services.webhooks.resend_webhook_service import apply_pending_resend_receipts
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +179,7 @@ def attempt_purchase_email_delivery(
     current.sent_at = attempted_at
     current.provider_message_id = result.provider_message_id
     current.last_error = None
+    apply_pending_resend_receipts(db, current, now=datetime.now(UTC))
     db.commit()
     return PurchaseEmailAttemptResult.SENT
 
@@ -250,6 +252,7 @@ def _build_transactional_email(
         text_body=rendered.text_body,
         html_body=rendered.html_body,
         idempotency_key=f"purchase-email/{delivery.id}",
+        purchase_email_delivery_id=delivery.id,
     )
 
 

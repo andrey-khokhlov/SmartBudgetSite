@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     MAIL_FROM_EMAIL: str = ""
     MAIL_FROM_NAME: str = "SmartBudget"
     RESEND_API_KEY: str | None = None
+    RESEND_WEBHOOK_SIGNING_SECRET: str | None = None
     PURCHASE_EMAIL_DELIVERY_ENABLED: bool = False
     PUBLIC_BASE_URL: str | None = None
 

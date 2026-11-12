@@ -587,7 +587,17 @@ Subscribe to these events and exclude open and click tracking:
 | `email.complained` | Create a separate complaint incident and preserve any successful delivery history. |
 
 Use the provider email ID and the dedicated `purchase_email_delivery_id`
-Resend tag as correlation evidence for `PurchaseEmailDelivery`. Persist only
+Resend tag as correlation evidence for `PurchaseEmailDelivery`. The send
+response is authoritative for binding `provider_message_id`. A tag locates a
+candidate, and an untagged legacy event can match a unique stored provider ID.
+Webhook handling and send completion lock the same delivery row. An event
+arriving before the provider ID is saved is committed as
+`awaiting_provider_confirmation` without applying provider state. Send
+completion applies pending events with an exact provider ID match in the same
+transaction. A mismatch or five minutes without confirmation requires operator
+review. The tag alone never establishes a binding.
+
+Persist only
 the provider email ID, internal delivery ID, event type, provider event
 timestamp and Svix message ID, with receipt timestamp and processing outcome
 where required. Exclude raw payloads, recipient addresses, subject, HTML or
@@ -600,7 +610,11 @@ The nested `data.created_at` records when the email record was created.
 Older events must leave newer provider state intact. Track
 complaints separately from delivery status, and keep provider delivery status
 distinct from the existing `PurchaseEmailDelivery` dispatch lifecycle. The
-exact event-receipt persistence model and retention period remain open.
+monitoring pass removes receipts 90 days after first receipt. Provider delays
+open automatically resolvable warnings. Terminal failures, complaints and
+correlation issues create operator-required incidents tied to the originating
+Svix event. The scanner leaves these incidents open. Explicit resolution
+records the operator and reason without changing delivery or dispatch state.
 
 G13D-2b observes and escalates delivery events. Sending and retries are
 outside its scope. Safe automatic purchase-email recovery belongs to G13D-2c.

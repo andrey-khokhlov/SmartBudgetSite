@@ -11,6 +11,7 @@ class TransactionalEmail:
     text_body: str
     html_body: str
     idempotency_key: str
+    purchase_email_delivery_id: int | None = None
 
 
 @dataclass(frozen=True)

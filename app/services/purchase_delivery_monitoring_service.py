@@ -7,11 +7,22 @@ from app.models.enums import SaleItemType
 from app.models.purchase_delivery_incident import PurchaseDeliveryIncident
 from app.models.purchase_email_delivery import PurchaseEmailDeliveryStatus
 from app.repositories.purchase_delivery_monitoring_repository import (
+    get_incident_for_update,
     lock_incident_writes,
     read_open_incidents,
+    read_open_operator_incidents,
     read_paid_fulfillment,
 )
+from app.repositories.resend_webhook_repository import (
+    add_operator_incident,
+    delete_expired_receipts,
+    read_overdue_receipts,
+)
 from app.services.consultation_entitlement_service import CONSULTATION_SERVICE_TYPE
+from app.services.webhooks.resend_webhook_service import (
+    CONFIRMATION_TIMEOUT,
+    RECEIPT_RETENTION,
+)
 
 EMAIL_STALL_THRESHOLD = timedelta(minutes=5)
 EMAIL_ERRORS = {
@@ -62,6 +73,7 @@ def _item_fulfilled(row) -> bool:
 def scan_purchase_delivery(db: Session, *, now: datetime | None = None) -> dict:
     """Run one atomic monitoring pass using a fresh session."""
     findings: dict[tuple[int, int, str], str] = {}
+    provider_origins: dict[tuple[int, int, str], str] = {}
     paid_sales = 0
     previous_sale_id = None
     with db.begin():
@@ -75,6 +87,11 @@ def scan_purchase_delivery(db: Session, *, now: datetime | None = None) -> dict:
                 if email_finding:
                     kind, severity = email_finding
                     findings[row.sale_id, row.sale_id, kind] = severity
+                if row.provider_delivery_status == "delivery_delayed":
+                    key = (row.sale_id, row.email_delivery_id, "email_provider_delayed")
+                    findings[key] = "warning"
+                    if row.provider_event_id is not None:
+                        provider_origins[key] = row.provider_event_id
 
             if row.item_id is None:
                 findings[row.sale_id, row.sale_id, "sale_items_missing"] = "error"
@@ -96,6 +113,7 @@ def scan_purchase_delivery(db: Session, *, now: datetime | None = None) -> dict:
                         subject_id=subject_id,
                         kind=kind,
                         severity=severity,
+                        originating_event_id=provider_origins.get(key),
                         first_detected_at=observed_at,
                         last_observed_at=observed_at,
                     )
@@ -108,11 +126,56 @@ def scan_purchase_delivery(db: Session, *, now: datetime | None = None) -> dict:
         for incident in open_incidents.values():
             incident.resolved_at = observed_at
 
+        expired_before = observed_at - RECEIPT_RETENTION
+        for receipt, sale_id in read_overdue_receipts(
+            db, cutoff=observed_at - CONFIRMATION_TIMEOUT, expires_before=expired_before
+        ):
+            opened += add_operator_incident(
+                db,
+                sale_id=sale_id,
+                delivery_id=receipt.delivery_id,
+                kind="email_provider_confirmation_overdue",
+                event_id=receipt.svix_id,
+                now=observed_at,
+            )
+        operator_incidents = read_open_operator_incidents(db)
+
+    # Receipt cleanup never waits on receipt rows while holding the incident lock.
+    with db.begin():
+        delete_expired_receipts(db, expired_before)
+
     return {
         "paid_sales_scanned": paid_sales,
-        "open_incidents": len(findings),
+        "open_incidents": len(findings) + len(operator_incidents),
         "opened": opened,
         "resolved": len(open_incidents),
-        "by_kind": dict(Counter(kind for _, _, kind in findings)),
-        "by_severity": dict(Counter(findings.values())),
+        "by_kind": dict(
+            Counter(kind for _, _, kind in findings)
+            + Counter(kind for kind, _ in operator_incidents)
+        ),
+        "by_severity": dict(
+            Counter(findings.values())
+            + Counter(severity for _, severity in operator_incidents)
+        ),
     }
+
+
+def resolve_operator_incident(
+    db: Session, *, incident_id: int, operator: str, reason: str, confirmed: bool
+) -> bool:
+    operator = operator.strip()
+    reason = reason.strip()
+    if not confirmed or not 0 < len(operator) <= 128 or not 0 < len(reason) <= 1000:
+        raise ValueError("Confirmation, operator and resolution reason are required.")
+    with db.begin():
+        incident = get_incident_for_update(db, incident_id)
+        if (
+            incident is None
+            or not incident.requires_operator
+            or incident.resolved_at is not None
+        ):
+            return False
+        incident.resolved_at = datetime.now(UTC)
+        incident.resolved_by = operator
+        incident.resolution_reason = reason
+    return True

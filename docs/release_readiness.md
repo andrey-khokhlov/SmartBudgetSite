@@ -969,8 +969,9 @@ neither Admin operation.
 
 **Open. Required before public sales.** G13D-1 local detection and PostgreSQL
 incident history are complete. G13D-2a Lava.top recovery is implemented and
-locally validated. G13D-2b Resend webhook delivery monitoring is approved and
-awaits implementation. G13D-2c safe automatic purchase-email recovery and
+locally validated. G13D-2b Resend webhook delivery monitoring is implemented
+and locally validated. Live endpoint registration and provider validation
+remain open. G13D-2c safe automatic purchase-email recovery and
 G13D-3 operational integration remain open. The
 [approved architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 requires release-environment validation of bounded Lava.top recovery, Resend

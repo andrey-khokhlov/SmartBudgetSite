@@ -568,6 +568,11 @@ See [Resend's GDPR and data storage policy](https://resend.com/security/gdpr/).
 
 When the public HTTPS endpoint is available, register it through Resend
 Dashboard using the [approved event subscription and signing requirements](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring).
+The endpoint is `POST /v1/webhooks/resend`. Set the dedicated
+`RESEND_WEBHOOK_SIGNING_SECRET` in server-owned configuration. The application
+limits requests to 64 KiB and applies a dedicated 120 requests per minute
+per-client-IP policy. It acknowledges authenticated events after their receipts
+commit, including malformed or unsupported events recorded without payloads.
 Use the Dashboard for endpoint management, delivery history and manual replay.
 Webhook event history and replay are limited to the account's plan retention
 window.
@@ -580,6 +585,20 @@ The five-minute timer is for incident scanning and Lava.top payment recovery.
 Resend delivery monitoring uses webhooks. During release validation, verify
 live webhook delivery and the Dashboard fallback separately from the
 Healthchecks.io heartbeat.
+
+Use the existing monitoring pass to surface deferred confirmation after five
+minutes and remove receipts at 90 days from first receipt. Resolve a reviewed
+operator-required incident with:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.resolve_purchase_delivery_incident --incident-id 42 --operator ops --reason "Reviewed provider history" --confirm
+```
+
+Use an operator identifier and a reason free of customer data, protected URLs
+and tokens. This command records the resolution and leaves email state intact.
+Before rollout, review unresolved pre-tag sends. Retrying one with the new tag
+can produce an idempotency conflict and require operator reconciliation under
+the existing stable-key policy.
 
 ## G13 purchase email template cutover
 

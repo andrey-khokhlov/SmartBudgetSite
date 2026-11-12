@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Index, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Index, String, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -20,6 +20,10 @@ class PurchaseDeliveryIncident(Base):
     first_detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     last_observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    requires_operator: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    originating_event_id: Mapped[str | None] = mapped_column(String(128))
+    resolved_by: Mapped[str | None] = mapped_column(String(128))
+    resolution_reason: Mapped[str | None] = mapped_column(String(1000))
 
     __table_args__ = (
         CheckConstraint(
@@ -32,7 +36,15 @@ class PurchaseDeliveryIncident(Base):
             subject_id,
             kind,
             unique=True,
-            postgresql_where=resolved_at.is_(None),
-            sqlite_where=resolved_at.is_(None),
+            postgresql_where=resolved_at.is_(None) & requires_operator.is_(False),
+            sqlite_where=resolved_at.is_(None) & requires_operator.is_(False),
+        ),
+        Index(
+            "uq_purchase_delivery_incidents_origin",
+            sale_id,
+            subject_id,
+            kind,
+            originating_event_id,
+            unique=True,
         ),
     )

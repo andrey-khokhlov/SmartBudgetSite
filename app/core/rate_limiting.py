@@ -26,6 +26,7 @@ PURCHASE_LOOKUP_PATH = "/v1/check-purchase"
 ADMIN_LOGIN_PATH = "/admin/login"
 CALENDLY_WEBHOOK_PATH = "/v1/webhooks/calendly"
 LAVA_TOP_WEBHOOK_PATH = "/v1/webhooks/lava-top/payment-result"
+RESEND_WEBHOOK_PATH = "/v1/webhooks/resend"
 
 DOWNLOAD_PATH_PATTERN = re.compile(r"^/download/([^/]+)(/.*)?$")
 CONSULTATION_PATH_PATTERN = re.compile(r"^/consultation/book/([^/]+)(/.*)?$")
@@ -625,6 +626,24 @@ class RateLimitMiddleware:
                 route_template=LAVA_TOP_WEBHOOK_PATH,
                 response_kind="api",
                 provider="lava_top",
+            )
+            return
+
+        if normalized_path == RESEND_WEBHOOK_PATH and method == "POST":
+            _enforce(
+                request,
+                rules=(
+                    _rule(
+                        policy_name="resend_ip_1m",
+                        limit=120,
+                        window_seconds=60,
+                        identity_kind="client_ip",
+                        identity_key=ip_identity,
+                    ),
+                ),
+                route_template=RESEND_WEBHOOK_PATH,
+                response_kind="api",
+                provider="resend",
             )
             return
 

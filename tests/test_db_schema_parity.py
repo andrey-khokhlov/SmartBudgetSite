@@ -59,6 +59,33 @@ def test_purchase_language_cutover_checks_legacy_sending_before_switching_schema
     add_column.assert_not_called()
 
 
+def test_resend_downgrade_checks_monitoring_history_before_schema_changes():
+    migration = _load_migration("c20d9be51072_add_resend_webhook_monitoring.py")
+    with (
+        patch.object(
+            migration.op,
+            "execute",
+            side_effect=[None, RuntimeError("Downgrade blocked")],
+        ) as execute,
+        patch.object(migration.op, "drop_index") as drop_index,
+        patch.object(migration.op, "drop_column") as drop_column,
+        patch.object(migration.op, "drop_table") as drop_table,
+    ):
+        with pytest.raises(RuntimeError, match="Downgrade blocked"):
+            migration.downgrade()
+
+    assert "IN ACCESS EXCLUSIVE MODE" in execute.call_args_list[0].args[0]
+    guard = execute.call_args_list[1].args[0]
+    assert "WHERE requires_operator" in guard
+    assert "SELECT 1 FROM resend_webhook_events" in guard
+    assert "WHERE provider_delivery_status IS NOT NULL" in guard
+    assert "RAISE EXCEPTION 'Downgrade blocked:" in guard
+    assert "DELETE FROM" not in guard
+    drop_index.assert_not_called()
+    drop_column.assert_not_called()
+    drop_table.assert_not_called()
+
+
 def _active_price_index() -> sa.Index:
     product_price_table = ProductPrice.metadata.tables[ProductPrice.__tablename__]
     matching_indexes = [

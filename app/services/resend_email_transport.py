@@ -22,6 +22,20 @@ class ResendEmailTransport:
                 "Transactional email transport is not configured."
             )
 
+        payload = {
+            "from": f"{email.sender_name} <{email.sender_email}>",
+            "to": [email.recipient],
+            "subject": email.subject,
+            "text": email.text_body,
+            "html": email.html_body,
+        }
+        if email.purchase_email_delivery_id is not None:
+            payload["tags"] = [
+                {
+                    "name": "purchase_email_delivery_id",
+                    "value": str(email.purchase_email_delivery_id),
+                }
+            ]
         try:
             response = httpx.post(
                 RESEND_EMAILS_URL,
@@ -29,13 +43,7 @@ class ResendEmailTransport:
                     "Authorization": f"Bearer {api_key}",
                     "Idempotency-Key": email.idempotency_key,
                 },
-                json={
-                    "from": f"{email.sender_name} <{email.sender_email}>",
-                    "to": [email.recipient],
-                    "subject": email.subject,
-                    "text": email.text_body,
-                    "html": email.html_body,
-                },
+                json=payload,
                 timeout=httpx.Timeout(10.0, connect=5.0),
             )
         except httpx.HTTPError as exc:

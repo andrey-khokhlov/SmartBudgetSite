@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Response, status, HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.dependencies import get_db
 
 from app.services.webhooks.calendly_webhook_service import (
@@ -22,6 +23,11 @@ from app.services.webhooks.payload_normalizers.lava_top_payment_normalizer impor
     normalize_lava_top_payment_event,
 )
 from app.services.webhooks.webhook_audit_logger import log_webhook_event
+from app.services.webhooks.resend_signature_verifier import verify_resend_signature
+from app.services.webhooks.resend_webhook_service import (
+    process_resend_webhook,
+    valid_identifier,
+)
 from app.services.webhooks.webhook_audit_statuses import (
     WEBHOOK_STATUS_MALFORMED_PAYLOAD,
     WEBHOOK_STATUS_REJECTED,
@@ -30,6 +36,33 @@ from app.services.webhooks.webhook_audit_statuses import (
 )
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+RESEND_WEBHOOK_MAX_BODY_BYTES = 64 * 1024
+
+
+@router.post("/resend", status_code=204)
+async def resend_webhook(request: Request, db: Session = Depends(get_db)) -> Response:
+    secret = settings.RESEND_WEBHOOK_SIGNING_SECRET
+    if not secret:
+        raise HTTPException(status_code=503, detail="Webhook verification unavailable")
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > RESEND_WEBHOOK_MAX_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="Webhook body too large")
+        body.extend(chunk)
+    raw_body = bytes(body)
+    svix_id = request.headers.get("svix-id", "")
+    if not valid_identifier(svix_id, 128) or not verify_resend_signature(
+        raw_body, request.headers, secret
+    ):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    try:
+        with db.begin():
+            process_resend_webhook(db, svix_id=svix_id, raw_body=raw_body)
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=503, detail="Webhook processing unavailable"
+        ) from None
+    return Response(status_code=204)
 
 
 @router.post("/calendly")
