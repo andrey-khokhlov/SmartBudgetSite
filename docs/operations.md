@@ -630,9 +630,11 @@ G13D-3 operational integration before public sales.
 
 ## G13D-3 operational monitoring target
 
-The architecture is approved and awaits implementation. The existing scanner
-and recovery commands are available for one-pass execution. The following
-service/timer pairs and the alert dispatcher are release targets.
+G13D-3a implements the PostgreSQL outbox and bounded materialization for the
+future Alert Dispatcher. The existing scanner and recovery commands are
+available for one-pass execution. The dispatcher, SMTP and Telegram
+delivery, systemd integration, and live validation remain open. Materialization
+has no separate scheduled job.
 
 | Job | Target interval |
 | --- | --- |

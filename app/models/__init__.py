@@ -14,6 +14,7 @@ from app.models.consultation_entitlement import (
 )
 from app.models.product_release import ProductRelease
 from app.models.purchase_delivery_incident import PurchaseDeliveryIncident
+from app.models.purchase_delivery_notification import PurchaseDeliveryNotification
 from app.models.resend_webhook_event import ResendWebhookEvent
 from app.models.lava_top_payment_recovery import (
     LavaTopPaymentRecovery,

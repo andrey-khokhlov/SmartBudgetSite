@@ -667,6 +667,24 @@ with backoff and uses at-least-once delivery. An interruption after provider
 acceptance can result in a duplicate. Keep customer PII, payment information,
 capability tokens, protected URLs, and credentials out of notifications.
 
+G13D-3a implements the outbox and a dispatcher-callable materializer. Each
+invocation considers up to 100 open incidents with missing channel entries in
+incident ID order, including incidents recorded by Resend webhooks. It
+commits both channel identities atomically and preserves existing delivery
+state on repeated or concurrent calls. Resolving an incident leaves any
+existing entries intact. Each entry stores only the incident
+reference, channel, creation and attempt metadata, next attempt time, and
+delivery confirmation time. Channel entries restrict deletion of their
+incident. The dispatcher will own delivery and retry decisions.
+
+The Alert Dispatcher must recheck incident resolution before
+delivery. Pending notifications for resolved incidents must not
+be sent. Record them as skipped, preserving outbox history
+and distinguishing skipped notifications from successful
+deliveries. Review resolved, skipped, and recurring incidents
+during a weekly operational review. Weekly review does not
+replace immediate alerting for open incidents.
+
 Use Healthchecks.io to monitor scheduled job heartbeats externally. Monitor
 public HTTP/HTTPS availability with a separate external check. Detection of
 monitoring failures must remain possible when local jobs or the Alert
