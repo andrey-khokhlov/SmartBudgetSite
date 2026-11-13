@@ -482,7 +482,11 @@ def download_page(
                 if release.released_at is not None
                 else None
             ),
-            "expires_at": _as_moscow_time(entitlement.expires_at),
+            "expires_at": (
+                entitlement.expires_at.astimezone(UTC)
+                if entitlement.expires_at.tzinfo is not None
+                else entitlement.expires_at.replace(tzinfo=UTC)
+            ),
             "support_reference": entitlement.support_reference,
             "feedback_url": _feedback_prefill_url(
                 request,

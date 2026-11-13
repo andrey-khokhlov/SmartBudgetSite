@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from urllib.parse import urlencode
 from decimal import Decimal
 
 import pytest
@@ -84,6 +85,9 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert "2.0 MB" in response.text
     assert release.sha256_hash in response.text
     assert "01.07.2026" in response.text
+    expiry_utc = entitlement.expires_at.replace(tzinfo=UTC)
+    assert expiry_utc.isoformat(timespec="milliseconds") in response.text
+    assert expiry_utc.strftime("%d.%m.%Y %H:%M:%S UTC") in response.text
     assert "DL-" in response.text
     assert entitlement.support_reference in response.text
     assert "Remaining attempts" not in response.text
@@ -91,6 +95,7 @@ def test_download_get_renders_release_without_exposing_token_or_mutating(
     assert "remaining_attempts" not in response.text
     localized_response = client.get(f"/download/{token}?lang=ru")
     assert localized_response.status_code == 200
+    assert expiry_utc.strftime("%d.%m.%Y %H:%M:%S UTC") in localized_response.text
     assert "Осталось попыток" not in localized_response.text
     assert token not in response.text
     assert release.storage_key not in response.text
@@ -179,6 +184,63 @@ def test_download_get_localizes_entitlement_errors(
     assert_capability_response_headers(response)
     assert expected in response.text
     assert "hidden-token" not in response.text
+
+
+@pytest.mark.parametrize(
+    ("lang", "expiry_text", "use_rights"),
+    [
+        (
+            "en",
+            "This secure download link has expired.",
+            "You can continue using your purchased version of SmartBudget indefinitely.",
+        ),
+        (
+            "ru",
+            "Срок действия ссылки для защищённого скачивания истёк.",
+            "Вы можете бессрочно пользоваться приобретённой версией SmartBudget.",
+        ),
+    ],
+)
+@pytest.mark.parametrize("method", ["GET", "POST"])
+def test_expired_download_keeps_localized_support_flow(
+    client, db_session, method, lang, expiry_text, use_rights
+):
+    entitlement, _ = create_download(db_session)
+    entitlement.expires_at = datetime.now(UTC) - timedelta(minutes=1)
+    db_session.commit()
+    token = entitlement.download_token
+    reference = entitlement.support_reference
+    feedback_params = {
+        "message_type": "purchase_or_download_issue",
+        "lang": lang,
+        "support_reference": reference,
+    }
+
+    response = client.request(method, f"/download/{token}", params={"lang": lang})
+
+    assert response.status_code == 403
+    assert_capability_response_headers(response)
+    assert expiry_text in response.text
+    assert use_rights in response.text
+    assert f'data-copy-value="{reference}"' in response.text
+    assert f'/feedback?{urlencode(feedback_params).replace("&", "&amp;")}' in response.text
+    assert token not in response.text
+    db_session.refresh(entitlement)
+    assert entitlement.attempt_count == 0
+
+
+def test_unknown_download_does_not_expose_support_reference(client, db_session):
+    entitlement, release = create_download(db_session)
+    response = client.get("/download/unknown-download-token")
+
+    assert response.status_code == 404
+    assert_capability_response_headers(response)
+    assert "unknown-download-token" not in response.text
+    assert entitlement.support_reference not in response.text
+    assert release.original_filename not in response.text
+    assert "data-support-reference-copy" not in response.text
+    assert "support_reference=" not in response.text
+    assert "indefinitely" not in response.text
 
 
 def test_download_post_records_attempt_and_redirects_to_signed_url(

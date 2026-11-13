@@ -59,9 +59,9 @@ def test_faq_groups_native_accordions_and_products_anchor(tmp_path, lang, width)
             "Частые вопросы" if lang == "ru" else "Frequently Asked Questions"
         )
         expect(page.locator(".faq-group h2")).to_have_text(
-            ["О SmartBudget", "Перед покупкой"]
+            ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта"]
             if lang == "ru"
-            else ["About SmartBudget", "Before You Buy"]
+            else ["About SmartBudget", "Before You Buy", "Purchase and Delivery"]
         )
         target = page.locator("#system-requirements-question")
         expect(target).to_have_attribute("open", "")
@@ -124,5 +124,13 @@ def test_faq_groups_native_accordions_and_products_anchor(tmp_path, lang, width)
         page.screenshot(
             path=str(tmp_path / f"faq-open-{lang}-{width}.png"), full_page=True
         )
+        purchase = page.locator("#purchase-and-delivery")
+        expect(purchase.locator("summary")).to_have_count(7)
+        expect(purchase.locator("details").last).to_have_attribute("open", "")
+        expect(purchase.locator(f'a[href="/feedback?lang={lang}"]')).to_be_visible()
+        expect(purchase.get_by_role("link", name="support@neocitrix.com")).to_have_attribute(
+            "href", "mailto:support@neocitrix.com"
+        )
+        purchase.screenshot(path=str(tmp_path / f"faq-purchase-{lang}-{width}.png"))
         browser.close()
     assert errors == []

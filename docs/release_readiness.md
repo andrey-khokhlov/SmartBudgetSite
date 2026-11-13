@@ -731,6 +731,12 @@ G4 Reviews visibility (R28–R29) is implemented and focused-validated. The
 [current-state evidence](current_state.md#g4-reviews-visibility-and-validation)
 covers exact-SKU Landing visibility and the single localized empty message.
 
+G14 publishes the approved RU/EN Purchase and Delivery FAQ, displays expiry
+in the browser timezone with a UTC fallback, and explains expired-link support
+while preserving Feedback prefill. Local pytest and Chromium checks passed.
+Gate 3 repeat review and deployed delivery validation remain open, including
+real interrupted and repeat downloads.
+
 **Open; mapping complete.** Proceed through the accepted bounded implementation
 groups in [current state](current_state.md#accepted-implementation-groups). G1's
 accepted scope, G2A and the scoped G7/G8 work are implemented and validated.

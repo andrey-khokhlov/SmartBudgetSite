@@ -19,7 +19,13 @@
               <summary class="faq-item__question">{{ t(question.question_key) }}</summary>
               <div class="faq-item__answer">
                 {% for part in question.body %}
-                  <p>{% if part.url %}<a href="{{ part.url }}" target="_blank" rel="noopener">{{ t(part.text_key) }}</a>{% else %}{{ t(part.text_key) }}{% endif %}</p>
+                  {% if part.support_links %}
+                    {% set before, after = t(part.text_key).split("{feedback}") %}
+                    {% set between, end = after.split("{email}") %}
+                    <p>{{ before }}<a href="/feedback?lang={{ lang }}">{{ t("faq_purchase_feedback") }}</a>{{ between }}<a href="mailto:support@neocitrix.com">support@neocitrix.com</a>{{ end }}</p>
+                  {% else %}
+                    <p>{% if part.url %}<a href="{{ part.url }}" target="_blank" rel="noopener">{{ t(part.text_key) }}</a>{% else %}{{ t(part.text_key) }}{% endif %}</p>
+                  {% endif %}
                 {% endfor %}
               </div>
             </details>

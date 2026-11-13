@@ -119,4 +119,21 @@ FAQ_GROUPS = (
             },
         ],
     },
+    {
+        "id": "purchase-and-delivery",
+        "title_key": "faq_purchase_title",
+        "questions": [
+            {
+                "question_key": f"faq_purchase_q{number}",
+                "body": [
+                    {
+                        "text_key": f"faq_purchase_a{number}_{paragraph}",
+                        "support_links": (number, paragraph) == (7, 2),
+                    }
+                    for paragraph in range(1, paragraph_count + 1)
+                ],
+            }
+            for number, paragraph_count in enumerate((3, 2, 2, 2, 2, 3, 3), start=1)
+        ],
+    },
 )

@@ -3,6 +3,9 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/download.css') }}">
 <script src="{{ url_for('static', path='js/support_reference.js') }}" defer></script>
+{% if not error_key %}
+<script src="{{ url_for('static', path='js/download_expiry.js') }}" defer></script>
+{% endif %}
 {% endblock %}
 
 {% block title %}{{ t("download_title") }}{% endblock %}
@@ -14,6 +17,10 @@
             <div class="download-icon" aria-hidden="true">!</div>
             <h1>{{ t("download_error_title") }}</h1>
             <p class="download-error">{{ t(error_key) }}</p>
+            {% if error_key == "download_error_expired" %}
+                <p>{{ t("download_expired_use_rights") }}</p>
+                <p>{{ t("download_expired_support") }}</p>
+            {% endif %}
             {% include "_support_reference.html" %}
         {% else %}
             <div class="download-icon" aria-hidden="true">↓</div>
@@ -50,7 +57,7 @@
                 {% endif %}
                 <div>
                     <dt>{{ t("download_expires_at") }}</dt>
-                    <dd>{{ expires_at.strftime("%d.%m.%Y %H:%M") }}</dd>
+                    <dd><time id="download-expiry" datetime="{{ expires_at.isoformat(timespec='milliseconds') }}">{{ expires_at.strftime("%d.%m.%Y %H:%M:%S") }} UTC</time></dd>
                 </div>
             </dl>
 

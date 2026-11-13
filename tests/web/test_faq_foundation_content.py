@@ -24,7 +24,6 @@ class FAQContent(HTMLParser):
         super().__init__()
         self.in_main = False
         self.groups = []
-        self.links = []
         self.group = None
         self.question = None
         self.capture = None
@@ -39,7 +38,7 @@ class FAQContent(HTMLParser):
             return
         attrs = dict(attrs)
         if tag == "section":
-            self.group = {**attrs, "questions": []}
+            self.group = {**attrs, "questions": [], "links": []}
             self.groups.append(self.group)
         if tag == "details":
             self.depth += 1
@@ -49,7 +48,7 @@ class FAQContent(HTMLParser):
         if tag in {"h1", "h2", "summary", "p"}:
             self.capture = {"tag": tag, "text": ""}
         if tag == "a":
-            self.links.append(attrs)
+            self.group["links"].append(attrs)
 
     def handle_endtag(self, tag):
         if self.capture and tag == self.capture["tag"]:
@@ -82,7 +81,8 @@ def approved_section(number):
 
 
 def approved_questions(block, lang):
-    localized = block.split(f"##### {lang.upper()}\n\n", 1)[1].split("##### EN", 1)[0]
+    locales = re.split(r"^##### (RU|EN)(?: — .*?)?\n", block, flags=re.MULTILINE)
+    localized = dict(zip(locales[1::2], locales[2::2], strict=True))[lang.upper()]
     return [
         chunk.strip().split("\n\n")
         for chunk in re.split(r"###### \d+\. ", localized)[1:]
@@ -90,7 +90,7 @@ def approved_questions(block, lang):
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
-def test_faq_has_only_two_ready_groups_and_four_exact_overview_questions(client, lang):
+def test_faq_has_only_ready_groups_and_four_exact_overview_questions(client, lang):
     response = client.get(f"/faq?lang={lang}")
     assert response.status_code == 200
     page = FAQContent(response.text)
@@ -100,13 +100,14 @@ def test_faq_has_only_two_ready_groups_and_four_exact_overview_questions(client,
     assert [group["id"] for group in page.groups] == [
         "about-smartbudget",
         "system-requirements",
+        "purchase-and-delivery",
     ]
     assert [group["title"] for group in page.groups] == (
-        ["О SmartBudget", "Перед покупкой"]
+        ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта"]
         if lang == "ru"
-        else ["About SmartBudget", "Before You Buy"]
+        else ["About SmartBudget", "Before You Buy", "Purchase and Delivery"]
     )
-    assert [len(group["questions"]) for group in page.groups] == [4, 7]
+    assert [len(group["questions"]) for group in page.groups] == [4, 7, 7]
     for actual, approved in zip(
         page.groups[0]["questions"],
         approved_questions(approved_section(1), lang),
@@ -117,6 +118,20 @@ def test_faq_has_only_two_ready_groups_and_four_exact_overview_questions(client,
     for number in range(1, 6):
         assert TRANSLATIONS[lang][f"faq_a{number}"] not in response.text
     assert page.depth == 0
+
+
+@pytest.mark.parametrize("lang", ["ru", "en"])
+def test_purchase_faq_matches_approved_copy_order_and_support_links(client, lang):
+    page = FAQContent(client.get(f"/faq?lang={lang}").text)
+    group = page.groups[2]
+    assert [
+        [question["title"], *question["paragraphs"]]
+        for question in group["questions"]
+    ] == approved_questions(approved_section(3), lang)
+    assert [link["href"] for link in group["links"]] == [
+        f"/feedback?lang={lang}",
+        "mailto:support@neocitrix.com",
+    ]
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
@@ -167,9 +182,10 @@ def test_before_buy_preserves_all_approved_questions_answers_and_microsoft_links
             if position < len(approved_body) and paragraph == approved_body[position]:
                 position += 1
         assert position == len(approved_body)
-    assert [link["href"] for link in page.links] == expected_links
-    assert len(page.links) == 5
-    for link in page.links:
+    links = page.groups[1]["links"]
+    assert [link["href"] for link in links] == expected_links
+    assert len(links) == 5
+    for link in links:
         assert urlsplit(link["href"]).hostname in {
             "learn.microsoft.com",
             "support.microsoft.com",
