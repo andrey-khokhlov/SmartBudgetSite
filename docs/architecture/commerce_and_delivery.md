@@ -1141,10 +1141,18 @@ preserve the stored value, including NULL for historical paid Sales.
 `NormalizedPaymentEvent` carries no reliable provider payment timestamp.
 `Sale.created_at` records pending-order creation and must not start the window.
 
-Voluntary eligibility enforcement remains pending. Calculate `voluntary_refund_deadline = paid_at + 14 days` and check eligibility
-against server-side UTC. Legacy paid Sales with `paid_at` NULL require manual
-eligibility review. Do not automatically reject them. Customer-facing copy
-should say “within 14 days of purchase” to reflect the timestamp-based deadline.
+R42b implements `assess_voluntary_refund_window(paid_at, *, now=None)` in
+`app/services/refund_eligibility_service.py`. It defaults to server UTC and
+normalizes aware inputs to UTC before adding 14 days to the payment timestamp.
+It returns an immutable status and deadline. The deadline is inclusive
+(`within_window`), and later times are `expired`. Missing, invalid, or future
+payment timestamps yield `manual_review` with no deadline. A caller-supplied
+assessment time must be timezone-aware.
+
+The result describes the voluntary window only. Refund authorization and use
+of the assessment in operational workflows remain pending. Manual review
+applies to legacy paid Sales with no timestamp. Customer-facing copy should
+say “within 14 days of purchase” to reflect the timestamp-based deadline.
 
 Expiry affects only the voluntary no-reason SmartBudget refund. Continue to
 accept online requests after the deadline and let the operator distinguish an
