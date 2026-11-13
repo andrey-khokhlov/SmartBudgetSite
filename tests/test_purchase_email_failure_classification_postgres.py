@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.services import purchase_alert_dispatcher_service as dispatcher
 from app.models.purchase_delivery_incident import PurchaseDeliveryIncident
 from app.models.purchase_delivery_notification import PurchaseDeliveryNotification
 from app.services.purchase_delivery_notification_service import (
@@ -143,7 +144,9 @@ def test_classification_downgrade_is_lossless_or_blocked(disposable_postgres):
     check_alembic("check")
 
 
-def test_outbox_migration_and_concurrent_materialization(disposable_postgres):
+def test_outbox_migration_and_concurrent_materialization(
+    disposable_postgres, monkeypatch
+):
     engine, env = disposable_postgres
     revision = "b92df68461c0"
 
@@ -169,7 +172,10 @@ def test_outbox_migration_and_concurrent_materialization(disposable_postgres):
     alembic("downgrade", REVISION)
     assert not inspect(engine).has_table("purchase_delivery_notifications")
     alembic("upgrade", revision)
+    alembic("upgrade", "head")
     alembic("check")
+    alembic("downgrade", revision)
+    alembic("upgrade", "head")
 
     now = datetime.now(UTC)
     with Session(engine) as db, db.begin():
@@ -208,6 +214,7 @@ def test_outbox_migration_and_concurrent_materialization(disposable_postgres):
         with pytest.raises(IntegrityError):
             db.commit()
 
+    alembic("downgrade", revision)
     alembic("downgrade", REVISION, blocked=True)
     with engine.connect() as connection:
         assert (
@@ -220,3 +227,67 @@ def test_outbox_migration_and_concurrent_materialization(disposable_postgres):
             )
             == 2
         )
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE purchase_delivery_notifications SET delivered_at = now(), attempt_count = 1 "
+                "WHERE channel = 'smtp'"
+            )
+        )
+    alembic("upgrade", "head")
+    with engine.connect() as connection:
+        assert (
+            connection.scalar(
+                text(
+                    "SELECT status FROM purchase_delivery_notifications WHERE channel = 'smtp'"
+                )
+            )
+            == "delivered"
+        )
+    # Start dispatch with both channels pending in the scratch database.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE purchase_delivery_notifications SET status = 'pending', delivered_at = NULL"
+            )
+        )
+    monkeypatch.setattr(settings, "PURCHASE_ALERT_DELIVERY_ENABLED", True)
+
+    def dispatch():
+        with Session(engine) as db:
+            return dispatcher.dispatch_purchase_alerts(db)
+
+    def telegram(message):
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            assert (
+                pool.submit(dispatch).result(timeout=10)["status"] == "already_running"
+            )
+        return None
+
+    def unexpected_smtp(message):
+        pytest.fail("SMTP must be skipped after Telegram accepts")
+
+    monkeypatch.setattr(dispatcher, "send_telegram_alert", telegram)
+    monkeypatch.setattr(dispatcher, "send_smtp_alert", unexpected_smtp)
+    assert dispatch()["by_result"] == {"delivered": 1}
+    blocked = subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", revision],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=45,
+    )
+    assert blocked.returncode != 0
+    assert "Downgrade blocked: notification dispatcher state" in blocked.stderr
+    with engine.connect() as connection:
+        assert (
+            connection.scalar(text("SELECT version_num FROM alembic_version"))
+            == "d7e45fa921c0"
+        )
+        assert connection.execute(
+            text(
+                "SELECT channel, status FROM purchase_delivery_notifications ORDER BY channel"
+            )
+        ).all() == [("smtp", "skipped"), ("telegram", "delivered")]
+    alembic("check")

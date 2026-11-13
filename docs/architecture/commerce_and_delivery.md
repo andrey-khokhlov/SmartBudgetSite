@@ -661,8 +661,13 @@ records its outcome and sanitized diagnostics.
 Use a PostgreSQL notification outbox with independent delivery state and
 deduplication for each incident and channel. The Incident Scanner detects and
 records incidents. The Alert Dispatcher owns network delivery through
-independent SMTP and the Telegram Bot API. Repeated scans must leave existing
-notification identities intact. The dispatcher retries temporary failures
+the Telegram Bot API and independent SMTP. Channel state is persisted separately.
+The dispatcher tries Telegram first when both channels are due. A failed
+Telegram attempt falls back immediately to SMTP when SMTP is due. Subsequent
+attempts honor each channel's own deadline. Provider acceptance on either
+channel skips the other, and the dispatcher checks that the incident is still
+open before each claim. Repeated scans preserve notification identities.
+The dispatcher retries temporary failures
 with backoff and uses at-least-once delivery. An interruption after provider
 acceptance can result in a duplicate. Keep customer PII, payment information,
 capability tokens, protected URLs, and credentials out of notifications.
@@ -676,6 +681,12 @@ existing entries intact. Each entry stores only the incident
 reference, channel, creation and attempt metadata, next attempt time, and
 delivery confirmation time. Channel entries restrict deletion of their
 incident. The dispatcher will own delivery and retry decisions.
+
+G13D-3b implements one-pass dispatch with PostgreSQL overlap protection,
+transactional claims, and a two-minute recovery lease. It commits each claim
+before network I/O. Temporary and ambiguous failures retry after 1, 2, 5,
+15, and 30 minutes, then every 60 minutes while eligible. Permanent failures
+stop retries for the affected channel. Delivery means provider acceptance.
 
 The Alert Dispatcher must recheck incident resolution before
 delivery. Pending notifications for resolved incidents must not

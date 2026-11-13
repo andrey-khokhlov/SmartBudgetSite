@@ -973,9 +973,9 @@ locally validated. G13D-2b Resend webhook delivery monitoring is implemented
 and locally validated. Live endpoint registration and provider validation
 remain open. G13D-2c safe automatic purchase-email recovery is implemented and
 locally validated. Live recovery validation remains open. G13D-3a implements
-the PostgreSQL notification outbox and materializer. The Alert Dispatcher,
-SMTP and Telegram delivery, systemd integration, and live validation remain
-open. The
+the PostgreSQL notification outbox and materializer. G13D-3b implements
+one-pass Telegram-first dispatch with SMTP fallback. Live transport
+validation and systemd integration remain open. The
 [approved architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 requires release-environment validation of bounded Lava.top recovery, Resend
 webhook monitoring and replay, safe automatic purchase-email recovery,

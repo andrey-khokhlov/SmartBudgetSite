@@ -1,4 +1,6 @@
-from sqlalchemy import literal, select, true, union_all
+from datetime import datetime
+
+from sqlalchemy import literal, or_, select, true, union_all
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
@@ -48,3 +50,55 @@ def insert_missing_notifications(db: Session, *, limit: int) -> int:
         .returning(notification.c.id)
     )
     return len(db.scalars(statement).all())
+
+
+def read_dispatch_candidates(db: Session, *, now: datetime, limit: int) -> list[int]:
+    incident = PurchaseDeliveryIncident
+    notification = PurchaseDeliveryNotification
+    active_send = (
+        select(notification.id)
+        .where(
+            notification.incident_id == incident.id,
+            notification.status == "sending",
+            notification.next_attempt_at > now,
+        )
+        .exists()
+    )
+    actionable = (
+        select(notification.id)
+        .where(
+            notification.incident_id == incident.id,
+            or_(
+                (notification.status.in_(("pending", "sending")))
+                & (
+                    (notification.next_attempt_at <= now)
+                    | incident.resolved_at.is_not(None)
+                ),
+                (notification.status == "failed") & incident.resolved_at.is_not(None),
+            ),
+        )
+        .exists()
+    )
+    return list(
+        db.scalars(
+            select(incident.id)
+            .where(~active_send, actionable)
+            .order_by(incident.id)
+            .limit(limit)
+        )
+    )
+
+
+def lock_dispatch_incident(db: Session, incident_id: int):
+    incident = db.scalar(
+        select(PurchaseDeliveryIncident)
+        .where(PurchaseDeliveryIncident.id == incident_id)
+        .execution_options(populate_existing=True)
+        .with_for_update()
+    )
+    entries = db.scalars(
+        select(PurchaseDeliveryNotification)
+        .where(PurchaseDeliveryNotification.incident_id == incident_id)
+        .execution_options(populate_existing=True)
+    ).all()
+    return incident, entries

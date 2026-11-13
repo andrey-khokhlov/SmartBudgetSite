@@ -630,11 +630,23 @@ G13D-3 operational integration before public sales.
 
 ## G13D-3 operational monitoring target
 
-G13D-3a implements the PostgreSQL outbox and bounded materialization for the
-future Alert Dispatcher. The existing scanner and recovery commands are
-available for one-pass execution. The dispatcher, SMTP and Telegram
-delivery, systemd integration, and live validation remain open. Materialization
-has no separate scheduled job.
+G13D-3a implements the PostgreSQL outbox. G13D-3b adds the one-pass
+Alert Dispatcher, which invokes materialization itself. Systemd integration
+and live validation remain open.
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.dispatch_purchase_alerts --dry-run
+```
+
+Dry-run inspects existing outbox candidates without writing or sending. Live
+dispatch uses the same command without `--dry-run` and requires
+`PURCHASE_ALERT_DELIVERY_ENABLED=true`, which defaults to false. Telegram uses
+`TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. SMTP uses the existing
+`MAIL_SMTP_*` settings, `MAIL_FROM_EMAIL`, and `ADMIN_NOTIFICATION_EMAIL`.
+SMTP alert delivery requires STARTTLS with certificate and hostname verification.
+The dispatcher processes up to 20 incidents per pass and attempts each due
+channel at most once per incident. It reports aggregate outcomes. Timeouts
+can be ambiguous, so a subsequent retry or fallback can deliver a duplicate.
 
 | Job | Target interval |
 | --- | --- |
