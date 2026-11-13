@@ -673,6 +673,12 @@ monitoring failures must remain possible when local jobs or the Alert
 Dispatcher are unavailable. See the
 [operational targets and measurements](../operations.md#g13d-3-operational-monitoring-target).
 
+Vultr telemetry and provider alerts are already configured. Host-level,
+application-level, and PostgreSQL-specific monitoring integration remains
+unimplemented. Select additional tools and production thresholds using the
+actual deployed environment and observed workload. Complete integration and
+validation before public sales.
+
 #### Purchase email transport and protected URLs
 
 Customer-facing delivery URLs must be generated from server-owned application

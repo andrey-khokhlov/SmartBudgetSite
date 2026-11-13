@@ -658,10 +658,10 @@ failures. Record execution outcomes and sanitized diagnostics.
 | PostgreSQL | Active connections, long-running queries, locks and deadlocks, database growth |
 | Public application | External HTTP/HTTPS availability, response latency, HTTP 5xx errors |
 
-Inspect the VPS provider's monitoring capabilities and evaluate operational
-trade-offs before selecting tooling, including Netdata or a paid service.
-Previously discussed CPU, RAM, and disk thresholds are provisional examples.
-Production thresholds remain open.
+Use the [verified Vultr monitoring and pre-deployment baseline](#vultr-monitoring-and-pre-deployment-baseline)
+as a starting point. Select additional tools and production thresholds during
+REL-002 using the deployed environment and observed workload. Previously
+discussed CPU, RAM, and disk thresholds are provisional examples.
 
 The Telegram bot `@SmartBudgetOpsAlertBot` was created and a direct Bot API
 message succeeded from the local environment. Application integration and
@@ -868,6 +868,32 @@ or evidence of production readiness.
 
 Infrastructure access details and credentials are stored privately in
 KeePassXC and must not be committed to the repository.
+
+### Vultr monitoring and pre-deployment baseline
+
+Verified on 2026-11-12:
+
+- Vultr Usage Graphs provide vCPU, Disk Operations, Network, and Monthly
+  Bandwidth. CPU, disk, and network graphs appeared after refreshing the
+  dashboard.
+- Outage and Maintenance email notifications are enabled.
+- Bandwidth email alerts are enabled at 75%, 90%, and 100%.
+- Invoice email notification remains enabled.
+
+The VPS measurements below were taken before application deployment.
+Production sizing requires measurements under the deployed workload.
+
+| Metric | Pre-deployment result |
+| --- | --- |
+| vCPU | 2 |
+| Load average | 0.00 / 0.00 / 0.00 |
+| RAM total | 3.8 GiB |
+| RAM used | 434 MiB |
+| RAM available | 3.4 GiB |
+| Swap | 7.7 GiB, 0 used |
+| Root filesystem | 75 GB, 12 GB used, 60 GB available (17%) |
+| Running Docker containers | None reported by `docker ps` |
+| System PostgreSQL service | Inactive |
 
 ### Verified initial configuration
 

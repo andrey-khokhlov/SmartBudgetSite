@@ -777,7 +777,7 @@ before publishing customer-facing commitments.
 
 #### Gate 4 — Production deployment and live integration validation
 
-Only after the relevant prior gates are complete, proceed with `REL-002`
+Only after the applicable pre-deployment criteria are met, proceed with `REL-002`
 production deployment, public DNS, HTTPS, external integrations, real provider/
 payment validation, required end-to-end customer journeys and the final Release
 Readiness Review. Existing `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`,
@@ -982,15 +982,20 @@ Validate the four [G13D-3 scheduled jobs](operations.md#g13d-3-operational-monit
 their execution metrics, PostgreSQL outbox delivery with independent SMTP and
 Telegram retry outcomes, external Healthchecks.io job heartbeats, independent
 public availability checks, and VPS, PostgreSQL, and public application
-monitoring.
-G13D and REL-001 remain open.
+monitoring. Configure and validate infrastructure monitoring during
+[REL-002](#production-deployment-rel-002) after the relevant application and
+database components are deployed. All G13D-3 requirements remain mandatory
+before public sales. G13D and REL-001 remain open until their accepted
+criteria are verified.
 
 ### Production deployment (`REL-002`)
 
 - production application and VPS deployment definition;
 - reverse proxy and process lifecycle;
 - public DNS and HTTPS;
-- production startup, migration, persistence, and health validation.
+- production startup, migration, persistence, and health validation;
+- detailed G13D-3 infrastructure monitoring configuration and validation
+  once the relevant production application and database components exist.
 
 ### Backup and recovery (`OPS-001`)
 
