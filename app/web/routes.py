@@ -92,6 +92,7 @@ from app.services.purchase_email_delivery_service import (
     authorize_reconciliation_resend,
     deliver_purchase_email_after_payment_commit,
 )
+from app.services.refund_eligibility_service import assess_voluntary_refund_window
 from app.services.refund_service import (
     RefundConflictError,
     RefundEligibilityError,
@@ -102,6 +103,7 @@ from app.services.refund_service import (
     start_full_refund,
 )
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
+from app.models.enums import PaymentStatus, SaleItemType
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
 from app.utils.product_utils import get_product_package
@@ -1737,10 +1739,16 @@ async def admin_sale_detail(
     except RefundNotFoundError:
         raise HTTPException(status_code=404, detail="Sale not found") from None
 
+    refund_window = None
+    if sale.payment_status == PaymentStatus.PAID and any(
+        item.item_type == SaleItemType.PRODUCT for item in sale.items
+    ):
+        refund_window = assess_voluntary_refund_window(sale.paid_at)
+
     return render(
         request,
         "admin_sale_detail.html",
-        {"sale": sale, "refund_result": refund_result},
+        {"sale": sale, "refund_result": refund_result, "refund_window": refund_window},
         document_lang="en",
     )
 

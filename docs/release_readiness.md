@@ -821,7 +821,8 @@ Before paid public sales:
   consultation-only item accounting within a bundle and the full-bundle refund
   when SmartBudget is refunded. R42a persists `Sale.paid_at` on authoritative
   payment confirmation. R42b implements the standalone window assessment.
-  Apply the assessment in the refund review workflow and validate the
+  R42c displays it for operator review on the protected Admin Sale Detail page.
+  Validate operational use of the
   [voluntary refund clock](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock),
   including idempotent confirmation and manual review of legacy paid Sales
   without a timestamp. Keep the existing full-Sale implementation distinct

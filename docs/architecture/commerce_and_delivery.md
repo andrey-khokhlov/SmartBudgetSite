@@ -1149,10 +1149,13 @@ It returns an immutable status and deadline. The deadline is inclusive
 payment timestamps yield `manual_review` with no deadline. A caller-supplied
 assessment time must be timezone-aware.
 
-The result describes the voluntary window only. Refund authorization and use
-of the assessment in operational workflows remain pending. Manual review
-applies to legacy paid Sales with no timestamp. Customer-facing copy should
-say “within 14 days of purchase” to reflect the timestamp-based deadline.
+R42c displays the assessment and any UTC deadline on the protected Admin Sale
+Detail page for paid Sales containing a product item. This is read-only
+information for the operator. The existing full-Sale refund controls and
+provider verification requirements apply regardless of the assessment. Manual
+review applies to legacy paid Sales with no timestamp. Consultation
+cancellation follows separate rules. Customer-facing copy should say “within
+14 days of purchase” to reflect the timestamp-based deadline.
 
 Expiry affects only the voluntary no-reason SmartBudget refund. Continue to
 accept online requests after the deadline and let the operator distinguish an

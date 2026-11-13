@@ -28,6 +28,27 @@
         {% endfor %}
     </ul>
 
+    {% if refund_window %}
+        <section aria-labelledby="voluntary-refund-window">
+            <h2 id="voluntary-refund-window">Voluntary SmartBudget refund window</h2>
+            <dl>
+                <dt>Status</dt><dd>{{ refund_window.status }}</dd>
+                {% if refund_window.deadline %}
+                    <dt>Deadline (UTC)</dt>
+                    <dd><time datetime="{{ refund_window.deadline.isoformat() }}">{{ refund_window.deadline.isoformat(sep=" ") }}</time></dd>
+                {% endif %}
+            </dl>
+            {% if refund_window.status == "within_window" %}
+                <p>The voluntary 14-day SmartBudget refund window is still open.</p>
+            {% elif refund_window.status == "expired" %}
+                <p>The voluntary 14-day window has expired. Other refund grounds may still require review.</p>
+            {% else %}
+                <p>The voluntary refund deadline cannot be determined. Review the payment history manually.</p>
+            {% endif %}
+            <p>This assessment concerns only the voluntary SmartBudget refund window and does not determine whether a refund may be authorized.</p>
+        </section>
+    {% endif %}
+
     <h2>Full refund</h2>
     {% if not sale.refund_operation %}
         {% if sale.payment_status == 'paid' and sale.payment_provider and sale.external_payment_id %}
