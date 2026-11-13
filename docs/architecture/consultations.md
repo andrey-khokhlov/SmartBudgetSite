@@ -8,13 +8,19 @@ admin visibility.
 
 ## Customer paths and pricing
 
-SmartBudget has two distinct consultation paths:
+Under the [first-release sales model amendment](commerce_and_delivery.md#first-release-sales-model-amendment),
+new public consultation purchases use only the existing standalone flow, with
+their own Sale and payment transaction. Keep the capacity management requirement
+for standalone sales. Preserve historical add-on pricing, SaleItems, entitlements,
+booking and refund handling for existing bundles.
+
+The implementation supports two distinct consultation paths:
 
 1. A discounted setup consultation added to a SmartBudget purchase.
 2. A higher-priced standalone consultation.
 
-The add-on price is shown on the product buy page before checkout. The standalone
-page shows its own price and terms. Calendly access is exposed only after a
+Public add-on selection and pricing must be suppressed while new bundles are
+disabled. The standalone page shows its own price and terms. Calendly access is exposed only after a
 successful paid purchase. Add-on and standalone provider access must remain
 separate so a public user cannot obtain discounted booking access.
 
@@ -46,7 +52,7 @@ for a service-only Sale. This keeps routing separate from product
 for booking. Public Checkout is implemented. End-to-end payment, email and
 booking validation remain open.
 
-### SmartBudget 1.0 launch consultation prices
+### Approved consultation prices by sales mode
 
 Owner-approved on 2026-10-26 for 60-minute consultations:
 
@@ -55,7 +61,8 @@ Owner-approved on 2026-10-26 for 60-minute consultations:
 | `addon` with SmartBudget purchase | 3,900 RUB | 69 EUR |
 | `standalone` | 5,900 RUB | 99 EUR |
 
-The resulting SmartBudget + consultation totals are 6,890 RUB and 118 EUR.
+The retained bundle pricing yields totals of 6,890 RUB and 118 EUR if that
+mode is reactivated. Only standalone consultation pricing applies at launch.
 These are independent market prices, not currency conversions. The complete
 launch price table is recorded in `commerce_and_delivery.md`; runtime
 consultation prices remain database-owned `ServiceAddon` data. Approval does

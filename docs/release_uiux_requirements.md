@@ -49,6 +49,29 @@ remain tracked separately. Appendix A is preserved as the 2026-10-28 recovered
 policy. A new synchronized owner-approved revision is required before paid
 sales. The update records product and architecture approval.
 
+## First-release sales model owner amendment — 2026-11-13
+
+This amendment supersedes affected launch expectations in the original
+register, RU/EN copy, validation checklists, D4 compatibility notes and
+Appendix A. Earlier wording is retained for audit history. The approved
+[commercial and refund architecture](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
+governs implementation. These changes are required and pending.
+
+| Existing requirements | First-release amendment |
+| --- | --- |
+| R02, R06, R10, R20–R23, R33–R34, R38–R39 | SmartBudget checkout is product-only. Consultations use standalone checkout with a separate Sale and payment, subject to capacity safeguards. Suppress bundle offers, add-on pricing and combined-order prompts on Landing, Buy, Checkout, Consultations and FAQ in RU/EN. Verify language switching for both public paths and server rejection of direct bundle submissions with the default-off flag. |
+| R35, R40 and section 7.2 | Validate product-only and standalone consultation as the two new public paid journeys, with separate localized emails and appropriate protected access. Retain bundle rendering and fulfillment regression coverage and historical access. |
+| R41–R44, R49–R54 and section 7.4 | Align the new RU/EN policy, FAQ, Checkout and email with separate purchases and applicable consents. Retain full-Sale refunds and exceptional or historical operator handling. Defer bundle item accounting as a launch deliverable. R42 and R53 remain open, including persisted request intake and confirmation and review of requests received after the voluntary window. Customer rights remain in force. |
+| R55 | First release excludes workbook activation expiry, DRM, mandatory post-purchase codes and remote disabling. |
+
+Retain the original bundle copy and scenarios for historical support and
+potential reactivation. Reactivation requires explicit owner approval and
+provider, refund, regression and operational validation.
+The [release gate](release_readiness.md#commerce-and-fulfillment-rel-001)
+also requires Product Refund Rate from authoritative production records,
+excluding consultation-only refunds and using the documented commercial
+launch cutoff to exclude pre-release test payments and their refunds.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

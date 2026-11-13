@@ -5,6 +5,45 @@
 This is the authoritative source for products, offers, sales, payments, product
 releases, download entitlements, and protected product delivery.
 
+## First-release sales model amendment
+
+Owner-approved on 2026-11-13. SmartBudget 1.0 and standalone consultations
+are separate purchases with separate Sales and provider payment transactions.
+Product checkout is product-only. The existing standalone flow remains
+available subject to consultation capacity management.
+
+Implement a disabled-by-default, server-enforced feature flag for new public
+bundle purchases. Suppress bundle selection and pricing throughout the public
+UI and reject bundle initiation on the server before creating a Sale or
+provider invoice. Preserve bundle checkout orchestration, catalog identities,
+SaleItem composition, fulfillment, purchase-email rendering, tests, and
+historical financial records. Existing transactions continue to reconcile,
+fulfill, and receive support under their original composition.
+
+Reactivation requires an explicit owner decision and provider, refund,
+regression, and operational validation. A provider migration with better
+partial-refund support may enable reconsideration. The flag alone conveys
+no authorization to reactivate.
+
+### Refund scope and analytics
+
+Preserve the operator-controlled full-Sale refund workflow. Defer the
+multiple-`RefundOperation`/`RefundAllocation` proposal and automated
+alternative bank payouts unless a genuine new requirement justifies them.
+Maintain a documented operator procedure for exceptional and historical cases,
+including review of applicable rights, original amounts, provider evidence,
+and explicit customer agreement and evidence for an alternative refund method.
+Existing customer refund rights remain in force.
+
+Product Refund Rate is required before first public release. Use authoritative
+production records for confirmed product sales and confirmed product refunds.
+Exclude consultation-only refunds from the product refund count. Production
+starts with a fresh database, and development and review Sales stay in their
+original environments. Document the commercial launch date and time in UTC.
+Include only product sales with authoritative payment confirmation at or after
+that cutoff, and count confirmed product refunds only for those sales. This
+excludes pre-release production test payments and their later refunds.
+
 ## Product catalog and purchase path
 
 - `family_slug` groups related SKUs into one product family.
@@ -28,8 +67,8 @@ releases, download entitlements, and protected product delivery.
   product price determines the checkout currency.
 - Currency mixing is forbidden at runtime; locale-aware formatting belongs in
   templates.
-- Consultation add-on pricing must be visible before checkout. Checkout confirms
-  selected items and total rather than revealing a price for the first time.
+- If bundle checkout is reactivated, show consultation add-on pricing before
+  checkout. Checkout confirms selected items and the total.
 
 `products` and `service_addons` are catalog/configuration entities. They are not
 purchase history.
@@ -46,7 +85,8 @@ EN prices are independently defined market prices, not currency conversions.
 | Consultation add-on with SmartBudget purchase, 60 minutes | 3,900 RUB | 69 EUR |
 | SmartBudget + consultation total | 6,890 RUB | 118 EUR |
 
-These are the intended release catalog/UI values. Runtime prices remain owned
+The product-only and standalone rows apply at launch under the 2026-11-13
+amendment. The bundle rows preserve the earlier approved prices. Runtime prices remain owned
 by database `ProductPrice` and `ServiceAddon` records; this approval does not
 update catalog data, provider configuration, or public website copy.
 Consultation sales modes remain defined in `consultations.md`.
@@ -1113,7 +1153,9 @@ Refund treatment uses the original purchased item amounts:
   the refund, the customer must make a new standalone purchase at the then-current
   standalone price. Do not retroactively convert or reprice the add-on.
 
-Keep the single-payment bundle checkout. The Lava.top limit of one refund
+Preserve the single-payment bundle implementation and historical transaction
+composition under the [first-release amendment](#first-release-sales-model-amendment).
+The Lava.top limit of one refund
 action per transaction constrains execution. It does not limit customer rights.
 If a later required refund cannot go through the original provider path, an
 alternative method may be used only with the customer's explicit agreement
@@ -1126,11 +1168,12 @@ the request and operational acknowledgement/evidence and send the customer
 confirmation. Submission does not move money. Request intake and refund
 execution have separate lifecycles.
 
-Item accounting, handling later refunds, and the request function need
-bounded implementation and validation. The current paid-Sale capability
-checks and `RefundOperation.sale_id` uniqueness stay in force until the
-approved bounded refund changes are implemented and validated. Partial refund
-design must preserve unaffected access and account for amounts already refunded.
+The first-release amendment defers bundle item-accounting implementation and
+keeps exceptional or historical cases under the operator procedure. Request
+intake still needs bounded implementation and validation. Preserve the current
+paid-Sale capability checks and `RefundOperation.sale_id` uniqueness.
+Any future partial refund design must preserve unaffected access and account
+for amounts already refunded.
 
 #### Voluntary SmartBudget refund eligibility clock
 

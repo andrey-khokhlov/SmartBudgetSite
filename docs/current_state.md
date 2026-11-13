@@ -436,6 +436,19 @@ EULA/licence and customer-facing copy before publication under `REL-001`.
 
 ## Current launch constraint
 
+The 2026-11-13 [first-release sales model amendment](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
+approves separate SmartBudget and standalone consultation purchases. Current
+Checkout still supports bundles. The bundle flag, public UI suppression,
+backend rejection, and Product Refund Rate are pending. Production will start
+with a fresh database without importing development or review Sales.
+
+The next bounded task is the default-off server-side bundle gate and coordinated
+RU/EN public suppression. Verify product-only and standalone purchases and
+preserve historical bundle processing. Standalone capacity safeguards remain
+required. Document the commercial launch cutoff in UTC for Product Refund
+Rate so pre-release production test payments and their refunds are excluded.
+R42, R53, and the relevant release gates stay open.
+
 The remaining live validation of the approved Lava.top integration and customer
 delivery requires the real deployed HTTPS environment. Production deployment
 and that validation are intentionally deferred until the approved
@@ -546,9 +559,10 @@ accessibility review must assess the actually updated interface.
 D4 settles the refund, consent, request and seller-information model. The
 recovered Refund Policy remains source material for a new owner-approved
 publication revision. Actual refund operations, checkout, FAQ and purchase
-email must match the revised policy before paid sales. R42 item-level refund
-capability, R50 applicable consent and R53 request intake still need bounded
-implementation. R55 keeps activation and DRM outside the first release.
+email must match the revised policy before paid sales. The 2026-11-13 amendment
+defers bundle item accounting. R42 operational validation, R50 applicable
+consent and R53 request intake remain open. R55 keeps activation and DRM
+outside the first release.
 These are owner-approved product and architecture decisions.
 
 The owner-reported clean review environment uses `smartbudget_review` and
@@ -712,7 +726,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R39 | Requires validation | Booking/token/webhook lifecycle exists; tests pre-link provider event URI and do not establish first-booking end-to-end behavior. | Real integration evidence first; no speculative architecture change |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. | Real purchase email and Calendly confirmation validation remain open |
 | R41 | Required | The recovered policy is preserved. A synchronized public policy page and pre-payment links are absent. | G15 new owner-approved publication revision under D4 |
-| R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Implement add-on-only item accounting, handle later required refunds and customer confirmation, and validate operations. Preserve unaffected product access |
+| R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Validate separate-purchase refunds and exceptional or historical handling. Bundle item accounting is deferred under the first-release amendment |
 | R43 | Required | Seller information is not published. D4 approves the full geographical address in the policy seller section. | G15 finalize seller details/status and publish identical factual address in RU/EN |
 | R44 | Partial | Support and founder refund operations exist. Public 2/5/10-business-day response, review and bank-settlement distinctions are incomplete. | G15 synchronized publication and separate support-capacity validation |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |

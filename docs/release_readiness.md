@@ -817,16 +817,17 @@ owner-approved publication revision.
 
 Before paid public sales:
 
-- Implement and validate the approved R42 refund directions, including
-  consultation-only item accounting within a bundle and the full-bundle refund
-  when SmartBudget is refunded. R42a persists `Sale.paid_at` on authoritative
+- Validate R42 full-Sale refunds for the two separate purchase paths and the
+  operator procedure for exceptional or historical cases. Bundle item accounting,
+  multiple refund operations and automated alternative payouts are deferred
+  under the first-release amendment. R42a persists `Sale.paid_at` on authoritative
   payment confirmation. R42b implements the standalone window assessment.
   R42c displays it for operator review on the protected Admin Sale Detail page.
   Validate operational use of the
   [voluntary refund clock](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock),
   including idempotent confirmation and manual review of legacy paid Sales
-  without a timestamp. Keep the existing full-Sale implementation distinct
-  from this pending capability.
+  without a timestamp. Preserve customer rights and the current full-Sale
+  workflow. R42 remains open.
 - Before launch, document and review the operator procedure for a later
   required refund when the original provider path cannot process it. Require
   explicit customer agreement to the alternative method and preserve
@@ -864,6 +865,25 @@ customer-facing materials. Publication and validation of that wording remain
 pending. The owner-approved launch prices remain database-owned at runtime.
 
 ### Commerce and fulfillment (`REL-001`)
+
+The owner-approved [first-release sales model](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
+supersedes earlier bundle launch requirements. Before public sales:
+
+- Implement and verify a default-off bundle flag, RU/EN public UI suppression,
+  and server-side rejection of direct bundle initiation before Sale or invoice
+  creation. Keep the historical bundle reconciliation, fulfillment, email and
+  support paths and their regression coverage.
+- Validate the live product-only and standalone consultation journeys as
+  separate Sales and payments, including fulfillment, purchase email, protected
+  access, and standalone capacity safeguards. Prior bundle smoke evidence is
+  historical and does not close these checks.
+- Launch with a fresh production database. Keep development and review Sales
+  in their original environments.
+- Deliver and verify Product Refund Rate from authoritative production records.
+  Document the commercial launch date and time in UTC. Include confirmed
+  product sales at or after that cutoff and their confirmed product refunds.
+  Exclude consultation-only refunds and verify that pre-release production
+  test payments and their later refunds are outside the calculation.
 
 Partial integration validation is complete: the normal admin upload and Publish
 path reached live R2, persisted a test `ProductRelease`, and activated it. A

@@ -899,8 +899,12 @@ govern eligibility, amounts, item access and customer confirmations.
 
 1. Record the customer request, acknowledge receipt, and provide the operator
    with backend-owned purchase context and the status of the voluntary deadline.
-2. Prepare the exact refund amount using the applicable rules and purchased
-   item snapshots. Flag exceptions for operator review.
+2. Prepare the exact full-Sale refund amount for the applicable separate
+   purchase. For an exceptional or historical case, review applicable rights,
+   original item amounts and provider evidence under the
+   [first-release amendment](architecture/commerce_and_delivery.md#first-release-sales-model-amendment).
+   Use the documented exception procedure when the existing full-Sale path
+   cannot execute the required outcome.
 3. Have the operator execute the refund manually in Lava.top and verify
    provider evidence before confirming the internal outcome. Lava.top supports
    one refund per transaction and currently offers no refund initiation API.
