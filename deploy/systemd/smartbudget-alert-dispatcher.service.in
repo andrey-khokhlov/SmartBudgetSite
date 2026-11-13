@@ -1,0 +1,16 @@
+[Unit]
+Description=SmartBudgetSite Alert Dispatcher
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@JOB_USER@
+WorkingDirectory=@JOB_WORKING_DIRECTORY@
+ExecStart=@PYTHON_COMMAND@ -m scripts.dispatch_purchase_alerts
+TimeoutStartSec=600s
+TimeoutStopSec=15s
+Restart=no
+RemainAfterExit=no
+StandardOutput=journal
+StandardError=journal

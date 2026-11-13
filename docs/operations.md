@@ -631,8 +631,8 @@ G13D-3 operational integration before public sales.
 ## G13D-3 operational monitoring target
 
 G13D-3a implements the PostgreSQL outbox. G13D-3b adds the one-pass
-Alert Dispatcher, which invokes materialization itself. Systemd integration
-and live validation remain open.
+Alert Dispatcher, which invokes materialization itself. G13D-3c prepares
+repository-managed unit templates. Installation and live validation remain open.
 
 ```powershell
 .\.venv\Scripts\python.exe -m scripts.dispatch_purchase_alerts --dry-run
@@ -648,12 +648,65 @@ The dispatcher processes up to 20 incidents per pass and attempts each due
 channel at most once per incident. It reports aggregate outcomes. Timeouts
 can be ambiguous, so a subsequent retry or fallback can deliver a duplicate.
 
-| Job | Target interval |
+### G13D-3c systemd unit templates
+
+The four pairs are in [deploy/systemd](../deploy/systemd). Calendar times are UTC.
+
+| Job | Unit stem | Interval and offset | Start timeout |
+| --- | --- | --- | --- |
+| Incident Scanner | `smartbudget-incident-scanner` | Every 5 minutes at :00, starting at minute 0 | 60 seconds |
+| Lava.top Recovery | `smartbudget-lava-top-recovery` | Every 5 minutes at :00, starting at minute 1 | 240 seconds |
+| Purchase Email Recovery | `smartbudget-purchase-email-recovery` | Every 5 minutes at :00, starting at minute 2 | 300 seconds |
+| Alert Dispatcher | `smartbudget-alert-dispatcher` | Every minute at :30 | 600 seconds |
+
+The scanner is database-only. Lava.top recovery stops initiating lookups after
+at most 120 seconds and can still finish a lookup and fulfillment with initial
+email dispatch. Email recovery can attempt 20 sends per pass. Alert dispatch
+can process 20 incidents with up to two channels each, including SMTP setup,
+authentication, and message submission. The unit timeouts bound whole passes.
+Network timeouts apply to individual operations. Validate these initial budgets
+under deployed load, particularly when a pass can exceed its interval.
+
+Each timer activates its matching oneshot. A running service is not started
+again by its timer. `Restart=no` leaves the next activation to the calendar,
+and `Persistent=false` prevents replay of calendar ticks missed while the timer
+was inactive. Offsets separate start times, while different jobs may still
+run concurrently. Each service has a 15-second stop timeout.
+
+Resolve these placeholders in each `.service.in` during REL-002, then save it
+with the `.service` suffix. The `.timer` files need no substitution.
+
+| Placeholder | Deployment value |
 | --- | --- |
-| Incident Scanner | 5 minutes |
-| Lava.top Recovery | 5 minutes |
-| Purchase Email Recovery | 5 minutes |
-| Alert Dispatcher | 1 minute |
+| `@JOB_USER@` | Host service account authorized to run the chosen job command |
+| `@JOB_WORKING_DIRECTORY@` | Absolute host directory from which the job command runs |
+| `@PYTHON_COMMAND@` | Absolute Python executable for a host deployment, or the approved absolute container execution command and arguments through the container's Python executable |
+
+Preserve the `-m scripts.…` suffix and use systemd command quoting. The
+container option must run in the chosen application context and propagate
+exit status and termination so timeout cleanup cannot leave a detached job.
+REL-002 must also decide how the job receives server-owned settings, how
+application and database readiness are established, and what dependencies
+the rendered unit needs. Keep secrets outside unit files and Git. The
+repository's Docker Compose definition runs PostgreSQL only.
+
+Before later installation, verify the selected runtime, account access,
+working directory, migrated PostgreSQL database, and provider settings.
+Run `systemd-analyze verify` on the rendered services and matching timers and
+`systemd-analyze calendar` on each calendar expression. In an isolated release
+validation environment, exercise safe CLI invocations and validate active-run
+non-overlap, timeouts, and the next timer activation after failure or reboot.
+Email recovery and alert dispatch support `--dry-run`. The scanner writes
+incidents and Lava.top recovery has no dry run, so use a disposable database
+and mocked provider transport for those checks.
+
+During REL-002, install the verified pairs, reload systemd, and enable the
+timers after prerequisites and operational safeguards are in place. Use
+`systemctl list-timers`, `systemctl status`, and `journalctl -u` to check
+activation, exit codes, and sanitized CLI summaries. For failed or missed
+runs, check readiness, runtime permissions, configured delivery switches,
+the service timeout, and the next calendar activation. The templates keep
+the existing CLI safety switches and send stdout and stderr to the journal.
 
 Stagger the scheduled runs, prevent overlapping executions of each job, and
 keep their failures independent. Use Healthchecks.io for external scheduled-job

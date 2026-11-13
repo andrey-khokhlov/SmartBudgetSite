@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Alert Dispatcher
+
+[Timer]
+OnCalendar=*-*-* *:*:30 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

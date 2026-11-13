@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Purchase Email Recovery
+
+[Timer]
+OnCalendar=*-*-* *:2/5:00 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

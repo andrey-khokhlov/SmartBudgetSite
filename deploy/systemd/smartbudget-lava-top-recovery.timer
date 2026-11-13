@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Lava.top Recovery
+
+[Timer]
+OnCalendar=*-*-* *:1/5:00 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Incident Scanner
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

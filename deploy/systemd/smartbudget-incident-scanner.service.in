@@ -1,0 +1,16 @@
+[Unit]
+Description=SmartBudgetSite Incident Scanner
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=@JOB_USER@
+WorkingDirectory=@JOB_WORKING_DIRECTORY@
+ExecStart=@PYTHON_COMMAND@ -m scripts.monitor_purchase_delivery
+TimeoutStartSec=60s
+TimeoutStopSec=15s
+Restart=no
+RemainAfterExit=no
+StandardOutput=journal
+StandardError=journal
