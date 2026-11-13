@@ -12,10 +12,11 @@ are separate purchases with separate Sales and provider payment transactions.
 Product checkout is product-only. The existing standalone flow remains
 available subject to consultation capacity management.
 
-Implement a disabled-by-default, server-enforced feature flag for new public
-bundle purchases. Suppress bundle selection and pricing throughout the public
-UI and reject bundle initiation on the server before creating a Sale or
-provider invoice. Preserve bundle checkout orchestration, catalog identities,
+`BUNDLE_CHECKOUT_ENABLED` defaults to false and gates new public bundle
+purchases. With the flag off, the public UI hides bundle selection and
+pricing, direct bundle checkout links show an unavailable state with an
+explicit product-only link, and the payment service rejects bundle initiation
+before creating a Sale or provider invoice. Preserve bundle checkout orchestration, catalog identities,
 SaleItem composition, fulfillment, purchase-email rendering, tests, and
 historical financial records. Existing transactions continue to reconcile,
 fulfill, and receive support under their original composition.

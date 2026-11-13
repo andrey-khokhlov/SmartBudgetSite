@@ -869,10 +869,10 @@ pending. The owner-approved launch prices remain database-owned at runtime.
 The owner-approved [first-release sales model](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
 supersedes earlier bundle launch requirements. Before public sales:
 
-- Implement and verify a default-off bundle flag, RU/EN public UI suppression,
-  and server-side rejection of direct bundle initiation before Sale or invoice
-  creation. Keep the historical bundle reconciliation, fulfillment, email and
-  support paths and their regression coverage.
+- The default-off `BUNDLE_CHECKOUT_ENABLED` flag, RU/EN public UI suppression,
+  and server-side rejection before Sale or invoice creation are implemented.
+  Verify the release configuration and deployed behavior. Preserve historical
+  bundle processing and regression coverage.
 - Validate the live product-only and standalone consultation journeys as
   separate Sales and payments, including fulfillment, purchase email, protected
   access, and standalone capacity safeguards. Prior bundle smoke evidence is

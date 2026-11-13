@@ -73,6 +73,11 @@ def auth_client(client: TestClient) -> TestClient:
     return client
 
 
+@pytest.fixture
+def enable_bundle_checkout(monkeypatch):
+    monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", True)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database() -> Generator[None, None, None]:
     # Clean old test DB file if it exists

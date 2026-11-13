@@ -1,8 +1,11 @@
 from decimal import Decimal
+from unittest.mock import Mock
 
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
+from app.core.config import Settings
 from app.core.rate_limiting import RollingWindowRateLimiter
 from app.dependencies import get_db
 from app.main import app
@@ -16,6 +19,30 @@ from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.service_addon import ServiceAddon
 from app.services.lava_top.client import LavaTopInvoice, LavaTopRequestError
+from app.services.payment_service import (
+    CheckoutValidationError,
+    initiate_lava_top_product_checkout,
+)
+
+
+def test_bundle_checkout_defaults_off():
+    assert Settings.model_fields["BUNDLE_CHECKOUT_ENABLED"].default is False
+
+
+def test_disabled_bundle_is_rejected_before_database_access(monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.BUNDLE_CHECKOUT_ENABLED", False)
+    db = Mock(spec=Session)
+
+    with pytest.raises(CheckoutValidationError, match="Bundle checkout is unavailable"):
+        initiate_lava_top_product_checkout(
+            db,
+            product_slug="smartbudget-int-standard",
+            customer_email="buyer@example.com",
+            currency="EUR",
+            include_consultation=True,
+        )
+
+    assert db.mock_calls == []
 
 
 def create_checkout_catalog(
@@ -89,6 +116,69 @@ def install_successful_provider(monkeypatch, captured: dict) -> str:
     return payment_url
 
 
+@pytest.mark.parametrize(
+    ("language", "package", "currency", "message"),
+    [
+        ("ru", "ru", "RUB", "Выбранная консультация недоступна для этого заказа."),
+        ("en", "int", "EUR", "The selected consultation is unavailable for this order."),
+    ],
+)
+def test_disabled_bundle_is_hidden_and_direct_attempts_are_rejected(
+    client, db_session, monkeypatch, language, package, currency, message
+):
+    monkeypatch.setattr("app.core.config.settings.BUNDLE_CHECKOUT_ENABLED", False)
+    product = create_checkout_catalog(
+        db_session, slug=f"smartbudget-{package}-standard", currency=currency
+    )
+    db_session.add(
+        ServiceAddon(
+            code="disabled-bundle-addon",
+            name="Consultation",
+            service_type="consultation",
+            usage_type="addon",
+            family_slug="smartbudget",
+            package_code=package.upper(),
+            currency_code=currency,
+            amount=Decimal("77.77"),
+            is_active=True,
+        )
+    )
+    db_session.commit()
+    provider = Mock(side_effect=AssertionError("Invoice creation must not run"))
+    monkeypatch.setattr("app.services.payment_service.create_invoice", provider)
+
+    for path, marker in (
+        ("/products/smartbudget", 'class="sb-offer__consultation"'),
+        ("/products/smartbudget/buy", 'class="product-addon__checkbox"'),
+        ("/consultations", 'class="consultations-addon"'),
+    ):
+        page = client.get(path, params={"lang": language})
+        assert page.status_code == 200
+        assert marker not in page.text
+        assert "77.77" not in page.text and "77,77" not in page.text
+
+    path = f"/checkout/{product.slug}?currency={currency}&lang={language}"
+    checkout = client.get(path + "&consultation=1")
+    assert checkout.status_code == 200
+    assert message in checkout.text
+    assert 'class="checkout-total"' not in checkout.text
+    assert 'class="checkout-form"' not in checkout.text
+
+    result = client.post(
+        path,
+        data={
+            "currency": currency,
+            "customer_email": "buyer@example.com",
+            "consultation": "1",
+        },
+    )
+    assert result.status_code == 400
+    assert f'<html lang="{language}">' in result.text
+    provider.assert_not_called()
+    assert db_session.query(Sale).count() == 0
+    assert db_session.query(SaleItem).count() == 0
+
+
 @pytest.mark.parametrize("language", ["ru", "en"])
 def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     client,
@@ -147,6 +237,7 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     }
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     client,
     db_session,
@@ -203,6 +294,7 @@ def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     assert captured["amount"] == Decimal("74.00")
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_selects_consultation_in_exact_product_currency(
     client,
     db_session,
@@ -552,6 +644,7 @@ def test_checkout_rate_limit_blocks_before_sale_and_provider_work(
 
 
 @pytest.mark.parametrize("addon_currency", [None, "RUB"])
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_rejects_unavailable_consultation_addon(
     client,
     db_session,

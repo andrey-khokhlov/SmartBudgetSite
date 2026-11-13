@@ -154,8 +154,12 @@ def test_shared_footer_has_only_approved_links(client, path, lang, feedback_labe
 @pytest.mark.parametrize("package,currency", [("ru", "RUB"), ("int", "EUR")])
 @pytest.mark.parametrize("consultation", [None, "0", "1"])
 def test_checkout_language_switch_preserves_exact_order_composition(
-    client, navigation_catalog, lang, alternate, package, currency, consultation
+    client, navigation_catalog, lang, alternate, package, currency, consultation,
+    monkeypatch,
 ):
+    monkeypatch.setattr(
+        "app.core.config.settings.BUNDLE_CHECKOUT_ENABLED", consultation == "1"
+    )
     product = navigation_catalog[package]
     params = {"currency": currency, "lang": lang, "source": "header test"}
     if consultation is not None:

@@ -252,6 +252,14 @@ A configuration change is not complete until the example and active development
 configuration are updated. Secrets, tokens, credentials, and provider signing
 secrets must never be committed or accepted from request input.
 
+`BUNDLE_CHECKOUT_ENABLED` defaults to `false`. Keep it false for the first
+public release. It controls new public product-plus-consultation purchases.
+Product-only and standalone consultation checkout use separate Sales and
+payments. Reconciliation, fulfillment, email and refunds for existing Sales
+continue under their original composition. Production reactivation requires
+explicit owner approval and provider, refund, regression and operational
+validation before enabling the setting.
+
 Purchase-email delivery is controlled by
 `PURCHASE_EMAIL_DELIVERY_ENABLED`. When enabled, `RESEND_API_KEY`,
 `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, and an absolute server-owned

@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     CALENDLY_WEBHOOK_SIGNING_SECRET: str | None = None
     CALENDLY_PERSONAL_ACCESS_TOKEN: str | None = None
 
+    BUNDLE_CHECKOUT_ENABLED: bool = False
     LAVA_TOP_API_KEY: str | None = None
     LAVA_TOP_WEBHOOK_SECRET: str | None = None
     LAVA_TOP_API_BASE_URL: str = "https://gate.lava.top"

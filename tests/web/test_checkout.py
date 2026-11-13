@@ -17,6 +17,7 @@ from app.models.service_addon import ServiceAddon
     ],
 )
 @pytest.mark.parametrize("explicit_language", [True, False])
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_buy_to_checkout_preserves_language_and_bundle_total(
     client,
     db_session,
@@ -121,6 +122,7 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
             assert requirement in response.text
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_with_consultation_shows_product_addon_and_total(client, db_session):
     """
     Test case: checkout page with consultation add-on
@@ -184,6 +186,7 @@ def test_checkout_with_consultation_shows_product_addon_and_total(client, db_ses
     assert 'name="consultation" value="1"' in response.text
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_with_consultation_does_not_fall_back_to_another_currency(
     client,
     db_session,
@@ -252,6 +255,7 @@ def test_checkout_with_consultation_does_not_fall_back_to_another_currency(
     assert 'name="consultation" value="0"' in product_only.text
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_checkout_with_consultation_uses_addon_usage_type_only(client, db_session):
     """
     Test case: checkout uses only consultation add-on usage type
@@ -470,6 +474,7 @@ def test_product_buy_links_include_displayed_price_currency(client, db_session):
     assert f'/checkout/{product.slug}?currency=RUB' in response.text
 
 
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_product_buy_without_active_price_has_no_checkout_action(
     client,
     db_session,

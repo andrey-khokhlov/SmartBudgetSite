@@ -455,6 +455,7 @@ def test_product_consultation_and_bundle_content(
     product = next((item for item in sale.items if item.item_type == "product"), None)
     if product:
         product.item_name = "SmartBudget <script> & Standard"
+        db_session.flush()
     transport = RecordingTransport()
     reconcile_payment_and_deliver(db_session, payment_event(sale), transport=transport)
     (message,) = transport.messages

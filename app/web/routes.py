@@ -597,6 +597,7 @@ async def product_detail(
             "product": product,
             "show_reviews_link": show_reviews_link,
             "product_price": product_price,
+            "bundle_checkout_enabled": settings.BUNDLE_CHECKOUT_ENABLED,
         },
     )
 
@@ -1201,7 +1202,7 @@ def checkout_page(
 
     addon = None
 
-    if consultation == 1:
+    if consultation == 1 and settings.BUNDLE_CHECKOUT_ENABLED:
         addon = ServiceAddonRepository.get_active_addon(
             db,
             family_slug=product.family_slug,
@@ -1299,7 +1300,8 @@ def consultations_page(request: Request, db: Session = Depends(get_db)):
     addons = [
         addon
         for addon in offers
-        if addon.usage_type == "addon"
+        if settings.BUNDLE_CHECKOUT_ENABLED
+        and addon.usage_type == "addon"
         and (offer is None or addon.currency_code == offer.currency_code)
     ]
     can_purchase = False
@@ -1422,7 +1424,7 @@ def product_buy_page(
         package = get_product_package(product.slug)
 
         consultation_addon = None
-        if price is not None:
+        if settings.BUNDLE_CHECKOUT_ENABLED and price is not None:
             consultation_addon = ServiceAddonRepository.get_active_addon(
                 db,
                 family_slug=product.family_slug,
@@ -1446,6 +1448,7 @@ def product_buy_page(
         "product_buy.html",
         {
             "product_options": product_options,
+            "bundle_checkout_enabled": settings.BUNDLE_CHECKOUT_ENABLED,
             "family_slug": family_slug,
         },
     )

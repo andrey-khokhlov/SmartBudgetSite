@@ -116,7 +116,9 @@
       <p>{{ t("sb_offer_description") }}</p>
       <p>{{ t("sb_offer_license") }}</p>
       <a class="btn btn-primary btn-large" href="/products/smartbudget/buy">{{ t("sb_landing_cta_buy") }}</a>
+      {% if bundle_checkout_enabled %}
       <p class="sb-offer__consultation">{{ t("sb_offer_consultation_note") }}</p>
+      {% endif %}
     </div>
   </section>
 </div>

@@ -133,7 +133,8 @@ def test_historical_paid_sale_keeps_null_timestamp_on_success_replay(db_session)
     assert sale.paid_at is None
 
 
-def test_success_fulfills_product_and_consultation_bundle(db_session):
+def test_success_fulfills_product_and_consultation_bundle(db_session, monkeypatch):
+    monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", False)
     sale = create_pending_sale(db_session, bundle=True)
 
     reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))

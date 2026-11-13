@@ -437,14 +437,15 @@ EULA/licence and customer-facing copy before publication under `REL-001`.
 ## Current launch constraint
 
 The 2026-11-13 [first-release sales model amendment](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
-approves separate SmartBudget and standalone consultation purchases. Current
-Checkout still supports bundles. The bundle flag, public UI suppression,
-backend rejection, and Product Refund Rate are pending. Production will start
-with a fresh database without importing development or review Sales.
+approves separate SmartBudget and standalone consultation purchases. The
+default-off `BUNDLE_CHECKOUT_ENABLED` flag suppresses public RU/EN bundle
+offers and rejects direct bundle initiation. Existing bundle transactions
+continue through their original processing. Product Refund Rate is pending.
+Production will start with a fresh database without importing development or
+review Sales.
 
-The next bounded task is the default-off server-side bundle gate and coordinated
-RU/EN public suppression. Verify product-only and standalone purchases and
-preserve historical bundle processing. Standalone capacity safeguards remain
+Live validation of product-only and standalone purchases remains open.
+Standalone capacity safeguards remain
 required. Document the commercial launch cutoff in UTC for Product Refund
 Rate so pre-release production test payments and their refunds are excluded.
 R42, R53, and the relevant release gates stay open.

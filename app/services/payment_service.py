@@ -85,6 +85,9 @@ def initiate_lava_top_product_checkout(
 ) -> str:
     """Resolve checkout data, prepare its sale snapshots, and create checkout."""
 
+    if include_consultation and not settings.BUNDLE_CHECKOUT_ENABLED:
+        raise CheckoutValidationError("Bundle checkout is unavailable.")
+
     normalized_currency = currency.strip().upper()
     if not normalized_currency:
         raise CheckoutValidationError("Currency is required.")

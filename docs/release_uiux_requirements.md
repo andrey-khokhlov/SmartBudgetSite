@@ -55,7 +55,8 @@ This amendment supersedes affected launch expectations in the original
 register, RU/EN copy, validation checklists, D4 compatibility notes and
 Appendix A. Earlier wording is retained for audit history. The approved
 [commercial and refund architecture](architecture/commerce_and_delivery.md#first-release-sales-model-amendment)
-governs implementation. These changes are required and pending.
+governs implementation. See [current state](current_state.md#current-launch-constraint)
+for implementation status and remaining validation.
 
 | Existing requirements | First-release amendment |
 | --- | --- |

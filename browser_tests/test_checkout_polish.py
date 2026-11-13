@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 from playwright.sync_api import expect, sync_playwright
 
+from app.core.config import settings
 from app.core.db import Base
 from app.main import app
 from app.models.product import Product
@@ -22,6 +23,7 @@ from browser_tests.test_feedback_form import _running_app
     ],
 )
 def test_localized_buy_checkout_and_review_navigation(
+    monkeypatch,
     tmp_path,
     review_sessions,
     width,
@@ -30,6 +32,7 @@ def test_localized_buy_checkout_and_review_navigation(
     currency,
     total,
 ):
+    monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", True)
     with review_sessions() as db:
         Base.metadata.create_all(db.get_bind())
         for edition, code, amount, addon_amount in (
@@ -235,5 +238,48 @@ def test_localized_buy_checkout_and_review_navigation(
             page.wait_for_load_state("networkidle")
             browser.close()
         assert errors == []
+    finally:
+        app.state.rate_limiter.reset()
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize(("width", "lang"), [(1280, "en"), (375, "ru")])
+def test_disabled_bundle_is_hidden_in_browser(
+    review_sessions, monkeypatch, tmp_path, width, lang
+):
+    monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", False)
+    with review_sessions() as db:
+        Base.metadata.create_all(db.get_bind())
+        product = Product(
+            family_slug="smartbudget",
+            slug="smartbudget-int-standard",
+            name="SmartBudget",
+            edition="Standard",
+            archive_path="",
+            status="in_sale",
+        )
+        db.add(product)
+        db.flush()
+        db.add(ProductPrice(product_id=product.id, currency_code="EUR", amount=49))
+        db.commit()
+
+    try:
+        with _running_app() as base_url, sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, channel="chromium")
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.goto(f"{base_url}/products/smartbudget?lang={lang}")
+            expect(page.locator(".sb-offer__consultation")).to_have_count(0)
+            page.goto(f"{base_url}/products/smartbudget/buy?lang={lang}")
+            expect(page.locator(".product-addon")).to_have_count(0)
+            page.screenshot(path=str(tmp_path / "buy-disabled.png"), full_page=True)
+            page.locator(".checkout-link").click()
+            expect(page.locator('input[name="consultation"]')).to_have_value("0")
+            page.locator(".language-switch a").click()
+            expect(page.locator("html")).to_have_attribute(
+                "lang", "ru" if lang == "en" else "en"
+            )
+            expect(page.locator('input[name="consultation"]')).to_have_value("0")
+            page.wait_for_load_state("networkidle")
+            browser.close()
     finally:
         app.state.rate_limiter.reset()

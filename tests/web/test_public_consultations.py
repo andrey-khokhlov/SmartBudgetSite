@@ -50,13 +50,16 @@ def seed_consultations(db):
         ("en", "EUR", "101.25 EUR", "72.50 EUR", "Personal SmartBudget Consultations"),
     ],
 )
+@pytest.mark.parametrize("bundles_enabled", [False, True])
 def test_localized_catalog_and_checkout(
-    client, catalog, lang, currency, price, addon, title
+    client, catalog, lang, currency, price, addon, title, bundles_enabled, monkeypatch
 ):
+    monkeypatch.setattr("app.core.config.settings.BUNDLE_CHECKOUT_ENABLED", bundles_enabled)
     page = client.get("/consultations", params={"lang": lang})
     path = f"/consultations/checkout/{catalog[currency]}"
     assert page.status_code == 200
-    assert title in page.text and price in page.text and addon in page.text
+    assert title in page.text and price in page.text
+    assert (addon in page.text) is bundles_enabled
     assert page.text.count('href="/consultations/checkout/') == 1
     assert f'href="{path}?currency={currency}"' in page.text
     assert "private-" not in page.text

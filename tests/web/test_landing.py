@@ -76,6 +76,7 @@ def approved_paragraphs(number, lang):
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("number", [1, 2, 3, 4, 5, 6, 7])
+@pytest.mark.usefixtures("enable_bundle_checkout")
 def test_landing_preserves_approved_copy(client, lang, number):
     response = client.get(f"/products/smartbudget?lang={lang}")
     assert response.status_code == 200
