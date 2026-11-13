@@ -184,6 +184,7 @@ def _apply_success(
         raise PaymentFulfillmentError("Sale has no fulfillable items.")
 
     sale.payment_status = PaymentStatus.PAID
+    sale.paid_at = datetime.now(UTC)
     for item in sale.items:
         _fulfill_sale_item(db, item)
     _ensure_purchase_email_delivery(db, sale)

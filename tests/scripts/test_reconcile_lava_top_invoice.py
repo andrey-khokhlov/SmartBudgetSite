@@ -21,6 +21,7 @@ from app.services.lava_top.client import (
 )
 from app.services.payment_reconciliation_service import (
     PaymentReconciliationMismatchError,
+    PaymentReconciliationResult,
 )
 from app.services.sale_service import create_product_sale
 from scripts.reconcile_lava_top_invoice import (
@@ -88,9 +89,22 @@ def test_manual_path_reuses_domain_reconciliation_and_commits(db_session):
         invoice_lookup=lambda invoice_id: invoice(),
     )
 
-    db_session.expire_all()
+    db_session.refresh(sale)
     assert result.sale_id == sale.id
-    assert db_session.get(type(sale), sale.id).payment_status == PaymentStatus.PAID
+    assert result.result == PaymentReconciliationResult.APPLIED
+    assert sale.payment_status == PaymentStatus.PAID
+    paid_at = sale.paid_at
+    assert paid_at is not None
+
+    replay = reconcile_lava_top_invoice(
+        db_session,
+        sale_id=sale.id,
+        external_payment_id="manual-invoice",
+        invoice_lookup=lambda invoice_id: invoice(),
+    )
+    db_session.refresh(sale)
+    assert replay.result == PaymentReconciliationResult.IDEMPOTENT
+    assert sale.paid_at == paid_at
     assert db_session.query(DownloadEntitlement).count() == 1
     assert db_session.query(PurchaseEmailDelivery).count() == 1
 
@@ -173,6 +187,7 @@ def test_nonterminal_lookup_persists_observation_without_fulfillment(db_session)
     db_session.expire_all()
     persisted_sale = db_session.get(type(sale), sale.id)
     assert persisted_sale.payment_status == PaymentStatus.PENDING
+    assert persisted_sale.paid_at is None
     assert persisted_sale.payment_last_checked_at.replace(tzinfo=UTC) == checked_at
     assert (
         persisted_sale.payment_last_check_result

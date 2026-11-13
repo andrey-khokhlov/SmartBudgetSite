@@ -72,6 +72,7 @@ class Sale(Base):
         default=PaymentStatus.PENDING,
     )
 
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     external_payment_id: Mapped[str | None] = mapped_column(
         String(200), nullable=True, index=True
     )

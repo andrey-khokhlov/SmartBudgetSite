@@ -94,9 +94,16 @@ def event(sale: Sale, outcome: PaymentOutcome) -> NormalizedPaymentEvent:
 def test_success_fulfills_product_once_and_replay_is_idempotent(db_session, monkeypatch):
     sale = create_pending_sale(db_session)
 
+    assert sale.paid_at is None
     monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 12)
+    before_confirmation = datetime.now(UTC)
     first = reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
+    assert sale.paid_at is not None
+    assert sale.paid_at.tzinfo is UTC
+    assert before_confirmation <= sale.paid_at <= datetime.now(UTC)
     db_session.commit()
+    original_paid_at = sale.paid_at
+    assert original_paid_at is not None
     original_expiry = db_session.query(DownloadEntitlement).one().expires_at
     monkeypatch.setattr(settings, "DOWNLOAD_TOKEN_TTL_HOURS", 24)
     second = reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
@@ -106,9 +113,24 @@ def test_success_fulfills_product_once_and_replay_is_idempotent(db_session, monk
     assert first.result == PaymentReconciliationResult.APPLIED
     assert second.result == PaymentReconciliationResult.IDEMPOTENT
     assert sale.payment_status == PaymentStatus.PAID
+    assert sale.paid_at == original_paid_at
     assert db_session.query(DownloadEntitlement).one().expires_at == original_expiry
     assert db_session.query(ConsultationEntitlement).count() == 0
     assert db_session.query(PurchaseEmailDelivery).count() == 1
+
+
+def test_historical_paid_sale_keeps_null_timestamp_on_success_replay(db_session):
+    sale = create_pending_sale(db_session)
+    reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
+    sale.paid_at = None
+    db_session.commit()
+
+    replay = reconcile_payment_event(db_session, event(sale, PaymentOutcome.SUCCESS))
+    db_session.commit()
+
+    assert replay.result == PaymentReconciliationResult.IDEMPOTENT
+    assert sale.payment_status == PaymentStatus.PAID
+    assert sale.paid_at is None
 
 
 def test_success_fulfills_product_and_consultation_bundle(db_session):
@@ -136,6 +158,7 @@ def test_failed_transition_and_duplicate_are_safe(db_session):
     assert first.result == PaymentReconciliationResult.APPLIED
     assert second.result == PaymentReconciliationResult.IDEMPOTENT
     assert sale.payment_status == PaymentStatus.FAILED
+    assert sale.paid_at is None
     assert db_session.query(DownloadEntitlement).count() == 0
     assert db_session.query(PurchaseEmailDelivery).count() == 0
 
@@ -229,6 +252,7 @@ def test_bundle_fulfillment_failure_rolls_back_paid_and_product_entitlement(
 
     db_session.refresh(sale)
     assert sale.payment_status == PaymentStatus.PENDING
+    assert sale.paid_at is None
     assert db_session.query(DownloadEntitlement).count() == 0
     assert db_session.query(ConsultationEntitlement).count() == 0
     assert db_session.query(PurchaseEmailDelivery).count() == 0

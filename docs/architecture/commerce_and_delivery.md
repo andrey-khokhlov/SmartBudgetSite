@@ -1134,16 +1134,14 @@ design must preserve unaffected access and account for amounts already refunded.
 
 #### Voluntary SmartBudget refund eligibility clock
 
-The pending refund capability requires a nullable `Sale.paid_at` as the
-authoritative paid timestamp. Set it exactly once in UTC in the same
-authoritative transition from pending to paid. Idempotent webhook replays
-and manual reconciliation must never overwrite it or extend the window.
-The current `NormalizedPaymentEvent` has no reliable provider payment
-timestamp. Use SmartBudgetSite's first authoritative confirmation time unless
-provider evidence is added under an explicitly approved design.
+R42a persists nullable `Sale.paid_at` in server-side UTC on the first
+authoritative transition from pending to paid, in the same transaction as
+payment confirmation and fulfillment. Webhook replays and manual reconciliation
+preserve the stored value, including NULL for historical paid Sales.
+`NormalizedPaymentEvent` carries no reliable provider payment timestamp.
 `Sale.created_at` records pending-order creation and must not start the window.
 
-Calculate `voluntary_refund_deadline = paid_at + 14 days` and check eligibility
+Voluntary eligibility enforcement remains pending. Calculate `voluntary_refund_deadline = paid_at + 14 days` and check eligibility
 against server-side UTC. Legacy paid Sales with `paid_at` NULL require manual
 eligibility review. Do not automatically reject them. Customer-facing copy
 should say “within 14 days of purchase” to reflect the timestamp-based deadline.

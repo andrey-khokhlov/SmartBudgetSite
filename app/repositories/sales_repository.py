@@ -115,6 +115,7 @@ def get_sale_for_payment_reconciliation(
             Sale.external_payment_id == external_payment_id,
         )
         .with_for_update()
+        .execution_options(populate_existing=True)
     )
     return db.execute(stmt).scalars().unique().one_or_none()
 

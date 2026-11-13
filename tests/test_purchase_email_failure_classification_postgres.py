@@ -271,6 +271,10 @@ def test_outbox_migration_and_concurrent_materialization(
     monkeypatch.setattr(dispatcher, "send_telegram_alert", telegram)
     monkeypatch.setattr(dispatcher, "send_smtp_alert", unexpected_smtp)
     assert dispatch()["by_result"] == {"delivered": 1}
+    with engine.connect() as connection:
+        head_before_downgrade = connection.scalar(
+            text("SELECT version_num FROM alembic_version")
+        )
     blocked = subprocess.run(
         [sys.executable, "-m", "alembic", "downgrade", revision],
         env=env,
@@ -283,7 +287,7 @@ def test_outbox_migration_and_concurrent_materialization(
     with engine.connect() as connection:
         assert (
             connection.scalar(text("SELECT version_num FROM alembic_version"))
-            == "d7e45fa921c0"
+            == head_before_downgrade
         )
         assert connection.execute(
             text(
@@ -291,3 +295,66 @@ def test_outbox_migration_and_concurrent_materialization(
             )
         ).all() == [("smtp", "skipped"), ("telegram", "delivered")]
     alembic("check")
+
+def test_sale_paid_at_migration_preserves_payment_history(disposable_postgres):
+    engine, env = disposable_postgres
+    previous = "d7e45fa921c0"
+    revision = "65fc4a8e2b13"
+
+    def alembic(*args, success=True):
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", *args],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+        assert (result.returncode == 0) is success, result.stderr
+        return result
+
+    alembic("upgrade", previous)
+    with engine.begin() as connection:
+        sales = connection.execute(text("""
+            INSERT INTO sales (customer_email, amount, currency, payment_status)
+            VALUES ('paid@example.test', 50, 'RUB', 'paid'),
+                   ('pending@example.test', 50, 'RUB', 'pending'),
+                   ('failed@example.test', 50, 'RUB', 'failed')
+            RETURNING id, payment_status
+        """)).all()
+
+    alembic("upgrade", revision)
+    alembic("check")
+    columns = {column["name"]: column for column in inspect(engine).get_columns("sales")}
+    assert columns["paid_at"]["nullable"]
+    assert columns["paid_at"]["type"].timezone
+    assert columns["paid_at"]["default"] is None
+    with engine.connect() as connection:
+        assert connection.execute(
+            text("SELECT id, payment_status, paid_at FROM sales ORDER BY id")
+        ).all() == [(sale.id, sale.payment_status, None) for sale in sales]
+
+    alembic("downgrade", previous)
+    assert "paid_at" not in {
+        column["name"] for column in inspect(engine).get_columns("sales")
+    }
+    with engine.connect() as connection:
+        assert connection.execute(
+            text("SELECT id, payment_status FROM sales ORDER BY id")
+        ).all() == sales
+
+    alembic("upgrade", revision)
+    paid_at = datetime(2026, 11, 13, 12, 0, tzinfo=UTC)
+    with engine.begin() as connection:
+        connection.execute(
+            text("UPDATE sales SET paid_at = :paid_at WHERE payment_status = 'paid'"),
+            {"paid_at": paid_at},
+        )
+
+    blocked = alembic("downgrade", previous, success=False)
+    assert "Downgrade blocked: Sale payment timestamps would be lost." in blocked.stderr
+    with engine.connect() as connection:
+        connection.execute(text("SET LOCAL TIME ZONE 'UTC'"))
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == revision
+        stored = connection.scalar(text("SELECT paid_at FROM sales WHERE payment_status = 'paid'"))
+        assert stored == paid_at
+        assert stored.utcoffset() == UTC.utcoffset(stored)
