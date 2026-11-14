@@ -421,3 +421,88 @@ def test_sale_reference_migration_backfills_and_enforces_constraints(disposable_
     blocked = alembic("downgrade", previous)
     assert blocked.returncode != 0
     assert "permanent purchase references would be lost" in blocked.stderr
+
+
+def test_refund_request_schema_preserves_requests_and_sales(disposable_postgres):
+    engine, env = disposable_postgres
+    previous = "8c40f6a2e517"
+
+    def alembic(*args):
+        return subprocess.run(
+            [sys.executable, "-m", "alembic", *args],
+            env=env, capture_output=True, text=True, timeout=45,
+        )
+
+    for args in [
+        ("upgrade", "head"), ("check",), ("downgrade", previous), ("upgrade", "head")
+    ]:
+        result = alembic(*args)
+        assert result.returncode == 0, result.stderr
+
+    with engine.begin() as connection:
+        connection.execute(text("""
+            INSERT INTO sales (customer_email, amount, currency, payment_status, sale_reference)
+            VALUES ('buyer@example.test', 50, 'RUB', 'paid', 'PAY-AAAAAAAAAAAAAA')
+        """))
+        connection.execute(text("""
+            INSERT INTO refund_requests (
+                sale_id, purchase_reference, customer_email, submitted_at,
+                language, composition, status, submission_token
+            )
+            SELECT id, sale_reference, customer_email, now(), 'en', 'product', 'pending',
+                   repeat('a', 64)
+            FROM sales
+        """))
+
+    with pytest.raises(IntegrityError), engine.begin() as connection:
+        connection.execute(text("DELETE FROM sales"))
+    blocked = alembic("downgrade", previous)
+    assert blocked.returncode != 0
+    assert "customer refund requests would be lost" in blocked.stderr
+    with engine.connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM refund_requests")) == 1
+
+
+def test_concurrent_refund_submission_uses_unique_token(disposable_postgres, monkeypatch):
+    from unittest.mock import Mock
+
+    from app.services import refund_request_service as intake
+
+    engine, env = disposable_postgres
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        env=env, capture_output=True, text=True, timeout=45,
+    )
+    assert result.returncode == 0, result.stderr
+    with engine.begin() as connection:
+        connection.execute(text("""
+            INSERT INTO sales (customer_email, amount, currency, payment_status, sale_reference)
+            VALUES ('buyer@example.com', 50, 'RUB', 'paid', 'PAY-AAAAAAAAAAAAAA')
+        """))
+
+    lookup = intake.find_refund_request_by_token
+    barrier = Barrier(2)
+
+    def synchronized_lookup(db, token):
+        existing = lookup(db, token)
+        if existing is None:
+            barrier.wait(timeout=10)
+        return existing
+
+    sender = Mock()
+    monkeypatch.setattr(intake, "find_refund_request_by_token", synchronized_lookup)
+    monkeypatch.setattr(intake.mail_service, "send_email", sender)
+
+    def submit():
+        with Session(engine) as db:
+            return intake.submit_refund_request(
+                db, email="buyer@example.com", reference="PAY-AAAAAAAAAAAAAA",
+                message="", language="en", submission_token="a" * 64,
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        attempts = [executor.submit(submit) for _ in range(2)]
+        assert [attempt.result(timeout=20) for attempt in attempts] == ["en", "en"]
+    sender.assert_called_once()
+    with engine.connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM refund_requests")) == 1

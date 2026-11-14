@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ t("refund_request_title") }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/download.css') }}">
+{% endblock %}
+{% block content %}
+<section class="download-page">
+    <div class="download-card">
+        <h1>{{ t("refund_request_title") }}</h1>
+        {% if submitted %}
+            <p role="status">{{ t("refund_request_success") }}</p>
+        {% else %}
+            {% if error_key %}<p class="download-error" role="alert">{{ t(error_key) }}</p>{% endif %}
+            <form method="post" action="/refund-request?lang={{ lang }}">
+                <input type="hidden" name="submission_token" value="{{ submission_token }}">
+                <input type="hidden" name="csrf_cookie_id" value="{{ csrf_cookie_id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <p><label for="refund-email">{{ t("refund_request_email") }}</label><br>
+                <input id="refund-email" name="email" type="email" autocomplete="email" maxlength="200" required></p>
+                <p><label for="refund-reference">{{ t("refund_request_reference") }}</label><br>
+                <input id="refund-reference" name="purchase_reference" type="text" maxlength="18" required></p>
+                <p><label for="refund-message">{{ t("refund_request_message") }}</label><br>
+                <textarea id="refund-message" name="message" maxlength="{{ max_message_length }}" rows="5" aria-describedby="refund-message-hint"></textarea></p>
+                <p id="refund-message-hint">{{ t("refund_request_message_hint") }}</p>
+                <button class="download-button" type="submit">{{ t("refund_request_submit") }}</button>
+            </form>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -20,6 +20,10 @@ from app.web.navigation import public_navigation_context
 from app.core.config import settings
 from app.dependencies import get_db, require_admin
 from app.repositories.feedback_admin_repository import FeedbackAdminRepository
+from app.repositories.refund_request_repository import (
+    find_refund_request_by_token,
+    list_refund_requests,
+)
 from app.repositories.products_repository import ProductsRepository
 from app.repositories.service_addon_repository import ServiceAddonRepository
 from app.repositories.sales_repository import (
@@ -93,6 +97,14 @@ from app.services.purchase_email_delivery_service import (
     deliver_purchase_email_after_payment_commit,
 )
 from app.services.refund_eligibility_service import assess_voluntary_refund_window
+from app.services.refund_request_service import (
+    MAX_MESSAGE_LENGTH,
+    SUBMISSION_TOKEN_PATTERN,
+    RefundRequestPersistenceError,
+    RefundRequestValidationError,
+    submit_refund_request,
+)
+from secrets import token_hex
 from app.services.refund_service import (
     RefundConflictError,
     RefundEligibilityError,
@@ -107,6 +119,11 @@ from app.models.enums import PaymentStatus, SaleItemType
 from app.models.product import ALLOWED_EDITIONS, ALLOWED_PRODUCT_STATUSES, Product
 from app.models.product_price import ProductPrice
 from app.utils.product_utils import get_product_package
+
+from app.core.refund_request_csrf import (
+    create_csrf_cookie_value,
+    verify_csrf_token,
+)
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -2072,4 +2089,168 @@ def admin_product_release_publish(
 
 
 # *** *** *** *** *** *** *** *** *** ***
+@router.get("/refund-request", response_class=HTMLResponse)
+def refund_request_page(request: Request):
+    return _render_refund_request_form(request)
+
+
+def _render_refund_request_form(
+    request: Request,
+    *,
+    error_key: str | None = None,
+    status_code: int = 200,
+    submission_token: str | None = None,
+):
+    if not submission_token or not SUBMISSION_TOKEN_PATTERN.fullmatch(
+        submission_token
+    ):
+        submission_token = token_hex(32)
+
+    csrf_cookie_id = token_hex(16)
+    csrf_token = token_hex(32)
+
+    response = render(
+        request,
+        "refund_request.html",
+        {
+            "max_message_length": MAX_MESSAGE_LENGTH,
+            "submission_token": submission_token,
+            "csrf_cookie_id": csrf_cookie_id,
+            "csrf_token": csrf_token,
+            "error_key": error_key,
+        },
+        status_code=status_code,
+    )
+
+    response.set_cookie(
+        key=f"refund_csrf_{csrf_cookie_id}",
+        value=create_csrf_cookie_value(csrf_cookie_id, csrf_token),
+        max_age=1800,
+        path="/refund-request",
+        httponly=True,
+        secure=settings.APP_ENV == "prod",
+        samesite="lax",
+    )
+
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.get("/refund-request/received", response_class=HTMLResponse)
+def refund_request_received(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("refund_request_receipt", "")
+    if not SUBMISSION_TOKEN_PATTERN.fullmatch(token):
+        return _render_refund_request_form(request)
+    if find_refund_request_by_token(db, token) is None:
+        return _render_refund_request_form(request)
+    response = render(request, "refund_request.html", {"submitted": True})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@router.post("/refund-request", response_class=HTMLResponse)
+def post_refund_request(
+    request: Request,
+    email: str = Form(default=""),
+    purchase_reference: str = Form(default=""),
+    message: str = Form(default=""),
+    submission_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+    csrf_cookie_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+):
+    csrf_cookie_value = (
+        request.cookies.get(f"refund_csrf_{csrf_cookie_id}")
+        if csrf_cookie_id
+        else None
+    )
+
+    if not verify_csrf_token(
+        csrf_cookie_id,
+        csrf_token,
+        csrf_cookie_value,
+    ):
+        return _render_refund_request_form(
+            request,
+            error_key="refund_request_invalid_submission",
+            status_code=400,
+        )
+
+    lang = get_lang(request)
+    try:
+        receipt_language = submit_refund_request(
+            db, email=email, reference=purchase_reference, message=message, language=lang,
+            submission_token=submission_token,
+        )
+    except RefundRequestValidationError as exc:
+        error_key, status_code = str(exc), 400
+    except RefundRequestPersistenceError:
+        return _render_refund_request_form(
+            request,
+            error_key="refund_request_unavailable",
+            status_code=503,
+            submission_token=submission_token,
+        )
+    else:
+        response = RedirectResponse(
+            f"/refund-request/received?lang={receipt_language}", status_code=303
+        )
+        response.set_cookie(
+            "refund_request_receipt",
+            submission_token,
+            max_age=600,
+            path="/refund-request/received",
+            httponly=True,
+            secure=settings.APP_ENV == "prod",
+            samesite="lax",
+        )
+        response.delete_cookie(
+            key=f"refund_csrf_{csrf_cookie_id}",
+            path="/refund-request",
+            secure=settings.APP_ENV == "prod",
+            httponly=True,
+            samesite="lax",
+        )
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    return _render_refund_request_form(
+        request, error_key=error_key, status_code=status_code,
+    )
+
+
+@admin_router.get("/admin/refund-requests", response_class=HTMLResponse)
+def admin_refund_requests(
+    request: Request, page: int = Query(1, ge=1, le=1_000_000),
+    db: Session = Depends(get_db),
+):
+    page_size = 50
+    requests = list_refund_requests(db, offset=(page - 1) * page_size, limit=page_size + 1)
+    entries = requests[:page_size]
+    now = datetime.now(UTC)
+    submitted_at = {
+        entry.id: (
+            entry.submitted_at.replace(tzinfo=UTC)
+            if entry.submitted_at.tzinfo is None
+            else entry.submitted_at.astimezone(UTC)
+        )
+        for entry in entries
+    }
+    response = render(
+        request, "admin_refund_requests.html",
+        {
+            "requests": entries, "page": page,
+            "has_next": len(requests) > page_size,
+            "submitted_at": submitted_at,
+            "utc": UTC,
+            "ages_hours": {
+                entry.id: max(0, int((now - submitted_at[entry.id]).total_seconds() // 3600))
+                for entry in entries
+            },
+        },
+        document_lang="en",
+    )
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+
 router.include_router(admin_router)

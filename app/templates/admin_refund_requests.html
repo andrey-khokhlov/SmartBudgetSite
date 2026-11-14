@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Refund requests{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_sales.css') }}">
+{% endblock %}
+{% block content %}
+<div class="admin-form sales-page">
+    <h1 class="admin-form-title">Refund requests</h1>
+    {% for entry in requests %}
+    <section>
+        <h2>Request #{{ entry.id }}</h2>
+        <dl>
+            <dt>Submitted (UTC)</dt><dd>{{ submitted_at[entry.id].isoformat(sep=" ") }}</dd>
+            <dt>Age</dt><dd>{{ ages_hours[entry.id] }} h</dd>
+            <dt>Purchase reference</dt><dd><a href="/admin/sales/{{ entry.sale_id }}">{{ entry.purchase_reference }}</a></dd>
+            <dt>Customer email</dt><dd>{{ entry.customer_email }}</dd>
+            <dt>Purchase composition</dt><dd>{{ entry.composition }}</dd>
+            <dt>Sale total</dt><dd>{{ entry.sale.amount }} {{ entry.sale.currency }}</dd>
+            {% if entry.window_status %}
+            <dt>Voluntary refund window</dt><dd>{{ entry.window_status }}</dd>
+            {% endif %}
+            {% if entry.window_deadline %}
+            {% set deadline = entry.window_deadline.astimezone(utc) if entry.window_deadline.tzinfo else entry.window_deadline.replace(tzinfo=utc) %}
+            <dt>Deadline (UTC)</dt><dd>{{ deadline.isoformat(sep=" ") }}</dd>
+            {% endif %}
+            <dt>Customer message</dt><dd>{{ entry.message or "—" }}</dd>
+            <dt>Status</dt><dd>{{ entry.status }}</dd>
+        </dl>
+    </section>
+    {% else %}
+    <p>No refund requests.</p>
+    {% endfor %}
+    {% if page > 1 %}<a href="?page={{ page - 1 }}">Previous</a>{% endif %}
+    {% if has_next %}<a href="?page={{ page + 1 }}">Next</a>{% endif %}
+</div>
+{% endblock %}

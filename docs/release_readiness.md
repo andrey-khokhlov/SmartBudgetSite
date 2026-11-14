@@ -842,10 +842,14 @@ Before paid public sales:
   procedure and record operational validation from that case. A real
   alternative transfer is not a pre-release requirement. Do not create an
   artificial customer or refund transaction to validate this edge case.
-- Deliver the bilingual R53 `/refund-request` form, durable request and receipt
-  confirmation, and Telegram-first operator notification with SMTP fallback.
-  Validate retries, privacy, pending request visibility and age, and continued
-  intake after the voluntary deadline. Keep money movement operator-controlled.
+- R53-1 implements bilingual `/refund-request` intake, CSRF protection,
+  idempotent persistence, protected Admin visibility and post-commit receipt
+  attempts. Development and review PostgreSQL schema checks are complete
+  per owner verification. Verify deployed receipt delivery, privacy and
+  continued intake after the voluntary deadline. Implement durable customer
+  receipt retry and durable Telegram-first operator notifications with SMTP
+  fallback. Validate notification retries, delivery evidence, pending request
+  visibility and age. Keep money movement operator-controlled. R53 remains open.
 - Under R39 and R42, validate reliable initial Calendly matching, cancellation
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against

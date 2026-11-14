@@ -122,8 +122,9 @@ generates it on ORM inserts, independently of payment status. Direct SQL
 inserts must provide the reference explicitly; the database enforces `UNIQUE`
 and `NOT NULL`. The migration assigns references to existing Sales. The PAY
 reference identifies a purchase, grants no access, and is separate from FP
-and DL references. All six purchase email variants include it. R53 request
-intake remains pending.
+and DL references. All six purchase email variants include it. R53-1 uses the
+PAY reference together with the purchase email and paid status to identify a
+Sale for request intake.
 
 `Sale` is the order header. It owns customer identity, payment status, payment
 provider and provider-specific external payment identifiers, total amount,
@@ -1193,11 +1194,32 @@ capability tokens and unnecessary personal data from alerts. Notification
 failure must leave the request intact, and operators must see pending requests
 and their age. Reuse established transport and reliability patterns where
 appropriate while keeping requests outside purchase-delivery incidents.
-Notification and reminder design and R53 implementation remain pending.
+Operator notification, retry and reminder design remain pending.
+
+R53-1 persists a separate pending `RefundRequest` with a restrictive Sale
+foreign key, purchase identity, UTC submission time, language, optional
+message, composition and applicable window evidence. Purchase verification
+failures share one public response. Product-only requests use the voluntary
+window assessment, including expired and unknown timestamps. Standalone
+consultations have no SmartBudget deadline. Mixed and other legacy compositions
+require manual review. The protected read-only Admin list shows pending
+requests and their age without adding refund controls.
+
+Public POSTs use the existing HMAC-based per-IP rate limit and require a
+signed per-form CSRF cookie and matching form token before intake. Each form
+also has a random submission token with a database uniqueness constraint.
+With valid CSRF credentials, a matching replay returns the original
+acknowledgement, including when concurrent submissions race. Only the
+transaction that creates the request attempts a localized customer receipt
+after commit. A successful POST redirects to a read-only confirmation page
+that checks the receipt cookie against the committed request. SMTP and connection failures leave the request
+available in Admin and log a warning without customer details. Durable
+customer receipt retry remains pending. The Admin request list links to Sale
+Detail for any existing refund operation. Pending or reconciliation-required
+operations do not prevent request intake.
 
 The first-release amendment defers bundle item-accounting implementation and
-keeps exceptional or historical cases under the operator procedure. Request
-intake still needs bounded implementation and validation. Preserve the current
+keeps exceptional or historical cases under the operator procedure. Preserve the current
 paid-Sale capability checks and `RefundOperation.sale_id` uniqueness.
 Any future partial refund design must preserve unaffected access and account
 for amounts already refunded.

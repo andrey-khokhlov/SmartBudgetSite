@@ -563,7 +563,7 @@ awaits implementation alignment, publication and independent legal validation.
 The owner confirms all transactions to date are tests, with no commercial sales.
 The first-release amendment defers bundle item accounting and preserves the
 commercial launch cutoff for Product Refund Rate. R42 operations, R50 consent,
-R53 intake and G15 publication remain open. R55 excludes activation and DRM.
+R53 operational follow-up and G15 publication remain open. R55 excludes activation and DRM.
 These are owner-approved product and architecture decisions.
 
 The owner-reported clean review environment uses `smartbudget_review` and
@@ -738,7 +738,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
-| R53 | Required | The bilingual `/refund-request` form, persisted requests, receipt confirmation and durable alerts are pending. | Bounded implementation with Telegram/SMTP, pending request visibility and operator-controlled refunds |
+| R53 | Partial | R53-1 implements bilingual `/refund-request` intake with verified paid purchase identification, CSRF protection, rate limiting, idempotent persistence, post-commit receipt attempts and read-only Admin visibility. The owner verified 32 focused tests, including PostgreSQL cases, and confirmed migration `c12a487d5e60` and schema parity in local development and review databases. | Validate deployed receipt delivery, implement durable customer receipt retry and Telegram-first operator notifications with SMTP fallback, and verify operational follow-up. Refund execution remains operator-controlled |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 
@@ -1048,8 +1048,8 @@ surface-specific slices, not duplicate requirements.
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the approved November 14 policy and linked bilingual seller page after factual disclosure and validation. Synchronize Checkout, FAQ, email and refund operations. |
 
 R42 remains a separate refund capability and operational implementation topic.
-R50 applicable consent and R53 persisted request intake need their own bounded
-scopes. G15 owns synchronized publication. R39 and R45 remain validation
+R50 applicable consent and the outstanding R53 operational requirements need
+their own bounded scopes. G15 owns synchronized publication. R39 and R45 remain validation
 work. R46 is complete, R48 is validated, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.

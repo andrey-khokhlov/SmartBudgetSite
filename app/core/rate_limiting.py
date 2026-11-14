@@ -22,6 +22,7 @@ RATE_LIMIT_MESSAGE = "Too many requests. Please try again later."
 RATE_LIMIT_UNAVAILABLE_MESSAGE = "Request protection is temporarily unavailable."
 
 FEEDBACK_PATH = "/v1/feedback"
+REFUND_REQUEST_PATH = "/refund-request"
 PURCHASE_LOOKUP_PATH = "/v1/check-purchase"
 ADMIN_LOGIN_PATH = "/admin/login"
 CALENDLY_WEBHOOK_PATH = "/v1/webhooks/calendly"
@@ -509,6 +510,23 @@ class RateLimitMiddleware:
         normalized_path = path.rstrip("/") or "/"
         method = request.method.upper()
         ip_identity = client_ip_identity(request)
+
+        if normalized_path == REFUND_REQUEST_PATH and method == "POST":
+            _enforce(
+                request,
+                rules=(
+                    _rule(
+                        policy_name="refund_request_ip_15m",
+                        limit=5,
+                        window_seconds=15 * 60,
+                        identity_kind="client_ip",
+                        identity_key=ip_identity,
+                    ),
+                ),
+                route_template=REFUND_REQUEST_PATH,
+                response_kind="html",
+            )
+            return
 
         if normalized_path == FEEDBACK_PATH and method == "POST":
             _enforce(
