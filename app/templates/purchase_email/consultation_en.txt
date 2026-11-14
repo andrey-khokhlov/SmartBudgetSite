@@ -4,6 +4,8 @@ Hello,
 
 Thank you for purchasing a SmartBudget consultation. Your payment has been confirmed.
 
+**Purchase reference:** {{ sale_reference }}
+
 Consultation duration: 60 minutes.
 
 Schedule your consultation: [[booking:personal secure booking link]]

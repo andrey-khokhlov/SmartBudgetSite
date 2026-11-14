@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
+from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.core.rate_limiting import RollingWindowRateLimiter
 from app.dependencies import get_db
 from app.main import app
@@ -292,6 +293,7 @@ def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     assert service_item.item_name == "SmartBudget setup consultation"
     assert service_item.currency_code == "EUR"
     assert captured["amount"] == Decimal("74.00")
+    assert SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference)
 
 
 @pytest.mark.usefixtures("enable_bundle_checkout")

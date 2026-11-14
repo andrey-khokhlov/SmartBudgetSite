@@ -5,6 +5,7 @@ from html import escape
 from pathlib import Path
 from urllib.parse import quote
 
+from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.models.enums import SaleItemType
 from app.models.sale import Sale
 
@@ -13,6 +14,10 @@ TEMPLATE_DIRECTORY = (
 )
 LINK_MARKER = re.compile(r"\[\[(download|booking):([^\[\]{}\n]+)\]\]")
 PRODUCT_PLACEHOLDER = "{{ product_name }}"
+REFERENCE_PLACEHOLDER = "{{ sale_reference }}"
+COPY_PLACEHOLDER = re.compile(
+    f"{re.escape(PRODUCT_PLACEHOLDER)}|{re.escape(REFERENCE_PLACEHOLDER)}"
+)
 TEMPLATE_DELIMITERS = ("[[", "]]", "{{", "}}")
 
 
@@ -49,6 +54,11 @@ def _validate_template(
         )
 
     remaining = LINK_MARKER.sub("", source)
+    if remaining.count(REFERENCE_PLACEHOLDER) != 1:
+        raise PurchaseEmailRenderError(
+            "Purchase email template has an invalid purchase reference placeholder count."
+        )
+    remaining = remaining.replace(REFERENCE_PLACEHOLDER, "")
     if "download" in links and product_name.strip():
         remaining = remaining.replace(PRODUCT_PLACEHOLDER, "")
     if any(
@@ -59,17 +69,20 @@ def _validate_template(
 
 
 def _render_bodies(
-    source: str, links: dict[str, str], product_name: str
+    source: str, links: dict[str, str], product_name: str, sale_reference: str
 ) -> tuple[str, str]:
     text_parts: list[str] = []
     html_parts: list[str] = []
+    values = {PRODUCT_PLACEHOLDER: product_name, REFERENCE_PLACEHOLDER: sale_reference}
 
     def append_copy(copy: str) -> None:
         text_parts.append(
-            copy.replace("**", "").replace(PRODUCT_PLACEHOLDER, product_name)
+            COPY_PLACEHOLDER.sub(lambda match: values[match[0]], copy.replace("**", ""))
         )
         formatted = re.sub(r"\*\*([^\n]+?)\*\*", r"<strong>\1</strong>", escape(copy))
-        html_parts.append(formatted.replace(PRODUCT_PLACEHOLDER, escape(product_name)))
+        html_parts.append(
+            COPY_PLACEHOLDER.sub(lambda match: escape(values[match[0]]), formatted)
+        )
 
     start = 0
     for marker in LINK_MARKER.finditer(source):
@@ -100,6 +113,8 @@ def render_purchase_email(
     base_url = public_base_url.rstrip("/")
     if not base_url:
         raise PurchaseEmailRenderError("Public application URL is not configured.")
+    if not sale.sale_reference or not SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference):
+        raise PurchaseEmailRenderError("Purchase has an invalid purchase reference.")
 
     links = {}
     product_name = ""
@@ -143,5 +158,5 @@ def render_purchase_email(
     source = source.replace("\\\n", "\n")
     _validate_template(subject, source, links, product_name)
 
-    text_body, html_body = _render_bodies(source, links, product_name)
+    text_body, html_body = _render_bodies(source, links, product_name, sale.sale_reference)
     return RenderedPurchaseEmail(subject, text_body, html_body)

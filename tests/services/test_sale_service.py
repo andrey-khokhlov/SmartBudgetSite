@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
@@ -59,6 +60,7 @@ def test_create_product_sale_creates_sale_and_sale_item(db_session):
     )
 
     assert sale.id is not None
+    assert SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference)
     assert len(items) == 1
 
     item = items[0]
@@ -181,6 +183,7 @@ def test_create_standalone_service_sale_creates_service_only_sale(db_session):
 
     assert sale.id is not None
     assert sale.product_id is None
+    assert SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference)
 
     items = (
         db_session.query(SaleItem)

@@ -1480,6 +1480,8 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 Спасибо за покупку консультации SmartBudget. Оплата подтверждена.
 
+**Номер покупки:** {{ sale_reference }}
+
 Продолжительность консультации: 60 минут.
 
 Записаться на консультацию: [персональная защищённая ссылка]
@@ -1501,6 +1503,8 @@ If Google Meet is unavailable on your device or network, please contact support 
 Hello,
 
 Thank you for purchasing a SmartBudget consultation. Your payment has been confirmed.
+
+**Purchase reference:** {{ sale_reference }}
 
 Consultation duration: 60 minutes.
 
@@ -1526,6 +1530,8 @@ Best regards, The SmartBudget Team
 
 Спасибо за покупку SmartBudget. Ваша оплата успешно подтверждена.
 
+**Номер покупки:** {{ sale_reference }}
+
 **Ваша покупка:** {{ product_name }}
 
 **Скачать SmartBudget:**
@@ -1550,6 +1556,8 @@ Best regards, The SmartBudget Team
 Hello,
 
 Thank you for purchasing SmartBudget. Your payment has been successfully confirmed.
+
+**Purchase reference:** {{ sale_reference }}
 
 **Your purchase:** {{ product_name }}
 
@@ -1577,6 +1585,8 @@ The SmartBudget Team
 Здравствуйте!
 
 Спасибо за покупку SmartBudget и персональной консультации. Ваша оплата успешно подтверждена.
+
+**Номер покупки:** {{ sale_reference }}
 
 **Ваша покупка:** {{ product_name }} + персональная консультация (60 минут).
 
@@ -1615,6 +1625,8 @@ The SmartBudget Team
 Hello,
 
 Thank you for purchasing SmartBudget and a personal consultation. Your payment has been successfully confirmed.
+
+**Purchase reference:** {{ sale_reference }}
 
 **Your purchase:** {{ product_name }} + personal consultation (60 minutes).
 

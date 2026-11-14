@@ -86,7 +86,7 @@ def test_classification_downgrade_is_lossless_or_blocked(disposable_postgres):
             )
         )
 
-    check_alembic("upgrade", "head")
+    check_alembic("upgrade", "65fc4a8e2b13")
     check_alembic("downgrade", PREVIOUS)
     assert "failure_classification" not in {
         column["name"]
@@ -101,8 +101,7 @@ def test_classification_downgrade_is_lossless_or_blocked(disposable_postgres):
             connection.scalar(text("SELECT count(*) FROM purchase_email_deliveries"))
             == 3
         )
-    check_alembic("upgrade", "head")
-    check_alembic("check")
+    check_alembic("upgrade", "65fc4a8e2b13")
 
     classifications = ["transient", "permanent", "unknown"]
     with engine.begin() as connection:
@@ -141,7 +140,6 @@ def test_classification_downgrade_is_lossless_or_blocked(disposable_postgres):
             )
         ).all()
         assert rows == list(zip(ids, ["failed"] * 3, classifications, strict=True))
-    check_alembic("check")
 
 
 def test_outbox_migration_and_concurrent_materialization(
@@ -323,7 +321,6 @@ def test_sale_paid_at_migration_preserves_payment_history(disposable_postgres):
         """)).all()
 
     alembic("upgrade", revision)
-    alembic("check")
     columns = {column["name"]: column for column in inspect(engine).get_columns("sales")}
     assert columns["paid_at"]["nullable"]
     assert columns["paid_at"]["type"].timezone
@@ -358,3 +355,69 @@ def test_sale_paid_at_migration_preserves_payment_history(disposable_postgres):
         stored = connection.scalar(text("SELECT paid_at FROM sales WHERE payment_status = 'paid'"))
         assert stored == paid_at
         assert stored.utcoffset() == UTC.utcoffset(stored)
+
+
+def test_sale_reference_migration_backfills_and_enforces_constraints(disposable_postgres):
+    from app.core.sale_reference import SALE_REFERENCE_PATTERN
+
+    engine, env = disposable_postgres
+    previous = "65fc4a8e2b13"
+
+    def alembic(*args):
+        return subprocess.run(
+            [sys.executable, "-m", "alembic", *args],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+
+    for args in [("upgrade", previous), ("upgrade", "head"), ("downgrade", previous)]:
+        result = alembic(*args)
+        assert result.returncode == 0, result.stderr
+
+    with engine.begin() as connection:
+        connection.execute(text("""
+            INSERT INTO sales (customer_email, amount, currency, payment_status, paid_at)
+            VALUES ('paid@example.test', 50, 'RUB', 'paid', '2026-11-13 12:00:00+00'),
+                   ('pending@example.test', 79, 'EUR', 'pending', NULL),
+                   ('failed@example.test', 39, 'EUR', 'failed', NULL)
+        """))
+        sales_before = connection.execute(text("SELECT * FROM sales ORDER BY id")).all()
+        connection.execute(text("""
+            INSERT INTO purchase_email_deliveries
+                (sale_id, status, attempt_count, sending_started_at)
+            SELECT id, 'sending', 1, now() FROM sales WHERE payment_status = 'paid'
+        """))
+
+    blocked = alembic("upgrade", "head")
+    assert blocked.returncode != 0
+    assert "Reconcile sending purchase emails" in blocked.stderr
+    with engine.begin() as connection:
+        connection.execute(text("""
+            UPDATE purchase_email_deliveries SET status = 'reconciliation_required'
+        """))
+
+    for args in [("upgrade", "head"), ("check",)]:
+        result = alembic(*args)
+        assert result.returncode == 0, result.stderr
+    with engine.connect() as connection:
+        sales_after = connection.execute(text("SELECT * FROM sales ORDER BY id")).all()
+        references = {sale.sale_reference for sale in sales_after}
+        assert [sale[:-1] for sale in sales_after] == sales_before
+        assert len(references) == len(sales_before)
+        assert all(SALE_REFERENCE_PATTERN.fullmatch(ref) for ref in references)
+
+    for reference in (None, next(iter(references))):
+        with pytest.raises(IntegrityError), engine.begin() as connection:
+            connection.execute(
+                text("""
+                    INSERT INTO sales
+                        (customer_email, amount, currency, payment_status, sale_reference)
+                    VALUES ('duplicate@example.test', 50, 'RUB', 'pending', :reference)
+                """),
+                {"reference": reference},
+            )
+    blocked = alembic("downgrade", previous)
+    assert blocked.returncode != 0
+    assert "permanent purchase references would be lost" in blocked.stderr

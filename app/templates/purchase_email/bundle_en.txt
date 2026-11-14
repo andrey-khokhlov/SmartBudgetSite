@@ -4,6 +4,8 @@ Hello,
 
 Thank you for purchasing SmartBudget and a personal consultation. Your payment has been successfully confirmed.
 
+**Purchase reference:** {{ sale_reference }}
+
 **Your purchase:** {{ product_name }} + personal consultation (60 minutes).
 
 **1. Download SmartBudget**

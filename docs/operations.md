@@ -768,6 +768,14 @@ and repeat the query. With zero `sending` entries, apply migration
 table during the check and refuses to change the schema while a `sending`
 entry exists. Apply the same operational check before rolling back the renderer.
 
+Repeat this cutover procedure for migration `8c40f6a2e517` and the purchase
+reference templates. Stop Sale creation and email workers before upgrading.
+The migration backfills references and blocks upgrade while a delivery is
+`sending`. On a populated database, keep the new schema and references
+when recovering from an application deployment failure. Downgrade blocks
+removal of assigned purchase references. Recovery code must still generate
+references for new Sales because the column has no database default.
+
 ## Manual Lava.top checkout smoke test
 
 The Lava.top checkout smoke command is a deliberate live-provider operation.

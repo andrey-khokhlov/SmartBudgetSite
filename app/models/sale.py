@@ -9,12 +9,18 @@ from sqlalchemy import (
     Index,
     Numeric,
     String,
+    UniqueConstraint,
     func,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.core.sale_reference import (
+    SALE_REFERENCE_LENGTH,
+    SALE_REFERENCE_PREFIX,
+    generate_sale_reference,
+)
 from app.models.enums import PaymentCheckResult, PaymentStatus
 
 if TYPE_CHECKING:
@@ -27,6 +33,11 @@ class Sale(Base):
     __tablename__ = "sales"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    sale_reference: Mapped[str] = mapped_column(
+        String(len(SALE_REFERENCE_PREFIX) + SALE_REFERENCE_LENGTH),
+        nullable=False,
+        default=generate_sale_reference,
+    )
 
     # Transitional legacy field.
     # Product ownership must eventually be resolved through SaleItem.
@@ -93,6 +104,7 @@ class Sale(Base):
     )
 
     __table_args__ = (
+        UniqueConstraint("sale_reference", name="uq_sales_sale_reference"),
         CheckConstraint(
             "purchase_language IN ('ru', 'en')", name="ck_sales_purchase_language"
         ),

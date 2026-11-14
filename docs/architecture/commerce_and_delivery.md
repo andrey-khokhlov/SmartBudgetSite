@@ -115,6 +115,16 @@ Apply the approved terms consistently before publication under REL-001.
 
 ## Sales and sale items
 
+Each Sale has a permanent public purchase reference in `Sale.sale_reference`.
+The `PAY-` prefix is followed by 14 cryptographically random characters from
+the unambiguous reference alphabet. The SQLAlchemy ORM column default
+generates it on ORM inserts, independently of payment status. Direct SQL
+inserts must provide the reference explicitly; the database enforces `UNIQUE`
+and `NOT NULL`. The migration assigns references to existing Sales. The PAY
+reference identifies a purchase, grants no access, and is separate from FP
+and DL references. All six purchase email variants include it. R53 request
+intake remains pending.
+
 `Sale` is the order header. It owns customer identity, payment status, payment
 provider and provider-specific external payment identifiers, total amount,
 currency, timestamps, and payment metadata.

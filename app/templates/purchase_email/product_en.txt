@@ -4,6 +4,8 @@ Hello,
 
 Thank you for purchasing SmartBudget. Your payment has been successfully confirmed.
 
+**Purchase reference:** {{ sale_reference }}
+
 **Your purchase:** {{ product_name }}
 
 **Download SmartBudget:**

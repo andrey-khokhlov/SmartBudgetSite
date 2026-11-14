@@ -460,6 +460,9 @@ def test_product_consultation_and_bundle_content(
     reconcile_payment_and_deliver(db_session, payment_event(sale), transport=transport)
     (message,) = transport.messages
     assert message.subject == f"SmartBudget — {subject}"
+    reference_label = "Номер покупки" if language == "ru" else "Purchase reference"
+    assert f"{reference_label}: {sale.sale_reference}" in message.text_body
+    assert f"<strong>{reference_label}:</strong> {sale.sale_reference}" in message.html_body
     assert message.sender_email == "support@example.test"
     assert message.sender_name == "SmartBudget"
     assert sale.purchase_language == language

@@ -60,7 +60,9 @@ def test_renderer_rejects_invalid_template(
     reconcile_payment_event(db_session, payment_event(sale))
     db_session.commit()
     monkeypatch.setattr(renderer, "TEMPLATE_DIRECTORY", tmp_path)
-    (tmp_path / f"{kind}_en.txt").write_text(f"Subject\n\n{body}", encoding="utf-8")
+    (tmp_path / f"{kind}_en.txt").write_text(
+        f"Subject\n\n{body}\n\n{{{{ sale_reference }}}}", encoding="utf-8"
+    )
 
     with pytest.raises(renderer.PurchaseEmailRenderError, match="template"):
         renderer.render_purchase_email(
@@ -79,7 +81,7 @@ def test_renderer_rejects_wrong_product_name_count(
     markers = ["[[download:Download]]"]
     if kind == "bundle":
         markers.append("[[booking:Book]]")
-    body = "\n\n".join(markers + ["{{ product_name }}"] * count)
+    body = "\n\n".join(markers + ["{{ product_name }}"] * count + ["{{ sale_reference }}"])
     monkeypatch.setattr(renderer, "TEMPLATE_DIRECTORY", tmp_path)
     (tmp_path / f"{kind}_en.txt").write_text(f"Subject\n\n{body}", encoding="utf-8")
 
@@ -97,7 +99,8 @@ def test_renderer_escapes_link_label_in_html(db_session, tmp_path, monkeypatch):
     db_session.commit()
     monkeypatch.setattr(renderer, "TEMPLATE_DIRECTORY", tmp_path)
     (tmp_path / "consultation_en.txt").write_text(
-        'Subject\n\n[[booking:**<script> & "book"**]]', encoding="utf-8"
+        'Subject\n\n[[booking:**<script> & "book"**]]\n\n{{ sale_reference }}',
+        encoding="utf-8",
     )
 
     rendered = renderer.render_purchase_email(
@@ -105,7 +108,34 @@ def test_renderer_escapes_link_label_in_html(db_session, tmp_path, monkeypatch):
     )
 
     assert re.fullmatch(
-        r"https://app\.example\.test/consultation/book/[\w-]+", rendered.text_body
+        r"https://app\.example\.test/consultation/book/[\w-]+",
+        rendered.text_body.split("\n\n")[0],
     )
     assert "**&lt;script&gt; &amp; &quot;book&quot;**</a>" in rendered.html_body
     assert "<script>" not in rendered.html_body
+
+
+@pytest.mark.parametrize("placeholder", ["", "{{ sale_reference }} {{ sale_reference }}"])
+def test_renderer_rejects_invalid_reference_placeholder(
+    db_session, tmp_path, monkeypatch, placeholder
+):
+    sale = create_pending_sale(db_session, kind="consultation")
+    reconcile_payment_event(db_session, payment_event(sale))
+    monkeypatch.setattr(renderer, "TEMPLATE_DIRECTORY", tmp_path)
+    (tmp_path / "consultation_en.txt").write_text(
+        f"Subject\n\n[[booking:Book]]\n\n{placeholder}", encoding="utf-8"
+    )
+    with pytest.raises(renderer.PurchaseEmailRenderError, match="reference placeholder"):
+        renderer.render_purchase_email(
+            sale, public_base_url="https://app.example.test", now=datetime.now(UTC)
+        )
+
+
+@pytest.mark.parametrize("reference", [None, "PAY-<script>"])
+def test_renderer_rejects_invalid_reference_value(db_session, reference):
+    sale = create_pending_sale(db_session, kind="consultation")
+    sale.sale_reference = reference
+    with pytest.raises(renderer.PurchaseEmailRenderError, match="invalid purchase reference"):
+        renderer.render_purchase_email(
+            sale, public_base_url="https://app.example.test", now=datetime.now(UTC)
+        )
