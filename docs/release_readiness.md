@@ -818,8 +818,9 @@ launch, primary development returns to SmartBudget Excel.
 **Open for implementation, publication and validation.** The owner approved D4
 at product and architecture level. Use the [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
 and [supply-consent and seller-information boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
-The 2026-10-28 recovered policy is retained as source material for a new
-owner-approved publication revision.
+The November 14 publication candidate supersedes the recovered October 28
+policy, which remains in Appendix A. All completed payment activity to date
+is test evidence. Commercial sales have yet to begin.
 
 Before paid public sales:
 
@@ -841,22 +842,30 @@ Before paid public sales:
   procedure and record operational validation from that case. A real
   alternative transfer is not a pre-release requirement. Do not create an
   artificial customer or refund transaction to validate this edge case.
-- Deliver a separate persisted R53 online request and confirmation flow.
-  Accept requests after the voluntary deadline and show expiry to the
-  operator for review. Keep money movement under the refund operations boundary.
+- Deliver the bilingual R53 `/refund-request` form, durable request and receipt
+  confirmation, and Telegram-first operator notification with SMTP fallback.
+  Validate retries, privacy, pending request visibility and age, and continued
+  intake after the voluntary deadline. Keep money movement operator-controlled.
+- Under R39 and R42, validate reliable initial Calendly matching, cancellation
+  and provider-side verification, mandatory operator follow-up on failure,
+  and booking disposition before refunds. Check outage handling against
+  mandatory deadlines and preserve booked-entitlement evidence.
 - Implement the R50 initially unchecked digital delivery request where legally
   applicable. Separate it from other agreements and any applicable consultation
   early-start consent. Verify durable order evidence and purchase communication,
   including applicability, supply-start, and no-consent handling for supported
   flows. Preserve the voluntary 14-day policy and mandatory rights.
-- Finalize seller status and factual details. Publish the full geographical
-  address in the Refund Policy seller section in RU and EN. Use the approved
-  Checkout label and retain the footer policy link as appropriate.
-- Obtain the synchronized owner-approved policy revision and match Checkout,
-  FAQ, purchase email and actual refund operations to it. Validate applicable
-  rights and disclosure before publication. Finalize R54 stop-use/delete
-  wording under applicable law and licence terms, with the first-release R55
-  boundary against DRM or remote disablement intact.
+- Securely obtain the owner-supplied geographical address and telephone. Publish
+  the bilingual seller-information page with policy §9, neutral footer and
+  pre-payment Checkout links. Verify disclosure before payment.
+- Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
+  only after aligning Checkout, FAQ, purchase email and actual operations,
+  including support targets and approved R54 wording. Keep R55 exclusions.
+- VAT integration, a payment-provider change and additional tax infrastructure
+  remain deferred. Complete market-specific legal and tax validation and satisfy
+  all obligations it identifies, including any required tax registration or
+  tax handling, before selling into the relevant market. Merchant of Record
+  status and automatic international VAT handling are unverified.
 
 The approval records the owner’s product and architecture decisions. It does
 not establish legal compliance or external provider validation.

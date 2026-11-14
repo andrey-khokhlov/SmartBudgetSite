@@ -25,10 +25,10 @@ This is a requirements source, not an implementation report or a second backlog.
   Its legal assertions and proposed wording are research, not legal advice, final
   legal wording, implementation authority or proof of compliance. No fresh legal
   assessment is claimed by this documentation revision.
-- **Appendix A is preserved agreed commercial content, no longer final
-  publication-ready legal wording.** R49–R54 and a new owner-approved publication
-  revision under R52 are mandatory before paid public sales. Related FAQ,
-  checkout, email and operational wording must be reconciled with that revision.
+- Appendix A preserves the October 28 source. The [November 14 owner-approved
+  publication candidate](#appendix-b--approved-refund-policy-publication-candidate)
+  supersedes it. R49–R54, synchronization of FAQ, Checkout, email and operations,
+  and applicable legal validation remain pre-sale requirements.
 - R47 supplements the older security-sheet guidance; final public RU/EN ActiveX
   wording remains pending editorial approval. Excel 2021 validation does not
   establish the complete Microsoft 365 scenario.
@@ -72,6 +72,18 @@ The [release gate](release_readiness.md#commerce-and-fulfillment-rel-001)
 also requires Product Refund Rate from authoritative production records,
 excluding consultation-only refunds and using the documented commercial
 launch cutoff to exclude pre-release test payments and their refunds.
+
+## Refund policy and seller disclosure amendment — 2026-11-14
+
+The [approved policy candidate](#appendix-b--approved-refund-policy-publication-candidate)
+and the updated architecture supersede earlier refund-policy and seller
+disclosure instructions in the audit. R39 and R42 require verified booking
+disposition before consultation refunds, with operator follow-up for failed
+or uncertain cancellations. Apply R44's provider-neutral service targets
+from policy §5. R49 and R50 retain the separate consent boundary where
+applicable. R51 applies to separate public purchases. R53 requires durable
+request intake and notifications. R54 public wording follows policy §6,
+and R55's technical exclusions remain internal.
 
 ## Как пользоваться документом
 
@@ -220,9 +232,9 @@ launch cutoff to exclude pre-release test payments and their refunds.
 | R38 · CONS-02/03/04/05/06 | Standalone и add-on: 60 минут, онлайн, работа с файлом и экраном; первое — отдельная покупка, второе — настройка вместе с продуктом; стоимость из каталога | High; согласовано с проверкой платформы | Страница 5.7 и карточки/FAQ соответствуют реальным предложениям | B 126–135, 172–184 |
 | R39 · CONS-09/11/13/14/15 | Проверить Calendly: первичная запись, подтверждение/ссылка, перенос, отмена, новый слот/письмо; перенос после истечения первых 14 дней; определение и резерв платформы | High; согласовано как обязательная проверка | Полный сценарий 7.3; обещания публикуются после результата, не по наличию функции в документации сервиса | B 175–184 |
 | R40 · CONS-10/12 | Локализовать purchase email; 14 дней на запись, 60 минут и дальнейшие шаги. Purchase email и Calendly confirmation — два этапа; название платформы только после проверки | High; согласовано с проверкой | Письма 5.8 соответствуют трём составам покупки; ссылки управления не обещаются в ещё не назначенной встрече | B 176–184 |
-| R41 · FAQ-09, REF-01/02/06 | Отдельная политика RU/EN для всей линейки; FAQ, Checkout и Footer дают доступ до оплаты | High; согласовано по коммерческому содержанию | Полный текст приложения А; юридические/публикационные вопросы раздела 8 не скрыты | B 184–213; C |
+| R41 · FAQ-09, REF-01/02/06 | Отдельная политика RU/EN для всей линейки; FAQ, Checkout и Footer дают доступ до оплаты | High; согласовано по коммерческому содержанию | [Appendix B](#appendix-b--approved-refund-policy-publication-candidate) is the current owner-approved publication candidate. Appendix A is historical source material. Legal and publication requirements in section 8 remain open. | B 184–213; C |
 | R42 · REF: mixed orders | Проверить ручной полный/частичный возврат через Lava.top, последствия для продукта и консультации, подтверждение покупателю; один возврат на транзакцию — ограничение провайдера, не отмена прав | High; согласовано с проверкой | Операционный сценарий подтверждён; непроведённая консультация при полном возврате отменена; частичный случай рассмотрен отдельно | A 116–122; B 188–203; C |
-| R43 · REF-07/08 | D4: раздел «Сведения о продавце» в Политике возвратов. ФИО, полный географический адрес, официальный support и применимые регистрационные/налоговые сведения после уточнения статуса продавца | High; решение принято, публикация и проверка впереди | Один фактический адрес в RU/EN. Без отдельной страницы продавца и дублирования полного адреса в Checkout или footer | A 137–143; B 208–213; C; D4 |
+| R43 · REF-07/08 | November 14 decision: bilingual `/legal/seller-information` page linked from policy §9, the neutral footer link and Checkout before payment | High; implementation and publication pending | Verify access before payment. Securely obtain the actual address and telephone before publication. Keep both details on the seller page | November 14 owner decision supersedes earlier D4 placement; see §5.10 |
 | R44 · сроки поддержки | Первый ответ — целевые 2 рабочих дня, обычное рассмотрение 5; банковское зачисление после возврата — до 10 рабочих дней по прежнему ответу Lava.top | High; сохранено в C; проверить операционную готовность | Сроки не подменяют законные; различаются ответ, решение и банковское зачисление | A 117–122; B 188–193; C |
 | R45 · процесс review | Сначала согласование desktop и реализация малыми связанными группами; затем повторный responsive/accessibility review | High для закрытия gate; согласовано | Проверен фактический обновлённый интерфейс, результаты сохранены по задачам | B 42–43, 74–76 |
 | R46 · сохранение результатов | Полные тексты и решения сохранять в постоянном документе; изменения версионировать, отмечать superseded/conditional | Организационное; требование настоящей передачи | Дорожная карта ссылается на этот документ; изменения публичной редакции не теряются в истории чата | A 143–150; текущий запрос |
@@ -1659,6 +1671,11 @@ a visible route to support. Preserve the support reference and Feedback prefill.
 
 ### 5.10. Сведения о продавце · R43 · B 212–213
 
+The copy below is retained for audit history. The November 14 amendment requires
+a separate bilingual `/legal/seller-information` page linked from policy §9,
+the neutral Legal Information footer link and pre-payment Checkout disclosures.
+Actual address and telephone are publication blockers pending secure owner input.
+
 #### RU — Сведения о продавце
 
 Продавец цифровых продуктов и исполнитель консультационных услуг SmartBudget: Хохлов Андрей Александрович, физическое лицо.
@@ -2168,7 +2185,7 @@ The 2026-10-29 research identified additional issues requiring review, including
 
 Before paid public sales:
 
-1. the policy must receive a new owner-approved publication revision;
+1. publish the [November 14 owner-approved candidate](#appendix-b--approved-refund-policy-publication-candidate) after implementation and validation;
 2. the policy must be consistent with actual checkout behavior;
 3. FAQ summaries must match it;
 4. checkout summaries/links must match it;
@@ -2177,10 +2194,8 @@ Before paid public sales:
 
 Do not silently rewrite the policy into supposedly legally final wording in this sprint.
 
-The owner now approves publication of the real full geographical seller
-address. Keep the seller section inside the Refund Policy and use the same
-factual address in RU and EN. Finalize seller status and applicable details
-before publication. Follow the approved [seller section and Checkout link](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
+The November 14 decision supersedes policy-only disclosure. Follow the
+[seller-page and Checkout requirements](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
 
 Status:
 
@@ -2188,16 +2203,19 @@ Status:
 
 ## R53 — Applicable online withdrawal/cancellation path
 
-D4 approves a dedicated online request function for product, consultation
-and entire-order cancellation/refund as applicable. Accept requests after
+The approved bilingual `/refund-request` route is pending. It covers product
+and standalone consultation purchases. Accept requests after
 the voluntary no-reason SmartBudget refund deadline and show expiry to the
 operator without blocking review of defects, non-conformity, statutory rights
-or other applicable remedies. In customer-facing wording use “within 14 days
-of purchase”. The backend deadline follows the
+or other applicable remedies. The customer policy specifies 14 calendar days
+of payment confirmation, and a voluntary request within that window needs
+no reason. The backend deadline follows the
 [approved paid timestamp](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock).
 Persist the request, acknowledgement and operational evidence. Confirm submission to the
 customer. Refund execution is a separate operator-controlled action.
-Feedback and support email remain available for ordinary support.
+Feedback and support email remain available for support and fallback. Deliver
+durable Telegram-first operator notifications with SMTP fallback and pending
+request visibility under the [R53 architecture](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
 
 Status:
 
@@ -2307,7 +2325,7 @@ recovered copy remains available as source material.
 | Requirement | Approved boundary and current gap | Remaining work |
 | --- | --- | --- |
 | R08/R34, section 5.1.7 | D1 allows a database-owned price in the concluding Landing section. Hero is price-free and Buy owns package selection. | G9 priced offer and validation |
-| R41/R42/R51/R52, Appendix A sections 3.4 and 4 | D4 approves add-on-only item refunds and the full-bundle rule. Current operations support full-Sale refunds and paid-Sale capability checks. | Implement and verify item accounting and unaffected product access before publishing the new policy |
+| R41/R42/R51/R52, Appendix B | The November amendments require separate public purchases. Full-Sale refunds and paid-Sale capability checks are implemented. Earlier bundle refund directions are retained as history. | Validate separate-purchase refunds and independent SmartBudget access. Bundle item accounting is deferred |
 | R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. Existing `RefundOperation.sale_id` uniqueness remains in force pending bounded implementation |
 | R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Existing public initiation is product-bound. | Implement G11/G12 and validate provider and paid entitlement behavior |
 | R35/R40 | D5 approves persisted Sale-level order language. G13 uses that snapshot for localized rendering. | Release-environment delivery validation |
@@ -2334,7 +2352,462 @@ to the commercial FAQ and related copy. D2 sets the public-support boundary.
 G2B implements and validates the approved contact changes under UX-001.
 Implementation groups belong in `current_state.md`.
 
+## Appendix B — Approved Refund Policy publication candidate
+
+Owner-approved on 2026-11-14. This bilingual revision supersedes the
+recovered October 28 policy in Appendix A for publication. This is the
+approved publication candidate. Implementation, publication and independent
+legal validation remain pending. The publication date remains a placeholder.
+The refund request and seller-information links are approved future routes.
+
+### SmartBudget — Политика отмены и возвратов
+
+**Последнее обновление:** [дата публикации]
+
+#### 1. Общие положения
+
+Настоящая Политика отмены и возвратов распространяется на цифровые продукты SmartBudget и индивидуальные консультации, приобретённые через сайт SmartBudget.
+
+Состав, стоимость, функциональные возможности и другие условия конкретного продукта или услуги определяются описанием предложения, доступным покупателю до оплаты.
+
+Мы заинтересованы в том, чтобы покупатели могли пользоваться приобретёнными продуктами и получать оплаченные услуги. Если возникает проблема, мы стремимся найти разумное решение: предоставить техническую помощь, восстановить доступ к покупке, перенести консультацию или оформить возврат денежных средств.
+
+Обращения рассматриваются добросовестно, с учётом условий покупки и применимого законодательства.
+
+Настоящая Политика предусматривает добровольные условия возврата и не ограничивает обязательные права покупателей.
+
+#### 2. Цифровые продукты
+
+Цифровые продукты SmartBudget предоставляются в электронном виде.
+
+Состав, функциональные возможности, совместимость, условия получения и использования конкретного продукта указываются в его описании до покупки.
+
+Приобретение SmartBudget предоставляет право бессрочного использования оплаченной версии продукта на условиях применимого лицензионного соглашения, если это право не прекратилось на законном основании.
+
+##### 2.1. Технические проблемы и несоответствие описанию
+
+Если приобретённый продукт не открывается, работает некорректно или не соответствует заявленным характеристикам, обратитесь в службу поддержки. Мы поможем разобраться в проблеме и, по возможности, устранить её.
+
+В зависимости от обстоятельств возможны предоставление исправленной версии продукта, возврат денежных средств или другие предусмотренные законодательством способы защиты прав покупателя.
+
+Обращение в техническую поддержку и выполнение диагностических действий не являются обязательным предварительным условием для предъявления требований, предусмотренных применимым законодательством.
+
+Для диагностики могут потребоваться сведения о версии Microsoft Excel, описание проблемы и снимок экрана. Мы не требуем предоставлять заполненный личный бюджет или другую персональную финансовую информацию, не необходимую для решения вопроса.
+
+##### 2.2. Добровольный возврат в течение 14 дней
+
+**Вы можете получить полный возврат стоимости SmartBudget без объяснения причин в течение 14 календарных дней с момента подтверждения оплаты.**
+
+Это право действует независимо от того, скачали ли вы файл, открывали ли его или начали использовать продукт.
+
+Для добровольного возврата не требуется наличие технического недостатка или несоответствия описанию.
+
+Подать запрос можно через форму, указанную в разделе 4 настоящей Политики.
+
+По истечении 14-дневного срока добровольная гарантия возврата без объяснения причин прекращается. При этом сохраняются все предусмотренные применимым законодательством права покупателя, включая требования, связанные с недостатками и несоответствием продукта договору.
+
+##### 2.3. Совместимость
+
+SmartBudget предназначен для использования в поддерживаемых настольных версиях Microsoft Excel для Windows с необходимой поддержкой VBA и ActiveX.
+
+Перед оплатой ознакомьтесь с опубликованными системными требованиями и ограничениями совместимости.
+
+Использование неподдерживаемого программного обеспечения само по себе не свидетельствует о недостатке продукта, если соответствующие ограничения были ясно и достоверно раскрыты до покупки.
+
+Если сведения о совместимости оказались неточными или неполными, обращение рассматривается с учётом применимого законодательства и прав покупателя.
+
+##### 2.4. Доставка и скачивание
+
+После подтверждения оплаты покупателю направляется электронное письмо с защищённой ссылкой для скачивания приобретённого продукта.
+
+Срок действия ссылки составляет **24 часа с момента подтверждения оплаты**.
+
+Истечение срока действия ссылки не прекращает право использования приобретённой версии SmartBudget.
+
+Если письмо не поступило, ссылка не работает или срок её действия истёк, обратитесь в службу поддержки. Мы проверим покупку и поможем восстановить доступ к продукту, если соответствующее право сохраняется.
+
+##### 2.5. Лицензия, обновления и поддержка
+
+Приобретённая версия SmartBudget предоставляется для бессрочного использования в соответствии с лицензионным соглашением.
+
+Новые коммерческие версии продукта, включая последующие крупные релизы, могут продаваться отдельно. Покупка одной версии не предоставляет автоматического права на бесплатное получение будущих коммерческих релизов.
+
+Предоставление исправленного файла для устранения недостатка ранее приобретённой версии не считается покупкой нового коммерческого релиза.
+
+Мы не гарантируем бесплатное предоставление всех будущих функциональных обновлений.
+
+Обычная техническая поддержка по вопросам покупки, получения файла, открытия продукта и технических ошибок предоставляется через службу поддержки.
+
+Индивидуальная помощь с настройкой личного бюджета, финансовым планированием и использованием продукта для конкретных задач может предоставляться в рамках отдельной платной консультации.
+
+#### 3. Консультации
+
+SmartBudget предоставляет платные индивидуальные консультации в онлайн-формате. Продолжительность, содержание, стоимость и условия записи указываются в описании услуги до покупки.
+
+После подтверждения оплаты покупатель получает инструкции и персональную защищённую ссылку для записи на консультацию.
+
+##### 3.1. Перенос встречи
+
+Если ваши планы изменились, вы можете перенести консультацию на другое доступное время по ссылке из подтверждения бронирования Calendly, если соответствующая функция доступна, либо обратившись в службу поддержки.
+
+Просим сообщать о необходимости переноса заблаговременно, чтобы мы могли согласовать удобное время.
+
+Перенос уже забронированной встречи сам по себе не является основанием для дополнительной оплаты.
+
+##### 3.2. Отмена до начала консультации
+
+**Вы можете отказаться от консультации до начала её проведения и получить полный возврат оплаченной стоимости услуги.**
+
+Это правило действует независимо от того, забронировали ли вы время встречи или ещё не воспользовались ссылкой для записи.
+
+Для возврата денежных средств направьте запрос через специальную форму на сайте SmartBudget, указанную в разделе 4 настоящей Политики.
+
+Если встреча уже забронирована, мы обеспечим её отмену. Самостоятельно отменять встречу в Calendly перед подачей запроса на возврат не требуется.
+
+Отмена бронирования в Calendly сама по себе не инициирует возврат денежных средств.
+
+Бронирование времени, подготовка к встрече или изменение ваших планов не являются основаниями для удержания части стоимости консультации, которая ещё не началась.
+
+Порядок рассмотрения обращения и сроки возврата приведены в разделах 4 и 5.
+
+##### 3.3. После проведения консультации
+
+Если консультация проведена надлежащим образом и в соответствии с согласованными условиями, последующее изменение решения покупателя само по себе не предусматривает добровольного возврата оплаты.
+
+Если консультация не состоялась по нашей причине, была оказана ненадлежащим образом или не соответствовала согласованным условиям, обратитесь в службу поддержки.
+
+Мы рассмотрим обстоятельства и предложим соответствующее решение, включая повторную встречу, возврат оплаты или другие средства защиты, предусмотренные применимым законодательством.
+
+##### 3.4. Технические проблемы со связью
+
+Если консультация не состоялась или была существенно прервана из-за технических проблем, сообщите об этом в службу поддержки.
+
+В зависимости от обстоятельств мы можем предложить восстановить соединение, продолжить встречу, перенести её на другое время либо оформить частичный или полный возврат с учётом фактически оказанной услуги и применимого законодательства.
+
+Технические проблемы не ограничивают обязательные права покупателя.
+
+#### 4. Порядок обращения
+
+Для запроса отмены покупки или возврата денежных средств воспользуйтесь специальной [формой возврата на сайте SmartBudget](/refund-request).
+
+Укажите адрес электронной почты, использованный при покупке, сведения, позволяющие определить заказ, и тип обращения.
+
+При запросе добровольного возврата SmartBudget в течение 14 календарных дней объяснять причину не требуется. В остальных случаях вы можете описать обстоятельства обращения, чтобы мы могли определить применимые условия возврата.
+
+После отправки формы вы получите подтверждение регистрации обращения. Подача запроса не означает, что возврат денежных средств уже выполнен.
+
+Если форма временно недоступна, направьте обращение по адресу support@neocitrix.com.
+
+Не отправляйте пароли, полные реквизиты банковских карт, заполненные файлы личного бюджета или другие финансовые сведения, не относящиеся к обращению.
+
+#### 5. Сроки рассмотрения обращений и возврата денежных средств
+
+##### 5.1. Рассмотрение обращения
+
+Мы стремимся предоставить первый ответ на обращение в течение **2 рабочих дней** с момента его получения.
+
+Обычное рассмотрение запроса на отмену покупки или возврат денежных средств, как правило, завершается в течение **5 рабочих дней** с момента получения обращения.
+
+Если для рассмотрения потребуется дополнительная проверка или информация, мы сообщим об этом покупателю.
+
+Для целей указанных сроков обслуживания рабочими днями считаются дни с понедельника по пятницу.
+
+Указанные сроки являются целевыми стандартами обслуживания. Они не ограничивают права покупателя и не продлевают обязательные сроки, установленные применимым законодательством.
+
+##### 5.2. Оформление возврата
+
+Если возврат денежных средств согласован или предусмотрен применимым законодательством, мы организуем его без необоснованной задержки и с соблюдением обязательных законных сроков.
+
+Возврат, как правило, осуществляется первоначальным способом оплаты.
+
+Если возврат первоначальным способом невозможен, мы согласуем с покупателем допустимый альтернативный способ возврата и зафиксируем соответствующее согласие.
+
+После оформления возврата мы предоставим покупателю имеющуюся подтверждённую информацию о его статусе.
+
+##### 5.3. Зачисление денежных средств
+
+Оформление возврата не означает, что денежные средства уже поступили на счёт или карту покупателя.
+
+Обычно зачисление денежных средств после проведения возврата занимает **до 10 рабочих дней**. Фактический срок зависит от участвующих банков, платёжного метода и особенностей обработки операции.
+
+Ориентировочный срок зачисления не изменяет обязательные сроки исполнения обязанности продавца, предусмотренные применимым законодательством.
+
+Если деньги не поступили в ожидаемый срок, обратитесь по адресу support@neocitrix.com. Мы проверим доступную информацию о возврате и поможем разобраться в ситуации.
+
+#### 6. Использование цифрового продукта после возврата
+
+После возврата полной стоимости SmartBudget право дальнейшего использования соответствующего цифрового продукта прекращается в соответствии с применимым законодательством и условиями лицензионного соглашения.
+
+Если право использования прекратилось, покупатель обязан прекратить использование продукта и удалить сохранённые копии файла со своих устройств и носителей информации.
+
+Мы не требуем предоставлять доступ к личному компьютеру, финансовым документам или другим персональным данным для проверки удаления файла.
+
+Возврат стоимости консультации, приобретённой отдельно, не затрагивает право использования SmartBudget, приобретённого по другой покупке.
+
+Настоящие условия не ограничивают обязательные права потребителей, предусмотренные применимым законодательством.
+
+#### 7. Обязательные права покупателей
+
+Настоящая Политика предусматривает добровольные условия возврата, которые дополняют, но не заменяют обязательные права покупателей, установленные применимым законодательством.
+
+В зависимости от обстоятельств покупки и применимого законодательства покупатель может иметь дополнительные права, включая право на отказ от дистанционного договора, возврат денежных средств и предусмотренные законом способы защиты при недостатках или несоответствии товара либо услуги согласованным условиям.
+
+Для цифрового содержимого и услуг могут действовать различные правила отказа от договора, начала исполнения и предоставления согласия покупателя.
+
+В случаях, когда законодательство требует отдельного согласия на немедленное предоставление цифрового продукта, такое согласие запрашивается отдельно. Оно не отменяет добровольное право на полный возврат стоимости SmartBudget в течение 14 календарных дней, предусмотренное разделом 2 настоящей Политики.
+
+Условия отмены консультаций применяются отдельно от правил предоставления цифровых продуктов.
+
+Если какое-либо положение настоящей Политики противоречит обязательным нормам применимого законодательства, преимущественную силу имеют соответствующие нормы закона.
+
+#### 8. Изменения Политики
+
+Актуальная редакция настоящей Политики публикуется на сайте SmartBudget с указанием даты последнего обновления.
+
+Мы можем изменять Политику в связи с развитием продуктов и услуг, изменением законодательства или условий обслуживания покупателей.
+
+Изменения применяются к покупкам, совершённым после вступления новой редакции в силу. Условия уже совершённых покупок не могут быть ухудшены задним числом.
+
+Все обязательные права покупателей, предусмотренные применимым законодательством, сохраняются независимо от изменений настоящей Политики.
+
+#### 9. Сведения о продавце и контакты
+
+Продавцом цифровых продуктов SmartBudget и исполнителем консультационных услуг является Хохлов Андрей Александрович — физическое лицо, применяющее специальный налоговый режим «Налог на профессиональный доход» (самозанятый).
+
+Полные сведения о продавце, включая адрес и контактный телефон, представлены на странице [«Юридическая информация»](/legal/seller-information).
+
+**Электронная почта:** support@neocitrix.com.
+
+**Общие вопросы:** [Форма обратной связи](/feedback).
+
+**Отмена покупки и возврат денежных средств:** [Форма возврата](/refund-request).
+
+### SmartBudget — Cancellation and Refund Policy
+
+**Last updated:** [publication date]
+
+#### 1. General Provisions
+
+This Cancellation and Refund Policy applies to SmartBudget digital products and individual consultations purchased through the SmartBudget website.
+
+The contents, price, features, and other terms of each product or service are specified in the offer available to customers before payment.
+
+We want customers to be able to use the products they purchase and receive the services they pay for. If a problem occurs, we aim to find a reasonable solution, including technical assistance, restoring access to a purchase, rescheduling a consultation, or processing a refund.
+
+We review requests in good faith, taking into account the purchase terms and applicable law.
+
+This Policy provides voluntary refund terms and does not limit mandatory consumer rights.
+
+#### 2. Digital Products
+
+SmartBudget digital products are delivered electronically.
+
+The contents, features, compatibility, delivery arrangements, and terms of use for each product are described before purchase.
+
+Purchasing SmartBudget grants the right to use the purchased version indefinitely under the applicable licence agreement, unless that right is lawfully terminated.
+
+##### 2.1. Technical Issues and Non-Conformity
+
+If your purchased product does not open, works incorrectly, or does not match its stated specifications, please contact support. We will help investigate the issue and, where possible, resolve it.
+
+Depending on the circumstances, appropriate remedies may include a corrected version of the product, a refund, or other remedies available under applicable law.
+
+Contacting technical support or performing troubleshooting steps is not a mandatory prerequisite for exercising statutory consumer rights.
+
+We may ask for your Microsoft Excel version, a description of the issue, or a screenshot to help diagnose a problem. We do not require your completed personal budget workbook or unrelated personal financial information.
+
+##### 2.2. Voluntary 14-Day Refund
+
+**You may request a full refund of your SmartBudget purchase without giving a reason within 14 calendar days of payment confirmation.**
+
+This right applies whether or not you have downloaded, opened, or started using the product.
+
+A technical defect or non-conformity is not required to qualify for this voluntary refund.
+
+You can submit your request using the form described in Section 4 of this Policy.
+
+After the 14-day period, the voluntary no-reason refund guarantee expires. All mandatory consumer rights remain available, including remedies for defects or non-conformity under applicable law.
+
+##### 2.3. Compatibility
+
+SmartBudget is designed for supported desktop versions of Microsoft Excel for Windows with the necessary VBA and ActiveX functionality.
+
+Please review the published system requirements and compatibility limitations before purchasing.
+
+Using unsupported software does not, by itself, establish a product defect where the relevant limitations were clearly and accurately disclosed before purchase.
+
+If compatibility information was inaccurate or incomplete, we will review your request in accordance with applicable law and consumer rights.
+
+##### 2.4. Delivery and Download
+
+After payment confirmation, we send an email containing a secure download link for the purchased product.
+
+The link remains valid for **24 hours after payment confirmation**.
+
+Expiry of the download link does not terminate your right to use the purchased SmartBudget version.
+
+If the email does not arrive, the link fails, or it expires, please contact support. We will verify your purchase and help restore access where your entitlement remains valid.
+
+##### 2.5. Licence, Updates, and Support
+
+The purchased SmartBudget version is licensed for indefinite use under the applicable licence agreement.
+
+New commercial versions, including future major releases, may be sold separately. Purchasing one version does not automatically entitle the customer to free access to future commercial releases.
+
+Providing a corrected file to remedy a defect in a previously purchased version does not constitute a purchase of a new commercial release.
+
+We do not guarantee that all future feature updates will be provided free of charge.
+
+Ordinary technical support covers purchase, delivery, downloading, opening the product, and technical issues.
+
+Individual assistance with setting up a personal budget, financial planning, or using the product for specific needs may be offered as a separate paid consultation.
+
+#### 3. Consultations
+
+SmartBudget offers paid individual consultations online. The duration, scope, price, and booking terms are described before purchase.
+
+Following payment confirmation, the customer receives instructions and a personal secure link to book a consultation.
+
+##### 3.1. Rescheduling
+
+If your plans change, you may reschedule your consultation to another available time using the link in your Calendly booking confirmation, where the feature is available, or by contacting support.
+
+Please provide as much advance notice as reasonably possible so that we can arrange a suitable time.
+
+Rescheduling an existing appointment does not, by itself, result in an additional charge.
+
+##### 3.2. Cancellation Before the Consultation Starts
+
+**You may cancel your consultation before it begins and receive a full refund of the amount paid for the service.**
+
+This applies whether you have already booked an appointment or have not yet used your booking link.
+
+To request a refund, submit a request through the dedicated form on the SmartBudget website, as described in Section 4 of this Policy.
+
+If an appointment has already been booked, we will arrange its cancellation. You do not need to cancel your Calendly booking before submitting the refund request.
+
+Canceling an appointment in Calendly does not itself initiate a monetary refund.
+
+Reserving an appointment, preparing for a session, or a change in your plans does not justify withholding part of the consultation fee for a session that has not yet started.
+
+The request procedure and refund processing times are described in Sections 4 and 5.
+
+##### 3.3. After a Completed Consultation
+
+If a consultation has been properly delivered in accordance with the agreed terms, a subsequent change of mind does not, by itself, qualify for a voluntary refund.
+
+If the consultation did not take place due to circumstances on our side, was not properly delivered, or did not meet the agreed terms, please contact support.
+
+We will review the circumstances and offer an appropriate resolution, which may include another session, a refund, or other remedies available under applicable law.
+
+##### 3.4. Technical Connection Issues
+
+If a consultation cannot take place or is substantially interrupted due to technical difficulties, please contact support.
+
+Depending on the circumstances, we may offer to reconnect, continue the session, reschedule it, or provide a partial or full refund, taking into account any services already provided and applicable law.
+
+Technical difficulties do not limit mandatory consumer rights.
+
+#### 4. How to Request a Cancellation or Refund
+
+To request a purchase cancellation or refund, use the dedicated [refund request form on the SmartBudget website](/refund-request).
+
+Provide the email address used for the purchase, information sufficient to identify your order, and the type of request.
+
+You do not need to give a reason when requesting a voluntary SmartBudget refund within 14 calendar days of payment confirmation. For other requests, you may describe the circumstances so that we can assess the applicable refund terms.
+
+After submitting the form, you will receive confirmation that your request has been registered. Submitting a request does not mean that the monetary refund has already been processed.
+
+If the form is temporarily unavailable, contact support@neocitrix.com.
+
+Do not provide passwords, full payment card details, completed personal budget workbooks, or unrelated financial information.
+
+#### 5. Request Review and Refund Processing Times
+
+##### 5.1. Request Review
+
+We aim to provide an initial response within **2 business days** of receiving your request.
+
+A standard cancellation or refund request will normally be reviewed within **5 business days** of receipt.
+
+If additional information or investigation is required, we will notify you.
+
+For these service targets, business days are Monday through Friday.
+
+These timeframes are customer service targets. They do not restrict customer rights or extend mandatory deadlines under applicable law.
+
+##### 5.2. Refund Processing
+
+If a refund is approved or required under applicable law, we will arrange it without undue delay and within any applicable mandatory legal deadlines.
+
+Refunds are normally processed using the original payment method.
+
+If a refund through the original payment method is unavailable, we will agree on a legally permissible alternative with the customer and record their consent.
+
+Once the refund has been processed, we will provide the customer with available verified information about its status.
+
+##### 5.3. Bank Settlement
+
+A refund being processed does not mean that the funds have already reached the customer's bank account or payment card.
+
+Funds are typically credited within **10 business days** after the refund has been processed. Actual timing depends on the banks involved, the payment method, and transaction processing arrangements.
+
+This estimated settlement period does not alter any mandatory legal deadlines applicable to the seller.
+
+If the funds have not arrived within the expected period, please contact support@neocitrix.com. We will review the available refund information and help investigate the issue.
+
+#### 6. Using Digital Products After a Refund
+
+Following a full refund of SmartBudget, the right to continue using the corresponding digital product ends in accordance with applicable law and the licence agreement.
+
+Where the right to use the product has ended, the customer must stop using it and delete retained copies of the file from their devices and storage media.
+
+We do not require access to your personal computer, financial documents, or other personal data to verify file deletion.
+
+A refund for a separately purchased consultation does not affect your right to use SmartBudget purchased in a separate transaction.
+
+Nothing in these terms limits mandatory consumer rights under applicable law.
+
+#### 7. Mandatory Consumer Rights
+
+This Policy provides voluntary refund terms that supplement, rather than replace, mandatory consumer rights under applicable law.
+
+Depending on the circumstances of the purchase and the applicable law, customers may have additional rights, including rights to withdraw from a distance contract, obtain a refund, or seek statutory remedies for defective or non-conforming products or services.
+
+Different withdrawal, performance, and consent requirements may apply to digital content and services.
+
+Where applicable law requires separate consent for the immediate supply of a digital product, that consent is requested separately. It does not affect the voluntary right to a full SmartBudget refund within 14 calendar days, as described in Section 2 of this Policy.
+
+Consultation cancellation terms apply separately from digital product supply rules.
+
+If any provision of this Policy conflicts with mandatory applicable law, the relevant legal requirements prevail.
+
+#### 8. Policy Updates
+
+The current version of this Policy is published on the SmartBudget website, together with its last updated date.
+
+We may revise this Policy to reflect changes in our products and services, applicable law, or customer service arrangements.
+
+Changes apply to purchases made after the revised Policy takes effect. The terms of purchases already completed will not be made less favorable retroactively.
+
+All mandatory consumer rights under applicable law remain unaffected by changes to this Policy.
+
+#### 9. Seller Information and Contact Details
+
+SmartBudget digital products and consultation services are provided by Andrey Alexandrovich Khokhlov, an individual registered under the Russian professional income tax regime (self-employed).
+
+Full seller details, including the geographical address and contact telephone number, are available on the [Legal Information](/legal/seller-information) page.
+
+**Email:** support@neocitrix.com.
+
+**General inquiries:** [Contact form](/feedback).
+
+**Purchase cancellations and refunds:** [Refund request form](/refund-request).
+
+
 ## Приложение А. Полный сохранённый текст политики отмены и возвратов
+
+Historical source material. The [approved publication candidate](#appendix-b--approved-refund-policy-publication-candidate) supersedes this October 28 revision.
 
 Источник C: SmartBudget_Refund_Policy_RU_EN_2026-10-28.md. Ниже сохранён его полный текст, изменён только уровень Markdown-заголовков для вложения в настоящий документ. Это согласованное коммерческое содержание с исходной оговоркой о непроверенной юридической полноте. Новая правовая экспертиза при восстановлении не проводилась. Включение текста не разрешает считать открытые вопросы раздела 8 закрытыми.
 

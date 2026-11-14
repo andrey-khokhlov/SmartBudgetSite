@@ -72,6 +72,30 @@ entitlement lifecycle, booking, and capacity rules remain unchanged.
 
 ## Purchase and booking are separate events
 
+### Cancellation and refund coordination
+
+For standalone consultations, a cancellation request before the session starts
+qualifies for a full refund, including when an appointment was booked or
+prepared. Mandatory remedies remain available for undelivered, defective or
+improperly delivered services. A refund leaves separate SmartBudget rights
+unaffected.
+
+The future R53 flow accepts the customer's request through SmartBudgetSite.
+Calendly cancellation alone creates no refund request, and customer
+self-cancellation is optional. For a booked consultation, identify the purchase
+and corresponding appointment, prevent further bookings against the rights
+being refunded, cancel via the Calendly API where supported, and verify the
+provider-side result. Failed cancellation or uncertain matching requires a
+mandatory operator action and retained evidence.
+
+Before executing a monetary refund, check the consultation and booking
+disposition. Keep outage exceptions visible with required follow-up so that
+provider outages do not delay mandatory refunds beyond applicable deadlines.
+Preserve booked-entitlement history and existing transaction and entitlement
+ownership. Initial booking-to-entitlement matching remains unvalidated under
+R39. Webhook receipt alone cannot verify cancellation of the correct meeting.
+API cancellation and this coordination workflow remain pending.
+
 A purchased consultation is not automatically a booked consultation. The
 customer may book later or never book. Sales administration tracks purchases and
 payments; consultation lifecycle administration tracks booking access and

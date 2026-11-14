@@ -1135,15 +1135,21 @@ whole transaction back.
 
 ### Approved refund rules and customer requests (D4)
 
-SmartBudget offers a voluntary no-reason refund within 14 days of purchase
-for all customers. Mandatory defect and non-conformity rights remain
+SmartBudget offers a voluntary full refund without a reason within 14 calendar
+days of confirmed payment, including after download, opening or use. Mandatory
+defect and non-conformity rights remain
 unaffected. Troubleshooting may be offered and must never replace mandatory
 refund or remedy rights. Consultation cancellation is handled separately. If the
 consultation has not started, policy permits cancellation for a full refund of
 its price.
 
-A bundle uses one Sale and one provider payment with separate SaleItems.
-Refund treatment uses the original purchased item amounts:
+The earlier D4 bundle directions below are retained as design history. All
+transactions to date are tests. The first public release offers separate Sales
+and payments, and refunding a standalone consultation leaves a separately
+purchased SmartBudget licence unaffected. Preserve test-data compatibility.
+
+The retained bundle implementation uses one Sale and one provider payment
+with separate SaleItems. Earlier D4 refund directions used the original item amounts:
 
 - If the customer cancels only an add-on consultation and keeps SmartBudget,
   refund only the consultation SaleItem and preserve the product access. This
@@ -1163,11 +1169,21 @@ alternative method may be used only with the customer's explicit agreement
 and appropriate evidence. Preserve original purchase, payment and entitlement
 history, including evidence of any consultation already delivered.
 
-Provide a dedicated persisted online cancellation and refund request function
-for product, consultation and entire-order requests as applicable. Persist
-the request and operational acknowledgement/evidence and send the customer
-confirmation. Submission does not move money. Request intake and refund
-execution have separate lifecycles.
+R53 requires a bilingual `/refund-request` form for SmartBudget and standalone
+consultation purchases. Identify the purchase, persist the explicit request
+and evidence, and send receipt confirmation. Keep the form accessible for
+requests after the voluntary deadline. A voluntary SmartBudget request within
+the window requires no reason. Feedback and support email remain available
+for support and fallback. Money movement stays operator-controlled.
+
+After successful persistence, trigger a durable operator notification through
+Telegram, with administrative email/SMTP fallback when delivery is unconfirmed.
+Preserve retries and delivery evidence. Exclude financial and card details,
+capability tokens and unnecessary personal data from alerts. Notification
+failure must leave the request intact, and operators must see pending requests
+and their age. Reuse established transport and reliability patterns where
+appropriate while keeping requests outside purchase-delivery incidents.
+Notification and reminder design and R53 implementation remain pending.
 
 The first-release amendment defers bundle item-accounting implementation and
 keeps exceptional or historical cases under the operator procedure. Request
@@ -1198,8 +1214,8 @@ Detail page for paid Sales containing a product item. This is read-only
 information for the operator. The existing full-Sale refund controls and
 provider verification requirements apply regardless of the assessment. Manual
 review applies to legacy paid Sales with no timestamp. Consultation
-cancellation follows separate rules. Customer-facing copy should say “within
-14 days of purchase” to reflect the timestamp-based deadline.
+cancellation follows separate rules. The approved policy says “within 14
+calendar days of payment confirmation”. Use the inclusive UTC deadline.
 
 Expiry affects only the voluntary no-reason SmartBudget refund. Continue to
 accept online requests after the deadline and let the operator distinguish an
@@ -1209,8 +1225,9 @@ rights or other applicable remedies that still require review.
 ### Public refund-policy and supply-consent boundary
 
 R49–R55 define the public requirements and release readiness owns the pre-sale
-gate. The recovered policy needs a new owner-approved publication revision
-that matches Checkout, FAQ, purchase email and actual refund operations.
+gate. The [2026-11-14 publication candidate](../release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
+supersedes the recovered policy. Align Checkout, FAQ, purchase email and actual
+operations before publication and independently validate applicable obligations.
 
 Payment, email, protected access and downloading do not establish a universal
 waiver of mandatory rights. For orders containing SmartBudget, support a
@@ -1226,21 +1243,24 @@ supply-start and no-consent handling, and durable confirmation in the bounded
 implementation and publication review. Do not infer legal applicability from
 locale, SKU, currency or payment method.
 
-International launch remains in scope. The owner has approved publication of
-the real full geographical seller address. Include a Seller Information /
-Сведения о продавце section in the Refund Policy with seller name, that same
-factual address in RU and EN, `support@neocitrix.com`, and applicable
-registration and tax details once seller status is finalized. Use the policy
-section as the public home for this information, with no separate seller page.
-A normal footer policy link may remain. Label the Checkout link
-“Политика возвратов и сведения о продавце” / “Refund Policy and Seller
-Information”. Avoid duplicating the full address in Checkout or the footer.
+The 2026-11-14 decision supersedes the earlier policy-only seller disclosure.
+Publish a bilingual `/legal/seller-information` page linked from policy §9,
+the neutral footer label “Юридическая информация” / “Legal Information”,
+and the pre-payment Checkout legal-disclosure flow. Keep the address and
+telephone on that page. The approved identity is Хохлов Андрей Александрович /
+Andrey Alexandrovich Khokhlov, an individual using the professional income tax
+regime (NPD/self-employed), with `support@neocitrix.com` as public support email.
+Publication is blocked until the owner securely supplies the actual geographical
+address and mobile telephone.
 
 R54 accepts that customers can retain autonomous local copies after refund;
 policy should explain the end of continued-use rights under applicable law and
 licence terms and ask customers to stop use and delete copies, without restricting
 statutory protections. SmartBudget cannot claim remote removal, inspection,
-deletion verification or disabling of downloaded copies. R55 excludes preventive
+deletion verification or disabling of downloaded copies. Keep these technical
+limitations internal. Public policy uses the approved §6 wording, including
+the boundary against requesting device access or personal financial data.
+R55 excludes preventive
 activation, DRM, time limits and mandatory continued server contact from the
 first release; reconsideration requires observed post-release evidence and
 explicit review. This does not weaken backend download/booking authorization.

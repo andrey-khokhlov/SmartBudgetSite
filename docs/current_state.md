@@ -557,13 +557,13 @@ FAQ compatibility section; G5 About/Products presentation is preserved.
 The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
 accessibility review must assess the actually updated interface.
 
-D4 settles the refund, consent, request and seller-information model. The
-recovered Refund Policy remains source material for a new owner-approved
-publication revision. Actual refund operations, checkout, FAQ and purchase
-email must match the revised policy before paid sales. The 2026-11-13 amendment
-defers bundle item accounting. R42 operational validation, R50 applicable
-consent and R53 request intake remain open. R55 keeps activation and DRM
-outside the first release.
+D4 and the November 14 decisions define the target refund, consent, request
+and seller-information model. The [approved publication candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
+awaits implementation alignment, publication and independent legal validation.
+The owner confirms all transactions to date are tests, with no commercial sales.
+The first-release amendment defers bundle item accounting and preserves the
+commercial launch cutoff for Product Refund Rate. R42 operations, R50 consent,
+R53 intake and G15 publication remain open. R55 excludes activation and DRM.
 These are owner-approved product and architecture decisions.
 
 The owner-reported clean review environment uses `smartbudget_review` and
@@ -724,11 +724,11 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R36 | Implemented | The public download page shows expiry in the browser timezone with its offset and a server-rendered UTC fallback. Chromium verified DST, fractional offsets and download submission without JavaScript. | Release-environment download validation |
 | R37 | Partial | Expired-link pages explain indefinite use and provide the existing Feedback support path with support reference and prefill. Local GET and POST checks cover expiry and token confidentiality. | Verify real interrupted and repeat downloads and the deployed support path |
 | R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
-| R39 | Requires validation | Booking/token/webhook lifecycle exists; tests pre-link provider event URI and do not establish first-booking end-to-end behavior. | Real integration evidence first; no speculative architecture change |
+| R39 | Requires validation | Booking/token/webhook lifecycle exists; initial booking matching remains unvalidated and approved API cancellation coordination is pending. | Verify initial matching and implement and validate the approved cancellation workflow |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. | Real purchase email and Calendly confirmation validation remain open |
-| R41 | Required | The recovered policy is preserved. A synchronized public policy page and pre-payment links are absent. | G15 new owner-approved publication revision under D4 |
+| R41 | Required | The November 14 publication candidate is owner-approved. Public policy and pre-payment links are pending. | G15 synchronize and publish after validation |
 | R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Validate separate-purchase refunds and exceptional or historical handling. Bundle item accounting is deferred under the first-release amendment |
-| R43 | Required | Seller information is not published. D4 approves the full geographical address in the policy seller section. | G15 finalize seller details/status and publish identical factual address in RU/EN |
+| R43 | Required | The bilingual seller page and policy, footer and Checkout links are pending. | Obtain actual address and mobile telephone securely before G15 publication |
 | R44 | Partial | Support and founder refund operations exist. Public 2/5/10-business-day response, review and bank-settlement distinctions are incomplete. | G15 synchronized publication and separate support-capacity validation |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
@@ -736,9 +736,9 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
 | R49 | Partial | G10 product Checkout displays composition-sensitive delivery information. The no-universal-waiver boundary remains in force. | G15 synchronized policy disclosure and link under D4 |
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
-| R51 | Partial | Public product, bundle and standalone checkout use composition-specific delivery and item-owned access. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
-| R52 | Required | The recovered policy needs a new owner-approved publication revision synchronized with actual behavior. | G15 publication and validation before paid sales |
-| R53 | Required | Dedicated persisted cancellation/refund request and customer confirmation are absent. | Separate bounded D4 implementation with request evidence and operator-controlled money movement |
+| R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
+| R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
+| R53 | Required | The bilingual `/refund-request` form, persisted requests, receipt confirmation and durable alerts are pending. | Bounded implementation with Telegram/SMTP, pending request visibility and operator-controlled refunds |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 
@@ -1045,7 +1045,7 @@ surface-specific slices, not duplicate requirements.
 | G13C — Reissue Download Access | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13c--reissue-download-access). |
 | G13D — Purchase Delivery Monitoring | REL-001 | G13D-1 local detection and PostgreSQL incident history are complete. G13D-2a [Lava.top recovery](operations.md#g13d-2a-lavatop-payment-recovery), G13D-2b [Resend webhook monitoring](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring), and G13D-2c [safe automatic purchase-email recovery](operations.md#g13d-2c-purchase-email-recovery) are implemented and locally validated. G13D-3a implements the PostgreSQL notification outbox and materializer. G13D-3b implements the [one-pass Alert Dispatcher](operations.md#g13d-3-operational-monitoring-target) with Telegram-first delivery and SMTP fallback. G13D-3c prepares [systemd unit templates](operations.md#g13d-3c-systemd-unit-templates). Deployment rendering, installation, and live validation remain open under the [release gate](release_readiness.md#g13d--purchase-delivery-monitoring). |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery, interrupted and repeat download, and Gate 3 repeat review remain open. |
-| G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the new owner-approved policy and seller section. Synchronize summaries with implemented Checkout, FAQ, email and refund operations. |
+| G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the approved November 14 policy and linked bilingual seller page after factual disclosure and validation. Synchronize Checkout, FAQ, email and refund operations. |
 
 R42 remains a separate refund capability and operational implementation topic.
 R50 applicable consent and R53 persisted request intake need their own bounded

@@ -907,6 +907,11 @@ govern eligibility, amounts, item access and customer confirmations.
 
 1. Record the customer request, acknowledge receipt, and provide the operator
    with backend-owned purchase context and the status of the voluntary deadline.
+   The future R53 flow must persist the request and notify the operator durably
+   via Telegram with administrative SMTP fallback. Track pending request age
+   and failed delivery evidence. Apply the policy targets of 2 business days
+   for initial response and normally 5 for review, counting Monday–Friday
+   without holiday exclusions. Mandatory deadlines take precedence.
 2. Prepare the exact full-Sale refund amount for the applicable separate
    purchase. For an exceptional or historical case, review applicable rights,
    original item amounts and provider evidence under the
@@ -916,12 +921,15 @@ govern eligibility, amounts, item access and customer confirmations.
 3. Have the operator execute the refund manually in Lava.top and verify
    provider evidence before confirming the internal outcome. Lava.top supports
    one refund per transaction and currently offers no refund initiation API.
+   Check [consultation and booking disposition](architecture/consultations.md#cancellation-and-refund-coordination)
+   before execution. The target cancellation workflow is pending.
 4. Record the evidence and follow-up. Use the approved recovery procedure for
    conflicting evidence or a later required refund that the original provider
    path cannot process.
 
 `SENT` is evidence of provider-side processing. Final bank or card settlement
-requires separate evidence. Authoritative machine-readable refund verification
+requires separate evidence. The public estimate is up to 10 business days
+after processing, subject to the bank and method. Authoritative machine-readable refund verification
 remains unconfirmed. Optional assisted tooling can be reviewed separately.
 
 ## Production VPS provisioning (2026-11-12)
