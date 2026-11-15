@@ -13,6 +13,7 @@ from app.dependencies import ADMIN_COOKIE_NAME
 from app.models.enums import PaymentStatus
 from app.models.refund_operation import RefundOperation
 from app.models.refund_request import RefundRequest
+from app.models.refund_request_notification import RefundRequestNotification
 from app.services import refund_request_service
 from app.services.sale_service import create_standalone_service_sale
 from tests.services.test_payment_reconciliation_service import create_pending_sale
@@ -250,6 +251,7 @@ def test_public_form_admin_and_receipt_failure(
     sender.assert_called_once()
     assert sender.call_args.kwargs["to_email"] == email
     assert db_session.query(RefundRequest).count() == 1
+    assert db_session.query(RefundRequestNotification).count() == 2
     client.cookies.set(ADMIN_COOKIE_NAME, admin_token)
     admin = client.get("/admin/refund-requests")
     assert admin.status_code == 200
@@ -268,8 +270,9 @@ def test_persistence_failure_rolls_back(db_session, monkeypatch):
     original_flush = Session.flush
 
     def fail_request_flush(session, *args, **kwargs):
-        if any(isinstance(row, RefundRequest) for row in session.new):
-            raise SQLAlchemyError("write failed")
+        if any(isinstance(row, RefundRequestNotification) for row in session.new):
+            original_flush(session, *args, **kwargs)
+            raise SQLAlchemyError("outbox write transaction failed")
         return original_flush(session, *args, **kwargs)
 
     monkeypatch.setattr(Session, "flush", fail_request_flush)
@@ -285,6 +288,7 @@ def test_persistence_failure_rolls_back(db_session, monkeypatch):
             submission_token=token_hex(32),
         )
     assert db_session.query(RefundRequest).count() == 0
+    assert db_session.query(RefundRequestNotification).count() == 0
     sender.assert_not_called()
 
 

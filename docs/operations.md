@@ -909,14 +909,33 @@ for confirmed capabilities, settlement timing, and pending verification research
 
 ### Pre-release refund operations
 
+`REFUND_REQUEST_ALERT_DELIVERY_ENABLED` defaults to `false` and controls
+operator delivery only. Apply `ae416d0f278b` before deploying R53-2 code.
+Earlier requests have no outbox rows and remain visible for operator review.
+Run `python -m scripts.dispatch_refund_request_alerts --dry-run` to read due
+counts without sending or mutating rows. Live one-pass mode uses the existing
+Telegram and administrative SMTP settings and selects up to 20 requests.
+
+The PostgreSQL advisory lock prevents overlapping live passes. An interrupted
+claim becomes ambiguous after its two-minute lease. Each channel allows one
+initial attempt and up to six retries at 1, 2, 5, 15, 30 and 60 minutes.
+Configuration and permanent failures stop that channel immediately.
+Confirmed transport acceptance suppresses future sends. An ambiguous outcome
+can result in duplicate alerts if a provider accepted a send before its result
+could be recorded. Review terminal failures in Admin.
+
+The prepared `smartbudget-refund-request-alerts` systemd units use the
+existing job placeholders and schedule one pass each minute at :45 UTC.
+Installation, activation and live delivery validation remain open.
+
 Complete the bounded R42 refund and R53 request capabilities after G13D and
 before public sales. The [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
 govern eligibility, amounts, item access and customer confirmations.
 
 1. Record the customer request, acknowledge receipt, and provide the operator
    with backend-owned purchase context and the status of the voluntary deadline.
-   The future R53 flow must persist the request and notify the operator durably
-   via Telegram with administrative SMTP fallback. Track pending request age
+   R53-2 persists the notification obligation at intake and uses Telegram
+   with administrative SMTP fallback. Track pending request age
    and failed delivery evidence. Apply the policy targets of 2 business days
    for initial response and normally 5 for review, counting Monday–Friday
    without holiday exclusions. Mandatory deadlines take precedence.

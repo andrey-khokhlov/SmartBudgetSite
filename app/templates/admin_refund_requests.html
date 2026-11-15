@@ -26,6 +26,18 @@
             {% endif %}
             <dt>Customer message</dt><dd>{{ entry.message or "—" }}</dd>
             <dt>Status</dt><dd>{{ entry.status }}</dd>
+            {% for notification in entry.notifications %}
+            <dt>{{ notification.channel }} notification</dt>
+            <dd>
+                {{ notification.status }} · {{ notification.attempt_count }} attempt(s)
+                {% if notification.last_error %} · {{ notification.last_error }}{% endif %}
+                {% if notification.delivered_at %} · Accepted {{ notification.delivered_at.isoformat(sep=" ") }}
+                {% elif notification.status == "pending" %} · Next attempt {{ notification.next_attempt_at.isoformat(sep=" ") }}
+                {% endif %}
+            </dd>
+            {% else %}
+            <dt>Operator notifications</dt><dd>No delivery record</dd>
+            {% endfor %}
         </dl>
     </section>
     {% else %}

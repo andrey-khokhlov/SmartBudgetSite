@@ -506,3 +506,28 @@ def test_concurrent_refund_submission_uses_unique_token(disposable_postgres, mon
     sender.assert_called_once()
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM refund_requests")) == 1
+        assert connection.scalar(text("SELECT count(*) FROM refund_request_notifications")) == 2
+
+    from app.services import refund_request_notification_service as alerts
+
+    monkeypatch.setattr(settings, "REFUND_REQUEST_ALERT_DELIVERY_ENABLED", True)
+    smtp = Mock()
+    monkeypatch.setattr(alerts, "send_smtp_alert", smtp)
+
+    def dispatch():
+        with Session(engine) as db:
+            return alerts.dispatch_refund_request_alerts(db)
+
+    def telegram(message):
+        assert message == "SmartBudget refund request #1. Review in Admin."
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            assert executor.submit(dispatch).result(timeout=10)["status"] == "already_running"
+        return None
+
+    monkeypatch.setattr(alerts, "send_telegram_alert", telegram)
+    assert dispatch()["by_result"] == {"delivered": 1}
+    smtp.assert_not_called()
+    with engine.connect() as connection:
+        assert connection.execute(text(
+            "SELECT channel, status FROM refund_request_notifications ORDER BY channel"
+        )).all() == [("smtp", "skipped"), ("telegram", "delivered")]

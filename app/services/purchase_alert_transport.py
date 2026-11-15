@@ -44,7 +44,9 @@ def send_telegram_alert(message: str) -> str | None:
         connection.close()
 
 
-def send_smtp_alert(message: str) -> str | None:
+def send_smtp_alert(
+    message: str, *, subject: str = "SmartBudget purchase delivery incident"
+) -> str | None:
     if not settings.MAIL_SMTP_TLS or not all(
         (
             settings.MAIL_SMTP_HOST,
@@ -57,7 +59,7 @@ def send_smtp_alert(message: str) -> str | None:
         return "configuration"
     try:
         mail = EmailMessage()
-        mail["Subject"] = "SmartBudget purchase delivery incident"
+        mail["Subject"] = subject
         mail["From"] = settings.MAIL_FROM_EMAIL
         mail["To"] = settings.ADMIN_NOTIFICATION_EMAIL
         mail.set_content(message)

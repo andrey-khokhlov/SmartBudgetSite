@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 from app.models.sale import Sale
+
+if TYPE_CHECKING:
+    from app.models.refund_request_notification import RefundRequestNotification
 
 
 class RefundRequest(Base):
@@ -21,6 +25,9 @@ class RefundRequest(Base):
         ForeignKey("sales.id", ondelete="RESTRICT"), index=True
     )
     sale: Mapped[Sale] = relationship()
+    notifications: Mapped[list["RefundRequestNotification"]] = relationship(
+        back_populates="request", passive_deletes="all"
+    )
     purchase_reference: Mapped[str] = mapped_column(String(18))
     customer_email: Mapped[str] = mapped_column(String(200))
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

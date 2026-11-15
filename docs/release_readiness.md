@@ -654,6 +654,11 @@ defects.
 
 ### Pre-deployment release sequence
 
+Follow the [owner-approved remaining pre-release sequence](current_state.md#owner-approved-remaining-pre-release-sequence).
+R53-3 — Customer Receipt Retry is the next implementation priority. The sequence
+places Functional Freeze and UI/UX Polish before Production Deployment, with
+Live Validation following deployment. Each release gate retains its criteria.
+
 The R01–R55 static repository mapping against `cd5190b` is complete and accepted.
 Its authoritative statuses, approved D1–D6 outcomes, implementation groups and separate
 validation/operational work are in
@@ -794,9 +799,9 @@ Completed engineering remediation history is unchanged by these gates.
 
 The first public commercial release requires operations that minimize routine
 manual administration, give timely alerts, support safe recovery, and reliably
-meet customer obligations. G13D Purchase Delivery Monitoring is the next
-implementation priority. Follow it with bounded work on the approved refund
-and request capabilities and on consultation capacity.
+meet customer obligations. G13D local implementation is complete. Its
+production deployment, scheduled execution, live delivery and
+release-environment validation remain open.
 
 - Validate [G13D](#g13d--purchase-delivery-monitoring), including the external
   heartbeat and critical alert paths.
@@ -847,9 +852,12 @@ Before paid public sales:
   attempts. Development and review PostgreSQL schema checks are complete
   per owner verification. Verify deployed receipt delivery, privacy and
   continued intake after the voluntary deadline. Implement durable customer
-  receipt retry and durable Telegram-first operator notifications with SMTP
-  fallback. Validate notification retries, delivery evidence, pending request
-  visibility and age. Keep money movement operator-controlled. R53 remains open.
+  receipt retry as R53-3, the next implementation priority. R53-2 is locally
+  implemented and independently validated. It provides a durable Telegram-first
+  operator outbox with administrative SMTP fallback and timer templates. Validate
+  the deployed flag and schedule, channel retries and acceptance evidence, pending
+  request visibility, and operational follow-up. Keep money movement
+  operator-controlled. R53 remains open.
 - Under R39 and R42, validate reliable initial Calendly matching, cancellation
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against
@@ -1009,7 +1017,8 @@ neither Admin operation.
 
 #### G13D — Purchase Delivery Monitoring
 
-**Open. Required before public sales.** G13D-1 local detection and PostgreSQL
+**Local implementation complete. Release validation open and required before
+public sales.** G13D-1 local detection and PostgreSQL
 incident history are complete. G13D-2a Lava.top recovery is implemented and
 locally validated. G13D-2b Resend webhook delivery monitoring is implemented
 and locally validated. Live endpoint registration and provider validation
@@ -1018,7 +1027,8 @@ locally validated. Live recovery validation remains open. G13D-3a implements
 the PostgreSQL notification outbox and materializer. G13D-3b implements
 one-pass Telegram-first dispatch with SMTP fallback. G13D-3c prepares
 [systemd unit templates](operations.md#g13d-3c-systemd-unit-templates).
-Deployment rendering, installation, and live transport and job validation
+Production deployment, unit rendering and installation, scheduled execution,
+and live transport and job validation
 remain open. The
 [approved architecture](architecture/commerce_and_delivery.md#purchase-delivery-monitoring-g13d)
 requires release-environment validation of bounded Lava.top recovery, Resend

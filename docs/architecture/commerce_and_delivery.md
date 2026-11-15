@@ -1187,14 +1187,15 @@ requests after the voluntary deadline. A voluntary SmartBudget request within
 the window requires no reason. Feedback and support email remain available
 for support and fallback. Money movement stays operator-controlled.
 
-After successful persistence, trigger a durable operator notification through
-Telegram, with administrative email/SMTP fallback when delivery is unconfirmed.
-Preserve retries and delivery evidence. Exclude financial and card details,
-capability tokens and unnecessary personal data from alerts. Notification
-failure must leave the request intact, and operators must see pending requests
-and their age. Reuse established transport and reliability patterns where
-appropriate while keeping requests outside purchase-delivery incidents.
-Operator notification, retry and reminder design remain pending.
+R53-2 creates separate Telegram and administrative SMTP outbox rows in the
+same transaction as each new request. Each request has at most one row per
+channel. The dispatcher tries Telegram first and falls back to SMTP when
+Telegram acceptance is unconfirmed. Each channel retains its attempt count,
+schedule, sanitized failure category and confirmed acceptance timestamp.
+The outbox is separate from purchase-delivery incidents. Alerts include only
+the internal request ID and an instruction to review it in Admin. Admin shows
+channel status alongside the pending request and its age. Notification failure
+leaves the request intact. Operator reminders remain pending.
 
 R53-1 persists a separate pending `RefundRequest` with a restrictive Sale
 foreign key, purchase identity, UTC submission time, language, optional

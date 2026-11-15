@@ -602,11 +602,27 @@ it does not close or abandon them.
 
 ### Pre-release operational readiness
 
-G13D Purchase Delivery Monitoring is the next implementation priority. Follow
-it with bounded refund operations and consultation capacity work. These
-capabilities must be ready before the first public commercial release. After
-launch, SmartBudgetSite moves to maintenance and the primary development focus
-returns to SmartBudget Excel.
+G13D Purchase Delivery Monitoring is complete locally. Production deployment,
+scheduled execution, live delivery and release-environment validation remain
+open under the [G13D release gate](release_readiness.md#g13d--purchase-delivery-monitoring).
+The next implementation priority is R53-3 — Customer Receipt Retry.
+
+#### Owner-approved remaining pre-release sequence
+
+1. R53-3 — Customer Receipt Retry.
+2. R39/R42 — Refund and cancellation workflow.
+3. Consultation Capacity Management.
+4. G13B/G13C — Administrative recovery.
+5. R50/G15 — Refund policy, consent and legal publication.
+6. Functional Freeze.
+7. UI/UX Polish.
+8. Production Deployment.
+9. Live Validation.
+
+Local implementation and validation are tracked separately from deployment
+and live validation. Existing release gates and publication prerequisites
+still apply. After launch, SmartBudgetSite moves to maintenance and the
+primary development focus returns to SmartBudget Excel.
 
 Operational readiness means minimizing routine manual administration, alerting
 the operator in time to act, providing safe recovery procedures, and reliably
@@ -738,9 +754,14 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
-| R53 | Partial | R53-1 implements bilingual `/refund-request` intake with verified paid purchase identification, CSRF protection, rate limiting, idempotent persistence, post-commit receipt attempts and read-only Admin visibility. The owner verified 32 focused tests, including PostgreSQL cases, and confirmed migration `c12a487d5e60` and schema parity in local development and review databases. | Validate deployed receipt delivery, implement durable customer receipt retry and Telegram-first operator notifications with SMTP fallback, and verify operational follow-up. Refund execution remains operator-controlled |
+| R53 | Partial | R53-1 implements bilingual intake, verified paid purchase identification, CSRF protection, rate limiting, idempotent persistence, post-commit receipt attempts and read-only Admin visibility. The owner verified the intake migration in local development and review databases. R53-2 is locally implemented and independently validated, with an atomic operator outbox, Telegram-first dispatch with SMTP fallback, and Admin delivery status. | R53-3 Customer Receipt Retry is next. Validate deployed notifications, receipts and operational follow-up. Operator reminders remain pending. Refund execution remains operator-controlled |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
+
+Independent R53-2 local verification reported 40 passing refund intake,
+notification and PostgreSQL tests, 25 passing model registration and schema
+parity tests, and 49 passing G13D recovery and dispatcher regressions. Ruff
+passed for relevant changed Python files, and diff checks passed.
 
 ### G1 implementation and validation
 
@@ -1057,9 +1078,9 @@ G6 foundation and the R18 requirements link are also implemented. G10 completes
 R32, while R30 remains Partial for later FAQ groups. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 completes the seven-block Landing. G11 precedes
-G12. Gate 2 is complete. Continue with Gate 3 implementation
-and repeat review against the updated interface before the deployment and
-live-validation gates.
+G12. Gate 2 is complete. Follow the
+[owner-approved sequence](#owner-approved-remaining-pre-release-sequence),
+including Gate 3 repeat review before deployment and live validation.
 
 ### Validation-only and operational dependencies
 

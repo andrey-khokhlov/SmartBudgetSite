@@ -11,6 +11,7 @@ from app.core.i18n import t
 from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.models.enums import SaleItemType
 from app.models.refund_request import RefundRequest
+from app.models.refund_request_notification import RefundRequestNotification
 from app.repositories.refund_request_repository import (
     find_paid_sale_for_request,
     find_refund_request_by_token,
@@ -111,6 +112,10 @@ def submit_refund_request(
                     window_status=window_status,
                     window_deadline=deadline,
                     status="pending",
+                    notifications=[
+                        RefundRequestNotification(channel=channel, next_attempt_at=submitted_at)
+                        for channel in ("telegram", "smtp")
+                    ],
                 )
             )
     except IntegrityError:
