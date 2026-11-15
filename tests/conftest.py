@@ -155,7 +155,7 @@ def disable_real_email_sending(monkeypatch):
     """
     sent_emails = []
 
-    def fake_send_email(*, to_email: str, subject: str, body: str) -> None:
+    def fake_send_email(*, to_email: str, subject: str, body: str, timeout=None) -> None:
         sent_emails.append(
             {
                 "to_email": to_email,

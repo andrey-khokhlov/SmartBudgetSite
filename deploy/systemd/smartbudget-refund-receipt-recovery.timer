@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Refund Request Receipt Recovery
+
+[Timer]
+OnCalendar=*-*-* *:*:15 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

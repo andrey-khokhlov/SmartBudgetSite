@@ -907,6 +907,28 @@ for confirmed capabilities, settlement timing, and pending verification research
    start another refund. Preserve the provider evidence and investigate the
    existing Sale/refund operation.
 
+### Refund request customer receipt recovery
+
+Apply `24d760e4bc31` before deploying R53-3. Run
+`python -m scripts.recover_refund_request_receipts --dry-run` for a read-only
+count of up to 20 due receipts, or omit `--dry-run` for one live pass using
+the existing customer SMTP settings. Live recovery uses a PostgreSQL advisory
+lock. The prepared `smartbudget-refund-receipt-recovery` timer runs each
+minute at :15 UTC and remains pending installation and live validation.
+
+After the initial attempt, temporary or ambiguous outcomes retry after
+1, 2, 5, 15, 30 and 60 minutes, up to seven total attempts. Expired
+two-minute sending leases are classified as ambiguous and enter the same
+bounded retry schedule. Configuration and permanent failures stop retries.
+The transport uses a five-second socket timeout and verifies the certificate
+and hostname when STARTTLS is enabled. An ambiguous outcome may yield a
+duplicate if SMTP accepted the message before acceptance was recorded.
+
+Use the protected Refund Requests Admin list to review receipt status,
+attempts, timestamps and sanitized failure classification. Investigate
+failed receipts through the existing operator follow-up. SMTP acceptance
+does not establish inbox delivery. Older requests have no receipt record.
+
 ### Pre-release refund operations
 
 `REFUND_REQUEST_ALERT_DELIVERY_ENABLED` defaults to `false` and controls

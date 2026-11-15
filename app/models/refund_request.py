@@ -9,6 +9,7 @@ from app.models.sale import Sale
 
 if TYPE_CHECKING:
     from app.models.refund_request_notification import RefundRequestNotification
+    from app.models.refund_request_receipt import RefundRequestReceipt
 
 
 class RefundRequest(Base):
@@ -25,6 +26,7 @@ class RefundRequest(Base):
         ForeignKey("sales.id", ondelete="RESTRICT"), index=True
     )
     sale: Mapped[Sale] = relationship()
+    receipt: Mapped["RefundRequestReceipt | None"] = relationship(passive_deletes="all")
     notifications: Mapped[list["RefundRequestNotification"]] = relationship(
         back_populates="request", passive_deletes="all"
     )

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, aliased, joinedload, selectinload
 from app.models.enums import PaymentStatus
 from app.models.refund_request import RefundRequest
 from app.models.refund_request_notification import RefundRequestNotification
+from app.models.refund_request_receipt import RefundRequestReceipt
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 
@@ -39,6 +40,7 @@ def list_refund_requests(
             .options(
                 joinedload(RefundRequest.sale),
                 selectinload(RefundRequest.notifications),
+                joinedload(RefundRequest.receipt),
             )
             .order_by(RefundRequest.id.desc())
             .offset(offset)
@@ -88,4 +90,28 @@ def lock_request_notifications(
             .with_for_update()
             .execution_options(populate_existing=True)
         )
+    )
+
+
+def list_due_receipt_ids(db: Session, *, now: datetime, limit: int) -> list[int]:
+    receipt = RefundRequestReceipt
+    return list(
+        db.scalars(
+            select(receipt.request_id)
+            .where(
+                receipt.status.in_(("pending", "sending")),
+                receipt.next_attempt_at <= now,
+            )
+            .order_by(receipt.next_attempt_at, receipt.request_id)
+            .limit(limit)
+        )
+    )
+
+
+def lock_receipt(db: Session, request_id: int) -> RefundRequestReceipt | None:
+    return db.scalar(
+        select(RefundRequestReceipt)
+        .where(RefundRequestReceipt.request_id == request_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
     )

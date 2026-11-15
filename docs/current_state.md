@@ -605,11 +605,12 @@ it does not close or abandon them.
 G13D Purchase Delivery Monitoring is complete locally. Production deployment,
 scheduled execution, live delivery and release-environment validation remain
 open under the [G13D release gate](release_readiness.md#g13d--purchase-delivery-monitoring).
-The next implementation priority is R53-3 — Customer Receipt Retry.
+R53-3 — Customer Receipt Retry is implemented locally. The next implementation
+priority is R39/R42 — Refund and cancellation workflow.
 
 #### Owner-approved remaining pre-release sequence
 
-1. R53-3 — Customer Receipt Retry.
+1. R53-3 — Customer Receipt Retry (implemented locally).
 2. R39/R42 — Refund and cancellation workflow.
 3. Consultation Capacity Management.
 4. G13B/G13C — Administrative recovery.
@@ -754,7 +755,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
-| R53 | Partial | R53-1 implements bilingual intake, verified paid purchase identification, CSRF protection, rate limiting, idempotent persistence, post-commit receipt attempts and read-only Admin visibility. The owner verified the intake migration in local development and review databases. R53-2 is locally implemented and independently validated, with an atomic operator outbox, Telegram-first dispatch with SMTP fallback, and Admin delivery status. | R53-3 Customer Receipt Retry is next. Validate deployed notifications, receipts and operational follow-up. Operator reminders remain pending. Refund execution remains operator-controlled |
+| R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts, bounded SMTP recovery and read-only Admin receipt status. | Validate deployed notifications, receipt recovery and operational follow-up. Operator reminders remain pending. Refund execution remains operator-controlled |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 

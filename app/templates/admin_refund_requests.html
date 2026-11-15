@@ -26,6 +26,17 @@
             {% endif %}
             <dt>Customer message</dt><dd>{{ entry.message or "—" }}</dd>
             <dt>Status</dt><dd>{{ entry.status }}</dd>
+            <dt>Customer receipt</dt>
+            {% if entry.receipt %}
+            <dd>
+                {{ entry.receipt.status }} · {{ entry.receipt.attempt_count }} attempt(s)
+                {% if entry.receipt.accepted_at %} · SMTP accepted {{ entry.receipt.accepted_at.isoformat(sep=" ") }}{% endif %}
+                {% if entry.receipt.status == "pending" %} · Next retry {{ entry.receipt.next_attempt_at.isoformat(sep=" ") }}{% endif %}
+                {% if entry.receipt.failure_classification %} · {{ entry.receipt.failure_classification }}{% endif %}
+            </dd>
+            {% else %}
+            <dd>No receipt record</dd>
+            {% endif %}
             {% for notification in entry.notifications %}
             <dt>{{ notification.channel }} notification</dt>
             <dd>

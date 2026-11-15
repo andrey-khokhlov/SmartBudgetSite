@@ -461,6 +461,7 @@ def test_refund_request_schema_preserves_requests_and_sales(disposable_postgres)
     assert "customer refund requests would be lost" in blocked.stderr
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM refund_requests")) == 1
+        assert connection.scalar(text("SELECT count(*) FROM refund_request_receipts")) == 0
 
 
 def test_concurrent_refund_submission_uses_unique_token(disposable_postgres, monkeypatch):
@@ -491,7 +492,9 @@ def test_concurrent_refund_submission_uses_unique_token(disposable_postgres, mon
 
     sender = Mock()
     monkeypatch.setattr(intake, "find_refund_request_by_token", synchronized_lookup)
-    monkeypatch.setattr(intake.mail_service, "send_email", sender)
+    from app.services import mail_service
+
+    monkeypatch.setattr(mail_service, "send_email", sender)
 
     def submit():
         with Session(engine) as db:
@@ -507,6 +510,33 @@ def test_concurrent_refund_submission_uses_unique_token(disposable_postgres, mon
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT count(*) FROM refund_requests")) == 1
         assert connection.scalar(text("SELECT count(*) FROM refund_request_notifications")) == 2
+        assert connection.scalar(text("SELECT count(*) FROM refund_request_receipts WHERE status = 'accepted'")) == 1
+
+    from app.services import refund_request_receipt_service as receipts
+
+    with engine.begin() as connection:
+        connection.execute(text("""
+            UPDATE refund_request_receipts
+            SET status = 'pending', next_attempt_at = now(), accepted_at = NULL
+        """))
+
+    def recover():
+        with Session(engine) as db:
+            return receipts.recover_refund_request_receipts(db)
+
+    def smtp(**kwargs):
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            assert executor.submit(recover).result(timeout=10)["status"] == "already_running"
+
+    monkeypatch.setattr(mail_service, "send_email", smtp)
+    assert recover()["by_result"] == {"accepted": 1}
+    assert recover()["selected"] == 0
+    blocked = subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", "ae416d0f278b"],
+        env=env, capture_output=True, text=True, timeout=45,
+    )
+    assert blocked.returncode != 0
+    assert "refund receipt history would be lost" in blocked.stderr
 
     from app.services import refund_request_notification_service as alerts
 

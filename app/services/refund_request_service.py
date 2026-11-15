@@ -1,22 +1,21 @@
 import logging
 import re
-from smtplib import SMTPException
 from datetime import UTC, datetime
 
 from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.i18n import t
 from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.models.enums import SaleItemType
 from app.models.refund_request import RefundRequest
 from app.models.refund_request_notification import RefundRequestNotification
+from app.models.refund_request_receipt import RefundRequestReceipt
 from app.repositories.refund_request_repository import (
     find_paid_sale_for_request,
     find_refund_request_by_token,
 )
-from app.services import mail_service
+from app.services.refund_request_receipt_service import deliver_refund_request_receipt
 from app.services.refund_eligibility_service import (
     VoluntaryRefundWindowStatus,
     assess_voluntary_refund_window,
@@ -99,25 +98,29 @@ def submit_refund_request(
             else:
                 composition = "mixed" if len(set(item_types)) > 1 else "legacy"
                 window_status = VoluntaryRefundWindowStatus.MANUAL_REVIEW
-            db.add(
-                RefundRequest(
-                    submission_token=submission_token,
-                    sale_id=sale.id,
-                    purchase_reference=reference,
-                    customer_email=email,
-                    submitted_at=submitted_at,
-                    language=language,
-                    message=message or None,
-                    composition=composition,
-                    window_status=window_status,
-                    window_deadline=deadline,
-                    status="pending",
-                    notifications=[
-                        RefundRequestNotification(channel=channel, next_attempt_at=submitted_at)
-                        for channel in ("telegram", "smtp")
-                    ],
-                )
+            request = RefundRequest(
+                submission_token=submission_token,
+                sale_id=sale.id,
+                purchase_reference=reference,
+                customer_email=email,
+                submitted_at=submitted_at,
+                language=language,
+                message=message or None,
+                composition=composition,
+                window_status=window_status,
+                window_deadline=deadline,
+                status="pending",
+                receipt=RefundRequestReceipt(next_attempt_at=submitted_at),
+                notifications=[
+                    RefundRequestNotification(
+                        channel=channel, next_attempt_at=submitted_at
+                    )
+                    for channel in ("telegram", "smtp")
+                ],
             )
+            db.add(request)
+            db.flush()
+            request_id = request.id
     except IntegrityError:
         # The failed transaction has rolled back. Only a committed token match
         # turns the integrity error into a replay.
@@ -135,11 +138,8 @@ def submit_refund_request(
         raise RefundRequestPersistenceError from None
 
     try:
-        mail_service.send_email(
-            to_email=email,
-            subject=t(language, "refund_request_receipt_subject"),
-            body=t(language, "refund_request_success"),
-        )
-    except (SMTPException, OSError, ValueError):
+        deliver_refund_request_receipt(db, request_id)
+    except Exception:
+        # Intake is already committed. Leave the receipt due or leased for recovery.
         logger.warning("Refund request receipt could not be sent")
     return language

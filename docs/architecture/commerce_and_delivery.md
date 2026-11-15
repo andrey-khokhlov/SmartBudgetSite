@@ -1213,11 +1213,22 @@ With valid CSRF credentials, a matching replay returns the original
 acknowledgement, including when concurrent submissions race. Only the
 transaction that creates the request attempts a localized customer receipt
 after commit. A successful POST redirects to a read-only confirmation page
-that checks the receipt cookie against the committed request. SMTP and connection failures leave the request
-available in Admin and log a warning without customer details. Durable
-customer receipt retry remains pending. The Admin request list links to Sale
+that checks the receipt cookie against the committed request. The Admin request list links to Sale
 Detail for any existing refund operation. Pending or reconciliation-required
 operations do not prevent request intake.
+
+R53-3 creates one `RefundRequestReceipt` in the intake transaction alongside
+the request and both R53-2 operator notification rows. Existing requests
+receive no backfill. The initial SMTP attempt follows commit. A separate
+recovery pass locks due receipt rows and commits the `sending` claim before
+SMTP. It records acceptance or failure in a new transaction. Interrupted
+claims become eligible for recovery after a two-minute lease. Retryable
+failures return to `pending` under the bounded schedule in
+[operations](../operations.md#refund-request-customer-receipt-recovery).
+Permanent, configuration and exhausted failures become `failed`. SMTP
+`accepted` confirms server acceptance only. An ambiguous outcome can lead
+to a duplicate receipt. Admin shows sanitized receipt state and retry timing
+independently of operator notifications.
 
 The first-release amendment defers bundle item-accounting implementation and
 keeps exceptional or historical cases under the operator procedure. Preserve the current

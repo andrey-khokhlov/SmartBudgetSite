@@ -13,8 +13,10 @@ from app.dependencies import ADMIN_COOKIE_NAME
 from app.models.enums import PaymentStatus
 from app.models.refund_operation import RefundOperation
 from app.models.refund_request import RefundRequest
+from app.models.refund_request_receipt import RefundRequestReceipt
 from app.models.refund_request_notification import RefundRequestNotification
 from app.services import refund_request_service
+from app.services import mail_service
 from app.services.sale_service import create_standalone_service_sale
 from tests.services.test_payment_reconciliation_service import create_pending_sale
 from tests.services.test_standalone_consultation_payment import add_offer
@@ -217,7 +219,7 @@ def test_public_form_admin_and_receipt_failure(
     another_form = client.get(path)
     assert token != form_fields(another_form)["submission_token"]
     sender = Mock(side_effect=failure)
-    monkeypatch.setattr(refund_request_service.mail_service, "send_email", sender)
+    monkeypatch.setattr(mail_service, "send_email", sender)
     assert client.get("/admin/refund-requests").status_code == 403
     payload = {
         **form_data,
@@ -259,6 +261,8 @@ def test_public_form_admin_and_receipt_failure(
     assert reference in admin.text and email in admin.text
     assert "manual_review" in admin.text and "50.00 RUB" in admin.text
     assert "&lt;script&gt;test&lt;/script&gt;" in admin.text
+    assert "Customer receipt" in admin.text
+    assert "1 attempt(s)" in admin.text
 
 
 def test_persistence_failure_rolls_back(db_session, monkeypatch):
@@ -277,7 +281,7 @@ def test_persistence_failure_rolls_back(db_session, monkeypatch):
 
     monkeypatch.setattr(Session, "flush", fail_request_flush)
     sender = Mock()
-    monkeypatch.setattr(refund_request_service.mail_service, "send_email", sender)
+    monkeypatch.setattr(mail_service, "send_email", sender)
     with pytest.raises(refund_request_service.RefundRequestPersistenceError):
         refund_request_service.submit_refund_request(
             db_session,
@@ -289,6 +293,7 @@ def test_persistence_failure_rolls_back(db_session, monkeypatch):
         )
     assert db_session.query(RefundRequest).count() == 0
     assert db_session.query(RefundRequestNotification).count() == 0
+    assert db_session.query(RefundRequestReceipt).count() == 0
     sender.assert_not_called()
 
 
@@ -296,6 +301,20 @@ def test_rate_limit_applies_before_validation(client):
     for _ in range(5):
         assert client.post("/refund-request").status_code == 400
     assert client.post("/refund-request?lang=ru").status_code == 429
+
+
+def test_admin_shows_historical_request_without_receipt(auth_client, db_session):
+    sale = create_pending_sale(db_session)
+    db_session.add(RefundRequest(
+        sale_id=sale.id, submission_token=token_hex(32),
+        purchase_reference=sale.sale_reference, customer_email=sale.customer_email,
+        submitted_at=datetime.now(UTC), language="en", composition="product",
+        status="pending",
+    ))
+    db_session.commit()
+    response = auth_client.get("/admin/refund-requests")
+    assert response.status_code == 200 and "No receipt record" in response.text
+    assert db_session.query(RefundRequestReceipt).count() == 0
 
 
 def test_overlong_message_is_rejected_before_persistence(client, db_session):
@@ -374,7 +393,7 @@ def test_submission_token_cannot_be_reused_for_another_purchase(
     sender = Mock()
 
     monkeypatch.setattr(
-        refund_request_service.mail_service,
+        mail_service,
         "send_email",
         sender,
     )

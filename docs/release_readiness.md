@@ -655,7 +655,7 @@ defects.
 ### Pre-deployment release sequence
 
 Follow the [owner-approved remaining pre-release sequence](current_state.md#owner-approved-remaining-pre-release-sequence).
-R53-3 — Customer Receipt Retry is the next implementation priority. The sequence
+R39/R42 — Refund and cancellation workflow is the next implementation priority. The sequence
 places Functional Freeze and UI/UX Polish before Production Deployment, with
 Live Validation following deployment. Each release gate retains its criteria.
 
@@ -851,8 +851,9 @@ Before paid public sales:
   idempotent persistence, protected Admin visibility and post-commit receipt
   attempts. Development and review PostgreSQL schema checks are complete
   per owner verification. Verify deployed receipt delivery, privacy and
-  continued intake after the voluntary deadline. Implement durable customer
-  receipt retry as R53-3, the next implementation priority. R53-2 is locally
+  continued intake after the voluntary deadline. R53-3 implements durable
+  customer receipt retry locally. Validate its deployed scheduler, SMTP
+  acceptance and customer receipt delivery. R53-2 is locally
   implemented and independently validated. It provides a durable Telegram-first
   operator outbox with administrative SMTP fallback and timer templates. Validate
   the deployed flag and schedule, channel retries and acceptance evidence, pending
