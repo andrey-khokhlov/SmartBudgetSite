@@ -115,6 +115,11 @@ from app.services.refund_service import (
     confirm_full_refund,
     get_refund_sale_for_admin,
     start_full_refund,
+    unresolved_consultation_dispositions,
+)
+from app.services.consultation_cancellation_service import (
+    check_consultation_cancellation,
+    disposition_unavailable,
 )
 from app.services.storage.r2_storage_service import R2SignedUrlError, R2StorageService
 from app.models.enums import PaymentStatus, SaleItemType
@@ -1822,10 +1827,20 @@ async def admin_sale_detail(
     ):
         refund_window = assess_voluntary_refund_window(sale.paid_at)
 
+    unresolved = unresolved_consultation_dispositions(
+        sale, [item.consultation_entitlement for item in sale.items if item.consultation_entitlement],
+    )
+
     return render(
         request,
         "admin_sale_detail.html",
-        {"sale": sale, "refund_result": refund_result, "refund_window": refund_window},
+        {
+            "sale": sale, "refund_result": refund_result, "refund_window": refund_window,
+            "unresolved": unresolved,
+            "allow_disposition_exception": bool(unresolved) and all(
+                disposition_unavailable(value) for value in unresolved
+            ),
+        },
         document_lang="en",
     )
 
@@ -1858,9 +1873,11 @@ async def admin_start_full_refund(
 
 
 @admin_router.post("/admin/sales/{sale_id}/refund/confirm")
-async def admin_confirm_full_refund(
+def admin_confirm_full_refund(
     sale_id: int,
     acknowledgement: str = Form(...),
+    disposition_exception: str = Form(default=""),
+    disposition_exception_reason: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     if acknowledgement != "verified_full_refund_in_lava_top":
@@ -1870,6 +1887,8 @@ async def admin_confirm_full_refund(
             db,
             sale_id=sale_id,
             provider_refund_verified=True,
+            disposition_exception_acknowledged=disposition_exception == "verify_unavailable",
+            disposition_exception_reason=disposition_exception_reason,
         )
     except RefundNotFoundError:
         raise HTTPException(status_code=404, detail="Refund not found") from None
@@ -1886,6 +1905,19 @@ async def admin_confirm_full_refund(
         url=f"/admin/sales/{sale_id}?refund_result={result.result.value}",
         status_code=303,
     )
+
+
+@admin_router.post("/admin/sales/{sale_id}/consultations/{entitlement_id}/disposition")
+def admin_check_consultation_disposition(
+    sale_id: int, entitlement_id: int, db: Session = Depends(get_db),
+):
+    try:
+        check_consultation_cancellation(db, sale_id, entitlement_id)
+    except SQLAlchemyError:
+        return RedirectResponse(
+            f"/admin/sales/{sale_id}?refund_result=persistence_error", status_code=303,
+        )
+    return RedirectResponse(f"/admin/sales/{sale_id}", status_code=303)
 
 
 @admin_router.post("/admin/sales/{sale_id}/purchase-email/retry")

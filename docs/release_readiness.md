@@ -862,6 +862,8 @@ Before paid public sales:
 - R39-A adds single-use Share provisioning and verified reconciliation.
   R39-B adds automatic expiry revocation. Validate the timer and provider
   outcomes in the release environment.
+  R39-C adds early revocation and cancellation coordination for full-Sale
+  refunds, including the audited Calendly verification exception.
   Under R39 and R42, validate live initial Calendly matching, cancellation
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against

@@ -8,6 +8,7 @@ from app.models.consultation_entitlement import (
     ConsultationEntitlement,
     ConsultationEntitlementStatus,
 )
+from app.models.consultation_cancellation import ConsultationCancellation
 from app.models.sale_item import SaleItem
 from app.models.sale import Sale
 
@@ -16,12 +17,20 @@ class ConsultationEntitlementRepository:
     """Persistence queries for consultation entitlements."""
 
     @staticmethod
+    def cancellation_target_ids(db: Session, invitee_uri: str) -> list[int]:
+        return list(db.scalars(
+            select(ConsultationCancellation.entitlement_id)
+            .where(ConsultationCancellation.invitee_uri == invitee_uri).limit(2)
+        ))
+
+    @staticmethod
     def due_share_revocations(db: Session, now: datetime, limit: int) -> list[int]:
         row = ConsultationEntitlement
         return list(db.scalars(
             select(row.id)
             .where(
-                row.expires_at <= now,
+                or_(row.expires_at <= now, row.cancellation.has()),
+                ~row.cancellation.has(ConsultationCancellation.event_uri.is_not(None)),
                 row.status != ConsultationEntitlementStatus.BOOKED,
                 row.booked_at.is_(None),
                 row.provider_event_uri.is_(None),

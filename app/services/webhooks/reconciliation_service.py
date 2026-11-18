@@ -19,6 +19,7 @@ from app.services.calendly.calendly_api_client import (
     resource_path,
 )
 from app.services.calendly.share_service import correlation_reference, valid_correlation
+from app.services.consultation_cancellation_service import record_cancellation_booking
 from app.services.consultation_entitlement_service import (
     _ensure_utc_aware,
     mark_entitlement_as_booked,
@@ -69,13 +70,14 @@ def reconcile_booking_confirmed_event(
 
     invitee = get_resource(new_path)
     scheduled = get_resource(event_path)
+    provider_status = invitee.get("status")
     try:
         if (
             invitee_path(invitee.get("uri")) != new_path
             or resource_path(invitee.get("event"), "scheduled_events") != event_path
             or resource_path(scheduled.get("uri"), "scheduled_events") != event_path
-            or invitee.get("status") != "active"
-            or scheduled.get("status") != "active"
+            or provider_status not in ("active", "canceled")
+            or scheduled.get("status") != provider_status
             or invitee.get("new_invitee")
             or (
                 invitee_path(invitee["old_invitee"])
@@ -109,6 +111,14 @@ def reconcile_booking_confirmed_event(
             ConsultationEntitlement.provider_invitee_uri,
             old_uri,
         )
+        if entitlement is None:
+            evidence_ids = Repository.cancellation_target_ids(db, old_uri)
+            if len(evidence_ids) > 1:
+                return None
+            if evidence_ids:
+                entitlement = Repository.lock_owner_and_entitlement(
+                    db, ConsultationEntitlement.id, evidence_ids[0],
+                )
         if entitlement is None:
             # The predecessor's own tracking and timestamp establish the first booking.
             original_correlation = _tracking_reference(predecessor)
@@ -147,9 +157,16 @@ def reconcile_booking_confirmed_event(
         )
     if (
         entitlement is None
-        or entitlement.sale_item.sale.payment_status != PaymentStatus.PAID
         or not entitlement.calendly_event_type_uri
         or CALENDLY_API_BASE_URL + event_type != entitlement.calendly_event_type_uri
+    ):
+        return None
+    cancellation = entitlement.cancellation
+    if provider_status == "canceled" and cancellation is None:
+        return None
+    payment_status = entitlement.sale_item.sale.payment_status
+    if payment_status != PaymentStatus.PAID and not (
+        cancellation is not None and payment_status == PaymentStatus.REFUNDED
     ):
         return None
     linked = Repository.get_by_provider_event_uri(db, event_uri)
@@ -176,14 +193,24 @@ def reconcile_booking_confirmed_event(
         and entitlement.booking_provider == "calendly"
         and entitlement.provider_invitee_uri == old_uri
     )
+    if cancellation is not None:
+        if (cancellation.event_uri, cancellation.invitee_uri) == (event_uri, invitee_uri):
+            return entitlement
+        if old_path and cancellation.invitee_uri == old_uri and not updating:
+            record_cancellation_booking(entitlement, event_uri, invitee_uri)
+            return entitlement
+        if cancellation.invitee_uri and (not old_path or cancellation.invitee_uri != old_uri):
+            return None
     if not updating and (
         (old_path and not recovering)
-        or entitlement.status not in (Status.AVAILABLE, Status.EXPIRED)
+        or (
+            entitlement.status not in (Status.AVAILABLE, Status.EXPIRED)
+            and not (cancellation is not None and entitlement.status == Status.CANCELLED)
+        )
         or entitlement.provider_event_uri
         or entitlement.provider_invitee_uri
         or original_time is None
         or original_time < _ensure_utc_aware(entitlement.created_at)
-        or original_time > _ensure_utc_aware(entitlement.expires_at)
         or (
             not recovering
             and (
@@ -194,6 +221,15 @@ def reconcile_booking_confirmed_event(
         )
     ):
         return None
+    if provider_status == "canceled" or not updating and (
+        original_time > _ensure_utc_aware(entitlement.expires_at)
+        or entitlement.status == Status.CANCELLED
+        or payment_status == PaymentStatus.REFUNDED
+    ):
+        if cancellation is None:
+            return None
+        record_cancellation_booking(entitlement, event_uri, invitee_uri)
+        return entitlement
 
     # The existing unique event index also arbitrates claims on different Sales.
     try:
@@ -215,6 +251,7 @@ def reconcile_booking_confirmed_event(
                     booked_at=original_time,
                     verified_provider_booking=True,
                 )
+            record_cancellation_booking(entitlement, event_uri, invitee_uri)
     except IntegrityError as exc:
         constraint = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint != "uq_consultation_entitlements_provider_event_uri":

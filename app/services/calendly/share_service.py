@@ -181,5 +181,8 @@ def provision_booking_share(db: Session, booking_token: str) -> str:
 
     # Persist the remote identity even if access expired during the API request.
     with db.begin():
+        ConsultationEntitlementRepository.lock_owner_and_entitlement(
+            db, ConsultationEntitlement.booking_token, booking_token,
+        )
         entitlement = get_valid_consultation_entitlement_by_token(db, booking_token)
         return _booking_redirect(entitlement)

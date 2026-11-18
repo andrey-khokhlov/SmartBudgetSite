@@ -1047,6 +1047,17 @@ After verifying the full amount and provider-side evidence, the founder must
 explicitly acknowledge `I verified the full refund in Lava.top.` before internal
 confirmation can reconcile the Sale and entitlements.
 
+For a Sale that includes a consultation, the founder must first resolve
+Calendly disposition. An unused Share requires verified revocation if a Share
+exists or may have been provisioned. An existing meeting requires verified
+cancellation or a verified elapsed meeting with no outstanding successor.
+The confirmation path rechecks verified meetings through Calendly before the
+locked Sale update. If verification is unavailable and a refund must proceed,
+an explicit acknowledgement and nonempty founder reason are recorded with the
+exceptional confirmation timestamp. The exception still requires founder
+verification of the manual Lava.top refund. Product-only Sale behavior is
+unchanged. Historical bundles use the same full-Sale workflow.
+
 The administrative surface must distinguish at least:
 
 - refund available;

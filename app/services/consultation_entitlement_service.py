@@ -165,7 +165,10 @@ def get_valid_consultation_entitlement_by_token(
     owning_sale = (
         entitlement.sale_item.sale if entitlement.sale_item is not None else None
     )
-    if owning_sale is None or owning_sale.payment_status != PaymentStatus.PAID:
+    if (
+        owning_sale is None or owning_sale.payment_status != PaymentStatus.PAID
+        or entitlement.cancellation is not None
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Consultation booking link is no longer available.",

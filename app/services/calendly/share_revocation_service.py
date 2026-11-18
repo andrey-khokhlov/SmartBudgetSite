@@ -31,7 +31,8 @@ def _lock_entitlement(db: Session, entitlement_id: int) -> Entitlement | None:
 def _eligible(entitlement: Entitlement | None, now: datetime) -> bool:
     return (
         entitlement is not None
-        and _ensure_utc_aware(entitlement.expires_at) <= now
+        and (_ensure_utc_aware(entitlement.expires_at) <= now or entitlement.cancellation is not None)
+        and (entitlement.cancellation is None or entitlement.cancellation.event_uri is None)
         and entitlement.status != ConsultationEntitlementStatus.BOOKED
         and entitlement.booked_at is None
         and entitlement.provider_event_uri is None

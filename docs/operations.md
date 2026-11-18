@@ -1184,8 +1184,28 @@ Downgrade is allowed before attempts exist and preserves evidence by refusing
 to downgrade after revocation work starts.
 
 Validate unit rendering, timer installation, a controlled unused Share DELETE
-and a provider booking race in the release environment. Early-refund and
-cancellation revocation remain part of R39/R42 coordination.
+and a provider booking race in the release environment.
+
+### Consultation cancellation in Admin Sale Detail
+
+A standalone consultation refund request permanently closes booking access.
+Starting a founder-initiated full refund does the same for consultation
+entitlements on that Sale. The revocation timer picks up unused Shares,
+including those with time remaining in the original booking window.
+If a meeting exists, use **Verify meeting and cancel if still upcoming**.
+The Calendly credential needs `scheduled_events:write` for cancellation and
+the read scopes for Event, Invitee and Event Type verification. If Calendly
+times out, retry after the displayed time. Verification runs before any
+repeat cancellation. Review unresolved ownership in the owning Calendly
+account and never target a meeting by email alone.
+
+An elapsed meeting with no outstanding successor is a verified provider
+disposition. Review actual delivery and refund eligibility separately. When
+provider verification is unavailable and a refund must proceed, acknowledge
+the exception and record the reason without customer secrets. Always perform
+and verify the refund manually in Lava.top. The confirmation stores the
+reason and timestamp. Validate the live provider paths and race handling
+before release.
 
 See `current_state.md` for current priorities and blockers.
 

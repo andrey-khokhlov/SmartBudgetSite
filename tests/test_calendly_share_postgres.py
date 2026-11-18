@@ -192,3 +192,76 @@ def test_revocation_migration_and_job_exclusion(disposable_postgres, monkeypatch
     blocked = alembic("downgrade", REVISION)
     assert blocked.returncode != 0
     assert "revocation evidence would be lost" in blocked.stderr
+
+
+def test_consultation_cancellation_migration_and_competing_checks(
+    disposable_postgres, monkeypatch  # noqa: F811
+):
+    from app.services import consultation_cancellation_service as coordination
+    from app.services.refund_service import start_full_refund
+
+    engine, env = disposable_postgres
+
+    def migrate(*args):
+        return subprocess.run(
+            [sys.executable, "-B", "-m", "alembic", *args],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+
+    for args in (
+        ("upgrade", "head"),
+        ("check",),
+        ("downgrade", "197e36fb4bc1"),
+        ("upgrade", "head"),
+    ):
+        result = migrate(*args)
+        assert result.returncode == 0, result.stderr
+    with Session(engine) as db:
+        entitlement = create_test_consultation_entitlement(db)
+        sale = entitlement.sale_item.sale
+        sale.payment_provider = "lava_top"
+        sale.external_payment_id = "concurrent-cancellation"
+        entitlement.status = "booked"
+        entitlement.provider_event_uri = (
+            "https://api.calendly.com/scheduled_events/CLAIM"
+        )
+        entitlement.provider_invitee_uri = (
+            entitlement.provider_event_uri + "/invitees/ONE"
+        )
+        sale_id, entitlement_id = sale.id, entitlement.id
+        db.commit()
+        start_full_refund(db, sale_id=sale_id)
+
+    started, release = Event(), Event()
+
+    def verify(*args, **kwargs):
+        started.set()
+        assert release.wait(10)
+        return "elapsed", "/scheduled_events/CLAIM", None
+
+    monkeypatch.setattr(coordination, "_verify_meeting", verify)
+
+    def check():
+        with Session(engine) as db:
+            return coordination.check_consultation_cancellation(
+                db, sale_id, entitlement_id
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as jobs:
+        first = jobs.submit(check)
+        try:
+            assert started.wait(10)
+            assert not jobs.submit(check).result(10)
+        finally:
+            release.set()
+        assert first.result(10)
+    with Session(engine) as db:
+        row = db.get(ConsultationEntitlement, entitlement_id).cancellation
+        assert row.verified_at is not None
+        assert row.provider_outcome == "elapsed"
+    blocked = migrate("downgrade", "197e36fb4bc1")
+    assert blocked.returncode != 0
+    assert "cancellation evidence would be lost" in blocked.stderr

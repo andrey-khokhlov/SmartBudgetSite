@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.models.consultation_cancellation import ConsultationCancellation
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.download_entitlement import DownloadEntitlement
 from app.models.refund_operation import RefundOperation
@@ -24,7 +25,10 @@ class RefundOperationRepository:
             self.db.execute(
                 select(Sale)
                 .options(
-                    selectinload(Sale.items).joinedload(SaleItem.consultation_entitlement),
+                    selectinload(Sale.items)
+                    .joinedload(SaleItem.consultation_entitlement)
+                    .joinedload(ConsultationEntitlement.cancellation),
+                    selectinload(Sale.items).joinedload(SaleItem.service_addon),
                     joinedload(Sale.refund_operation),
                     joinedload(Sale.purchase_email_delivery),
                 )
@@ -70,6 +74,20 @@ class RefundOperationRepository:
                 .with_for_update()
             ).scalars()
         )
+
+    def verified_consultation_ids(self, sale_id: int) -> list[int]:
+        return list(self.db.scalars(
+            select(ConsultationCancellation.entitlement_id)
+            .join(ConsultationEntitlement, ConsultationEntitlement.id == ConsultationCancellation.entitlement_id)
+            .join(SaleItem, SaleItem.id == ConsultationEntitlement.sale_item_id)
+            .join(RefundOperation, RefundOperation.sale_id == SaleItem.sale_id)
+            .where(
+                SaleItem.sale_id == sale_id,
+                RefundOperation.status == "pending",
+                ConsultationCancellation.verified_at.is_not(None),
+            )
+            .order_by(ConsultationCancellation.entitlement_id)
+        ))
 
     def create(self, operation: RefundOperation) -> RefundOperation:
         self.db.add(operation)

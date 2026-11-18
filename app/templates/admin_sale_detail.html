@@ -27,6 +27,20 @@
             <li>
                 {{ item.item_name }} — {{ item.amount }} {{ item.currency_code }}
                 {% set entitlement = item.consultation_entitlement %}
+                {% if entitlement and entitlement.cancellation %}
+                    {% set cancellation = entitlement.cancellation %}
+                    <p>Consultation booking access closed.
+                    {% if cancellation.provider_outcome %}Meeting disposition: {{ cancellation.provider_outcome.replace("_", " ") }}.{% endif %}
+                    {% if cancellation.verified_at %}Verified at {{ cancellation.verified_at }} UTC.{% endif %}
+                    {% if cancellation.next_attempt_at %}Retry at or after {{ cancellation.next_attempt_at }} UTC.{% endif %}
+                    {% if cancellation.provider_outcome == "replacement_pending" %}Review the replacement booking in Calendly and wait for reconciliation before confirming an ordinary refund.{% endif %}
+                    {% if cancellation.provider_outcome == "elapsed" %}Review whether the consultation was delivered and whether a refund is due.{% endif %}</p>
+                    {% if (cancellation.event_uri or cancellation.invitee_uri or entitlement.status == "booked") and not cancellation.verified_at %}
+                        <form method="post" action="/admin/sales/{{ sale.id }}/consultations/{{ entitlement.id }}/disposition">
+                            <button type="submit" class="btn-primary">Verify meeting and cancel if still upcoming</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
                 {% if entitlement and entitlement.calendly_revoke_outcome and not entitlement.calendly_revoked_at and not entitlement.booked_at %}
                     <p>Calendly Share revocation unresolved: {{ entitlement.calendly_revoke_outcome.replace("_", " ") }}.
                     Booking deadline (UTC): {{ entitlement.expires_at.isoformat(sep=" ") }}.
@@ -81,18 +95,41 @@
             {% if sale.refund_operation.confirmed_at %}
                 <dt>Confirmed at</dt><dd>{{ sale.refund_operation.confirmed_at }}</dd>
             {% endif %}
+            {% if sale.refund_operation.exceptional_confirmed_at %}
+                <dt>Calendly verification exception</dt>
+                <dd>{{ sale.refund_operation.exceptional_confirmed_at }} UTC · {{ sale.refund_operation.exceptional_confirmation_reason }}</dd>
+            {% endif %}
         </dl>
 
         {% if sale.refund_operation.status == 'pending' %}
+            {% if unresolved %}
+                <p>Consultation disposition requires review: {{ unresolved | join(", ") | replace("_", " ") }}.</p>
+                {% if "coordination_required" in unresolved %}
+                    <form method="post" action="/admin/sales/{{ sale.id }}/refund/start">
+                        <button type="submit" name="confirmation" value="start_full_refund" class="btn-primary">Start consultation coordination</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+            {% if not unresolved %}
             <p>Complete the exact full refund manually in Lava.top Sales. Verify the amount and provider refund evidence there before confirming below.</p>
+            {% elif allow_disposition_exception %}
+            <p>Use the exception when Calendly disposition cannot be verified and the refund must proceed. Complete and verify the exact full refund manually in Lava.top Sales.</p>
+            {% endif %}
+            {% if not unresolved or allow_disposition_exception %}
             <p>Internal confirmation records founder verification; it does not claim bank or card settlement.</p>
             <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm" class="refund-confirmation-form">
                 <label>
                     <input type="checkbox" name="acknowledgement" value="verified_full_refund_in_lava_top" class="refund-confirmation-checkbox" required>
                     I verified the full refund in Lava.top.
                 </label>
+                {% if allow_disposition_exception %}
+                    <label><input type="checkbox" name="disposition_exception" value="verify_unavailable" required>
+                    I acknowledge that Calendly disposition could not be verified.</label>
+                    <label>Reason for proceeding <textarea name="disposition_exception_reason" maxlength="2000" required></textarea></label>
+                {% endif %}
                 <button type="submit" class="btn-primary refund-confirmation-button">Confirm verified full refund</button>
             </form>
+            {% endif %}
         {% elif sale.refund_operation.status == 'confirmed' %}
             <p>The full refund is internally confirmed and future customer access is revoked.</p>
         {% else %}

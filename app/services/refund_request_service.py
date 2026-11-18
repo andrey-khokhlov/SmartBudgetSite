@@ -15,6 +15,8 @@ from app.repositories.refund_request_repository import (
     find_paid_sale_for_request,
     find_refund_request_by_token,
 )
+from app.repositories.refund_operation_repository import RefundOperationRepository
+from app.services.consultation_cancellation_service import close_consultation_access
 from app.services.refund_request_receipt_service import deliver_refund_request_receipt
 from app.services.refund_eligibility_service import (
     VoluntaryRefundWindowStatus,
@@ -121,6 +123,9 @@ def submit_refund_request(
             db.add(request)
             db.flush()
             request_id = request.id
+            if composition == "consultation":
+                for entitlement in RefundOperationRepository(db).lock_consultation_entitlements(sale.id):
+                    close_consultation_access(entitlement, submitted_at, request_id=request_id)
     except IntegrityError:
         # The failed transaction has rolled back. Only a committed token match
         # turns the integrity error into a replay.

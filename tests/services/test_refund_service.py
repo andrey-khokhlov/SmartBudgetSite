@@ -309,8 +309,22 @@ def test_download_entitlement_history_rules(db_session, initial, expected):
 )
 def test_consultation_entitlement_history_rules(db_session, initial, expected):
     sale, download, consultation = create_sale(db_session, consultation_status=initial)
+    sale_id, entitlement_id = sale.id, consultation.id
     start_full_refund(db_session, sale_id=sale.id)
-    confirm_full_refund(db_session, sale_id=sale.id, provider_refund_verified=True)
+    if initial == "booked":
+        # This historical booking has no provider identity to verify.
+        with pytest.raises(RefundConflictError):
+            confirm_full_refund(db_session, sale_id=sale.id, provider_refund_verified=True)
+        from app.services.consultation_cancellation_service import check_consultation_cancellation
+        db_session.rollback()
+        assert check_consultation_cancellation(db_session, sale_id, entitlement_id)
+        confirm_full_refund(
+            db_session, sale_id=sale_id, provider_refund_verified=True,
+            disposition_exception_acknowledged=True,
+            disposition_exception_reason="Historical booking identity unavailable.",
+        )
+    else:
+        confirm_full_refund(db_session, sale_id=sale.id, provider_refund_verified=True)
     db_session.refresh(download)
     db_session.refresh(consultation)
     assert download.status == "cancelled"

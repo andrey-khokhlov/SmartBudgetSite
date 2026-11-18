@@ -80,13 +80,13 @@ prepared. Mandatory remedies remain available for undelivered, defective or
 improperly delivered services. A refund leaves separate SmartBudget rights
 unaffected.
 
-The future R53 flow accepts the customer's request through SmartBudgetSite.
-Calendly cancellation alone creates no refund request, and customer
-self-cancellation is optional. For a booked consultation, identify the purchase
-and corresponding appointment, prevent further bookings against the rights
-being refunded, cancel via the Calendly API where supported, and verify the
-provider-side result. Failed cancellation or uncertain matching requires a
-mandatory operator action and retained evidence.
+Persisting a standalone consultation refund request also closes booking access
+permanently under that Sale. A future consultation requires a new purchase.
+The same coordination boundary applies when the founder starts a full refund
+that includes a consultation, including historical bundles. A
+`ConsultationCancellation` record per entitlement closes access without
+changing booking lifecycle status at intake. Purchases on separate Sales are
+independent. Calendly cancellation alone creates no refund request.
 
 Before executing a monetary refund, check the consultation and booking
 disposition. Keep outage exceptions visible with required follow-up so that
@@ -94,7 +94,15 @@ provider outages do not delay mandatory refunds beyond applicable deadlines.
 Preserve booked-entitlement history and existing transaction and entitlement
 ownership. Initial booking-to-entitlement matching remains unvalidated under
 R39. Webhook receipt alone cannot verify cancellation of the correct meeting.
-API cancellation and this coordination workflow remain pending.
+R39-C makes unused Shares eligible for the existing R39-B revocation pass
+immediately after access closes. Verified delayed bookings and reschedules
+update disposition evidence without restoring access. The founder verifies
+the exact Event and Invitee and may cancel a verified upcoming one-on-one
+appointment. The provider is contacted outside row locks. A bounded retry
+claim and a target recheck prevent stale outcomes from overwriting a newly
+linked meeting. A verified elapsed appointment with no active successor
+satisfies provider disposition without a cancellation call. It establishes
+neither service delivery nor monetary eligibility. Live validation remains open.
 
 A purchased consultation is not automatically a booked consultation. The
 customer may book later or never book. Sales administration tracks purchases and
@@ -312,7 +320,7 @@ first booking only if the original Invitee was created within the original
 booking window. The original Invitee's creation time becomes `booked_at`.
 Provider verification failures return a retryable response. Confirmed
 relationship mismatches are audited without changing the entitlement. Initial live
-booking and rescheduling validation and cancellation coordination remain open.
+booking, rescheduling and cancellation coordination still require live validation.
 
 ## Expired Share revocation
 
@@ -335,7 +343,7 @@ The timer runs once per minute without a grace period. A copied Share can
 remain bookable until confirmed deletion because of timer granularity,
 backlog or provider failure. A valid delayed webhook still uses the original
 provider booking time. The worker does not cancel meetings. Revocation for a
-refund or cancellation before expiry belongs to R39/R42 coordination.
+refund before expiry uses the same pass after R39-C closes access.
 
 ## Administration and operations
 

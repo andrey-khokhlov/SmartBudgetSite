@@ -54,6 +54,8 @@ class ConsultationEntitlement(Base):
 
     __tablename__ = "consultation_entitlements"
 
+    cancellation = relationship("ConsultationCancellation", uselist=False)
+
     id: Mapped[int] = mapped_column(primary_key=True)
 
     sale_item_id: Mapped[int] = mapped_column(

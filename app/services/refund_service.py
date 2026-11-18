@@ -9,10 +9,16 @@ from sqlalchemy.orm import Session
 
 from app.models.consultation_entitlement import ConsultationEntitlementStatus
 from app.models.download_entitlement import DownloadEntitlementStatus
-from app.models.enums import PaymentStatus
+from app.models.enums import PaymentStatus, SaleItemType
 from app.models.refund_operation import RefundOperation, RefundOperationStatus
 from app.models.sale import Sale
 from app.repositories.refund_operation_repository import RefundOperationRepository
+from app.services.consultation_cancellation_service import (
+    check_consultation_cancellation,
+    close_consultation_access,
+    consultation_disposition,
+    disposition_unavailable,
+)
 
 
 class RefundNotFoundError(Exception):
@@ -53,6 +59,22 @@ def get_refund_sale_for_admin(db: Session, sale_id: int) -> Sale:
     return sale
 
 
+def unresolved_consultation_dispositions(sale: Sale, consultations) -> list[str]:
+    known_ids = {entitlement.sale_item_id for entitlement in consultations}
+    unresolved = [
+        disposition for entitlement in consultations
+        if (disposition := consultation_disposition(entitlement)) != "verified"
+    ]
+    if any(
+        item.id not in known_ids
+        and item.item_type == SaleItemType.SERVICE
+        and (item.service_addon is None or item.service_addon.service_type == "consultation")
+        for item in sale.items
+    ):
+        unresolved.append("ownership_unresolved")
+    return unresolved
+
+
 def start_full_refund(db: Session, *, sale_id: int) -> RefundOperation:
     """Persist one pending full-refund snapshot and own its transaction."""
     repository = RefundOperationRepository(db)
@@ -63,8 +85,13 @@ def start_full_refund(db: Session, *, sale_id: int) -> RefundOperation:
                 raise RefundNotFoundError
             existing = repository.lock_by_sale_id(sale_id)
             if existing is not None:
+                if existing.status == RefundOperationStatus.PENDING and sale.payment_status == PaymentStatus.PAID:
+                    for entitlement in repository.lock_consultation_entitlements(sale_id):
+                        close_consultation_access(entitlement, datetime.now(UTC))
                 return existing
             _validate_start_eligibility(sale)
+            for entitlement in repository.lock_consultation_entitlements(sale_id):
+                close_consultation_access(entitlement, datetime.now(UTC))
             operation = repository.create(
                 RefundOperation(
                     sale_id=sale.id,
@@ -93,6 +120,8 @@ def confirm_full_refund(
     *,
     sale_id: int,
     provider_refund_verified: bool = False,
+    disposition_exception_acknowledged: bool = False,
+    disposition_exception_reason: str = "",
 ) -> RefundConfirmationResult:
     """Confirm a founder-verified provider refund and reconcile access atomically."""
     if not provider_refund_verified:
@@ -101,6 +130,10 @@ def confirm_full_refund(
         )
     repository = RefundOperationRepository(db)
     try:
+        with db.begin():
+            verified_ids = repository.verified_consultation_ids(sale_id)
+        for entitlement_id in verified_ids:
+            check_consultation_cancellation(db, sale_id, entitlement_id, allow_cancel=False)
         with db.begin():
             sale = repository.lock_sale(sale_id)
             if sale is None:
@@ -124,6 +157,19 @@ def confirm_full_refund(
 
             downloads = repository.lock_download_entitlements(sale_id)
             consultations = repository.lock_consultation_entitlements(sale_id)
+            unresolved = unresolved_consultation_dispositions(sale, consultations)
+            reason = disposition_exception_reason.strip()
+            if unresolved:
+                if (
+                    not disposition_exception_acknowledged or not reason
+                    or len(reason) > 2000 or "\x00" in reason
+                    or not all(disposition_unavailable(value) for value in unresolved)
+                ):
+                    raise RefundConflictError("Consultation disposition requires verification.")
+                operation.exceptional_confirmed_at = datetime.now(UTC)
+                operation.exceptional_confirmation_reason = reason
+            elif disposition_exception_acknowledged or reason:
+                raise RefundConflictError("Consultation disposition exception is unavailable.")
             for entitlement in downloads:
                 if entitlement.status == DownloadEntitlementStatus.AVAILABLE.value:
                     entitlement.status = DownloadEntitlementStatus.CANCELLED.value
