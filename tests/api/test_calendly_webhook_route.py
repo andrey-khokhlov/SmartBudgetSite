@@ -87,26 +87,45 @@ def test_calendly_webhook_persists_booked_entitlement_after_request(
     monkeypatch,
 ):
     """A successful webhook commits the lifecycle transition durably."""
+    from app.services.calendly.share_service import signed_correlation
+    from datetime import UTC
 
     provider_event_uri = (
         "https://api.calendly.com/scheduled_events/DURABLE-BOOKING-1"
     )
     provider_invitee_uri = (
-        "https://api.calendly.com/invitees/DURABLE-INVITEE-1"
+        provider_event_uri + "/invitees/DURABLE-INVITEE-1"
     )
     entitlement = create_test_consultation_entitlement(db_session)
-    entitlement.provider_event_uri = provider_event_uri
+    entitlement.provisioning_reference = "A" * 22
+    entitlement.calendly_share_uri = "https://api.calendly.com/shares/TEST"
+    entitlement.calendly_event_type_uri = "https://api.calendly.com/event_types/TEST"
     db_session.commit()
     entitlement_id = entitlement.id
 
     assert entitlement.status == ConsultationEntitlementStatus.AVAILABLE
 
+    monkeypatch.setattr(settings, "SECRET_KEY", "test-utm-secret")
+    correlation = signed_correlation(entitlement.calendly_share_uri, entitlement.provisioning_reference)
+    invitee = {
+        "event": provider_event_uri,
+        "uri": provider_invitee_uri,
+        "created_at": entitlement.created_at.replace(tzinfo=UTC).isoformat(),
+        "status": "active",
+        "tracking": {"utm_content": correlation},
+    }
+    scheduled = {
+        "uri": provider_event_uri,
+        "status": "active",
+        "event_type": entitlement.calendly_event_type_uri,
+    }
+    monkeypatch.setattr(
+        "app.services.webhooks.reconciliation_service.get_resource",
+        lambda path: invitee if "/invitees/" in path else scheduled,
+    )
     payload = {
         "event": "invitee.created",
-        "payload": {
-            "event": provider_event_uri,
-            "invitee": provider_invitee_uri,
-        },
+        "payload": invitee,
     }
     payload_bytes = json.dumps(payload).encode("utf-8")
     signing_secret = "test-secret"
@@ -155,6 +174,47 @@ def test_calendly_webhook_persists_booked_entitlement_after_request(
             == provider_invitee_uri
         )
         assert persisted_entitlement.booked_at is not None
+
+
+def test_calendly_reschedule_predecessor_timeout_returns_retryable_response(client, monkeypatch):
+    from app.services.calendly.calendly_api_client import CalendlyAPIError
+
+    root = "https://api.calendly.com"
+    event_uri = root + "/scheduled_events/REPLACEMENT"
+    predecessor = root + "/scheduled_events/PREDECESSOR/invitees/INVITEE"
+    invitee = {
+        "uri": event_uri + "/invitees/INVITEE",
+        "event": event_uri,
+        "status": "active",
+        "old_invitee": predecessor,
+    }
+    routes = {
+        "/scheduled_events/REPLACEMENT/invitees/INVITEE": invitee,
+        "/scheduled_events/REPLACEMENT": {
+            "uri": event_uri, "status": "active", "event_type": root + "/event_types/TEST",
+        },
+    }
+
+    def get_resource(path):
+        if path == predecessor.removeprefix(root):
+            raise CalendlyAPIError("private provider timeout")
+        return routes[path]
+
+    monkeypatch.setattr(
+        "app.services.webhooks.reconciliation_service.get_resource", get_resource,
+    )
+    secret = "test-webhook-secret"
+    monkeypatch.setattr(settings, "CALENDLY_WEBHOOK_SIGNING_SECRET", secret)
+    payload = json.dumps({"event": "invitee.created", "payload": invitee}).encode()
+    signature = _build_calendly_signature_header(
+        payload=payload, signing_secret=secret, timestamp=str(int(time.time())),
+    )
+    response = client.post(
+        "/v1/webhooks/calendly", content=payload,
+        headers={"Content-Type": "application/json", "Calendly-Webhook-Signature": signature},
+    )
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Calendly verification temporarily unavailable"}
 
 
 def test_calendly_webhook_rejects_invalid_signature(client):

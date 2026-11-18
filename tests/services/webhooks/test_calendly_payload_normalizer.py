@@ -1,5 +1,6 @@
 import pytest
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.services.webhooks.payload_normalizers.calendly_payload_normalizer import (
@@ -25,6 +26,9 @@ def test_normalize_calendly_invitee_created_event():
     normalized = normalize_calendly_invitee_created_event(payload)
 
     assert normalized.provider == "calendly"
+    assert normalized.occurred_at == datetime(2026, 5, 26, 11, 59, 58, tzinfo=UTC)
+    assert normalized.invitee_status == "active"
+    assert normalized.correlation.startswith("v1.")
 
     assert (
         normalized.provider_event_uri

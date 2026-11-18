@@ -60,17 +60,15 @@
 
         </div>
 
-        {% if calendly_consultation_url %}
-            <a
-                id="consultation-book-button"
-                href="{{ calendly_consultation_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="consultation-book-button"
-            >
-                <span aria-hidden="true">📅</span>
-                <span>{{ t("consultation_book_button") }}</span>
-            </a>
+        {% if can_provision %}
+            <form method="post">
+                <input type="hidden" name="csrf_cookie_id" value="{{ csrf_cookie_id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" id="consultation-book-button" class="consultation-book-button">
+                    <span aria-hidden="true">📅</span>
+                    <span>{{ t("consultation_book_button") }}</span>
+                </button>
+            </form>
         {% else %}
             <p class="consultation-unavailable">
                 {{ t("consultation_booking_unavailable") }}

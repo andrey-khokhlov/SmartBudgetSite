@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 from typing import cast
 
@@ -8,23 +9,33 @@ from app.models.consultation_entitlement import (
     ConsultationEntitlementStatus,
 )
 from app.models.sale_item import SaleItem
+from app.models.sale import Sale
 
 
 class ConsultationEntitlementRepository:
-    """
-    Repository for consultation entitlement persistence queries.
+    """Persistence queries for consultation entitlements."""
 
-    Business rules:
-    - Repository only loads entitlement data.
-    - Booking lifecycle decisions belong to service layer.
-
-    Side effects:
-    - Executes read queries against the database.
-
-    Invariants/restrictions:
-    - Do not place status transition logic here.
-    """
-
+    @staticmethod
+    def lock_owner_and_entitlement(
+        db: Session, attribute, value: str,
+    ) -> ConsultationEntitlement | None:
+        # Match the refund workflow's Sale -> entitlement lock order.
+        sale = db.scalar(
+            select(Sale)
+            .join(SaleItem, SaleItem.sale_id == Sale.id)
+            .join(ConsultationEntitlement, ConsultationEntitlement.sale_item_id == SaleItem.id)
+            .where(attribute == value)
+            .with_for_update(of=Sale)
+            .execution_options(populate_existing=True)
+        )
+        if sale is None:
+            return None
+        return db.scalar(
+            select(ConsultationEntitlement)
+            .where(attribute == value)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
     @staticmethod
     def get_by_provider_event_uri(
         db: Session,
@@ -115,5 +126,7 @@ class ConsultationEntitlementRepository:
                 ConsultationEntitlement.expires_at <= expires_at_or_before,
             )
             .order_by(ConsultationEntitlement.id)
+            .with_for_update()
+            .populate_existing()
             .all(),
         )

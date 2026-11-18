@@ -355,16 +355,24 @@ def test_unsupported_consultation_method_keeps_405_then_returns_protected_429(
     controlled_limiter,
 ):
     for _ in range(5):
-        response = client.post("/consultation/book/private-token?lang=ru")
+        response = client.put("/consultation/book/private-token?lang=ru")
         assert response.status_code == 405
         assert_capability_headers(response)
 
-    denied = client.post("/consultation/book/private-token?lang=ru")
+    denied = client.put("/consultation/book/private-token?lang=ru")
     assert denied.status_code == 429
     assert denied.headers["retry-after"] == "900"
     assert_capability_headers(denied)
     assert "Слишком много запросов" in denied.text
     assert "private-token" not in denied.text
+
+
+def test_consultation_post_limit_protects_provisioning(client, controlled_limiter):
+    for _ in range(5):
+        assert client.post("/consultation/book/private-token").status_code == 403
+    denied = client.post("/consultation/book/private-token")
+    assert denied.status_code == 429
+    assert_capability_headers(denied)
 
 
 def test_unsupported_download_method_keeps_405_then_returns_protected_429(

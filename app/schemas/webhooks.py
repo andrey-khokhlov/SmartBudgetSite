@@ -26,7 +26,11 @@ class NormalizedBookingConfirmedEvent(BaseModel):
     provider: str
     provider_event_uri: str
     provider_invitee_uri: str | None = None
-    occurred_at: datetime
+    occurred_at: datetime | None = None
+    correlation: str | None = None
+    invitee_status: str | None = None
+    old_invitee_uri: str | None = None
+    new_invitee_uri: str | None = None
 
 
 class PaymentOutcome(StrEnum):

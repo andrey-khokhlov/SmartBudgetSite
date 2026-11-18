@@ -10,7 +10,9 @@ CSRF_TOKEN_PATTERN = re.compile(r"[0-9a-f]{64}")
 CSRF_SIGNATURE_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 
-def create_csrf_cookie_value(cookie_id: str, token: str) -> str:
+def create_csrf_cookie_value(
+    cookie_id: str, token: str, *, context: str = "refund-request-csrf:v1"
+) -> str:
     if not CSRF_COOKIE_ID_PATTERN.fullmatch(cookie_id):
         raise ValueError("Invalid CSRF cookie ID.")
 
@@ -21,7 +23,7 @@ def create_csrf_cookie_value(cookie_id: str, token: str) -> str:
     if not secret:
         raise RuntimeError("SECRET_KEY must be configured for CSRF protection.")
 
-    payload = f"refund-request-csrf:v1:{cookie_id}:{token}".encode("ascii")
+    payload = f"{context}:{cookie_id}:{token}".encode("utf-8")
 
     signature = hmac.new(
         secret.encode("utf-8"),
@@ -36,6 +38,8 @@ def verify_csrf_token(
     cookie_id: str,
     token: str,
     cookie_value: str | None,
+    *,
+    context: str = "refund-request-csrf:v1",
 ) -> bool:
     if not cookie_value:
         return False
@@ -57,7 +61,7 @@ def verify_csrf_token(
     if not CSRF_SIGNATURE_PATTERN.fullmatch(signature):
         return False
 
-    expected_value = create_csrf_cookie_value(cookie_id, cookie_token)
+    expected_value = create_csrf_cookie_value(cookie_id, cookie_token, context=context)
     expected_signature = expected_value.split(".", 1)[1]
 
     return (

@@ -234,7 +234,9 @@ Consultations:
 - `CODE-003` is complete: consultation entitlement creation requires a
   consultation service item owned by a `PaymentStatus.PAID` sale.
 - The protected booking page validates the entitlement before exposing the
-  configured Calendly URL.
+  localized booking action. R39-A provisions an individual Share through a
+  CSRF-protected POST, persists it against the entitlement and reuses it on
+  repeat access.
 - Booking lifecycle, normalized webhook handling, real HMAC verification,
   reconciliation orchestration, replay-safe transitions, and admin visibility
   are implemented.
@@ -247,10 +249,12 @@ Consultations:
   lifecycle services continue to flush without owning the commit.
 - Manual Calendly booking, Google Meet, email, cancellation, Google Calendar,
   API, and PAT validation are complete.
-- No Calendly webhook subscription exists yet. A public HTTPS endpoint and real
-  webhook capture are still required to validate first-booking reconciliation.
-  `provider_event_uri` is confirmed for replay/idempotency, not for initially
-  finding an entitlement.
+- R39-A implements signed Share correlation, provider Event and Invitee
+  verification, atomic first-booking reconciliation and verified rescheduling.
+  A verified booking created within its entitlement window can reconcile even
+  if lazy expiration already ran. No deployed Calendly webhook subscription is
+  recorded. Live first-booking and rescheduling validation remain outstanding,
+  as do Share revocation and cancellation coordination.
 
 Feedback:
 
@@ -741,7 +745,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R36 | Implemented | The public download page shows expiry in the browser timezone with its offset and a server-rendered UTC fallback. Chromium verified DST, fractional offsets and download submission without JavaScript. | Release-environment download validation |
 | R37 | Partial | Expired-link pages explain indefinite use and provide the existing Feedback support path with support reference and prefill. Local GET and POST checks cover expiry and token confidentiality. | Verify real interrupted and repeat downloads and the deployed support path |
 | R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
-| R39 | Requires validation | Booking/token/webhook lifecycle exists; initial booking matching remains unvalidated and approved API cancellation coordination is pending. | Verify initial matching and implement and validate the approved cancellation workflow |
+| R39 | Requires validation | R39-A implements protected single-use Share provisioning, first-booking correlation and verified rescheduling. | Validate real HTTPS webhook delivery, booking and rescheduling. Implement and validate Share revocation and cancellation coordination |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. All six variants include the permanent Sale-level PAY reference. | Real purchase email and Calendly confirmation validation remain open |
 | R41 | Required | The November 14 publication candidate is owner-approved. Public policy and pre-payment links are pending. | G15 synchronize and publish after validation |
 | R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Validate separate-purchase refunds and exceptional or historical handling. Bundle item accounting is deferred under the first-release amendment |

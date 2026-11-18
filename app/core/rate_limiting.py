@@ -732,6 +732,7 @@ class RateLimitMiddleware:
 
         consultation_match = CONSULTATION_PATH_PATTERN.match(path)
         if consultation_match is not None:
+            is_provisioning = method == "POST" and consultation_match.group(2) is None
             capability_identity = keyed_identity(
                 "consultation_capability",
                 consultation_match.group(1),
@@ -756,14 +757,20 @@ class RateLimitMiddleware:
             else:
                 rules = (
                     _rule(
-                        policy_name="consultation_unsupported_ip_15m",
+                        policy_name=(
+                            "consultation_provision_ip_15m" if is_provisioning
+                            else "consultation_unsupported_ip_15m"
+                        ),
                         limit=10,
                         window_seconds=15 * 60,
                         identity_kind="client_ip",
                         identity_key=ip_identity,
                     ),
                     _rule(
-                        policy_name="consultation_unsupported_capability_15m",
+                        policy_name=(
+                            "consultation_provision_capability_15m" if is_provisioning
+                            else "consultation_unsupported_capability_15m"
+                        ),
                         limit=5,
                         window_seconds=15 * 60,
                         identity_kind="capability",

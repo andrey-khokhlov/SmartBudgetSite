@@ -859,7 +859,8 @@ Before paid public sales:
   the deployed flag and schedule, channel retries and acceptance evidence, pending
   request visibility, and operational follow-up. Keep money movement
   operator-controlled. R53 remains open.
-- Under R39 and R42, validate reliable initial Calendly matching, cancellation
+- R39-A adds single-use Share provisioning and verified reconciliation.
+  Under R39 and R42, validate live initial Calendly matching, cancellation
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against
   mandatory deadlines and preserve booked-entitlement evidence.

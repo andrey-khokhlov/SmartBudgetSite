@@ -206,6 +206,7 @@ def mark_entitlement_as_booked(
     provider_event_uri: str | None = None,
     provider_invitee_uri: str | None = None,
     booked_at: datetime | None = None,
+    verified_provider_booking: bool = False,
 ) -> ConsultationEntitlement:
     """
     Mark consultation entitlement as booked.
@@ -229,7 +230,15 @@ def mark_entitlement_as_booked(
     if entitlement.status == ConsultationEntitlementStatus.BOOKED:
         return entitlement
 
-    if entitlement.status != ConsultationEntitlementStatus.AVAILABLE:
+    timely_verified_booking = (
+        verified_provider_booking
+        and booked_at is not None
+        and _ensure_utc_aware(booked_at) <= _ensure_utc_aware(entitlement.expires_at)
+    )
+    if entitlement.status != ConsultationEntitlementStatus.AVAILABLE and not (
+        entitlement.status == ConsultationEntitlementStatus.EXPIRED
+        and timely_verified_booking
+    ):
         raise HTTPException(
             status_code=400,
             detail="Consultation entitlement is not available for booking.",
@@ -246,3 +255,15 @@ def mark_entitlement_as_booked(
     db.flush()
 
     return entitlement
+
+
+def update_rescheduled_booking(
+    db: Session,
+    entitlement: ConsultationEntitlement,
+    event_uri: str,
+    invitee_uri: str,
+) -> None:
+    """Replace the verified current appointment while retaining original booking time."""
+    entitlement.provider_event_uri = event_uri
+    entitlement.provider_invitee_uri = invitee_uri
+    db.flush()

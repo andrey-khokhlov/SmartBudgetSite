@@ -49,7 +49,8 @@ class Settings(BaseSettings):
     PURCHASE_ALERT_DELIVERY_ENABLED: bool = False
     REFUND_REQUEST_ALERT_DELIVERY_ENABLED: bool = False
 
-    CALENDLY_CONSULTATION_URL: str | None = None
+    CALENDLY_CONSULTATION_URL: str | None = None  # Legacy environment compatibility.
+    CALENDLY_CONSULTATION_EVENT_TYPE_URI: str | None = None
     CALENDLY_WEBHOOK_SIGNING_SECRET: str | None = None
     CALENDLY_PERSONAL_ACCESS_TOKEN: str | None = None
 

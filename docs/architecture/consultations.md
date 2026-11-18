@@ -159,9 +159,13 @@ Supported transition behavior includes `available -> booked`, `available ->
 expired`, and an idempotent `booked -> booked` no-op. Time expiration applies
 only when an available entitlement has `expires_at` at or before the current UTC
 time. Booked and cancelled entitlements preserve their lifecycle history even
-after that time; expired entitlements remain expired. `expired -> booked` and
-`cancelled -> booked` are blocked. Lifecycle transitions belong in services,
-not repositories.
+after that time. An expired entitlement can become booked only for its first
+verified Calendly booking on a paid Sale. The Event and active Invitee must
+match the pinned Event Type and signed Share correlation, and the provider's
+invitee creation timestamp must be at or before `expires_at`. This also
+applies to the first booking of an available entitlement. Late bookings,
+cancelled entitlements and refunded Sales remain ineligible. Lifecycle
+transitions belong in services.
 
 The default booking window is 14 days after entitlement creation. It controls
 when a slot must be booked, not the date on which the consultation occurs.
@@ -172,11 +176,23 @@ Admin request, and displays only persisted lifecycle state.
 
 ## Booking page and customer communication
 
-The protected page exposes a config-driven `CALENDLY_CONSULTATION_URL` only after
-validation. Provider URLs are infrastructure configuration, not business logic.
-Missing provider configuration produces a deterministic fallback message.
-Support diagnostics use a masked token reference and never reveal the full
-token.
+The protected GET renders a localized booking form after validating the
+entitlement. Its CSRF-protected POST exclusively provisions or recovers an
+individual Calendly Share and redirects the customer to it after persistence and
+an eligibility recheck. GET does not write to the database or call Calendly.
+The POST cannot confirm a booking or mark the entitlement booked. Missing
+configuration produces a localized fallback. Diagnostics use a masked capability
+reference.
+
+Provisioning locks the owning Sale and entitlement and commits an opaque claim
+and the pinned Event Type URI before calling Calendly. The Share URI and
+customer URL are stored in a subsequent transaction. A repeat POST reuses a
+stored Share. An outstanding claim can only be recovered by listing the
+authenticated Calendly user's paginated Shares within a creation-time window,
+filtered by the pinned Event Type and matched to the exact server-set name
+`SmartBudgetSite:<provisioning_reference>`. One matching valid Share is
+required. An unresolved claim prevents another creation attempt. Payment
+fulfillment remains independent of Calendly.
 
 Known customer capability failures render through the normal public HTML layout
 without weakening validation: an unknown token remains HTTP 404, while a
@@ -196,9 +212,11 @@ and the production reverse proxy must disable access logging and caching for
 booking capability routes.
 
 Booking GET uses 60 requests per 15 minutes per client IP and 30 per 15 minutes
-per keyed capability identity. Unsupported methods use 10 per 15 minutes per IP
-and 5 per 15 minutes per capability, remain HTTP 405 before exhaustion, and do
-not introduce a booking POST mutation. Rate-limit responses are localized,
+per keyed capability identity. The Share POST and unsupported methods each
+use 10 per 15 minutes per IP and 5 per 15 minutes per capability in separate
+buckets. Unsupported methods remain HTTP 405 before exhaustion. The POST
+requires a signed double-submit token scoped to consultation provisioning and
+the booking capability. Rate-limit responses are localized,
 include integer `Retry-After`, preserve every capability protection header, and
 never echo the token.
 
@@ -265,13 +283,39 @@ entitlements originate from successful purchases.
 after a booking is linked. Duplicate delivery must result in a safe no-op for an
 already-booked entitlement.
 
-It is not a validated first-booking reconciliation key because the entitlement
-does not know the provider event URI before the booking exists. The initial
-matching strategy remains an integration question until a real
-`invitee.created` payload is captured through a public HTTPS endpoint. Possible
-candidates include a backend token returned by Calendly, invitee email with
-additional safeguards, or another supported tracking field. Do not finalize or
-replace this architecture based only on assumed payloads.
+First-booking matching uses `utm_content=v1.<reference>.<tag>`. The 22-character
+reference encodes 128 bits of randomness. The 43-character tag encodes an
+HMAC-SHA-256 over UTF-8 `smartbudgetsite:calendly-share:v1\n<share_uri>\n<reference>`
+using `SECRET_KEY`. Both values use unpadded base64url. The reference uniquely
+identifies the entitlement and the tag binds it to the persisted Share URI. The
+provider's stored Invitee tracking must agree with the signed webhook tracking.
+The customer-supplied tracking is an approved correlation mechanism and can
+be copied between Calendly URLs. Tracking carries no booking capability or PII.
+
+Reconciliation verifies the Event and Invitee through fixed-host API requests.
+The provider's invitee creation timestamp determines the initial booking time.
+It does not use webhook creation or receipt time. The Sale and entitlement are
+locked before the first-booking transition. Exact replays preserve existing
+metadata. A conflicting first booking is audited and does not replace it.
+
+A reschedule requires an active replacement and a cancelled predecessor that
+Calendly marks as rescheduled. Both invitees must identify each other through
+the old/new relationship. When the predecessor is the stored current Invitee,
+the replacement preserves the original `booked_at` and can reconcile after the
+original booking window.
+
+If the original Invitee has no stored mapping, reconciliation can use its
+provider-verified signed tracking to recover the entitlement and persisted Share.
+Both Events must match the pinned Event Type. Under the Sale and entitlement
+locks, the paid, unclaimed entitlement can record the active replacement as its
+first booking only if the original Invitee was created within the original
+booking window. The original Invitee's creation time becomes `booked_at`.
+Provider verification failures return a retryable response. Confirmed
+relationship mismatches are audited without changing the entitlement. Initial live
+booking and rescheduling validation and cancellation coordination remain open.
+An unused copied Share can remain bookable at Calendly until the provider's
+90-day unused-link expiry. R39-A enforces the exact local window and defers
+provider revocation and its retries.
 
 ## Administration and operations
 

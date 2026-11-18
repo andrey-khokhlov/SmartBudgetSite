@@ -69,9 +69,11 @@ def test_consultation_booking_page_opens_with_valid_token(
     db_session.commit()
 
     monkeypatch.setattr(
-        "app.core.config.settings.CALENDLY_CONSULTATION_URL",
-        "https://calendly.com/test/smartbudget-consultation",
+        "app.core.config.settings.CALENDLY_CONSULTATION_EVENT_TYPE_URI",
+        "https://api.calendly.com/event_types/TEST",
     )
+    monkeypatch.setattr("app.core.config.settings.SECRET_KEY", "test-secret")
+    monkeypatch.setattr("app.core.config.settings.CALENDLY_PERSONAL_ACCESS_TOKEN", "test-pat")
 
     response = client.get(f"/consultation/book/{entitlement.booking_token}")
 
@@ -82,8 +84,9 @@ def test_consultation_booking_page_opens_with_valid_token(
     assert entitlement.status in response.text
     assert "Book your consultation" in response.text
     assert 'id="consultation-book-button"' in response.text
-    assert 'target="_blank"' in response.text
-    assert 'rel="noopener noreferrer"' in response.text
+    assert '<form method="post">' in response.text
+    db_session.refresh(entitlement)
+    assert entitlement.provisioning_claimed_at is None
     assert "Ref:" in response.text
     assert entitlement.booking_token[:8] in response.text
     assert entitlement.booking_token not in response.text
@@ -225,7 +228,7 @@ def test_consultation_booking_renders_generic_html_for_internal_http_error(
 def test_consultation_unsupported_method_receives_capability_protection_headers(
     client,
 ):
-    response = client.post("/consultation/book/unsupported-method-secret")
+    response = client.put("/consultation/book/unsupported-method-secret")
 
     assert response.status_code == 405
     assert_capability_response_headers(response)

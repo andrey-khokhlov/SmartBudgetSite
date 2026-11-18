@@ -11,6 +11,8 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from app.services.calendly.calendly_api_client import CalendlyAPIError
+from app.services.calendly.share_service import provision_booking_share
 from fastapi.templating import Jinja2Templates
 
 from app.products_catalog import products_index, product_by_slug
@@ -188,6 +190,7 @@ CONSULTATION_ERROR_TRANSLATION_KEYS = {
     "Consultation booking link is no longer available.": "consultation_booking_error_cancelled",
     "Consultation booking link has expired.": "consultation_booking_error_expired",
     "This consultation has already been booked.": "consultation_booking_error_booked",
+    "Invalid consultation booking form.": "consultation_booking_error_form",
 }
 
 
@@ -1505,17 +1508,67 @@ def consultation_booking_page(
     except HTTPException as exc:
         return _render_consultation_error(request, exc)
 
-    masked_token = f"{booking_token[:8]}..."
-
-    return render(
+    can_provision = bool(
+        settings.SECRET_KEY.strip()
+        and (entitlement.calendly_share_uri or (
+            settings.CALENDLY_PERSONAL_ACCESS_TOKEN
+            and (entitlement.calendly_event_type_uri or settings.CALENDLY_CONSULTATION_EVENT_TYPE_URI)
+        ))
+    )
+    cookie_id = token_hex(16)
+    csrf_token = token_hex(32)
+    response = render(
         request,
         "consultation_booking.html",
         {
             "entitlement": entitlement,
-            "calendly_consultation_url": settings.CALENDLY_CONSULTATION_URL,
-            "masked_token": masked_token,
+            "can_provision": can_provision,
+            "masked_token": f"{booking_token[:8]}...",
+            "csrf_cookie_id": cookie_id,
+            "csrf_token": csrf_token,
         },
     )
+    if can_provision:
+        response.set_cookie(
+            f"consultation_csrf_{cookie_id}",
+            create_csrf_cookie_value(
+                cookie_id, csrf_token, context=f"consultation-share-csrf:v1:{booking_token}"
+            ),
+            max_age=1800,
+            path=request.url.path,
+            secure=request.url.scheme == "https",
+            httponly=True,
+            samesite="strict",
+        )
+    return response
+
+
+@router.post("/consultation/book/{booking_token}")
+def consultation_booking_share(
+    booking_token: str,
+    request: Request,
+    csrf_cookie_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    if not settings.SECRET_KEY.strip() or not verify_csrf_token(
+        csrf_cookie_id, csrf_token,
+        request.cookies.get(f"consultation_csrf_{csrf_cookie_id}"),
+        context=f"consultation-share-csrf:v1:{booking_token}",
+    ):
+        return _render_consultation_error(
+            request, HTTPException(403, "Invalid consultation booking form."),
+        )
+    try:
+        url = provision_booking_share(db, booking_token)
+    except HTTPException as exc:
+        return _render_consultation_error(request, exc)
+    except (CalendlyAPIError, ValueError, SQLAlchemyError):
+        db.rollback()
+        return _render_consultation_error(request, HTTPException(503))
+    response = RedirectResponse(url, status_code=303)
+    response.delete_cookie(f"consultation_csrf_{csrf_cookie_id}", path=request.url.path)
+    return response
 
 
 @admin_router.get("/admin/consultations")

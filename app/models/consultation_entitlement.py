@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, UTC
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Index
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -108,12 +108,25 @@ class ConsultationEntitlement(Base):
         nullable=True,
     )
 
+    provisioning_reference: Mapped[str | None] = mapped_column(String(22))
+    provisioning_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    calendly_event_type_uri: Mapped[str | None] = mapped_column(String(500))
+    calendly_share_uri: Mapped[str | None] = mapped_column(String(500))
+    calendly_booking_url: Mapped[str | None] = mapped_column(String(2048))
+
     sale_item = relationship(
         "SaleItem",
         back_populates="consultation_entitlement",
     )
 
     __table_args__ = (
+        UniqueConstraint(
+            "provisioning_reference",
+            name="uq_consultation_entitlements_provisioning_reference",
+        ),
+        UniqueConstraint(
+            "calendly_share_uri", name="uq_consultation_entitlements_calendly_share_uri",
+        ),
         CheckConstraint(
             status.in_(
                 [

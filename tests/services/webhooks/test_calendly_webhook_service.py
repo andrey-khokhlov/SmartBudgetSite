@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from app.models.consultation_entitlement import ConsultationEntitlementStatus
@@ -139,7 +140,7 @@ def test_process_calendly_webhook_handles_missing_entitlement_safely(
     assert result.provider_event_uri.endswith("UNKNOWN")
 
 
-def test_process_calendly_webhook_marks_entitlement_as_booked(
+def test_process_calendly_webhook_does_not_bind_preseeded_event_without_correlation(
     db_session,
 ):
     """
@@ -178,10 +179,8 @@ def test_process_calendly_webhook_marks_entitlement_as_booked(
 
     db_session.refresh(entitlement)
 
-    assert entitlement.status == ConsultationEntitlementStatus.BOOKED
-    assert entitlement.booking_provider == "calendly"
-    assert entitlement.provider_invitee_uri.endswith("INVITEE-1")
-    assert entitlement.booked_at is not None
+    assert entitlement.status == ConsultationEntitlementStatus.AVAILABLE
+    assert entitlement.booked_at is None
 
 
 def test_process_calendly_webhook_replay_is_idempotent(
@@ -201,6 +200,10 @@ def test_process_calendly_webhook_replay_is_idempotent(
     entitlement.provider_event_uri = (
         "https://api.calendly.com/scheduled_events/REPLAY-1"
     )
+    entitlement.provider_invitee_uri = entitlement.provider_event_uri + "/invitees/REPLAY-INVITEE-1"
+    entitlement.status = ConsultationEntitlementStatus.BOOKED
+    entitlement.booking_provider = "calendly"
+    entitlement.booked_at = datetime.now(UTC)
 
     db_session.flush()
 
@@ -211,7 +214,7 @@ def test_process_calendly_webhook_replay_is_idempotent(
                 "uri": "https://api.calendly.com/scheduled_events/REPLAY-1",
             },
             "invitee": {
-                "uri": "https://api.calendly.com/invitees/REPLAY-INVITEE-1",
+                "uri": entitlement.provider_invitee_uri,
             },
         },
     }

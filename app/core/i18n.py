@@ -295,6 +295,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "consultation_booking_error_temporary": (
             "Consultation booking is temporarily unavailable. Please try again later."
         ),
+        "consultation_booking_error_form": "Reopen your booking link and try again.",
         "support_contact": "Contact support",
         "support_reference_prompt": " and provide this reference:",
         "support_reference_copy_hint": "Click to copy",
@@ -747,6 +748,7 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "consultation_booking_error_temporary": (
             "Запись на консультацию временно недоступна. Повторите попытку позже."
         ),
+        "consultation_booking_error_form": "Откройте ссылку для записи заново и повторите попытку.",
         "support_contact": "Обратитесь в поддержку",
         "support_reference_prompt": " и сообщите код обращения:",
         "support_reference_copy_hint": "Нажмите, чтобы скопировать",

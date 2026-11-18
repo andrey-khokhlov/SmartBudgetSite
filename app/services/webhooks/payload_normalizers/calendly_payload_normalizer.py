@@ -3,6 +3,16 @@ from datetime import datetime, UTC
 from app.schemas.webhooks import NormalizedBookingConfirmedEvent
 
 
+def invitee_created_at(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        result = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return result.astimezone(UTC) if result.utcoffset() is not None else None
+
+
 def _extract_uri(value):
     """
     Extract URI from Calendly payload field.
@@ -46,9 +56,18 @@ def normalize_calendly_invitee_created_event(
     - Raises KeyError if required provider fields are missing.
     """
 
+    invitee = payload["payload"]
+    uri = _extract_uri(invitee["uri"] if "uri" in invitee else invitee["invitee"])
+    if "uri" in invitee and "invitee" in invitee and uri != _extract_uri(invitee["invitee"]):
+        raise ValueError("Conflicting Calendly invitee identifiers.")
+    tracking = invitee.get("tracking")
     return NormalizedBookingConfirmedEvent(
         provider="calendly",
-        provider_event_uri=_extract_uri(payload["payload"]["event"]),
-        provider_invitee_uri = _extract_uri(payload["payload"]["invitee"]),
-        occurred_at=datetime.now(UTC),
+        provider_event_uri=_extract_uri(invitee["event"]),
+        provider_invitee_uri=uri,
+        occurred_at=invitee_created_at(invitee.get("created_at")),
+        correlation=tracking.get("utm_content") if isinstance(tracking, dict) else None,
+        invitee_status=invitee.get("status"),
+        old_invitee_uri=invitee.get("old_invitee"),
+        new_invitee_uri=invitee.get("new_invitee"),
     )

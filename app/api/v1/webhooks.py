@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, Response, status, HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from app.core.config import settings
+from starlette.concurrency import run_in_threadpool
+from app.services.calendly.calendly_api_client import CalendlyAPIError
 from app.dependencies import get_db
 
 from app.services.webhooks.calendly_webhook_service import (
@@ -128,10 +130,12 @@ async def calendly_webhook(
             detail="Malformed JSON payload",
         )
 
-    process_calendly_webhook(
-        db=db,
-        payload=payload,
-    )
+    try:
+        await run_in_threadpool(process_calendly_webhook, db=db, payload=payload)
+    except CalendlyAPIError:
+        raise HTTPException(503, "Calendly verification temporarily unavailable") from None
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(400, "Malformed Calendly payload") from None
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

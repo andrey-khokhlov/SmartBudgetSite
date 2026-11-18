@@ -348,6 +348,7 @@ Application policies:
 | download POST | 10/15 min per IP and 5/15 min per capability HMAC |
 | unsupported download methods | 10/15 min per IP and 5/15 min per capability HMAC |
 | consultation booking GET | 60/15 min per IP and 30/15 min per capability HMAC |
+| consultation Share POST | 10/15 min per IP and 5/15 min per capability HMAC |
 | unsupported booking methods | 10/15 min per IP and 5/15 min per capability HMAC |
 | admin authentication | shared 5/15 min per IP across login and invalid-cookie access |
 | Calendly pre-verification | 120/min per IP |
@@ -1117,9 +1118,10 @@ domain integration, startup validation, and operational logging review.
 The first deployed public HTTPS environment must validate the existing
 implementation before prompting architecture changes:
 
-1. Create and validate the Calendly webhook subscription, capture a real
-   `invitee.created` payload, confirm initial reconciliation, and verify replay
-   and cancellation edge cases.
+1. Configure Calendly Share access as described below. Create and validate the
+   Calendly webhook subscription, capture a real `invitee.created` payload,
+   and verify first-booking matching, replay and rescheduling. Validate
+   cancellation and provider-side revocation in their separate release slices.
 2. Validate Cloudflare R2 S3 connectivity, authenticated bucket access, real
    release upload, stored object metadata, `ProductRelease` persistence,
    identical retry behavior, compensation after a forced database failure, and
@@ -1128,6 +1130,33 @@ implementation before prompting architecture changes:
 Use `current_state.md` to identify completed external validation and current
 blockers. Test the existing implementation from the deployed environment before
 introducing architecture changes or repeating local integration troubleshooting.
+
+### Calendly Share configuration and recovery
+
+Set `CALENDLY_CONSULTATION_EVENT_TYPE_URI` to the Calendly API URI of the
+approved one-on-one Event Type. Configure `CALENDLY_PERSONAL_ACCESS_TOKEN` with
+`shares:write` for creation, `shares:read` for recovery, `users:read` for
+`/users/me`, and `scheduled_events:read` for Event and Invitee verification.
+Calendly documents that `shares:write` includes `shares:read`. Event Type
+discovery requires `event_types:read`. Webhook setup uses `webhooks:write`
+and the event-family read scope. Set `CALENDLY_WEBHOOK_SIGNING_SECRET` for
+transport verification. Keep `SECRET_KEY` stable across the lifetime of
+outstanding signed Share URLs. Rotating it invalidates their correlation and
+requires operational review before rollout.
+
+R39-A persists the Share claim before contacting Calendly. Following a timeout
+or failed local write, reopening the protected page and submitting again
+attempts paginated recovery for the pinned Event Type and exact opaque name
+marker. It does not issue another create request. If no single valid Share
+can be recovered, inspect the Share in the owning Calendly account and escalate
+the unresolved claim. Do not clear it or create a replacement based only on
+an empty search. Migration downgrade is supported before claims exist. It is
+blocked once claim history exists to avoid losing Share ownership.
+
+Verify live Share provisioning, signed tracking, timely booking, replay and
+rescheduling after the local window in the release environment. An unused
+copied Share can remain bookable in Calendly after the local deadline until
+its provider expiry. R39-A includes no provider-side revocation.
 
 See `current_state.md` for current priorities and blockers.
 
