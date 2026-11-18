@@ -24,7 +24,7 @@ class RefundOperationRepository:
             self.db.execute(
                 select(Sale)
                 .options(
-                    selectinload(Sale.items),
+                    selectinload(Sale.items).joinedload(SaleItem.consultation_entitlement),
                     joinedload(Sale.refund_operation),
                     joinedload(Sale.purchase_email_delivery),
                 )

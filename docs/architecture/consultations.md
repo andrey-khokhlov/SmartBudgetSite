@@ -313,9 +313,29 @@ booking window. The original Invitee's creation time becomes `booked_at`.
 Provider verification failures return a retryable response. Confirmed
 relationship mismatches are audited without changing the entitlement. Initial live
 booking and rescheduling validation and cancellation coordination remain open.
-An unused copied Share can remain bookable at Calendly until the provider's
-90-day unused-link expiry. R39-A enforces the exact local window and defers
-provider revocation and its retries.
+
+## Expired Share revocation
+
+Local booking access closes at the exact `expires_at`. R39-B selects overdue
+entitlements with a stored Share or unresolved provisioning claim and no
+recorded booking. It does not depend on lazy entitlement expiration. The
+worker commits an attempt before contacting Calendly and holds the existing
+style of PostgreSQL advisory job lock across a bounded pass. Short write
+transactions lock the Sale before the entitlement.
+
+The worker recovers an unresolved claim through the same authenticated,
+paginated booking-claim lookup before attempting deletion. It preserves the
+Share identity and entitlement history. Only HTTP 204 from the unbooked Share
+DELETE endpoint confirms revocation. A booked Share is preserved, and a 404,
+ambiguous DELETE or unresolved ownership remains visible and unconfirmed.
+Retries use persisted backoff. Provider-confirmed booked Shares leave the
+deletion queue and are flagged for reconciliation or operator review.
+
+The timer runs once per minute without a grace period. A copied Share can
+remain bookable until confirmed deletion because of timer granularity,
+backlog or provider failure. A valid delayed webhook still uses the original
+provider booking time. The worker does not cancel meetings. Revocation for a
+refund or cancellation before expiry belongs to R39/R42 coordination.
 
 ## Administration and operations
 

@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Calendly Share Revocation
+
+[Timer]
+OnCalendar=*-*-* *:*:20 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

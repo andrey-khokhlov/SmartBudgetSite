@@ -113,6 +113,10 @@ class ConsultationEntitlement(Base):
     calendly_event_type_uri: Mapped[str | None] = mapped_column(String(500))
     calendly_share_uri: Mapped[str | None] = mapped_column(String(500))
     calendly_booking_url: Mapped[str | None] = mapped_column(String(2048))
+    calendly_revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    calendly_revoke_next_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    calendly_revoke_attempts: Mapped[int] = mapped_column(server_default="0")
+    calendly_revoke_outcome: Mapped[str | None] = mapped_column(String(32))
 
     sale_item = relationship(
         "SaleItem",

@@ -11,9 +11,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.consultation_entitlement import ConsultationEntitlement
+from app.services.calendly import share_revocation_service as revocation
 from app.services.calendly import share_service as shares
 from app.services.webhooks import reconciliation_service as reconciliation
-from tests.services.test_calendly_share_service import EVENT_TYPE, share_resource
+from tests.services.test_calendly_share_service import EVENT_TYPE, SHARE, share_resource
 from tests.services.test_consultation_entitlement_service import (
     create_test_consultation_entitlement,
 )
@@ -40,7 +41,7 @@ def test_share_migration_and_concurrent_claims(disposable_postgres, monkeypatch)
         assert (result.returncode == 0) == succeeds, result.stderr
         return result
 
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     alembic("check")
     with Session(engine) as db:
         entitlement = create_test_consultation_entitlement(db)
@@ -51,7 +52,7 @@ def test_share_migration_and_concurrent_claims(disposable_postgres, monkeypatch)
         item["name"]
         for item in inspect(engine).get_columns("consultation_entitlements")
     }
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     uniques = {
         tuple(item["column_names"])
         for item in inspect(engine).get_unique_constraints("consultation_entitlements")
@@ -130,3 +131,64 @@ def test_share_migration_and_concurrent_claims(disposable_postgres, monkeypatch)
             one.provider_event_uri,
             two.provider_event_uri,
         }
+
+
+def test_revocation_migration_and_job_exclusion(disposable_postgres, monkeypatch):  # noqa: F811
+    engine, env = disposable_postgres
+
+    def alembic(*args):
+        return subprocess.run(
+            [sys.executable, "-B", "-m", "alembic", *args],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+
+    for args in (
+        ("upgrade", "head"),
+        ("downgrade", REVISION),
+        ("upgrade", "head"),
+        ("check",),
+    ):
+        result = alembic(*args)
+        assert result.returncode == 0, result.stderr
+
+    now = revocation.datetime.now(UTC)
+    with Session(engine) as db:
+        entitlement = create_test_consultation_entitlement(db)
+        entitlement.expires_at = now
+        entitlement.calendly_share_uri = SHARE
+        entitlement_id = entitlement.id
+        db.commit()
+
+    started, release = Event(), Event()
+
+    def delete(uri):
+        with Session(engine) as db:
+            claim = db.get(ConsultationEntitlement, entitlement_id)
+            assert claim.calendly_revoke_attempts == 1
+            assert claim.calendly_revoke_outcome == "attempt_started"
+        started.set()
+        assert release.wait(10)
+
+    provider = Mock(side_effect=delete)
+    monkeypatch.setattr(revocation, "delete_share", provider)
+
+    def run():
+        with Session(engine) as db:
+            return revocation.revoke_expired_shares(db, now=now)
+
+    with ThreadPoolExecutor(max_workers=2) as jobs:
+        first = jobs.submit(run)
+        try:
+            assert started.wait(10)
+            assert jobs.submit(run).result(10) == {"status": "already_running"}
+        finally:
+            release.set()
+        assert first.result(10)["by_outcome"] == {"revoked": 1}
+    assert run()["selected"] == 0
+    provider.assert_called_once_with(SHARE)
+    blocked = alembic("downgrade", REVISION)
+    assert blocked.returncode != 0
+    assert "revocation evidence would be lost" in blocked.stderr

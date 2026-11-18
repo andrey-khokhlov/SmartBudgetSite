@@ -860,6 +860,8 @@ Before paid public sales:
   request visibility, and operational follow-up. Keep money movement
   operator-controlled. R53 remains open.
 - R39-A adds single-use Share provisioning and verified reconciliation.
+  R39-B adds automatic expiry revocation. Validate the timer and provider
+  outcomes in the release environment.
   Under R39 and R42, validate live initial Calendly matching, cancellation
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against

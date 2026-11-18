@@ -253,8 +253,9 @@ Consultations:
   verification, atomic first-booking reconciliation and verified rescheduling.
   A verified booking created within its entitlement window can reconcile even
   if lazy expiration already ran. No deployed Calendly webhook subscription is
-  recorded. Live first-booking and rescheduling validation remain outstanding,
-  as do Share revocation and cancellation coordination.
+  recorded. R39-B implements scheduled expiry revocation with durable retry
+  state and operator visibility. Live first-booking, rescheduling and
+  scheduler validation remain outstanding, as does cancellation coordination.
 
 Feedback:
 
@@ -745,7 +746,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R36 | Implemented | The public download page shows expiry in the browser timezone with its offset and a server-rendered UTC fallback. Chromium verified DST, fractional offsets and download submission without JavaScript. | Release-environment download validation |
 | R37 | Partial | Expired-link pages explain indefinite use and provide the existing Feedback support path with support reference and prefill. Local GET and POST checks cover expiry and token confidentiality. | Verify real interrupted and repeat downloads and the deployed support path |
 | R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
-| R39 | Requires validation | R39-A implements protected single-use Share provisioning, first-booking correlation and verified rescheduling. | Validate real HTTPS webhook delivery, booking and rescheduling. Implement and validate Share revocation and cancellation coordination |
+| R39 | Requires validation | R39-A implements protected Share provisioning, first-booking correlation and verified rescheduling. R39-B implements automatic expiry revocation. | Validate real HTTPS webhook delivery, booking, rescheduling and the revocation timer. Implement and validate cancellation coordination |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. All six variants include the permanent Sale-level PAY reference. | Real purchase email and Calendly confirmation validation remain open |
 | R41 | Required | The November 14 publication candidate is owner-approved. Public policy and pre-payment links are pending. | G15 synchronize and publish after validation |
 | R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Validate separate-purchase refunds and exceptional or historical handling. Bundle item accounting is deferred under the first-release amendment |

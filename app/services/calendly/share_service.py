@@ -92,7 +92,7 @@ def _booking_redirect(entitlement: ConsultationEntitlement) -> str:
     return urlunsplit(parts._replace(query=urlencode(query)))
 
 
-def _recover_share(event_type: str, marker: str, claimed_at: datetime) -> dict:
+def recover_share(event_type: str, marker: str, claimed_at: datetime) -> dict:
     return find_share(
         event_type,
         marker,
@@ -101,7 +101,7 @@ def _recover_share(event_type: str, marker: str, claimed_at: datetime) -> dict:
     )
 
 
-def _share_details(resource: dict, event_type: str, marker: str) -> tuple[str, str]:
+def share_details(resource: dict, event_type: str, marker: str) -> tuple[str, str]:
     uri = resource.get("uri")
     resource_path(uri, "shares")
     override = resource.get("share_override")
@@ -155,14 +155,14 @@ def provision_booking_share(db: Session, booking_token: str) -> str:
     if create:
         try:
             resource = create_share(event_type, marker)
-            uri, url = _share_details(resource, event_type, marker)
+            uri, url = share_details(resource, event_type, marker)
         except (CalendlyAPIError, ValueError):
-            uri, url = _share_details(
-                _recover_share(event_type, marker, claimed_at), event_type, marker
+            uri, url = share_details(
+                recover_share(event_type, marker, claimed_at), event_type, marker
             )
     else:
-        uri, url = _share_details(
-            _recover_share(event_type, marker, claimed_at), event_type, marker
+        uri, url = share_details(
+            recover_share(event_type, marker, claimed_at), event_type, marker
         )
 
     with db.begin():

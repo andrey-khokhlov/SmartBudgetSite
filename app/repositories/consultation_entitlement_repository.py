@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 from typing import cast
 
@@ -14,6 +14,26 @@ from app.models.sale import Sale
 
 class ConsultationEntitlementRepository:
     """Persistence queries for consultation entitlements."""
+
+    @staticmethod
+    def due_share_revocations(db: Session, now: datetime, limit: int) -> list[int]:
+        row = ConsultationEntitlement
+        return list(db.scalars(
+            select(row.id)
+            .where(
+                row.expires_at <= now,
+                row.status != ConsultationEntitlementStatus.BOOKED,
+                row.booked_at.is_(None),
+                row.provider_event_uri.is_(None),
+                row.provider_invitee_uri.is_(None),
+                row.calendly_revoked_at.is_(None),
+                or_(row.calendly_share_uri.is_not(None), row.provisioning_claimed_at.is_not(None)),
+                or_(row.calendly_revoke_outcome.is_(None), row.calendly_revoke_outcome != "provider_booked"),
+                or_(row.calendly_revoke_next_at.is_(None), row.calendly_revoke_next_at <= now),
+            )
+            .order_by(func.coalesce(row.calendly_revoke_next_at, row.expires_at), row.id)
+            .limit(limit)
+        ))
 
     @staticmethod
     def lock_owner_and_entitlement(

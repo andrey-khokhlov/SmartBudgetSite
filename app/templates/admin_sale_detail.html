@@ -24,7 +24,15 @@
     <h2>Items</h2>
     <ul>
         {% for item in sale.items %}
-            <li>{{ item.item_name }} — {{ item.amount }} {{ item.currency_code }}</li>
+            <li>
+                {{ item.item_name }} — {{ item.amount }} {{ item.currency_code }}
+                {% set entitlement = item.consultation_entitlement %}
+                {% if entitlement and entitlement.calendly_revoke_outcome and not entitlement.calendly_revoked_at and not entitlement.booked_at %}
+                    <p>Calendly Share revocation unresolved: {{ entitlement.calendly_revoke_outcome.replace("_", " ") }}.
+                    Booking deadline (UTC): {{ entitlement.expires_at.isoformat(sep=" ") }}.
+                    {% if entitlement.calendly_revoke_next_at %}Next attempt (UTC): {{ entitlement.calendly_revoke_next_at.isoformat(sep=" ") }}.{% endif %}</p>
+                {% endif %}
+            </li>
         {% endfor %}
     </ul>
 

@@ -121,6 +121,20 @@ def test_admin_omits_refund_window_for_inapplicable_sales(
     assert "Voluntary SmartBudget refund window" not in detail.text
 
 
+def test_admin_sale_detail_displays_unresolved_calendly_revocation(auth_client, db_session):
+    from tests.services.test_consultation_entitlement_service import create_test_consultation_entitlement
+
+    entitlement = create_test_consultation_entitlement(db_session)
+    sale_id = entitlement.sale_item.sale_id
+    entitlement.calendly_revoke_outcome = "provider_not_found"
+    entitlement.calendly_revoke_next_at = entitlement.expires_at
+    db_session.commit()
+    response = auth_client.get(f"/admin/sales/{sale_id}")
+    assert response.status_code == 200
+    assert "Calendly Share revocation unresolved: provider not found." in response.text
+    assert "Next attempt (UTC)" in response.text
+
+
 def test_admin_refund_workflow_requires_authentication(client, db_session):
     sale = add_paid_sale(db_session)
     add_sale_item(sale, SaleItemType.PRODUCT)

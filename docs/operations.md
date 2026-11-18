@@ -1154,9 +1154,38 @@ an empty search. Migration downgrade is supported before claims exist. It is
 blocked once claim history exists to avoid losing Share ownership.
 
 Verify live Share provisioning, signed tracking, timely booking, replay and
-rescheduling after the local window in the release environment. An unused
-copied Share can remain bookable in Calendly after the local deadline until
-its provider expiry. R39-A includes no provider-side revocation.
+rescheduling after the local window in the release environment.
+
+### Calendly Share expiry revocation
+
+`python -m scripts.revoke_calendly_shares --dry-run` selects due records
+without writing to the database or contacting Calendly. Running without
+`--dry-run` performs one bounded pass. The configured Calendly token needs
+`shares:write` to delete and the Share listing and user scopes above to recover
+unresolved claims or verify booking conflicts.
+
+The paired `smartbudget-calendly-share-revocation` systemd units run every
+minute at second 20 UTC. Prepare and verify the service placeholders during
+REL-002. The selection includes overdue records from missed ticks. Each pass
+selects at most 20 rows and stops starting new rows after 40 seconds. Provider
+requests use a five-second HTTP timeout. Local access expiry is exact, while
+provider deletion can lag because of timer granularity, backlog or outages.
+
+Review the journal summary and unresolved outcome on Admin Sale Detail. An
+attempt starts with a durable retry time and backs off from one minute to one
+hour. A longer provider `Retry-After` takes precedence. If a crash occurs after
+DELETE, a later 404 stays unconfirmed. Check the owning Calendly account using
+the persisted Share identity or exact provisioning marker. Do not infer
+deletion from an empty listing. A verified provider-booked outcome stops
+deletion attempts and requires booking reconciliation or operator review.
+Compare `calendly_revoked_at` against `expires_at` to measure confirmed
+provider revocation lag. A null confirmation time leaves the outcome unresolved.
+Downgrade is allowed before attempts exist and preserves evidence by refusing
+to downgrade after revocation work starts.
+
+Validate unit rendering, timer installation, a controlled unused Share DELETE
+and a provider booking race in the release environment. Early-refund and
+cancellation revocation remain part of R39/R42 coordination.
 
 See `current_state.md` for current priorities and blockers.
 
