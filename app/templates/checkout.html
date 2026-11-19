@@ -45,7 +45,7 @@
         </div>
 
         {% if consultation_unavailable %}
-            <p>{{ t("checkout.consultation_unavailable") }}</p>
+            <p>{{ t("consultations_unavailable" if capacity_unavailable else "checkout.consultation_unavailable") }}</p>
             <p><a href="/checkout/{{ product.slug }}?currency={{ price.currency_code | urlencode }}">{{ t("checkout.continue_without_consultation") }}</a></p>
         {% else %}
             <form class="checkout-form" method="post" action="/checkout/{{ product.slug }}?lang={{ lang }}">

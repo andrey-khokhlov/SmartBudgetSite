@@ -809,9 +809,24 @@ release-environment validation remain open.
   under R42 and R53, including request evidence, accurate amounts, verified
   provider outcomes, and customer follow-up. The operator performs Lava.top
   refund initiation manually.
-- Validate [consultation capacity management](architecture/consultations.md#operational-capacity),
-  including timely warnings and control of new purchases at the approved
-  limit. Finalize the capacity rules in the bounded implementation review.
+- Complete the [Consultation Capacity Management production deployment checklist](operations.md#consultation-capacity-management-production-deployment-checklist).
+  The configuration and live validation items below remain open.
+  - [ ] Confirm both thresholds and verify that the effective web and
+    dispatcher settings match. Verify Telegram and administrative SMTP
+    configuration.
+  - [ ] **Release prerequisite.** Explicitly set
+    `CONSULTATION_CAPACITY_ALERT_DELIVERY_ENABLED=true` in the dispatcher
+    environment once both transports are ready.
+  - [ ] Apply Alembic revision `8e21d4f6ab93` before starting the updated
+    application or dispatcher and verify the seeded capacity row.
+  - [ ] Verify that the existing alert timer is active and triggers a
+    successful scheduled dispatcher pass.
+  - [ ] Verify live RU/EN checkout blocking and reopening, durable Admin
+    suspend and resume, and fulfillment of a previously initiated payment
+    at the limit.
+  - [ ] Verify live warning and exhaustion alert delivery, including
+    successful Telegram delivery and administrative SMTP fallback after a
+    controlled Telegram failure.
 - Rehearse recovery and confirm that routine operator work is supported by
   the approved automation and procedures.
 

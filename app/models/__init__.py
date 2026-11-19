@@ -1,3 +1,7 @@
+from app.models.consultation_capacity import (
+    ConsultationCapacityNotification as ConsultationCapacityNotification,
+    ConsultationCapacityState as ConsultationCapacityState,
+)
 from app.models.feedback import FeedbackMessage as FeedbackMessage
 from app.models.feedback_attachment import FeedbackAttachment as FeedbackAttachment
 from app.models.product import Product as Product

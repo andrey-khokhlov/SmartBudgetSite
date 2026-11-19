@@ -673,6 +673,8 @@ at most 120 seconds and can still finish a lookup and fulfillment with initial
 email dispatch. Email recovery can attempt 20 sends per pass. Alert dispatch
 can process 20 incidents with up to two channels each, including SMTP setup,
 authentication, and message submission. The unit timeouts bound whole passes.
+The same service then runs the capacity pass, which can attempt up to two
+channels for each of five capacity episodes.
 Network timeouts apply to individual operations. Validate these initial budgets
 under deployed load, particularly when a pass can exceed its interval.
 
@@ -1185,6 +1187,68 @@ to downgrade after revocation work starts.
 
 Validate unit rendering, timer installation, a controlled unused Share DELETE
 and a provider booking race in the release environment.
+
+### Consultation sales capacity
+
+Alembic revision `8e21d4f6ab93` seeds the single PostgreSQL capacity row with
+sales unsuspended. An absent or unreadable row closes new consultation checkout.
+Before a downgrade across this revision, close new consultation checkout at
+the deployment perimeter and preserve any state or alert history needed for
+recovery. The downgrade drops both capacity tables.
+
+`/admin/consultation-offers` shows the current workload and has persistent
+suspend and resume controls. Resume removes the manual pause and leaves the
+workload limit in effect.
+
+The existing `smartbudget-alert-dispatcher` runs the capacity pass once per
+activation through `python -m scripts.dispatch_purchase_alerts`. The command
+reports its result under `consultation_capacity` and uses a separate session
+from purchase delivery alerts. `--dry-run` checks for due outbox entries
+without observing new episodes, writing, or sending.
+
+Both channels use the existing Telegram and administrative SMTP settings.
+Telegram is tried first when both channels are due. An unconfirmed Telegram
+attempt leaves SMTP eligible. The two-minute send lease supports recovery
+after interruption. Temporary and ambiguous outcomes back off by 1, 2, 5,
+15, 30, and 60 minutes, with up to seven attempts per channel. Configuration
+and permanent failures terminate that channel. An accepted send suppresses
+further attempts for the episode. Ambiguous acceptance can still produce a
+duplicate through retry or fallback.
+
+Observation is periodic, so a crossing that begins and ends between samples
+can go unreported. Public checkout evaluates current workload on each initiation.
+
+#### Consultation Capacity Management production deployment checklist
+
+Steps 1–4 prepare configuration. Steps 5–6 deploy it. Steps 7–9 verify live
+behavior and record production evidence.
+
+1. Confirm the intended capacity limit (default `4`) and warning threshold
+   (default `3`). The warning threshold must be a positive integer below the
+   limit.
+2. Set identical `CONSULTATION_CAPACITY_LIMIT` and
+   `CONSULTATION_CAPACITY_WARNING_THRESHOLD` values in the web and dispatcher
+   environments.
+3. Prepare and verify the existing [Telegram and administrative SMTP settings](#g13d-3-operational-monitoring-target),
+   including the destinations and SMTP STARTTLS requirements.
+4. Once both transports are ready, explicitly set
+   `CONSULTATION_CAPACITY_ALERT_DELIVERY_ENABLED=true` in the dispatcher
+   environment. The flag defaults to `false`.
+5. Apply Alembic revision `8e21d4f6ab93` before starting the updated
+   application or dispatcher.
+6. Deploy or restart the application and alert dispatcher. Verify that the
+   existing `smartbudget-alert-dispatcher.timer` is active and triggers a
+   successful scheduled pass.
+7. Verify the seeded capacity row, Admin suspend and resume, and persistence
+   of a manual suspension across a restart. Check that RU/EN consultation
+   checkout blocks at the limit and reopens below it. Confirm that a payment
+   initiated before the limit was reached can still complete and grant the
+   booking entitlement.
+8. Verify live dispatch of both the warning and exhaustion alerts. Confirm
+   Telegram delivery and use a controlled Telegram failure to verify that
+   the alert reaches the administrative SMTP recipient.
+9. Record production validation results, supporting evidence, and any
+   remaining issues in the release readiness review.
 
 ### Consultation cancellation in Admin Sale Detail
 

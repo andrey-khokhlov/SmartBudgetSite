@@ -23,6 +23,9 @@ from app.repositories.service_payment_provider_offer_repository import (
     ServicePaymentProviderOfferRepository,
 )
 from app.services import mail_service
+from app.services.consultation_capacity_service import (
+    require_consultation_sales_available,
+)
 from app.services.consultation_offer_admin_service import (
     ALLOWED_CONSULTATION_CURRENCIES,
 )
@@ -93,6 +96,8 @@ def initiate_lava_top_product_checkout(
         raise CheckoutValidationError("Currency is required.")
 
     normalized_email = _normalize_checkout_email(customer_email)
+    if include_consultation:
+        require_consultation_sales_available(db)
 
     products_repository = ProductsRepository(db)
     product = products_repository.get_by_slug(product_slug)
@@ -206,6 +211,7 @@ def initiate_lava_top_standalone_consultation_checkout(
 ) -> str:
     """Start hosted checkout for one exact standalone consultation catalog record."""
     normalized_email = _normalize_checkout_email(customer_email)
+    require_consultation_sales_available(db)
     try:
         service, mapping = resolve_standalone_consultation_checkout(
             db, service_addon_id=service_addon_id, currency=currency

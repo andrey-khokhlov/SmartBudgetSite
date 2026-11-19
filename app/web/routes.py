@@ -33,6 +33,13 @@ from app.repositories.sales_repository import (
     stale_pending_sale_ids,
 )
 from app.services.admin_consultation_service import get_consultation_entitlements
+from app.services.consultation_capacity_service import (
+    ConsultationCapacityUnavailableError,
+    consultation_sales_available,
+    get_consultation_capacity,
+    require_consultation_sales_available,
+    set_consultation_sales_suspended,
+)
 from app.services.consultation_offer_admin_service import (
     ConsultationOfferInputError,
     ConsultationOfferNotFoundError,
@@ -150,6 +157,8 @@ templates = Jinja2Templates(
 ADMIN_COOKIE_NAME = "admin_token"
 
 admin_router = APIRouter(dependencies=[Depends(require_admin)])
+CAPACITY_ADMIN_ACTION = "/admin/consultation-offers/capacity"
+CAPACITY_CSRF_CONTEXT = "consultation-capacity-csrf:v1"
 
 
 def render(
@@ -1212,6 +1221,8 @@ def checkout_page(
     if not normalized_currency:
         raise HTTPException(status_code=400, detail="Currency is required")
 
+    bundle_requested = consultation == 1 and settings.BUNDLE_CHECKOUT_ENABLED
+    capacity_unavailable = bundle_requested and not consultation_sales_available(db)
     products_repository = ProductsRepository(db)
     product = products_repository.get_by_slug(slug)
     if product is None:
@@ -1231,7 +1242,7 @@ def checkout_page(
 
     addon = None
 
-    if consultation == 1 and settings.BUNDLE_CHECKOUT_ENABLED:
+    if bundle_requested and not capacity_unavailable:
         addon = ServiceAddonRepository.get_active_addon(
             db,
             family_slug=product.family_slug,
@@ -1256,6 +1267,7 @@ def checkout_page(
             "total_amount": total_amount,
             "consultation": consultation == 1,
             "consultation_unavailable": consultation == 1 and addon is None,
+            "capacity_unavailable": capacity_unavailable,
             "package": package,
             "lang": get_lang(request),
         },
@@ -1290,6 +1302,8 @@ def initiate_checkout(
             include_consultation=consultation == "1",
             purchase_language=get_lang(request),
         )
+    except ConsultationCapacityUnavailableError:
+        return _render_consultation_capacity_unavailable(request)
     except CheckoutValidationError:
         return render(
             request,
@@ -1312,8 +1326,18 @@ def initiate_checkout(
     return RedirectResponse(url=payment_url, status_code=303)
 
 
+def _render_consultation_capacity_unavailable(request: Request) -> HTMLResponse:
+    return render(
+        request,
+        "payment_result.html",
+        {"result_state": "consultation_unavailable"},
+        status_code=503,
+    )
+
+
 @router.get("/consultations", response_class=HTMLResponse)
 def consultations_page(request: Request, db: Session = Depends(get_db)):
+    capacity_available = consultation_sales_available(db)
     package = "RU" if get_lang(request) == "ru" else "INT"
     offers = [
         offer
@@ -1330,11 +1354,12 @@ def consultations_page(request: Request, db: Session = Depends(get_db)):
         addon
         for addon in offers
         if settings.BUNDLE_CHECKOUT_ENABLED
+        and capacity_available
         and addon.usage_type == "addon"
         and (offer is None or addon.currency_code == offer.currency_code)
     ]
     can_purchase = False
-    if offer is not None:
+    if offer is not None and capacity_available:
         try:
             resolve_standalone_consultation_checkout(
                 db, service_addon_id=offer.id, currency=offer.currency_code
@@ -1362,9 +1387,12 @@ def consultation_checkout_page(
     db: Session = Depends(get_db),
 ):
     try:
+        require_consultation_sales_available(db)
         offer, _ = resolve_standalone_consultation_checkout(
             db, service_addon_id=offer_id, currency=currency
         )
+    except ConsultationCapacityUnavailableError:
+        return _render_consultation_capacity_unavailable(request)
     except CheckoutValidationError:
         return render(
             request, "payment_result.html", {"result_state": "error"}, status_code=404
@@ -1388,6 +1416,8 @@ def initiate_consultation_checkout(
             currency=currency,
             purchase_language=get_lang(request),
         )
+    except ConsultationCapacityUnavailableError:
+        return _render_consultation_capacity_unavailable(request)
     except CheckoutValidationError:
         status_code = 400
     except PaymentReconciliationRequiredError as exc:
@@ -1441,6 +1471,9 @@ def product_buy_page(
     - Does not start payment processing.
     """
 
+    bundles_available = (
+        settings.BUNDLE_CHECKOUT_ENABLED and consultation_sales_available(db)
+    )
     repository = ProductsRepository(db)
     family_products = repository.list_products_by_family_slug(family_slug)
 
@@ -1453,7 +1486,7 @@ def product_buy_page(
         package = get_product_package(product.slug)
 
         consultation_addon = None
-        if settings.BUNDLE_CHECKOUT_ENABLED and price is not None:
+        if bundles_available and price is not None:
             consultation_addon = ServiceAddonRepository.get_active_addon(
                 db,
                 family_slug=product.family_slug,
@@ -1477,7 +1510,7 @@ def product_buy_page(
         "product_buy.html",
         {
             "product_options": product_options,
-            "bundle_checkout_enabled": settings.BUNDLE_CHECKOUT_ENABLED,
+            "bundle_checkout_enabled": bundles_available,
             "family_slug": family_slug,
         },
     )
@@ -1642,12 +1675,63 @@ def admin_consultation_offers_page(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    return render(
+    capacity = get_consultation_capacity(db)
+    csrf_cookie_id = csrf_token = ""
+    if capacity is not None and settings.SECRET_KEY.strip():
+        csrf_cookie_id, csrf_token = token_hex(16), token_hex(32)
+    response = render(
         request,
         "admin_consultation_offers.html",
-        {"offers": list_consultation_offers(db)},
+        {
+            "offers": list_consultation_offers(db),
+            "capacity": capacity,
+            "capacity_action": CAPACITY_ADMIN_ACTION,
+            "csrf_cookie_id": csrf_cookie_id,
+            "csrf_token": csrf_token,
+        },
         document_lang="en",
     )
+    response.headers["Cache-Control"] = "no-store"
+    if csrf_token:
+        response.set_cookie(
+            f"capacity_csrf_{csrf_cookie_id}",
+            create_csrf_cookie_value(
+                csrf_cookie_id, csrf_token, context=CAPACITY_CSRF_CONTEXT
+            ),
+            path=CAPACITY_ADMIN_ACTION,
+            max_age=900,
+            httponly=True,
+            secure=settings.APP_ENV == "prod" or request.url.scheme == "https",
+            samesite="strict",
+        )
+    return response
+
+
+@admin_router.post(CAPACITY_ADMIN_ACTION)
+def admin_update_consultation_capacity(
+    request: Request,
+    action: str = Form(...),
+    csrf_cookie_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    cookie_name = f"capacity_csrf_{csrf_cookie_id}"
+    if not settings.SECRET_KEY.strip() or not verify_csrf_token(
+        csrf_cookie_id,
+        csrf_token,
+        request.cookies.get(cookie_name),
+        context=CAPACITY_CSRF_CONTEXT,
+    ):
+        raise HTTPException(status_code=403, detail="Invalid capacity form")
+    if action not in {"suspend", "resume"}:
+        raise HTTPException(status_code=400, detail="Invalid capacity action")
+    try:
+        set_consultation_sales_suspended(db, suspended=action == "suspend")
+    except ConsultationCapacityUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Capacity state unavailable") from exc
+    response = RedirectResponse(url="/admin/consultation-offers", status_code=303)
+    response.delete_cookie(cookie_name, path=CAPACITY_ADMIN_ACTION)
+    return response
 
 
 @admin_router.get("/admin/consultation-offers/new")

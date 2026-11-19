@@ -38,6 +38,7 @@ from app.core.db import Base
 
 from app.dependencies import get_db, ADMIN_COOKIE_NAME
 from app.core.config import settings
+from app.models.consultation_capacity import ConsultationCapacityState
 
 from app.services import mail_service
 
@@ -108,6 +109,11 @@ def clean_database() -> Generator[None, None, None]:
     try:
         for table in reversed(Base.metadata.sorted_tables):
             db.execute(table.delete())
+        db.add(
+            ConsultationCapacityState(
+                id=1, manually_suspended=False, observed_level="normal"
+            )
+        )
         db.commit()
         yield
     finally:

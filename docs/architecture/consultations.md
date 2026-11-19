@@ -376,25 +376,31 @@ launch.
 
 ### Operational capacity
 
-Operational capacity management is required before the first public commercial
-release. Operational capacity is separate from catalog activation:
+New consultation checkout requires both an eligible catalog offer and
+operational capacity. This applies to standalone consultations and to any
+checkout with a consultation add-on if bundle sales are enabled separately.
+`ServiceAddon.is_active` remains catalog versioning state.
 
-```text
-Catalog offer active AND operational capacity available
-    = consultation add-on sellable
-```
+PostgreSQL counts one global workload across currencies and sales modes. An
+entitlement counts if its Sale is paid, its SaleItem is a consultation service,
+its status is available, its expiry is strictly after the current UTC time,
+and it has no ConsultationCancellation. This uses the expiry timestamp
+directly. Calendly continues to manage scheduling, and booked appointments
+are outside this workload.
 
-`ServiceAddon.is_active` remains catalog/versioning state and must not be
-repurposed as temporary capacity state. Exhausted operational capacity must
-suppress or disable new consultation add-on purchases while preserving catalog
-history and access already granted to customers.
+Sales close at the configured limit of four by default and reopen below it.
+The manual suspension in `/admin/consultation-offers` overrides automatic
+availability and remains active until an operator resumes sales. An unknown
+capacity state closes new consultation sales. Checkout checks capacity before
+creating a Sale or contacting Lava.top. Already pending payments still fulfill
+normally, so concurrent confirmations can exceed the limit. Paid booking
+access and the entitlement lifecycle continue through their existing flows.
 
-Outstanding consultation liability is the preferred candidate
-signal rather than raw weekly sales. It may include available consultation
-entitlements and relevant future booked consultations, but this is not a
-finalized formula. The exact workload definition, measurement window, warning
-threshold, hard limit, and re-enable behavior remain open for the bounded
-pre-release capacity review.
+The scheduled dispatcher observes workload and records a warning when it rises
+into the warning range (three by default), or an exhaustion alert when it
+reaches the limit. Each threshold rearms after a sample below that threshold.
+The observation and its two channel entries are committed together in a
+consultation-specific outbox. See [operation and validation](../operations.md#consultation-sales-capacity).
 
 ### Consultation cancellation and refund requests (D4)
 

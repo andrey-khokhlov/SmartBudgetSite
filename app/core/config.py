@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     CALENDLY_CONSULTATION_EVENT_TYPE_URI: str | None = None
     CALENDLY_WEBHOOK_SIGNING_SECRET: str | None = None
     CALENDLY_PERSONAL_ACCESS_TOKEN: str | None = None
+    CONSULTATION_CAPACITY_LIMIT: int = Field(default=4, gt=1)
+    CONSULTATION_CAPACITY_WARNING_THRESHOLD: int = Field(default=3, gt=0)
+    CONSULTATION_CAPACITY_ALERT_DELIVERY_ENABLED: bool = False
 
     BUNDLE_CHECKOUT_ENABLED: bool = False
     LAVA_TOP_API_KEY: str | None = None
@@ -82,6 +85,15 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="forbid",
     )
+
+    @model_validator(mode="after")
+    def validate_consultation_capacity(self) -> "Settings":
+        if self.CONSULTATION_CAPACITY_WARNING_THRESHOLD >= self.CONSULTATION_CAPACITY_LIMIT:
+            raise ValueError(
+                "CONSULTATION_CAPACITY_WARNING_THRESHOLD must be below "
+                "CONSULTATION_CAPACITY_LIMIT"
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":

@@ -9,7 +9,9 @@
 {% block content %}
 <section class="checkout-page">
     <div class="checkout-card payment-result" role="status">
-        {% if result_state == "error" %}
+        {% if result_state == "consultation_unavailable" %}
+            <h1 class="checkout-title">{{ t("consultations_unavailable") }}</h1>
+        {% elif result_state == "error" %}
             <h1 class="checkout-title">{{ t("payment_result.error_title") }}</h1>
             <p>{{ t("payment_result.error_message") }}</p>
         {% else %}

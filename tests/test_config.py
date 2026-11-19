@@ -10,6 +10,27 @@ def build_settings(**values: Any) -> Settings:
     return Settings(_env_file=None, **values)  # type: ignore[call-arg]
 
 
+def test_consultation_capacity_defaults_and_overrides(monkeypatch):
+    config = build_settings()
+    assert config.CONSULTATION_CAPACITY_LIMIT == 4
+    assert config.CONSULTATION_CAPACITY_WARNING_THRESHOLD == 3
+    assert not config.CONSULTATION_CAPACITY_ALERT_DELIVERY_ENABLED
+    monkeypatch.setenv("CONSULTATION_CAPACITY_LIMIT", "8")
+    monkeypatch.setenv("CONSULTATION_CAPACITY_WARNING_THRESHOLD", "6")
+    config = build_settings()
+    assert config.CONSULTATION_CAPACITY_LIMIT == 8
+    assert config.CONSULTATION_CAPACITY_WARNING_THRESHOLD == 6
+
+
+@pytest.mark.parametrize(("limit", "warning"), [(4, 0), (4, 4), (4, 5), (1, 1)])
+def test_consultation_capacity_rejects_invalid_thresholds(limit, warning):
+    with pytest.raises(ValidationError):
+        build_settings(
+            CONSULTATION_CAPACITY_LIMIT=limit,
+            CONSULTATION_CAPACITY_WARNING_THRESHOLD=warning,
+        )
+
+
 @pytest.mark.parametrize("app_env", ["dev", "test", "prod"])
 def test_app_env_accepts_supported_values(app_env: str) -> None:
     configured_settings = build_settings(

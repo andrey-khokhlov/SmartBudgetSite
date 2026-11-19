@@ -452,8 +452,8 @@ Production will start with a fresh database without importing development or
 review Sales.
 
 Live validation of product-only and standalone purchases remains open.
-Standalone capacity safeguards remain
-required. Document the commercial launch cutoff in UTC for Product Refund
+Standalone capacity safeguards are implemented locally and require deployed
+validation. Document the commercial launch cutoff in UTC for Product Refund
 Rate so pre-release production test payments and their refunds are excluded.
 R42, R53, and the relevant release gates stay open.
 
@@ -612,14 +612,13 @@ it does not close or abandon them.
 G13D Purchase Delivery Monitoring is complete locally. Production deployment,
 scheduled execution, live delivery and release-environment validation remain
 open under the [G13D release gate](release_readiness.md#g13d--purchase-delivery-monitoring).
-R53-3 — Customer Receipt Retry is implemented locally. The next implementation
-priority is R39/R42 — Refund and cancellation workflow.
+R53-3 — Customer Receipt Retry is implemented locally.
 
 #### Owner-approved remaining pre-release sequence
 
 1. R53-3 — Customer Receipt Retry (implemented locally).
 2. R39/R42 — Refund and cancellation workflow.
-3. Consultation Capacity Management.
+3. Consultation Capacity Management (implemented locally).
 4. G13B/G13C — Administrative recovery.
 5. R50/G15 — Refund policy, consent and legal publication.
 6. Functional Freeze.
@@ -631,6 +630,12 @@ Local implementation and validation are tracked separately from deployment
 and live validation. Existing release gates and publication prerequisites
 still apply. After launch, SmartBudgetSite moves to maintenance and the
 primary development focus returns to SmartBudget Excel.
+
+Consultation sales use the global outstanding workload and a durable manual
+suspension in Admin. The existing Alert Dispatcher command also runs a
+separately enabled capacity pass with its own outbox. Capacity configuration,
+scheduled execution, and both alert transports still need release-environment
+validation.
 
 Operational readiness means minimizing routine manual administration, alerting
 the operator in time to act, providing safe recovery procedures, and reliably

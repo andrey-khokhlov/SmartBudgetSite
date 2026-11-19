@@ -8,6 +8,33 @@
 <div class="admin-workspace">
     <h1>Consultation offers</h1>
     <p>Catalog offers and purchased consultation entitlements are managed separately.</p>
+    <section aria-labelledby="consultation-capacity-heading">
+        <h2 id="consultation-capacity-heading">Sales capacity</h2>
+        {% if capacity is not none %}
+        <dl>
+            <dt>Outstanding consultations</dt><dd>{{ capacity.outstanding }}</dd>
+            <dt>Warning threshold</dt><dd>{{ capacity.warning_threshold }}</dd>
+            <dt>Capacity limit</dt><dd>{{ capacity.limit }}</dd>
+            <dt>New consultation sales</dt><dd>{{ "Available" if capacity.available else "Unavailable" }}</dd>
+            <dt>Manual suspension</dt><dd>{{ "Active" if capacity.manually_suspended else "Inactive" }}</dd>
+        </dl>
+        {% if csrf_token %}
+        <form method="post" action="{{ capacity_action }}">
+            <input type="hidden" name="csrf_cookie_id" value="{{ csrf_cookie_id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if capacity.manually_suspended %}
+                <button type="submit" name="action" value="resume">Resume consultation sales</button>
+            {% else %}
+                <button type="submit" name="action" value="suspend">Suspend consultation sales</button>
+            {% endif %}
+        </form>
+        {% else %}
+        <p>Manual controls require a configured secret key.</p>
+        {% endif %}
+        {% else %}
+        <p>Capacity state unavailable. New consultation sales are closed.</p>
+        {% endif %}
+    </section>
     <p><a href="/admin/consultation-offers/new">+ Create consultation offer</a></p>
 
     <div class="admin-table-wrapper">
