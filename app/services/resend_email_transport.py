@@ -24,7 +24,7 @@ class ResendEmailTransport:
                 "Transactional email transport is not configured."
             )
 
-        payload = {
+        payload: dict[str, str | list[str] | list[dict[str, str]]] = {
             "from": f"{email.sender_name} <{email.sender_email}>",
             "to": [email.recipient],
             "subject": email.subject,
@@ -36,6 +36,13 @@ class ResendEmailTransport:
                 {
                     "name": "purchase_email_delivery_id",
                     "value": str(email.purchase_email_delivery_id),
+                }
+            ]
+        elif email.purchase_access_recovery_id is not None:
+            payload["tags"] = [
+                {
+                    "name": "purchase_access_recovery_id",
+                    "value": str(email.purchase_access_recovery_id),
                 }
             ]
         try:

@@ -105,6 +105,16 @@ from app.services.purchase_email_delivery_service import (
     authorize_reconciliation_resend,
     deliver_purchase_email_after_payment_commit,
 )
+from app.services.purchase_access_recovery_service import (
+    MAX_REASON_LENGTH,
+    VERIFICATION_METHODS,
+    VERIFY_CONFIRMATION,
+    RecoveryConflictError,
+    RecoveryInputError,
+    prepare_purchase_access_recovery,
+    recovery_admin_state,
+    send_purchase_access_recovery,
+)
 from app.services.refund_eligibility_service import assess_voluntary_refund_window
 from app.services.refund_request_service import (
     MAX_MESSAGE_LENGTH,
@@ -551,12 +561,10 @@ def issue_download(
             support_reference,
         )
 
-    storage_key = entitlement.release.storage_key
-    db.commit()
-
     try:
+        # Local signing stays under the entitlement lock acquired by the POST.
         signed_url = R2StorageService().generate_signed_get_url(
-            storage_key=storage_key,
+            storage_key=entitlement.release.storage_key,
             download_filename=entitlement.release.original_filename,
         )
     except (HTTPException, R2SignedUrlError):
@@ -568,6 +576,9 @@ def issue_download(
             ),
             entitlement.support_reference,
         )
+    finally:
+        # A storage failure still consumes the recorded attempt.
+        db.commit()
 
     return RedirectResponse(url=signed_url, status_code=303)
 
@@ -1898,6 +1909,7 @@ async def admin_sale_detail(
     request: Request,
     sale_id: int,
     refund_result: str | None = Query(default=None),
+    recovery_result: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     try:
@@ -1915,7 +1927,11 @@ async def admin_sale_detail(
         sale, [item.consultation_entitlement for item in sale.items if item.consultation_entitlement],
     )
 
-    return render(
+    recovery, recovery_ineligible, recovery_prepare_blocked = recovery_admin_state(db, sale)
+    recovery_csrf_id = recovery_csrf_token = ""
+    if recovery_ineligible is None and settings.SECRET_KEY.strip():
+        recovery_csrf_id, recovery_csrf_token = token_hex(16), token_hex(32)
+    response = render(
         request,
         "admin_sale_detail.html",
         {
@@ -1924,9 +1940,99 @@ async def admin_sale_detail(
             "allow_disposition_exception": bool(unresolved) and all(
                 disposition_unavailable(value) for value in unresolved
             ),
+            "recovery": recovery,
+            "recovery_result": recovery_result,
+            "recovery_ineligible": recovery_ineligible,
+            "recovery_prepare_blocked": recovery_prepare_blocked,
+            "recovery_csrf_id": recovery_csrf_id,
+            "recovery_csrf_token": recovery_csrf_token,
+            "recovery_verification_methods": VERIFICATION_METHODS,
+            "recovery_verification_confirmation": VERIFY_CONFIRMATION,
+            "recovery_reason_max_length": MAX_REASON_LENGTH,
         },
         document_lang="en",
     )
+    response.headers["Cache-Control"] = "no-store"
+    if recovery_csrf_token:
+        response.set_cookie(
+            f"recovery_csrf_{recovery_csrf_id}",
+            create_csrf_cookie_value(
+                recovery_csrf_id,
+                recovery_csrf_token,
+                context=f"purchase-access-recovery:v1:{sale_id}",
+            ),
+            path=f"/admin/sales/{sale_id}/purchase-access",
+            max_age=900,
+            httponly=True,
+            secure=settings.APP_ENV == "prod" or request.url.scheme == "https",
+            samesite="strict",
+        )
+    return response
+
+
+def _require_recovery_csrf(request: Request, sale_id: int, cookie_id: str, token: str) -> None:
+    if not settings.SECRET_KEY.strip() or not verify_csrf_token(
+        cookie_id,
+        token,
+        request.cookies.get(f"recovery_csrf_{cookie_id}"),
+        context=f"purchase-access-recovery:v1:{sale_id}",
+    ):
+        raise HTTPException(status_code=403, detail="Invalid purchase recovery form")
+
+
+@admin_router.post("/admin/sales/{sale_id}/purchase-access/prepare")
+def admin_prepare_purchase_access(
+    sale_id: int,
+    request: Request,
+    csrf_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    expected_recovery_id: int = Form(default=0, ge=0),
+    verification: str = Form(default=""),
+    verification_method: str = Form(default=""),
+    reason: str = Form(default=""),
+    corrected_email: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    _require_recovery_csrf(request, sale_id, csrf_id, csrf_token)
+    try:
+        result = prepare_purchase_access_recovery(
+            db,
+            sale_id=sale_id,
+            request_id=csrf_id,
+            expected_recovery_id=expected_recovery_id,
+            verification=verification,
+            verification_method=verification_method,
+            reason=reason,
+            corrected_email=corrected_email,
+        )
+    except RecoveryInputError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RecoveryConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RedirectResponse(f"/admin/sales/{sale_id}?recovery_result={result}", status_code=303)
+
+
+@admin_router.post("/admin/sales/{sale_id}/purchase-access/send")
+def admin_send_purchase_access(
+    sale_id: int,
+    request: Request,
+    recovery_id: int = Form(..., ge=1),
+    expected_attempt_count: int = Form(..., ge=0),
+    csrf_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    _require_recovery_csrf(request, sale_id, csrf_id, csrf_token)
+    try:
+        result = send_purchase_access_recovery(
+            db,
+            sale_id=sale_id,
+            recovery_id=recovery_id,
+            expected_attempt_count=expected_attempt_count,
+        )
+    except RecoveryConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RedirectResponse(f"/admin/sales/{sale_id}?recovery_result={result}", status_code=303)
 
 
 @admin_router.post("/admin/sales/{sale_id}/refund/start")

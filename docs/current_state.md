@@ -619,7 +619,7 @@ R53-3 — Customer Receipt Retry is implemented locally.
 1. R53-3 — Customer Receipt Retry (implemented locally).
 2. R39/R42 — Refund and cancellation workflow.
 3. Consultation Capacity Management (implemented locally).
-4. G13B/G13C — Administrative recovery.
+4. G13B/G13C — Administrative recovery (implemented locally for product-only Sales).
 5. R50/G15 — Refund policy, consent and legal publication.
 6. Functional Freeze.
 7. UI/UX Polish.
@@ -1075,8 +1075,8 @@ surface-specific slices, not duplicate requirements.
 | G11 — Standalone payment boundary | R06, R38 | **Implemented and locally validated**: separate provider mapping, operator configuration, service-only initiation and existing paid reconciliation. |
 | G12 — Public Consultations | R03, R06, R23, R34, R38, applicable R51 | **Public catalog, navigation and standalone Checkout implemented and locally validated**. Real provider, email, booking and meeting validation remain open. |
 | G13 — Purchase email | R35, R40 | **Implemented and locally validated.** Stores `Sale.purchase_language`, uses `en` for historical orders, renders the approved HTML/plain-text emails and blocks expired download links. Migration checks unresolved sends before switching templates. Release-environment delivery validation remains open. |
-| G13B — Customer Email Correction | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13b--customer-email-correction). |
-| G13C — Reissue Download Access | REL-001 | [Open pre-release Admin operation](release_readiness.md#g13c--reissue-download-access). |
+| G13B — Customer Email Correction | REL-001 | Implemented locally in Admin Sale Detail for paid product-only Sales after independent payment verification. Consultation-only and mixed Sales use manual support. [Production validation remains open](release_readiness.md#g13b--customer-email-correction). |
+| G13C — Reissue Download Access | REL-001 | Implemented locally. Recovery rotates the existing token for 24 hours, snapshots previous attempts and provides a separate operator-triggered Resend send. [Production validation remains open](release_readiness.md#g13c--reissue-download-access). |
 | G13D — Purchase Delivery Monitoring | REL-001 | G13D-1 local detection and PostgreSQL incident history are complete. G13D-2a [Lava.top recovery](operations.md#g13d-2a-lavatop-payment-recovery), G13D-2b [Resend webhook monitoring](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring), and G13D-2c [safe automatic purchase-email recovery](operations.md#g13d-2c-purchase-email-recovery) are implemented and locally validated. G13D-3a implements the PostgreSQL notification outbox and materializer. G13D-3b implements the [one-pass Alert Dispatcher](operations.md#g13d-3-operational-monitoring-target) with Telegram-first delivery and SMTP fallback. G13D-3c prepares [systemd unit templates](operations.md#g13d-3c-systemd-unit-templates). Deployment rendering, installation, and live validation remain open under the [release gate](release_readiness.md#g13d--purchase-delivery-monitoring). |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery, interrupted and repeat download, and Gate 3 repeat review remain open. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the approved November 14 policy and linked bilingual seller page after factual disclosure and validation. Synchronize Checkout, FAQ, email and refund operations. |

@@ -65,7 +65,7 @@ LAVA_TOP_PROVIDER = "lava_top"
 EMAIL_ADAPTER = TypeAdapter(EmailStr)
 
 
-def _normalize_checkout_email(customer_email: str) -> str:
+def normalize_checkout_email(customer_email: str) -> str:
     try:
         normalized_email = str(
             EMAIL_ADAPTER.validate_python(customer_email.strip().lower())
@@ -95,7 +95,7 @@ def initiate_lava_top_product_checkout(
     if not normalized_currency:
         raise CheckoutValidationError("Currency is required.")
 
-    normalized_email = _normalize_checkout_email(customer_email)
+    normalized_email = normalize_checkout_email(customer_email)
     if include_consultation:
         require_consultation_sales_available(db)
 
@@ -210,7 +210,7 @@ def initiate_lava_top_standalone_consultation_checkout(
     purchase_language: str = "en",
 ) -> str:
     """Start hosted checkout for one exact standalone consultation catalog record."""
-    normalized_email = _normalize_checkout_email(customer_email)
+    normalized_email = normalize_checkout_email(customer_email)
     require_consultation_sales_available(db)
     try:
         service, mapping = resolve_standalone_consultation_checkout(

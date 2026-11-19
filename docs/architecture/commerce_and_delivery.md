@@ -976,7 +976,36 @@ capability response-header policy and contains no token or raw URL.
 
 Strict one-time completion, automatic completion detection, IP/user-agent audit
 records, and backend file proxying are deferred until reliable completion
-criteria justify them. Future admin reissue/reset must be explicit and auditable.
+criteria justify them.
+
+### Admin purchase access recovery (G13B/G13C)
+
+Admin Sale Detail supports recovery for a paid, product-only Sale with one
+product item and no refund operation. The founder independently verifies
+ownership using provider payment evidence. Preparation can correct
+`Sale.customer_email`, which becomes the address used for purchase and refund
+lookup. It preserves payment evidence, the SaleItem and the purchased release.
+
+Preparation locks the Sale, original email state and download entitlement.
+It replaces the token on the existing entitlement for 24 hours from reissue,
+keeps its support reference, and resets the attempt allowance under the same
+lock used by download POST. The recovery record retains the previous aggregate
+attempt count and timestamps, verification details and any prior address under
+the existing order-data retention policy. Previously signed R2 URLs keep their
+short expiry.
+
+The separate Send recovery email action uses the stored purchase language and
+its own stable Resend identity. A retry must use the same payload, key and
+provider credentials while the link and the 23-hour retry safety window are
+still valid. An uncertain outcome outside those bounds requires operator
+reconciliation. The original purchase-email record and its provider evidence
+remain historical. Its Admin and G13D retry paths stop sending after recovery
+is prepared.
+
+Consultation-only and mixed Sales require
+[manual consultation support](../operations.md#manual-consultation-support).
+Recovery has no authority over consultation entitlements, Calendly Shares, or
+bookings.
 
 ## Refund architecture
 

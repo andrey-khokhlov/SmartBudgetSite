@@ -655,9 +655,9 @@ defects.
 ### Pre-deployment release sequence
 
 Follow the [owner-approved remaining pre-release sequence](current_state.md#owner-approved-remaining-pre-release-sequence).
-R39/R42 — Refund and cancellation workflow is the next implementation priority. The sequence
-places Functional Freeze and UI/UX Polish before Production Deployment, with
-Live Validation following deployment. Each release gate retains its criteria.
+The sequence places Functional Freeze and UI/UX Polish before Production
+Deployment, with Live Validation following deployment. Each release gate
+retains its criteria.
 
 The R01–R55 static repository mapping against `cd5190b` is complete and accepted.
 Its authoritative statuses, approved D1–D6 outcomes, implementation groups and separate
@@ -1018,23 +1018,24 @@ and publish the G14 FAQ. Previously issued entitlements keep their expiry.
 
 #### G13B — Customer Email Correction
 
-**Open. Required before public sales.** Provide a protected Admin operation to
-correct the email of a paid Sale after verifying purchase ownership. Record the
-change in the audit history, handle previously issued capability tokens safely,
-and use a separate controlled redelivery. The redelivery requires its own Resend
-idempotency key. Preserve the payment and order composition.
+**Implemented locally. Production validation is required before public sales.**
+Admin Sale Detail can correct the email for a paid, product-only Sale after the
+founder independently verifies payment ownership. The change is audited during
+download recovery. Consultation-only and mixed Sales use the
+[manual support procedure](operations.md#manual-consultation-support).
 
 #### G13C — Reissue Download Access
 
-**Open. Required before public sales.** After verifying that the order was paid
-and remains unrefunded, provide a protected Admin operation to reissue access to
-the exact purchased release for the approved standard of 24 hours from reissue.
-Invalidate the previous token, retain its download-attempt history, and record
-the reason. Use a separate controlled redelivery procedure and keep the global
-TTL independent of this operation.
+**Implemented locally. Production validation is required before public sales.**
+For the same eligible Sale, the operator can prepare a 24-hour reissue of the
+exact purchased release and separately send the recovery email through Resend.
+Use the [recovery runbook](operations.md#g13bg13c-purchase-access-recovery).
 
-The current `DownloadEntitlement` and purchase-email delivery lifecycle provide
-neither Admin operation.
+- [ ] Apply revision `4a2d8c71ef36` in the release environment.
+- [ ] Verify an audited correction and an unchanged-email reissue, immediate
+  old-token rejection, a fresh attempt allowance, and the exact release.
+- [ ] Verify the separate Resend send and original purchase-email retry
+  suppression. Verify the consultation-only and mixed Sale manual review path.
 
 #### G13D — Purchase Delivery Monitoring
 

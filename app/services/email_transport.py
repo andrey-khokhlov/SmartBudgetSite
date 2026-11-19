@@ -12,6 +12,7 @@ class TransactionalEmail:
     html_body: str
     idempotency_key: str
     purchase_email_delivery_id: int | None = None
+    purchase_access_recovery_id: int | None = None
 
 
 @dataclass(frozen=True)

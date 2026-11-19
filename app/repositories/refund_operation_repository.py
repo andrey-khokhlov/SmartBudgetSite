@@ -29,6 +29,7 @@ class RefundOperationRepository:
                     .joinedload(SaleItem.consultation_entitlement)
                     .joinedload(ConsultationEntitlement.cancellation),
                     selectinload(Sale.items).joinedload(SaleItem.service_addon),
+                    selectinload(Sale.items).joinedload(SaleItem.download_entitlement),
                     joinedload(Sale.refund_operation),
                     joinedload(Sale.purchase_email_delivery),
                 )
@@ -41,7 +42,10 @@ class RefundOperationRepository:
 
     def lock_sale(self, sale_id: int) -> Sale | None:
         return self.db.execute(
-            select(Sale).where(Sale.id == sale_id).with_for_update()
+            select(Sale)
+            .where(Sale.id == sale_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
         ).scalar_one_or_none()
 
     def lock_by_sale_id(self, sale_id: int) -> RefundOperation | None:

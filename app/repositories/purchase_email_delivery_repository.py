@@ -13,6 +13,7 @@ from app.models.purchase_email_delivery import (
 from app.models.resend_webhook_event import ResendWebhookEvent
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
+from app.repositories.purchase_access_recovery_repository import recovery_exists_for_sale
 from app.repositories.resend_webhook_repository import AWAITING_CONFIRMATION
 
 
@@ -70,7 +71,11 @@ def _recovery_candidates(cutoffs: RecoveryCutoffs):
     return (
         select(delivery.sale_id, expired.label("expired"))
         .join(Sale, Sale.id == delivery.sale_id)
-        .where(Sale.payment_status == PaymentStatus.PAID, eligible)
+        .where(
+            Sale.payment_status == PaymentStatus.PAID,
+            eligible,
+            ~recovery_exists_for_sale(Sale.id),
+        )
     )
 
 
@@ -123,6 +128,7 @@ def get_delivery_by_sale_id_for_update(
         select(PurchaseEmailDelivery)
         .where(PurchaseEmailDelivery.sale_id == sale_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     )
     return db.execute(stmt).scalar_one_or_none()
 

@@ -11,6 +11,7 @@ from app.models.purchase_email_delivery import (
     PurchaseEmailDeliveryStatus,
     PurchaseEmailFailureClassification,
 )
+from app.repositories.purchase_access_recovery_repository import recovery_exists_for_sale
 from app.repositories.purchase_email_delivery_repository import (
     RecoveryCutoffs,
     email_recovery_is_due,
@@ -60,6 +61,7 @@ class PurchaseEmailAttemptResult(StrEnum):
     DISABLED = "disabled"
     UNAVAILABLE = "unavailable"
     SKIPPED = "skipped"
+    SUPERSEDED = "superseded"
 
 
 def purchase_email_recovery_cutoffs(
@@ -120,6 +122,9 @@ def attempt_purchase_email_delivery(
     """Claim, commit, send, and persist one purchase-email attempt."""
 
     delivery = get_delivery_by_sale_id_for_update(db, sale_id=sale_id)
+    if db.scalar(recovery_exists_for_sale(sale_id).select()):
+        db.commit()
+        return PurchaseEmailAttemptResult.SUPERSEDED
     if delivery is None:
         db.rollback()
         if recovery_allow_sends is not None:
@@ -276,6 +281,9 @@ def authorize_reconciliation_resend(
         return PurchaseEmailAttemptResult.DISABLED
 
     delivery = get_delivery_by_sale_id_for_update(db, sale_id=sale_id)
+    if db.scalar(recovery_exists_for_sale(sale_id).select()):
+        db.commit()
+        return PurchaseEmailAttemptResult.SUPERSEDED
     if delivery is None:
         db.rollback()
         raise RuntimeError("Purchase email delivery record does not exist.")

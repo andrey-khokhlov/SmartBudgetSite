@@ -21,6 +21,9 @@ from app.models.consultation_entitlement import (
     ConsultationEntitlementStatus as ConsultationEntitlementStatus,
 )
 from app.models.product_release import ProductRelease as ProductRelease
+from app.models.purchase_access_recovery import (
+    PurchaseAccessRecovery as PurchaseAccessRecovery,
+)
 from app.models.purchase_delivery_incident import (
     PurchaseDeliveryIncident as PurchaseDeliveryIncident,
 )

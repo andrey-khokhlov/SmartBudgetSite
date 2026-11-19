@@ -20,7 +20,14 @@ class FakeResponse:
         return {"id": "resend-id-123"}
 
 
-def test_resend_uses_configured_sender_and_stable_idempotency_key(monkeypatch):
+@pytest.mark.parametrize(
+    ("tag", "key_prefix"),
+    [
+        ("purchase_email_delivery_id", "purchase-email"),
+        ("purchase_access_recovery_id", "purchase-access-recovery"),
+    ],
+)
+def test_resend_uses_configured_sender_and_stable_idempotency_key(monkeypatch, tag, key_prefix):
     captured = {}
     monkeypatch.setattr(settings, "RESEND_API_KEY", "private-api-key")
 
@@ -37,16 +44,16 @@ def test_resend_uses_configured_sender_and_stable_idempotency_key(monkeypatch):
             subject="Purchase",
             text_body="protected link",
             html_body="<p>protected link</p>",
-            idempotency_key="purchase-email/42",
-            purchase_email_delivery_id=42,
+            idempotency_key=f"{key_prefix}/42",
+            **{tag: 42},
         )
     )
 
     assert result.provider_message_id == "resend-id-123"
-    assert captured["headers"]["Idempotency-Key"] == "purchase-email/42"
+    assert captured["headers"]["Idempotency-Key"] == f"{key_prefix}/42"
     assert captured["json"]["from"] == "SmartBudget <support@example.test>"
     assert captured["json"]["tags"] == [
-        {"name": "purchase_email_delivery_id", "value": "42"}
+        {"name": tag, "value": "42"}
     ]
     assert captured["headers"]["Authorization"] == "Bearer private-api-key"
 

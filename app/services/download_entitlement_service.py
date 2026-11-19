@@ -105,6 +105,19 @@ def get_download_entitlement_by_support_reference(
     return DownloadEntitlementRepository(db).get_by_support_reference(support_reference)
 
 
+def reissue_download_entitlement(
+    db: Session, entitlement: DownloadEntitlement, *, now: datetime
+) -> None:
+    """Rotate a locked entitlement after the caller snapshots the previous grant."""
+    entitlement.download_token = _generate_unique_token(DownloadEntitlementRepository(db))
+    entitlement.status = DownloadEntitlementStatus.AVAILABLE
+    entitlement.expires_at = now + timedelta(hours=24)
+    entitlement.attempt_count = 0
+    entitlement.first_attempt_at = None
+    entitlement.last_attempt_at = None
+    entitlement.updated_at = now
+
+
 def get_download_support_reference_by_token(
     db: Session,
     download_token: str,
@@ -117,9 +130,13 @@ def get_download_support_reference_by_token(
 def get_valid_download_entitlement_by_token(
     db: Session,
     download_token: str,
+    *,
+    for_update: bool = False,
 ) -> DownloadEntitlement:
     """Resolve and validate a currently available download entitlement."""
-    entitlement = DownloadEntitlementRepository(db).get_by_token(download_token)
+    entitlement = DownloadEntitlementRepository(db).get_by_token(
+        download_token, for_update=for_update
+    )
 
     if entitlement is None:
         raise HTTPException(
@@ -127,6 +144,14 @@ def get_valid_download_entitlement_by_token(
             detail="Download link was not found.",
         )
 
+    validate_download_entitlement(entitlement, now=datetime.now(UTC))
+    return entitlement
+
+
+def validate_download_entitlement(
+    entitlement: DownloadEntitlement, *, now: datetime
+) -> None:
+    """Validate a loaded entitlement without issuing a URL or consuming an attempt."""
     owning_sale = (
         entitlement.sale_item.sale if entitlement.sale_item is not None else None
     )
@@ -160,7 +185,7 @@ def get_valid_download_entitlement_by_token(
             detail="Download link is no longer available.",
         )
 
-    if _ensure_utc_aware(entitlement.expires_at) <= datetime.now(UTC):
+    if _ensure_utc_aware(entitlement.expires_at) <= now:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Download link has expired.",
@@ -178,21 +203,22 @@ def get_valid_download_entitlement_by_token(
             detail="Download release was not found.",
         )
 
-    return entitlement
-
-
 def record_download_attempt(
     db: Session,
     download_token: str,
 ) -> DownloadEntitlement:
     """Validate and record one signed-URL issuance attempt without committing."""
-    entitlement = get_valid_download_entitlement_by_token(db, download_token)
+    entitlement = get_valid_download_entitlement_by_token(
+        db, download_token, for_update=True
+    )
     now = datetime.now(UTC)
 
     entitlement.attempt_count += 1
 
     if entitlement.first_attempt_at is None:
         entitlement.first_attempt_at = now
+    else:
+        entitlement.first_attempt_at = _ensure_utc_aware(entitlement.first_attempt_at)
 
     entitlement.last_attempt_at = now
     entitlement.updated_at = now

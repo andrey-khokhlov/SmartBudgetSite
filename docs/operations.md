@@ -779,6 +779,60 @@ when recovering from an application deployment failure. Downgrade blocks
 removal of assigned purchase references. Recovery code must still generate
 references for new Sales because the column has no database default.
 
+## G13B/G13C purchase access recovery
+
+Apply Alembic revision `4a2d8c71ef36` before starting the updated web and
+purchase-email workers. The revision refuses downgrade when recovery history
+exists. Keep that history with the order data. If application rollback is
+required after a recovery, disable purchase-email delivery in both environments
+before running code that predates the recovery send guard.
+
+On Admin Sale Detail, use the following procedure for a paid product-only Sale
+with one product item and no refund operation:
+
+1. Verify the original payment and the claimant's ownership independently
+   using trusted payment-provider evidence. Match the provider payment ID
+   and order details to the Sale. Treat the purchase reference and email as
+   lookup details. Use the verification method and a short operational reason
+   in Admin. Omit card details, identity documents, and capability links.
+2. Use **Prepare recovery** with the corrected email if needed. This replaces
+   the app download token, sets a fresh 24-hour window for the purchased
+   release and saves the previous attempt summary. An original email still
+   in `sending` must settle or reach reconciliation before preparation.
+3. Check the recovery recipient and use **Send recovery email**. This uses
+   the existing Resend settings and `PURCHASE_EMAIL_DELIVERY_ENABLED`.
+   `accepted` records Resend acceptance. Check provider delivery separately.
+   An ambiguous send can be retried only for the same recovery, within its
+   safety window and while the grant is usable. A stalled send claim can be
+   retried after its two-minute lease when those checks pass.
+4. For `reconciliation_required`, inspect Resend using the available message
+   ID, recovery correlation tag, recipient and attempt time. Record verified
+   evidence in the support case and escalate unresolved cases. The workflow
+   blocks replacement recovery while a send remains unresolved. G13D can
+   still show incidents for the original delivery. Check the recovery status
+   on Sale Detail and use the recovery-specific Resend evidence.
+
+In production, verify the migration, both preparation paths, exact release
+and attempt audit, old-token rejection, and separate Resend delivery and
+original-retry suppression. Track evidence in the
+[release checklist](release_readiness.md#g13c--reissue-download-access).
+
+### Manual consultation support
+
+For consultation-only or mixed Sales, independently verify the original payment
+using provider evidence. Inspect the entitlement in `/admin/consultations`
+and check the Calendly Share, any provisioning or revocation in progress, and the
+actual booking or invitee state in Calendly. An existing booking capability or
+Share keeps its own lifecycle when a customer reports an email correction.
+Describe the actual access status to the customer.
+
+Resolve the case individually through supported Admin and Calendly operations.
+Use the [consultation cancellation procedure](#consultation-cancellation-in-admin-sale-detail)
+when a cancellation or refund is appropriate. Escalate unresolved access,
+Share, booking, or refund issues for operator review. Keep database changes
+within supported operations and record only the needed provider reference and
+outcome in the support case.
+
 ## Manual Lava.top checkout smoke test
 
 The Lava.top checkout smoke command is a deliberate live-provider operation.

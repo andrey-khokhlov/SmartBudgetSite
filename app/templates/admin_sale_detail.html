@@ -50,6 +50,76 @@
         {% endfor %}
     </ul>
 
+    <section aria-labelledby="purchase-access-recovery-heading">
+        <h2 id="purchase-access-recovery-heading">Purchase access recovery</h2>
+        {% if recovery_result %}
+            <p class="admin-operation-result">Recovery result: {{ recovery_result.replace("_", " ") }}</p>
+        {% endif %}
+        {% if recovery %}
+            <dl>
+                <dt>Recovery</dt><dd>#{{ recovery.id }}</dd>
+                <dt>Verified at (UTC)</dt><dd>{{ recovery.verified_at }}</dd>
+                <dt>Verification method</dt><dd>{{ recovery_verification_methods[recovery.verification_method] }}</dd>
+                <dt>Reason</dt><dd>{{ recovery.reason }}</dd>
+                {% if recovery.previous_email %}
+                    <dt>Previous email</dt><dd>{{ recovery.previous_email }}</dd>
+                {% endif %}
+                <dt>Recovery recipient</dt><dd>{{ recovery.recipient }}</dd>
+                <dt>Previous download attempts</dt><dd>{{ recovery.previous_attempt_count }}</dd>
+                <dt>Email status</dt><dd>{{ recovery.delivery_status.replace("_", " ") }}</dd>
+                <dt>Email attempts</dt><dd>{{ recovery.attempt_count }}</dd>
+                {% if recovery.provider_message_id %}
+                    <dt>Resend message ID</dt><dd>{{ recovery.provider_message_id }}</dd>
+                    <dt>Provider accepted at (UTC)</dt><dd>{{ recovery.accepted_at }}</dd>
+                {% endif %}
+                {% if recovery.last_error %}
+                    <dt>Last outcome</dt><dd>{{ recovery.last_error.replace("_", " ") }}</dd>
+                {% endif %}
+            </dl>
+        {% endif %}
+        {% if recovery_ineligible %}
+            <p>{{ recovery_ineligible }}</p>
+        {% elif not recovery_csrf_token %}
+            <p>Recovery controls require a configured secret key.</p>
+        {% else %}
+            {% if recovery_prepare_blocked %}
+                <p>{{ recovery_prepare_blocked }}</p>
+            {% else %}
+                <form method="post" action="/admin/sales/{{ sale.id }}/purchase-access/prepare" class="refund-confirmation-form">
+                    <input type="hidden" name="csrf_id" value="{{ recovery_csrf_id }}">
+                    <input type="hidden" name="csrf_token" value="{{ recovery_csrf_token }}">
+                    <input type="hidden" name="expected_recovery_id" value="{{ recovery.id if recovery else 0 }}">
+                    <label for="recovery-method">Verification method</label>
+                    <select id="recovery-method" name="verification_method" required>
+                        {% for value, label in recovery_verification_methods.items() %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <label>
+                        <input type="checkbox" name="verification" value="{{ recovery_verification_confirmation }}" required>
+                        I independently verified purchase ownership using payment-provider evidence.
+                    </label>
+                    <label for="recovery-reason">Reason</label>
+                    <textarea id="recovery-reason" name="reason" maxlength="{{ recovery_reason_max_length }}"
+                              aria-describedby="recovery-reason-help" required></textarea>
+                    <p id="recovery-reason-help">Enter a short operational reason. Omit card details, identity documents, and access links.</p>
+                    <label for="recovery-email">Corrected purchase email (optional)</label>
+                    <input id="recovery-email" type="email" name="corrected_email" maxlength="200">
+                    <button type="submit" class="btn-primary">Prepare recovery</button>
+                </form>
+            {% endif %}
+            {% if recovery and recovery.delivery_status not in ("accepted", "reconciliation_required") %}
+                <form method="post" action="/admin/sales/{{ sale.id }}/purchase-access/send" class="refund-confirmation-form">
+                    <input type="hidden" name="csrf_id" value="{{ recovery_csrf_id }}">
+                    <input type="hidden" name="csrf_token" value="{{ recovery_csrf_token }}">
+                    <input type="hidden" name="recovery_id" value="{{ recovery.id }}">
+                    <input type="hidden" name="expected_attempt_count" value="{{ recovery.attempt_count }}">
+                    <button type="submit" class="btn-primary">Send recovery email</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </section>
+
     {% if refund_window %}
         <section aria-labelledby="voluntary-refund-window">
             <h2 id="voluntary-refund-window">Voluntary SmartBudget refund window</h2>
