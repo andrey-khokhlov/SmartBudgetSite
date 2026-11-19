@@ -53,6 +53,7 @@ class RefundOperationRepository:
             select(RefundOperation)
             .where(RefundOperation.sale_id == sale_id)
             .with_for_update()
+            .execution_options(populate_existing=True)
         ).scalar_one_or_none()
 
     def lock_download_entitlements(self, sale_id: int) -> list[DownloadEntitlement]:

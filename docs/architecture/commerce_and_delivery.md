@@ -1009,10 +1009,8 @@ bookings.
 
 ## Refund architecture
 
-The current full-Sale refund workflow is administrative. The approved D4
-target separates customer request submission from operator-controlled money
-movement. The rules below describe the existing workflow until the bounded
-refund implementation is completed.
+The full-Sale refund workflow is administrative. The approved D4 rules
+separate customer request submission from operator-controlled money movement.
 
 ### Current full-Sale workflow rules
 
@@ -1021,21 +1019,22 @@ refund implementation is completed.
 - The implemented workflow supports full-Sale refunds only. The approved
   consultation-only partial refund for a bundle requires separate implementation.
 - SmartBudgetSite must preserve the originating payment provider and provider
-  payment identity for every historical Sale. Refund execution must route through
-  that originating provider so a future Stripe migration does not break refunds
-  for historical Lava.top Sales.
+  payment identity for every historical Sale. The normal path uses that
+  provider, including for historical Lava.top Sales after a future provider
+  migration.
 - SmartBudgetSite must not change `Sale.payment_status` to `refunded` merely
   because an administrator requested a refund.
-- `Sale.payment_status = refunded` is allowed only after the founder has
-  completed the exact full refund manually in the originating provider and
-  explicitly confirms in SmartBudgetSite that the provider evidence was
-  verified. This operator confirmation does not claim bank or card settlement.
+- `Sale.payment_status = refunded` requires founder verification that the
+  exact full refund was executed through the originating provider or an
+  approved alternative transfer when the provider cannot process it.
+  Bank or card settlement requires separate evidence.
 - `reconciliation_required` is reserved for real internal/provider uncertainty,
   not ordinary operator cancellation or validation failure. Manual database
   edits are not a supported recovery mechanism.
 - Starting and confirming a refund must be idempotent. Repeated administrative
-  actions must not create a second refund operation or repeat entitlement
-  mutation.
+  actions leave one operation and one entitlement reconciliation. Repeating
+  the same confirmation method returns the existing result. A different
+  method is rejected once confirmed.
 - `Sale`, `SaleItem`, payment identity, refund-operation history, and entitlement
   history must never be deleted as part of refund processing.
 
@@ -1076,16 +1075,27 @@ After verifying the full amount and provider-side evidence, the founder must
 explicitly acknowledge `I verified the full refund in Lava.top.` before internal
 confirmation can reconcile the Sale and entitlements.
 
+When the original provider cannot process the required full refund, the
+founder can execute a customer-agreed alternative transfer externally and
+select **Confirm alternative refund** on the same pending Sale operation.
+Confirmation requires four attestations covering customer agreement,
+verified execution of the full transfer, evidence retained outside
+SmartBudgetSite, and no refund executed through the original provider.
+The application accepts only these attestations and any applicable
+consultation exception, with transfer details and evidence kept externally.
+Sale Detail protects refund start and both confirmation actions with
+Sale-bound CSRF tokens.
+
 For a Sale that includes a consultation, the founder must first resolve
 Calendly disposition. An unused Share requires verified revocation if a Share
 exists or may have been provisioned. An existing meeting requires verified
 cancellation or a verified elapsed meeting with no outstanding successor.
 The confirmation path rechecks verified meetings through Calendly before the
 locked Sale update. If verification is unavailable and a refund must proceed,
-an explicit acknowledgement and nonempty founder reason are recorded with the
-exceptional confirmation timestamp. The exception still requires founder
-verification of the manual Lava.top refund. Product-only Sale behavior is
-unchanged. Historical bundles use the same full-Sale workflow.
+an explicit acknowledgement and a founder reason are recorded with the
+exceptional confirmation timestamp. The alternative action uses a structured
+consultation reason. Both paths still require verification of the full refund.
+Historical bundles use the same full-Sale workflow.
 
 The administrative surface must distinguish at least:
 
@@ -1174,6 +1184,12 @@ reconciliation timestamps plus optional provider refund identity, provider
 status, and observation time for future integrations. Optional provider metadata
 never drives `Sale.payment_status` directly.
 
+Confirmation records `original_provider` or `alternative_transfer` in
+`RefundOperation.confirmation_method`. Pending operations and historical
+confirmed operations without a recorded method keep `NULL`. Replaying the
+original action on a legacy confirmed operation returns its existing outcome
+and preserves `NULL`. The alternative action rejects a legacy confirmation.
+
 Creation requires a paid Sale, non-empty provider and external payment identity,
 and no existing operation. The workflow accepts no operator-entered amount, so
 partial and item-level refunds cannot enter it. Confirmation owns one database
@@ -1215,10 +1231,12 @@ Preserve the single-payment bundle implementation and historical transaction
 composition under the [first-release amendment](#first-release-sales-model-amendment).
 The Lava.top limit of one refund
 action per transaction constrains execution. It does not limit customer rights.
-If a later required refund cannot go through the original provider path, an
-alternative method may be used only with the customer's explicit agreement
-and appropriate evidence. Preserve original purchase, payment and entitlement
-history, including evidence of any consultation already delivered.
+If a required full refund cannot go through the original provider path, an
+alternative method requires the customer's explicit agreement and external
+evidence of execution. Where provider evidence shows a refund already exists,
+review the case through the operator reconciliation procedure. Preserve
+original purchase, payment and entitlement history, including evidence of
+any consultation already delivered.
 
 R53 requires a bilingual `/refund-request` form for SmartBudget and standalone
 consultation purchases. Identify the purchase, persist the explicit request

@@ -4,23 +4,47 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.orm.attributes import set_committed_value
 
+from app.core.config import settings
 from app.models.enums import PaymentStatus, SaleItemType
 from app.models.product import Product
-from app.models.refund_operation import RefundOperation
+from app.models.refund_operation import RefundConfirmationMethod, RefundOperation
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.service_addon import ServiceAddon
+from app.services.refund_service import start_full_refund
 from app.web import routes
 
 
-def add_paid_sale(db_session) -> Sale:
+ORIGINAL_ACK = {"acknowledgement": "verified_full_refund_in_lava_top"}
+ALTERNATIVE_ACKS = {
+    "customer_agreed": "yes",
+    "transfer_verified": "yes",
+    "evidence_retained": "yes",
+    "original_refund_not_executed": "yes",
+}
+START_ACK = {"confirmation": "start_full_refund"}
+
+
+@pytest.fixture(autouse=True)
+def refund_csrf_secret(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", "test-refund-operation-csrf")
+
+
+def refund_csrf(page):
+    return {
+        "csrf_id": page.context["refund_csrf_id"],
+        "csrf_token": page.context["refund_csrf_token"],
+    }
+
+
+def add_paid_sale(db_session, *, invoice="admin-refund-invoice") -> Sale:
     sale = Sale(
         customer_email="admin-refund@example.com",
         amount=Decimal("50.00"),
         currency="RUB",
         payment_provider="lava_top",
         payment_status=PaymentStatus.PAID,
-        external_payment_id="admin-refund-invoice",
+        external_payment_id=invoice,
     )
     db_session.add(sale)
     db_session.commit()
@@ -151,7 +175,14 @@ def test_admin_refund_workflow_requires_authentication(client, db_session):
     assert (
         client.post(
             f"/admin/sales/{sale.id}/refund/confirm",
-            data={"acknowledgement": "verified_full_refund_in_lava_top"},
+            data=ORIGINAL_ACK,
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            f"/admin/sales/{sale.id}/refund/confirm-alternative",
+            data=ALTERNATIVE_ACKS,
         ).status_code
         == 403
     )
@@ -159,11 +190,12 @@ def test_admin_refund_workflow_requires_authentication(client, db_session):
 
 def test_admin_requires_explicit_confirmation_for_both_actions(auth_client, db_session):
     sale = add_paid_sale(db_session)
+    csrf = refund_csrf(auth_client.get(f"/admin/sales/{sale.id}"))
 
-    missing_start = auth_client.post(f"/admin/sales/{sale.id}/refund/start")
+    missing_start = auth_client.post(f"/admin/sales/{sale.id}/refund/start", data=csrf)
     wrong_start = auth_client.post(
         f"/admin/sales/{sale.id}/refund/start",
-        data={"confirmation": "yes"},
+        data=csrf | {"confirmation": "yes"},
     )
 
     assert missing_start.status_code == 422
@@ -172,13 +204,15 @@ def test_admin_requires_explicit_confirmation_for_both_actions(auth_client, db_s
 
     started = auth_client.post(
         f"/admin/sales/{sale.id}/refund/start",
-        data={"confirmation": "start_full_refund"},
+        data=csrf | START_ACK,
         follow_redirects=False,
     )
-    missing_confirm = auth_client.post(f"/admin/sales/{sale.id}/refund/confirm")
+    missing_confirm = auth_client.post(
+        f"/admin/sales/{sale.id}/refund/confirm", data=csrf
+    )
     wrong_confirm = auth_client.post(
         f"/admin/sales/{sale.id}/refund/confirm",
-        data={"acknowledgement": "sent"},
+        data=csrf | {"acknowledgement": "sent"},
     )
 
     assert started.status_code == 303
@@ -215,7 +249,7 @@ def test_admin_full_refund_flow_is_visible_and_confirmed(
     assert db_session.query(RefundOperation).count() == 0
     started = auth_client.post(
         f"/admin/sales/{sale.id}/refund/start",
-        data={"confirmation": "start_full_refund"},
+        data=refund_csrf(detail) | START_ACK,
         follow_redirects=False,
     )
     operation = db_session.query(RefundOperation).one()
@@ -225,7 +259,7 @@ def test_admin_full_refund_flow_is_visible_and_confirmed(
     assert (operation.id, operation.status, operation.updated_at) == before_detail
     confirmed = auth_client.post(
         f"/admin/sales/{sale.id}/refund/confirm",
-        data={"acknowledgement": "verified_full_refund_in_lava_top"},
+        data=refund_csrf(pending_detail) | ORIGINAL_ACK,
         follow_redirects=False,
     )
 
@@ -252,3 +286,108 @@ def test_admin_full_refund_flow_is_visible_and_confirmed(
     assert confirmed.status_code == 303
     db_session.expire_all()
     assert db_session.get(Sale, sale.id).payment_status == PaymentStatus.REFUNDED
+    assert operation.confirmation_method == RefundConfirmationMethod.ORIGINAL_PROVIDER
+
+
+@pytest.mark.parametrize(
+    ("action", "acknowledgements"),
+    [
+        ("start", START_ACK),
+        ("confirm", ORIGINAL_ACK),
+        ("confirm-alternative", ALTERNATIVE_ACKS),
+    ],
+)
+def test_admin_refund_csrf_is_bound_to_sale_before_mutation(
+    auth_client, db_session, action, acknowledgements
+):
+    sale_id = add_paid_sale(db_session).id
+    other_id = add_paid_sale(db_session, invoice="other-csrf-sale").id
+    db_session.rollback()
+    if action != "start":
+        start_full_refund(db_session, sale_id=sale_id)
+    path = f"/admin/sales/{sale_id}/refund/{action}"
+    csrf = refund_csrf(auth_client.get(f"/admin/sales/{sale_id}"))
+    other = auth_client.get(f"/admin/sales/{other_id}")
+    foreign_csrf = refund_csrf(other)
+    foreign_cookie = f"refund_operation_csrf_{foreign_csrf['csrf_id']}"
+    auth_client.cookies.set(
+        foreign_cookie,
+        other.cookies[foreign_cookie],
+        path=f"/admin/sales/{sale_id}/refund",
+    )
+    for form in ({}, csrf | {"csrf_token": "0" * 64}, foreign_csrf):
+        assert auth_client.post(path, data=acknowledgements | form).status_code == 403
+
+    operation = (
+        db_session.query(RefundOperation).filter_by(sale_id=sale_id).one_or_none()
+    )
+    if action == "start":
+        assert operation is None
+    else:
+        assert operation.status == "pending" and operation.confirmation_method is None
+    assert db_session.get(Sale, sale_id).payment_status == PaymentStatus.PAID
+
+
+@pytest.mark.parametrize("missing", ALTERNATIVE_ACKS)
+def test_alternative_confirmation_requires_every_acknowledgement(
+    auth_client, db_session, missing
+):
+    sale_id = add_paid_sale(db_session).id
+    db_session.rollback()
+    start_full_refund(db_session, sale_id=sale_id)
+    csrf = refund_csrf(auth_client.get(f"/admin/sales/{sale_id}"))
+    incomplete = {
+        name: value for name, value in ALTERNATIVE_ACKS.items() if name != missing
+    }
+    response = auth_client.post(
+        f"/admin/sales/{sale_id}/refund/confirm-alternative", data=csrf | incomplete
+    )
+    assert response.status_code == 400
+    assert db_session.get(Sale, sale_id).payment_status == PaymentStatus.PAID
+    operation = db_session.query(RefundOperation).one()
+    assert operation.status == "pending" and operation.confirmation_method is None
+
+
+def test_admin_confirmation_records_alternative_method_and_rejects_switch(
+    auth_client, db_session
+):
+    sale_id = add_paid_sale(db_session).id
+    db_session.rollback()
+    start_full_refund(db_session, sale_id=sale_id)
+    path = f"/admin/sales/{sale_id}"
+    page = auth_client.get(path)
+    assert "Confirm alternative refund" in page.text
+    assert "I verified the full refund in Lava.top." in page.text
+    assert "Bank or card settlement requires separate evidence." in page.text
+    csrf = refund_csrf(page)
+
+    def post(action, data):
+        return auth_client.post(
+            f"{path}/refund/{action}", data=csrf | data, follow_redirects=False
+        )
+
+    invalid = post(
+        "confirm-alternative",
+        ALTERNATIVE_ACKS
+        | {"disposition_exception_reason": "unexpected transfer details"},
+    )
+    assert (
+        invalid.status_code == 400 and "unexpected transfer details" not in invalid.text
+    )
+    assert (
+        post("confirm-alternative", ALTERNATIVE_ACKS)
+        .headers["location"]
+        .endswith("=applied")
+    )
+    assert (
+        post("confirm-alternative", ALTERNATIVE_ACKS)
+        .headers["location"]
+        .endswith("=idempotent")
+    )
+    assert post("confirm", ORIGINAL_ACK).headers["location"].endswith("=conflict")
+    assert "Alternative transfer</dd>" in auth_client.get(path).text
+    operation = db_session.query(RefundOperation).one()
+    assert (
+        operation.confirmation_method == RefundConfirmationMethod.ALTERNATIVE_TRANSFER
+    )
+    assert operation.exceptional_confirmation_reason is None

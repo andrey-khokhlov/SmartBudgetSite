@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 from app.models.consultation_entitlement import ConsultationEntitlementStatus
 from app.models.download_entitlement import DownloadEntitlementStatus
 from app.models.enums import PaymentStatus, SaleItemType
-from app.models.refund_operation import RefundOperation, RefundOperationStatus
+from app.models.refund_operation import (
+    RefundConfirmationMethod,
+    RefundOperation,
+    RefundOperationStatus,
+)
 from app.models.sale import Sale
 from app.repositories.refund_operation_repository import RefundOperationRepository
 from app.services.consultation_cancellation_service import (
@@ -44,6 +48,21 @@ class RefundPersistenceError(Exception):
 class RefundActionResult(StrEnum):
     APPLIED = "applied"
     IDEMPOTENT = "idempotent"
+
+
+@dataclass(frozen=True, kw_only=True)
+class AlternativeRefundVerification:
+    customer_agreed: bool
+    transfer_verified: bool
+    evidence_retained: bool
+    original_refund_not_executed: bool
+
+
+# The alternative form records consultation facts without accepting transfer details.
+ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS = {
+    "verification_unavailable": "Consultation disposition verification is unavailable and the refund cannot wait.",
+    "evidence_incomplete": "Consultation disposition evidence is incomplete or conflicting and the refund cannot wait.",
+}
 
 
 @dataclass(frozen=True)
@@ -120,11 +139,33 @@ def confirm_full_refund(
     *,
     sale_id: int,
     provider_refund_verified: bool = False,
+    alternative_verification: AlternativeRefundVerification | None = None,
     disposition_exception_acknowledged: bool = False,
     disposition_exception_reason: str = "",
 ) -> RefundConfirmationResult:
-    """Confirm a founder-verified provider refund and reconcile access atomically."""
-    if not provider_refund_verified:
+    """Record verified completion of a full refund and reconcile access atomically."""
+    method = RefundConfirmationMethod.ORIGINAL_PROVIDER
+    reason = disposition_exception_reason.strip()
+    if alternative_verification is not None:
+        if provider_refund_verified or not all(
+            (
+                alternative_verification.customer_agreed,
+                alternative_verification.transfer_verified,
+                alternative_verification.evidence_retained,
+                alternative_verification.original_refund_not_executed,
+            )
+        ):
+            raise RefundVerificationRequiredError(
+                "Explicit alternative refund verification is required."
+            )
+        if reason:
+            if reason not in ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS:
+                raise RefundVerificationRequiredError(
+                    "Select a consultation disposition exception reason."
+                )
+            reason = ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS[reason]
+        method = RefundConfirmationMethod.ALTERNATIVE_TRANSFER
+    elif not provider_refund_verified:
         raise RefundVerificationRequiredError(
             "Explicit provider refund verification is required."
         )
@@ -147,6 +188,15 @@ def confirm_full_refund(
                 operation.status == RefundOperationStatus.CONFIRMED.value
                 and sale.payment_status == PaymentStatus.REFUNDED
             ):
+                # Legacy confirmations can replay the original action without backfill.
+                legacy_replay = (
+                    operation.confirmation_method is None
+                    and method == RefundConfirmationMethod.ORIGINAL_PROVIDER
+                )
+                if operation.confirmation_method != method and not legacy_replay:
+                    raise RefundConflictError(
+                        "A confirmed refund cannot change its confirmation method."
+                    )
                 return RefundConfirmationResult(
                     operation, RefundActionResult.IDEMPOTENT
                 )
@@ -158,7 +208,6 @@ def confirm_full_refund(
             downloads = repository.lock_download_entitlements(sale_id)
             consultations = repository.lock_consultation_entitlements(sale_id)
             unresolved = unresolved_consultation_dispositions(sale, consultations)
-            reason = disposition_exception_reason.strip()
             if unresolved:
                 if (
                     not disposition_exception_acknowledged or not reason
@@ -170,15 +219,16 @@ def confirm_full_refund(
                 operation.exceptional_confirmation_reason = reason
             elif disposition_exception_acknowledged or reason:
                 raise RefundConflictError("Consultation disposition exception is unavailable.")
-            for entitlement in downloads:
-                if entitlement.status == DownloadEntitlementStatus.AVAILABLE.value:
-                    entitlement.status = DownloadEntitlementStatus.CANCELLED.value
-            for entitlement in consultations:
-                if entitlement.status == ConsultationEntitlementStatus.AVAILABLE.value:
-                    entitlement.status = ConsultationEntitlementStatus.CANCELLED.value
+            for download in downloads:
+                if download.status == DownloadEntitlementStatus.AVAILABLE.value:
+                    download.status = DownloadEntitlementStatus.CANCELLED.value
+            for consultation in consultations:
+                if consultation.status == ConsultationEntitlementStatus.AVAILABLE.value:
+                    consultation.status = ConsultationEntitlementStatus.CANCELLED.value
 
             now = datetime.now(UTC)
             operation.status = RefundOperationStatus.CONFIRMED.value
+            operation.confirmation_method = method.value
             operation.confirmed_at = now
             sale.payment_status = PaymentStatus.REFUNDED
             db.flush()

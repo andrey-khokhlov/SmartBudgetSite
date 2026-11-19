@@ -141,17 +141,26 @@
         </section>
     {% endif %}
 
+    {% macro refund_csrf_fields() %}
+        <input type="hidden" name="csrf_id" value="{{ refund_csrf_id }}">
+        <input type="hidden" name="csrf_token" value="{{ refund_csrf_token }}">
+    {% endmacro %}
     <h2>Full refund</h2>
     {% if not sale.refund_operation %}
         {% if sale.payment_status == 'paid' and sale.payment_provider and sale.external_payment_id %}
             <p>This creates a pending internal full-refund operation for the exact Sale total. It does not issue a provider refund.</p>
+            {% if refund_csrf_token %}
             <form method="post" action="/admin/sales/{{ sale.id }}/refund/start" class="refund-confirmation-form">
+                {{ refund_csrf_fields() }}
                 <label>
                     <input type="checkbox" name="confirmation" value="start_full_refund" class="refund-confirmation-checkbox" required>
-                    I understand that I must issue the exact full refund manually in Lava.top.
+                    I understand that I must execute and verify the exact full refund outside SmartBudgetSite.
                 </label>
                 <button type="submit" class="btn-primary refund-confirmation-button">Start refund</button>
             </form>
+            {% else %}
+                <p>Refund controls require a configured secret key.</p>
+            {% endif %}
         {% else %}
             <p>This Sale is not eligible to start a refund.</p>
         {% endif %}
@@ -165,6 +174,10 @@
             {% if sale.refund_operation.confirmed_at %}
                 <dt>Confirmed at</dt><dd>{{ sale.refund_operation.confirmed_at }}</dd>
             {% endif %}
+            {% if sale.refund_operation.status == 'confirmed' %}
+                <dt>Confirmation method</dt>
+                <dd>{% if sale.refund_operation.confirmation_method == 'original_provider' %}Original provider{% elif sale.refund_operation.confirmation_method == 'alternative_transfer' %}Alternative transfer{% else %}Historical method unavailable{% endif %}</dd>
+            {% endif %}
             {% if sale.refund_operation.exceptional_confirmed_at %}
                 <dt>Calendly verification exception</dt>
                 <dd>{{ sale.refund_operation.exceptional_confirmed_at }} UTC · {{ sale.refund_operation.exceptional_confirmation_reason }}</dd>
@@ -174,20 +187,24 @@
         {% if sale.refund_operation.status == 'pending' %}
             {% if unresolved %}
                 <p>Consultation disposition requires review: {{ unresolved | join(", ") | replace("_", " ") }}.</p>
-                {% if "coordination_required" in unresolved %}
+                {% if "coordination_required" in unresolved and refund_csrf_token %}
                     <form method="post" action="/admin/sales/{{ sale.id }}/refund/start">
+                        {{ refund_csrf_fields() }}
                         <button type="submit" name="confirmation" value="start_full_refund" class="btn-primary">Start consultation coordination</button>
                     </form>
                 {% endif %}
             {% endif %}
-            {% if not unresolved %}
+            {% if not refund_csrf_token %}
+            <p>Refund controls require a configured secret key.</p>
+            {% elif not unresolved %}
             <p>Complete the exact full refund manually in Lava.top Sales. Verify the amount and provider refund evidence there before confirming below.</p>
             {% elif allow_disposition_exception %}
-            <p>Use the exception when Calendly disposition cannot be verified and the refund must proceed. Complete and verify the exact full refund manually in Lava.top Sales.</p>
+            <p>Use the exception when Calendly disposition cannot be verified and the refund must proceed. Verify execution of the exact full refund before confirming.</p>
             {% endif %}
-            {% if not unresolved or allow_disposition_exception %}
-            <p>Internal confirmation records founder verification; it does not claim bank or card settlement.</p>
+            {% if refund_csrf_token and (not unresolved or allow_disposition_exception) %}
+            <p>Internal confirmation records verified execution. Bank or card settlement requires separate evidence.</p>
             <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm" class="refund-confirmation-form">
+                {{ refund_csrf_fields() }}
                 <label>
                     <input type="checkbox" name="acknowledgement" value="verified_full_refund_in_lava_top" class="refund-confirmation-checkbox" required>
                     I verified the full refund in Lava.top.
@@ -195,9 +212,34 @@
                 {% if allow_disposition_exception %}
                     <label><input type="checkbox" name="disposition_exception" value="verify_unavailable" required>
                     I acknowledge that Calendly disposition could not be verified.</label>
-                    <label>Reason for proceeding <textarea name="disposition_exception_reason" maxlength="2000" required></textarea></label>
+                    <label>Consultation reason for proceeding <textarea name="disposition_exception_reason" maxlength="2000" required></textarea></label>
                 {% endif %}
                 <button type="submit" class="btn-primary refund-confirmation-button">Confirm verified full refund</button>
+            </form>
+            <h3>Alternative refund</h3>
+            <p>Use this option when the original provider cannot process the required full refund. Keep transfer evidence and payment details outside SmartBudgetSite.</p>
+            <form method="post" action="/admin/sales/{{ sale.id }}/refund/confirm-alternative" class="refund-confirmation-form">
+                {{ refund_csrf_fields() }}
+                <label><input type="checkbox" name="customer_agreed" value="yes" required>
+                    The customer agreed to the alternative method.</label>
+                <label><input type="checkbox" name="transfer_verified" value="yes" required>
+                    I executed and verified the exact full refund.</label>
+                <label><input type="checkbox" name="evidence_retained" value="yes" required>
+                    I retained supporting evidence outside SmartBudgetSite.</label>
+                <label><input type="checkbox" name="original_refund_not_executed" value="yes" required>
+                    The original provider could not process the required refund and has not executed it.</label>
+                {% if allow_disposition_exception %}
+                    <label><input type="checkbox" name="disposition_exception" value="verify_unavailable" required>
+                        I acknowledge that Calendly disposition could not be verified.</label>
+                    <label for="alternative-disposition-reason">Consultation reason for proceeding</label>
+                    <select id="alternative-disposition-reason" name="disposition_exception_reason" required>
+                        <option value="">Select a reason</option>
+                        {% for value, label in alternative_exception_reasons.items() %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                <button type="submit" class="btn-primary">Confirm alternative refund</button>
             </form>
             {% endif %}
         {% elif sale.refund_operation.status == 'confirmed' %}

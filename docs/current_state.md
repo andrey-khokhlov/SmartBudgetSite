@@ -756,7 +756,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R39 | Requires validation | R39-A implements Share provisioning and booking reconciliation. R39-B implements expiry revocation. R39-C coordinates access closure, early revocation and meeting disposition. | Validate live webhook delivery, booking, rescheduling, revocation and cancellation coordination |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. All six variants include the permanent Sale-level PAY reference. | Real purchase email and Calendly confirmation validation remain open |
 | R41 | Required | The November 14 publication candidate is owner-approved. Public policy and pre-payment links are pending. | G15 synchronize and publish after validation |
-| R42 | Partial | Founder full-Sale refunds exist. R42a persists authoritative `Sale.paid_at`. R42b implements the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock). R42c displays it for paid Sales with a product item on the protected Admin Sale Detail page and is locally validated. | Validate separate-purchase refunds and exceptional or historical handling. Bundle item accounting is deferred under the first-release amendment |
+| R42 | Partial | Founder full-Sale refund confirmation supports Lava.top and verified alternative transfers locally. Both paths use Sale-bound CSRF and preserve the same Sale and entitlement reconciliation. R42a–c implement authoritative `Sale.paid_at` and the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock) on Admin Sale Detail. | Validate separate-purchase refunds and the alternative procedure in the release environment. Bundle item accounting is deferred under the first-release amendment |
 | R43 | Required | The bilingual seller page and policy, footer and Checkout links are pending. | Obtain actual address and mobile telephone securely before G15 publication |
 | R44 | Partial | Support and founder refund operations exist. Public 2/5/10-business-day response, review and bank-settlement distinctions are incomplete. | G15 synchronized publication and separate support-capacity validation |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
@@ -1081,7 +1081,8 @@ surface-specific slices, not duplicate requirements.
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery, interrupted and repeat download, and Gate 3 repeat review remain open. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | Publish the approved November 14 policy and linked bilingual seller page after factual disclosure and validation. Synchronize Checkout, FAQ, email and refund operations. |
 
-R42 remains a separate refund capability and operational implementation topic.
+R42 original-provider and alternative full-Sale confirmations are implemented
+locally. Release-environment validation remains open.
 R50 applicable consent and the outstanding R53 operational requirements need
 their own bounded scopes. G15 owns synchronized publication. R39 and R45 remain validation
 work. R46 is complete, R48 is validated, and R55 remains deferred.

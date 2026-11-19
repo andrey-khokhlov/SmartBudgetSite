@@ -853,15 +853,20 @@ Before paid public sales:
   Validate operational use of the
   [voluntary refund clock](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock),
   including idempotent confirmation and manual review of legacy paid Sales
-  without a timestamp. Preserve customer rights and the current full-Sale
-  workflow. R42 remains open.
-- Before launch, document and review the operator procedure for a later
-  required refund when the original provider path cannot process it. Require
-  explicit customer agreement to the alternative method and preserve
-  appropriate evidence. On the first genuine customer case, follow the
-  procedure and record operational validation from that case. A real
-  alternative transfer is not a pre-release requirement. Do not create an
-  artificial customer or refund transaction to validate this edge case.
+  without a timestamp. Apply migration `1c6ea8b50d37` in the release
+  environment and verify that legacy confirmation methods remain unknown.
+  R42 production validation remains open.
+- The [manual alternative refund procedure](operations.md#manual-alternative-full-refund)
+  is implemented locally. Before launch, verify the protected Admin forms
+  and rejection of an unverified transfer in the release environment. Retain
+  local regression evidence for successful alternative confirmation, replay,
+  method-switch rejection, consultation disposition, and independent purchase
+  access. Record live alternative confirmation on the first genuine
+  customer case. Settlement requires separate evidence.
+  A real alternative bank transfer is not a pre-release requirement.
+  Do not create an artificial customer or refund transaction to validate
+  this scenario. Perform live alternative-transfer validation on the first
+  genuine customer case and retain the operational evidence.
 - R53-1 implements bilingual `/refund-request` intake, CSRF protection,
   idempotent persistence, protected Admin visibility and post-commit receipt
   attempts. Development and review PostgreSQL schema checks are complete

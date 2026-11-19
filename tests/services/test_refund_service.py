@@ -15,11 +15,16 @@ from app.models.download_entitlement import (
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.product_release import ProductRelease
-from app.models.refund_operation import RefundOperation, RefundOperationStatus
+from app.models.refund_operation import (
+    RefundConfirmationMethod,
+    RefundOperation,
+    RefundOperationStatus,
+)
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.service_addon import ServiceAddon
 from app.services.refund_service import (
+    AlternativeRefundVerification,
     RefundActionResult,
     RefundConflictError,
     RefundEligibilityError,
@@ -27,6 +32,16 @@ from app.services.refund_service import (
     RefundVerificationRequiredError,
     confirm_full_refund,
     start_full_refund,
+)
+from tests.services.test_consultation_entitlement_service import (
+    create_test_consultation_entitlement,
+)
+
+VERIFIED_ALTERNATIVE = AlternativeRefundVerification(
+    customer_agreed=True,
+    transfer_verified=True,
+    evidence_retained=True,
+    original_refund_not_executed=True,
 )
 
 
@@ -235,6 +250,10 @@ def test_confirmation_refunds_sale_and_is_idempotent(db_session):
     second = confirm_full_refund(
         db_session, sale_id=sale.id, provider_refund_verified=True
     )
+    with pytest.raises(RefundConflictError, match="cannot change"):
+        confirm_full_refund(
+            db_session, sale_id=sale.id, alternative_verification=VERIFIED_ALTERNATIVE
+        )
 
     db_session.refresh(sale)
     db_session.refresh(operation)
@@ -243,6 +262,7 @@ def test_confirmation_refunds_sale_and_is_idempotent(db_session):
     assert second.result == RefundActionResult.IDEMPOTENT
     assert sale.payment_status == PaymentStatus.REFUNDED
     assert operation.status == RefundOperationStatus.CONFIRMED.value
+    assert operation.confirmation_method == RefundConfirmationMethod.ORIGINAL_PROVIDER
     assert operation.confirmed_at is not None
     assert download.status == DownloadEntitlementStatus.CANCELLED.value
 
@@ -255,6 +275,90 @@ def test_confirmation_requires_explicit_provider_verification(db_session):
         confirm_full_refund(db_session, sale_id=sale.id)
 
     assert sale.payment_status == PaymentStatus.PAID
+
+
+def test_confirmation_rejects_mixed_verification_methods(db_session):
+    sale, _, _ = create_sale(db_session)
+    operation = start_full_refund(db_session, sale_id=sale.id)
+    with pytest.raises(RefundVerificationRequiredError):
+        confirm_full_refund(
+            db_session,
+            sale_id=sale.id,
+            provider_refund_verified=True,
+            alternative_verification=VERIFIED_ALTERNATIVE,
+        )
+    assert operation.confirmation_method is None
+    assert sale.payment_status == PaymentStatus.PAID
+
+
+@pytest.mark.parametrize("refunded_purchase", ["product", "consultation"])
+def test_alternative_confirmation_reconciles_only_the_selected_sale(
+    db_session, refunded_purchase
+):
+    product, download, _ = create_sale(db_session)
+    consultation = create_test_consultation_entitlement(db_session)
+    standalone = consultation.sale_item.sale
+    standalone.payment_provider = "lava_top"
+    standalone.external_payment_id = "standalone-refund-invoice"
+    db_session.commit()
+    sale, independent = (
+        (product, standalone)
+        if refunded_purchase == "product"
+        else (standalone, product)
+    )
+    sale_id, independent_id = sale.id, independent.id
+    operation = start_full_refund(db_session, sale_id=sale_id)
+    operation.provider_status = "provider_unavailable"
+    operation.provider_observed_at = datetime.now(UTC)
+    db_session.commit()
+    snapshot = (
+        operation.id,
+        operation.amount,
+        operation.currency,
+        operation.payment_provider,
+        operation.external_payment_id,
+        operation.provider_status,
+        operation.provider_observed_at,
+    )
+
+    first = confirm_full_refund(
+        db_session, sale_id=sale_id, alternative_verification=VERIFIED_ALTERNATIVE
+    )
+    confirmed_at = first.operation.confirmed_at
+    replay = confirm_full_refund(
+        db_session, sale_id=sale_id, alternative_verification=VERIFIED_ALTERNATIVE
+    )
+    with pytest.raises(RefundConflictError, match="cannot change"):
+        confirm_full_refund(db_session, sale_id=sale_id, provider_refund_verified=True)
+
+    db_session.refresh(operation)
+    db_session.refresh(download)
+    db_session.refresh(consultation)
+    assert first.result == RefundActionResult.APPLIED
+    assert replay.result == RefundActionResult.IDEMPOTENT
+    assert (
+        operation.confirmation_method == RefundConfirmationMethod.ALTERNATIVE_TRANSFER
+    )
+    assert confirmed_at is not None
+    assert operation.confirmed_at.replace(tzinfo=UTC) == confirmed_at
+    assert (
+        operation.id,
+        operation.amount,
+        operation.currency,
+        operation.payment_provider,
+        operation.external_payment_id,
+        operation.provider_status,
+        operation.provider_observed_at.replace(tzinfo=UTC),
+    ) == snapshot
+    assert db_session.get(Sale, sale_id).payment_status == PaymentStatus.REFUNDED
+    assert db_session.get(Sale, independent_id).payment_status == PaymentStatus.PAID
+    assert download.status == (
+        "cancelled" if refunded_purchase == "product" else "available"
+    )
+    assert consultation.status == (
+        "cancelled" if refunded_purchase == "consultation" else "available"
+    )
+    assert db_session.query(RefundOperation).count() == 1
 
 
 def test_snapshot_mismatch_and_conflicting_sale_state_fail_closed(db_session):

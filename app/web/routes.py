@@ -125,10 +125,13 @@ from app.services.refund_request_service import (
 )
 from secrets import token_hex
 from app.services.refund_service import (
+    ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS,
+    AlternativeRefundVerification,
     RefundConflictError,
     RefundEligibilityError,
     RefundNotFoundError,
     RefundPersistenceError,
+    RefundVerificationRequiredError,
     confirm_full_refund,
     get_refund_sale_for_admin,
     start_full_refund,
@@ -1929,17 +1932,24 @@ async def admin_sale_detail(
 
     recovery, recovery_ineligible, recovery_prepare_blocked = recovery_admin_state(db, sale)
     recovery_csrf_id = recovery_csrf_token = ""
+    refund_csrf_id = refund_csrf_token = ""
     if recovery_ineligible is None and settings.SECRET_KEY.strip():
         recovery_csrf_id, recovery_csrf_token = token_hex(16), token_hex(32)
+    if sale.payment_status == PaymentStatus.PAID and settings.SECRET_KEY.strip():
+        refund_csrf_id, refund_csrf_token = token_hex(16), token_hex(32)
     response = render(
         request,
         "admin_sale_detail.html",
         {
-            "sale": sale, "refund_result": refund_result, "refund_window": refund_window,
+            "sale": sale,
+            "refund_result": refund_result,
+            "refund_window": refund_window,
             "unresolved": unresolved,
-            "allow_disposition_exception": bool(unresolved) and all(
-                disposition_unavailable(value) for value in unresolved
-            ),
+            "allow_disposition_exception": bool(unresolved)
+            and all(disposition_unavailable(value) for value in unresolved),
+            "refund_csrf_id": refund_csrf_id,
+            "refund_csrf_token": refund_csrf_token,
+            "alternative_exception_reasons": ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS,
             "recovery": recovery,
             "recovery_result": recovery_result,
             "recovery_ineligible": recovery_ineligible,
@@ -1953,6 +1963,20 @@ async def admin_sale_detail(
         document_lang="en",
     )
     response.headers["Cache-Control"] = "no-store"
+    if refund_csrf_token:
+        response.set_cookie(
+            f"refund_operation_csrf_{refund_csrf_id}",
+            create_csrf_cookie_value(
+                refund_csrf_id,
+                refund_csrf_token,
+                context=f"refund-operation-csrf:v1:{sale_id}",
+            ),
+            path=f"/admin/sales/{sale_id}/refund",
+            max_age=900,
+            httponly=True,
+            secure=settings.APP_ENV == "prod" or request.url.scheme == "https",
+            samesite="strict",
+        )
     if recovery_csrf_token:
         response.set_cookie(
             f"recovery_csrf_{recovery_csrf_id}",
@@ -2035,12 +2059,28 @@ def admin_send_purchase_access(
     return RedirectResponse(f"/admin/sales/{sale_id}?recovery_result={result}", status_code=303)
 
 
+def _require_refund_operation_csrf(
+    request: Request, sale_id: int, cookie_id: str, token: str
+) -> None:
+    if not settings.SECRET_KEY.strip() or not verify_csrf_token(
+        cookie_id,
+        token,
+        request.cookies.get(f"refund_operation_csrf_{cookie_id}"),
+        context=f"refund-operation-csrf:v1:{sale_id}",
+    ):
+        raise HTTPException(status_code=403, detail="Invalid refund form")
+
+
 @admin_router.post("/admin/sales/{sale_id}/refund/start")
 async def admin_start_full_refund(
     sale_id: int,
+    request: Request,
     confirmation: str = Form(...),
+    csrf_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
+    _require_refund_operation_csrf(request, sale_id, csrf_id, csrf_token)
     if confirmation != "start_full_refund":
         raise HTTPException(status_code=400, detail="Explicit confirmation required")
     try:
@@ -2065,21 +2105,76 @@ async def admin_start_full_refund(
 @admin_router.post("/admin/sales/{sale_id}/refund/confirm")
 def admin_confirm_full_refund(
     sale_id: int,
+    request: Request,
     acknowledgement: str = Form(...),
     disposition_exception: str = Form(default=""),
     disposition_exception_reason: str = Form(default=""),
+    csrf_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
+    _require_refund_operation_csrf(request, sale_id, csrf_id, csrf_token)
     if acknowledgement != "verified_full_refund_in_lava_top":
         raise HTTPException(status_code=400, detail="Explicit acknowledgement required")
+    return _confirm_admin_refund(
+        db,
+        sale_id=sale_id,
+        provider_refund_verified=True,
+        disposition_exception=disposition_exception,
+        disposition_exception_reason=disposition_exception_reason,
+    )
+
+
+@admin_router.post("/admin/sales/{sale_id}/refund/confirm-alternative")
+def admin_confirm_alternative_refund(
+    sale_id: int,
+    request: Request,
+    customer_agreed: str = Form(default=""),
+    transfer_verified: str = Form(default=""),
+    evidence_retained: str = Form(default=""),
+    original_refund_not_executed: str = Form(default=""),
+    disposition_exception: str = Form(default=""),
+    disposition_exception_reason: str = Form(default=""),
+    csrf_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    _require_refund_operation_csrf(request, sale_id, csrf_id, csrf_token)
+    return _confirm_admin_refund(
+        db,
+        sale_id=sale_id,
+        alternative_verification=AlternativeRefundVerification(
+            customer_agreed=customer_agreed == "yes",
+            transfer_verified=transfer_verified == "yes",
+            evidence_retained=evidence_retained == "yes",
+            original_refund_not_executed=original_refund_not_executed == "yes",
+        ),
+        disposition_exception=disposition_exception,
+        disposition_exception_reason=disposition_exception_reason,
+    )
+
+
+def _confirm_admin_refund(
+    db: Session,
+    *,
+    sale_id: int,
+    disposition_exception: str,
+    disposition_exception_reason: str,
+    provider_refund_verified: bool = False,
+    alternative_verification: AlternativeRefundVerification | None = None,
+) -> RedirectResponse:
     try:
         result = confirm_full_refund(
             db,
             sale_id=sale_id,
-            provider_refund_verified=True,
-            disposition_exception_acknowledged=disposition_exception == "verify_unavailable",
+            provider_refund_verified=provider_refund_verified,
+            alternative_verification=alternative_verification,
+            disposition_exception_acknowledged=disposition_exception
+            == "verify_unavailable",
             disposition_exception_reason=disposition_exception_reason,
         )
+    except RefundVerificationRequiredError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RefundNotFoundError:
         raise HTTPException(status_code=404, detail="Refund not found") from None
     except RefundConflictError:

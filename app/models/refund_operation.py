@@ -18,6 +18,11 @@ class RefundOperationStatus(StrEnum):
     RECONCILIATION_REQUIRED = "reconciliation_required"
 
 
+class RefundConfirmationMethod(StrEnum):
+    ORIGINAL_PROVIDER = "original_provider"
+    ALTERNATIVE_TRANSFER = "alternative_transfer"
+
+
 class RefundOperation(Base):
     """Provider-independent persisted full-refund operation for one Sale."""
 
@@ -44,6 +49,7 @@ class RefundOperation(Base):
     provider_observed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    confirmation_method: Mapped[str | None] = mapped_column(String(32))
     requested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -73,4 +79,9 @@ class RefundOperation(Base):
             name="ck_refund_operations_status",
         ),
         CheckConstraint("amount > 0", name="ck_refund_operations_amount_positive"),
+        CheckConstraint(
+            "confirmation_method IS NULL OR (status = 'confirmed' AND "
+            "confirmation_method IN ('original_provider', 'alternative_transfer'))",
+            name="ck_refund_operations_confirmation_method",
+        ),
     )

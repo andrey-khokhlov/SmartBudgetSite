@@ -15,6 +15,7 @@ from app.services.consultation_entitlement_service import (
 )
 from app.services.refund_request_service import submit_refund_request
 from app.services.refund_service import (
+    ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS,
     RefundConflictError,
     RefundVerificationRequiredError,
     confirm_full_refund,
@@ -25,6 +26,7 @@ from tests.services.test_calendly_share_service import SHARE, share_resource
 from tests.services.test_consultation_entitlement_service import (
     create_test_consultation_entitlement,
 )
+from tests.services.test_refund_service import VERIFIED_ALTERNATIVE
 from tests.services.webhooks.test_reconciliation_service import (
     pin_share,
     verified_booking,
@@ -46,9 +48,15 @@ def consultation(db_session, monkeypatch):
     return entitlement
 
 
+@pytest.mark.parametrize("alternative", [False, True])
 def test_request_closes_access_and_revokes_unused_share_before_deadline(
-    db_session, monkeypatch, consultation
+    db_session, monkeypatch, consultation, alternative
 ):
+    verification = (
+        {"alternative_verification": VERIFIED_ALTERNATIVE}
+        if alternative
+        else {"provider_refund_verified": True}
+    )
     sale = consultation.sale_item.sale
     sale_id, token = sale.id, consultation.booking_token
     consultation.calendly_share_uri = SHARE
@@ -75,12 +83,10 @@ def test_request_closes_access_and_revokes_unused_share_before_deadline(
     monkeypatch.setattr(revocation, "delete_share", delete)
     start_full_refund(db_session, sale_id=sale_id)
     with pytest.raises(RefundConflictError):
-        confirm_full_refund(db_session, sale_id=sale_id, provider_refund_verified=True)
+        confirm_full_refund(db_session, sale_id=sale_id, **verification)
     assert revocation.revoke_expired_shares(db_session)["by_outcome"] == {"revoked": 1}
     delete.assert_called_once_with(SHARE)
-    assert confirm_full_refund(
-        db_session, sale_id=sale_id, provider_refund_verified=True
-    )
+    assert confirm_full_refund(db_session, sale_id=sale_id, **verification)
 
 
 def test_inflight_share_is_retained_but_never_returned_after_access_closes(
@@ -176,9 +182,23 @@ def reconcile_delayed(db_session, event):
     )
 
 
+@pytest.mark.parametrize("alternative", [False, True])
 def test_timeout_exception_requires_founder_reason_and_verified_money(
-    db_session, monkeypatch, consultation
+    db_session, monkeypatch, consultation, alternative
 ):
+    verification = (
+        {"alternative_verification": VERIFIED_ALTERNATIVE}
+        if alternative
+        else {"provider_refund_verified": True}
+    )
+    entered_reason = (
+        "verification_unavailable"
+        if alternative
+        else "Provider timeout, refund cannot wait."
+    )
+    expected_reason = ALTERNATIVE_DISPOSITION_EXCEPTION_REASONS.get(
+        entered_reason, entered_reason
+    )
     sale_id, entitlement_id = consultation.sale_item.sale_id, consultation.id
     event, resources = booking(db_session, monkeypatch, consultation)
     assert reconcile_delayed(db_session, event)
@@ -201,23 +221,20 @@ def test_timeout_exception_requires_founder_reason_and_verified_money(
         confirm_full_refund(
             db_session,
             sale_id=sale_id,
-            provider_refund_verified=True,
             disposition_exception_acknowledged=True,
+            **verification,
         )
     exception = dict(
         disposition_exception_acknowledged=True,
-        disposition_exception_reason="Provider timeout, refund cannot wait.",
+        disposition_exception_reason=entered_reason,
     )
     with pytest.raises(RefundVerificationRequiredError):
         confirm_full_refund(db_session, sale_id=sale_id, **exception)
     result = confirm_full_refund(
-        db_session, sale_id=sale_id, provider_refund_verified=True, **exception
+        db_session, sale_id=sale_id, **verification, **exception
     )
     assert result.operation.exceptional_confirmed_at
-    assert (
-        result.operation.exceptional_confirmation_reason
-        == exception["disposition_exception_reason"]
-    )
+    assert result.operation.exceptional_confirmation_reason == expected_reason
     assert consultation.sale_item.sale.payment_status == PaymentStatus.REFUNDED
 
 

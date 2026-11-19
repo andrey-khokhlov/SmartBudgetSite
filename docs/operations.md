@@ -957,12 +957,42 @@ for confirmed capabilities, settlement timing, and pending verification research
 4. Verify the amount and provider-side refund evidence in Lava.top. The observed
    `SENT` label is provider UI metadata, not a SmartBudgetSite lifecycle state
    and not proof of bank/card settlement.
-5. Return to the Sale and accept **I verified the full refund in Lava.top.** Only
-   this action confirms the internal operation, changes the Sale to `refunded`,
-   and revokes future access atomically.
+5. Return to the Sale, accept **I verified the full refund in Lava.top.** and
+   select **Confirm verified full refund**. This records `original_provider`,
+   changes the Sale to `refunded`, and revokes future access atomically.
 6. If the Admin reports a conflict or persistence error, do not edit SQL or
    start another refund. Preserve the provider evidence and investigate the
    existing Sale/refund operation.
+
+### Manual alternative full refund
+
+Apply Alembic revision `1c6ea8b50d37` before starting the updated application.
+Legacy confirmations retain an unknown method. Downgrade across this revision
+is blocked once a confirmation method has been recorded, which protects refund
+history.
+
+1. If Lava.top cannot process the required full refund, review the payment and
+   confirm that the original provider has executed no refund for the Sale.
+   Use the same pending full-Sale operation. Escalate conflicting evidence
+   before transferring funds. Apply the existing
+   [consultation disposition checks](#consultation-cancellation-in-admin-sale-detail)
+   when the Sale includes a consultation.
+2. Obtain the customer's explicit agreement to the alternative method.
+   Complete and verify the exact full refund externally using the agreed
+   phone-number or card-based method. Keep the agreement, execution evidence,
+   and any payment details outside SmartBudgetSite.
+3. In Admin Sale Detail, acknowledge the customer's agreement, verified
+   execution of the full transfer, external evidence retention, and the
+   absence of an executed original-provider refund. Select **Confirm
+   alternative refund**. If the consultation verification exception applies,
+   acknowledge it and select the consultation reason.
+4. Verify that the operation shows **Alternative transfer** and the Sale
+   shows `refunded`. This records verification of execution. Confirm any bank
+   or card settlement separately.
+
+Rehearse the protected Admin flow in the release environment up to the
+confirmation step. Record verified execution and confirm the alternative
+refund on the first genuine case.
 
 ### Refund request customer receipt recovery
 
@@ -1024,11 +1054,12 @@ govern eligibility, amounts, item access and customer confirmations.
    [first-release amendment](architecture/commerce_and_delivery.md#first-release-sales-model-amendment).
    Use the documented exception procedure when the existing full-Sale path
    cannot execute the required outcome.
-3. Have the operator execute the refund manually in Lava.top and verify
-   provider evidence before confirming the internal outcome. Lava.top supports
-   one refund per transaction and currently offers no refund initiation API.
-   Check [consultation and booking disposition](architecture/consultations.md#cancellation-and-refund-coordination)
-   before execution. The target cancellation workflow is pending.
+3. Have the operator execute the refund manually through the
+   [original provider](#manual-lavatop-full-refund) or the approved
+   [alternative procedure](#manual-alternative-full-refund) when the provider
+   cannot process it. Verify execution and apply the
+   [consultation disposition safeguards](architecture/consultations.md#cancellation-and-refund-coordination)
+   before confirming the internal outcome.
 4. Record the evidence and follow-up. Use the approved recovery procedure for
    conflicting evidence or a later required refund that the original provider
    path cannot process.
