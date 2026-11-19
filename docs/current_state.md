@@ -617,7 +617,7 @@ R53-3 — Customer Receipt Retry is implemented locally.
 #### Owner-approved remaining pre-release sequence
 
 1. R53-3 — Customer Receipt Retry (implemented locally).
-2. R39/R42 — Refund and cancellation workflow.
+2. R39/R42 — Refund and cancellation workflow (implemented locally; release-environment validation open).
 3. Consultation Capacity Management (implemented locally).
 4. G13B/G13C — Administrative recovery (implemented locally for product-only Sales).
 5. R50/G15 — Refund policy, consent and legal publication.
@@ -765,7 +765,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
 | R49 | Partial | G10 product Checkout displays composition-sensitive delivery information. The no-universal-waiver boundary remains in force. | G15 synchronized policy disclosure and link under D4 |
 | R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
-| R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 capability, applicable early-start consent and G15 composition-specific wording |
+| R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 release-environment validation, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
 | R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts, bounded SMTP recovery and read-only Admin receipt status. | Validate deployed notifications, receipt recovery and operational follow-up. Operator reminders remain pending. Refund execution remains operator-controlled |
 | R54 | Required | Full refunds revoke future protected access. Downloaded local copies remain under customer control. | G15 stop-use/delete wording subject to law and licence. R55 excludes DRM |

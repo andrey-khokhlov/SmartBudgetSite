@@ -2153,11 +2153,9 @@ Status:
 
 Record:
 
-SmartBudget sells three materially different order compositions:
-
-1. product only;
-2. consultation only;
-3. product + consultation.
+For the first public release, SmartBudget and standalone consultations
+are separate purchases with separate Sales. The existing combined composition
+is retained for historical records, but new public bundle checkout is disabled.
 
 Digital-product supply rules and consultation-service cancellation rules must not be collapsed into one universal waiver.
 
@@ -2169,13 +2167,14 @@ Customer-facing wording must reflect the actual composition of the order.
 
 For consultation-only purchases, use consultation cancellation/rescheduling/refund rules rather than digital-content waiver language.
 
-For bundles, explain the [approved refund directions](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
-An add-on-only refund preserves SmartBudget, while a SmartBudget refund covers
-the entire bundle even if the consultation was delivered.
+The earlier bundle refund directions are retained as historical design
+context. Bundle item-level refund accounting is deferred under the first-release
+amendment. Applicable customer rights and exceptional operator procedures remain
+in force.
 
 Status:
 
-`High; D4 decision complete. Implementation and synchronized publication pending.`
+`High; D4 decision complete. Separate purchases implemented; R50 consent and G15 synchronized publication pending.`
 
 ## R52 — Refund Policy revision before paid sales
 
@@ -2215,7 +2214,7 @@ Status:
 
 ## R53 — Applicable online withdrawal/cancellation path
 
-The approved bilingual `/refund-request` route is pending. It covers product
+The bilingual `/refund-request` route is implemented locally. It covers product
 and standalone consultation purchases. Accept requests after
 the voluntary no-reason SmartBudget refund deadline and show expiry to the
 operator without blocking review of defects, non-conformity, statutory rights
@@ -2231,7 +2230,7 @@ request visibility under the [R53 architecture](architecture/commerce_and_delive
 
 Status:
 
-`High; D4 decision complete. Bounded request implementation and validation pending.`
+`High; R53-1/2/3 locally implemented. Deployment validation, operator reminders and operational follow-up remain pending.`
 
 ## R54 — Full-refund consequences for digital-product use
 
@@ -2336,12 +2335,12 @@ recovered copy remains available as source material.
 
 | Requirement | Approved boundary and current gap | Remaining work |
 | --- | --- | --- |
-| R08/R34, section 5.1.7 | D1 allows a database-owned price in the concluding Landing section. Hero is price-free and Buy owns package selection. | G9 priced offer and validation |
+| R08/R34, section 5.1.7 | D1 allows a database-owned price in the concluding Landing section. Hero is price-free and Buy owns package selection. | G9 implemented locally; release-environment price validation remains open |
 | R41/R42/R51/R52, Appendix B | The November amendments require separate public purchases. Full-Sale refunds and paid-Sale capability checks are implemented. Earlier bundle refund directions are retained as history. | Validate separate-purchase refunds and independent SmartBudget access. Bundle item accounting is deferred |
-| R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. Existing `RefundOperation.sale_id` uniqueness remains in force pending bounded implementation |
-| R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Existing public initiation is product-bound. | Implement G11/G12 and validate provider and paid entitlement behavior |
+| R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. The one-operation-per-Sale constraint remains; alternative confirmation is implemented locally |
+| R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Product-only and standalone consultation initiation are implemented locally. | Validate provider and paid entitlement behavior in the release environment |
 | R35/R40 | D5 approves persisted Sale-level order language. G13 uses that snapshot for localized rendering. | Release-environment delivery validation |
-| R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement applicable Checkout/confirmation flows and separate request intake. Synchronize the new policy with actual behavior |
+| R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement R50 applicable Checkout/confirmation flows; R53 intake is implemented locally. Synchronize the new policy with actual behavior |
 | R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | Review replacement and verification completed at version 1.0 after zero-reference inspection. Retain immutable identity and distinct R2 keys for later releases |
 
 Product-release evidence checked in `app/models/product_release.py` (unique
