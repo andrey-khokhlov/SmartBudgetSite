@@ -1066,7 +1066,7 @@ govern eligibility, amounts, item access and customer confirmations.
    with backend-owned purchase context and the status of the voluntary deadline.
    R53-2 persists the notification obligation at intake and uses Telegram
    with administrative SMTP fallback. Track pending request age
-   and failed delivery evidence. Apply the policy targets of 2 business days
+   and failed delivery evidence. Apply the policy targets of 3 business days
    for initial response and normally 5 for review, counting Monday–Friday
    without holiday exclusions. Mandatory deadlines take precedence.
 2. Prepare the exact full-Sale refund amount for the applicable separate

@@ -237,7 +237,7 @@ and R55's technical exclusions remain internal.
 | R41 · FAQ-09, REF-01/02/06 | Отдельная политика RU/EN для всей линейки; FAQ, Checkout и Footer дают доступ до оплаты | High; согласовано по коммерческому содержанию | [Appendix B](#appendix-b--approved-refund-policy-publication-candidate) is the current owner-approved publication candidate. Appendix A is historical source material. Legal and publication requirements in section 8 remain open. | B 184–213; C |
 | R42 · REF: mixed orders | Проверить ручной полный/частичный возврат через Lava.top, последствия для продукта и консультации, подтверждение покупателю; один возврат на транзакцию — ограничение провайдера, не отмена прав | High; согласовано с проверкой | Операционный сценарий подтверждён; непроведённая консультация при полном возврате отменена; частичный случай рассмотрен отдельно | A 116–122; B 188–203; C |
 | R43 · REF-07/08 | November 14 decision: bilingual `/legal/seller-information` page linked from policy §9, the neutral footer link and Checkout before payment | High; page and links implemented locally. Release publication and validation remain open | Verify access before payment. Securely obtain the actual address and telephone before publication. Keep both details on the seller page | November 14 owner decision supersedes earlier D4 placement; see §5.10 |
-| R44 · сроки поддержки | Первый ответ — целевые 2 рабочих дня, обычное рассмотрение 5; банковское зачисление после возврата — до 10 рабочих дней по прежнему ответу Lava.top | High; сохранено в C; проверить операционную готовность | Сроки не подменяют законные; различаются ответ, решение и банковское зачисление | A 117–122; B 188–193; C |
+| R44 · сроки поддержки | Первый ответ — целевые 3 рабочих дня, обычное рассмотрение 5; банковское зачисление после возврата — до 10 рабочих дней по прежнему ответу Lava.top | High; срок первого ответа утверждён владельцем 2026-11-20; проверить операционную готовность | Сроки не подменяют законные; различаются ответ, решение и банковское зачисление | A 117–122; B 188–193; C |
 | R45 · процесс review | Сначала согласование desktop и реализация малыми связанными группами; затем повторный responsive/accessibility review | High для закрытия gate; согласовано | Проверен фактический обновлённый интерфейс, результаты сохранены по задачам | B 42–43, 74–76 |
 | R46 · сохранение результатов | Полные тексты и решения сохранять в постоянном документе; изменения версионировать, отмечать superseded/conditional | Организационное; требование настоящей передачи | Дорожная карта ссылается на этот документ; изменения публичной редакции не теряются в истории чата | A 143–150; текущий запрос |
 | R47 | ActiveX onboarding and customer guidance; full requirement below | Required pre-release; public copy/editorial and remaining Microsoft 365 validation pending | Acceptance and validation: see R47 below | Owner planning amendment, 2026-11-04 |
@@ -1301,7 +1301,7 @@ If you cannot find the link or have difficulty rescheduling, please contact supp
 
 Для обращения воспользуйтесь [формой возврата](/refund-request). Если форма временно недоступна, напишите на support@neocitrix.com. Подробные условия, включая возвраты после проведения консультации, изложены в [Политике отмены и возвратов](/legal/refund-policy).
 
-Мы стремимся предоставить первый ответ в течение 2 рабочих дней. Обычное рассмотрение запроса, как правило, занимает до 5 рабочих дней. После оформления возврата зачисление денежных средств обычно занимает до 10 рабочих дней в зависимости от банка и способа оплаты.
+Мы стремимся предоставить первый ответ в течение 3 рабочих дней. Обычное рассмотрение запроса, как правило, занимает до 5 рабочих дней. После оформления возврата зачисление денежных средств обычно занимает до 10 рабочих дней в зависимости от банка и способа оплаты.
 
 ##### EN — Support
 
@@ -1343,7 +1343,7 @@ Yes. You can receive a full refund for SmartBudget within 14 calendar days of pa
 
 To request a refund, use the [refund request form](/refund-request). If the form is temporarily unavailable, email support@neocitrix.com. Full terms, including refunds after a completed consultation, are described in the [Cancellation and Refund Policy](/legal/refund-policy).
 
-We aim to provide an initial response within 2 business days. Standard requests are normally reviewed within 5 business days. After a refund is processed, funds are typically credited within 10 business days, depending on the bank and payment method.
+We aim to provide an initial response within 3 business days. Standard requests are normally reviewed within 5 business days. After a refund is processed, funds are typically credited within 10 business days, depending on the bank and payment method.
 
 ### 5.7. Consultations / «Консультации» · R06/R38 · B 129–135, 179–184
 
@@ -1827,7 +1827,7 @@ For purchase enquiries, product support, consultation cancellations, and refunds
 | Изображения | Источники и композиции выбраны | Подготовить/проверить финальные RU/EN файлы в релизном продукте |
 | Возвраты Lava.top | По прежнему ответу ручные, полный/частичный, один на транзакцию, до 10 рабочих дней банк | Реальный процесс, свидетельство результата, клиентские уведомления и текущие возможности сервиса |
 | Юридический статус/адрес | D4: международный запуск в scope, публикация полного географического адреса одобрена | Уточнить статус и фактические сведения продавца, затем проверить синхронную RU/EN публикацию. Решение владельца не является независимой юридической сертификацией |
-| Сроки поддержки | В сохранённой политике 2/5 рабочих дней как целевые | Подтвердить соблюдаемость, в том числе при отсутствии владельца; не подменять обязательные сроки |
+| Сроки поддержки | По R44 и приложению B целевой срок первого ответа — 3 рабочих дня, обычного рассмотрения — 5 рабочих дней | Подтвердить соблюдаемость, в том числе при отсутствии владельца; не подменять обязательные сроки |
 | Текущий код | В переписке часть механизмов уже была частично реализована | Сверить актуальный main; не планировать заново выполненную работу и не считать старое наблюдение актуальной проверкой |
 
 D4 заменяет прежнее решение о публикации без полного адреса. Сохранённый
@@ -2369,7 +2369,7 @@ Implementation groups belong in `current_state.md`.
 
 ## Appendix B — Approved Refund Policy publication candidate
 
-Owner-approved on 2026-11-14 and amended in Section 7 on 2026-11-20. This
+Owner-approved on 2026-11-14 and amended in Sections 5 and 7 on 2026-11-20. This
 bilingual revision supersedes the recovered October 28 policy in Appendix A.
 G15-B renders this candidate at `/legal/refund-policy`. The date placeholders
 below are replaced on the page by the owner-approved publication date in
@@ -2520,7 +2520,7 @@ SmartBudget предоставляет платные индивидуальны
 
 ##### 5.1. Рассмотрение обращения
 
-Мы стремимся предоставить первый ответ на обращение в течение **2 рабочих дней** с момента его получения.
+Мы стремимся предоставить первый ответ на обращение в течение **3 рабочих дней** с момента его получения.
 
 Обычное рассмотрение запроса на отмену покупки или возврат денежных средств, как правило, завершается в течение **5 рабочих дней** с момента получения обращения.
 
@@ -2742,7 +2742,7 @@ Do not provide passwords, full payment card details, completed personal budget w
 
 ##### 5.1. Request Review
 
-We aim to provide an initial response within **2 business days** of receiving your request.
+We aim to provide an initial response within **3 business days** of receiving your request.
 
 A standard cancellation or refund request will normally be reviewed within **5 business days** of receipt.
 

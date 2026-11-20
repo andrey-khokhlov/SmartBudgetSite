@@ -758,7 +758,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R41 | Partial | G15-B implements the bilingual policy page and footer link using the November 14 candidate as amended on November 20. G15-C1 adds conditional pre-payment links in both Checkout flows. G15-C2 adds a conditional policy link and direct refund form access in the FAQ. | Policy activation and release validation remain open |
 | R42 | Partial | Founder full-Sale refund confirmation supports Lava.top and verified alternative transfers locally. Both paths use Sale-bound CSRF and preserve the same Sale and entitlement reconciliation. R42a–c implement authoritative `Sale.paid_at` and the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock) on Admin Sale Detail. | Validate separate-purchase refunds and the alternative procedure in the release environment. Bundle item accounting is deferred under the first-release amendment |
 | R43 | Partial | G15-A implements the bilingual Seller Information page and neutral footer link. G15-B links to the seller page from policy §9. G15-C1 links to it from both Checkout flows when the seller details are complete. | Securely configure and verify the owner-supplied details and pre-payment access in the release environment |
-| R44 | Partial | Support and founder refund operations exist. The G15-B policy and G15-C2 FAQ state the 2/5/10-business-day response, review and bank-settlement distinctions. | G15 synchronized publication and separate support-capacity validation |
+| R44 | Partial | Support and founder refund operations exist. G15-C4 synchronizes the policy and FAQ with the owner-approved 3/5/10-business-day response, review and bank-settlement distinctions. | G15 synchronized publication and separate support-capacity validation |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
@@ -1115,7 +1115,7 @@ speculative code changes or provider operations:
 - Refund/provider/customer-communication validation after the approved D4
   capabilities are implemented. Keep partial refunds outside the current
   full-Sale workflow.
-- Owner confirmation of 2/5-business-day support readiness, distinct from the
+- Owner confirmation of 3/5-business-day support readiness, distinct from the
   provider-reported bank settlement period.
 - Final repeat desktop/mobile/accessibility review of the updated real interface;
   earlier screenshots or browser tests do not close R45.

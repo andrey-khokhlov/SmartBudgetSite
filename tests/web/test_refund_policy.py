@@ -113,7 +113,7 @@ def test_complete_policy_matches_approved_appendix_b(client, policy_configured, 
             "Вы можете отказаться от консультации до начала её проведения и получить полный "
             "возврат оплаченной стоимости услуги."
         ) in emphasized
-        assert {"2 рабочих дней", "5 рабочих дней", "до 10 рабочих дней"} <= emphasized
+        assert {"3 рабочих дней", "5 рабочих дней", "до 10 рабочих дней"} <= emphasized
     else:
         assert (
             "You may request a full refund of your SmartBudget purchase without giving a "
@@ -123,7 +123,7 @@ def test_complete_policy_matches_approved_appendix_b(client, policy_configured, 
             "You may cancel your consultation before it begins and receive a full refund "
             "of the amount paid for the service."
         ) in emphasized
-        assert {"2 business days", "5 business days", "10 business days"} <= emphasized
+        assert {"3 business days", "5 business days", "10 business days"} <= emphasized
 
 
 @pytest.mark.parametrize(("lang", "other"), [("ru", "en"), ("en", "ru")])

@@ -903,7 +903,7 @@ Before paid public sales:
   footer link locally. Securely obtain and [configure the seller details](operations.md#configuration-completion-rule).
   Verify both locales and the footer link in the release environment.
 - G15-B implements the bilingual refund policy page and footer link locally,
-  including the November 20 Section 7 amendment and the seller link in §9.
+  including the November 20 amendments in §§5 and 7 and the seller link in §9.
   The owner approved **2026-12-01** as the intended publication date.
   Release-environment activation remains a separate pre-sale step. Set the
   [publication date](operations.md#configuration-completion-rule) only at
@@ -927,7 +927,10 @@ Before paid public sales:
   as either can change the payload of an unresolved send.
 - Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
   only after aligning Checkout, FAQ, purchase email and actual operations,
-  including support targets and approved R54 wording. Keep R55 exclusions.
+  including the R44 service targets of 3 business days for an initial response,
+  normally 5 for review, and an estimated bank settlement of up to 10. Mandatory
+  deadlines take precedence. Verify the approved R54 wording and keep R55
+  exclusions.
 - VAT integration, a payment-provider change and additional tax infrastructure
   remain deferred. Complete market-specific legal and tax validation and satisfy
   all obligations it identifies, including any required tax registration or
