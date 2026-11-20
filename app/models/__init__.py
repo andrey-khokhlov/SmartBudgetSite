@@ -45,6 +45,7 @@ from app.models.refund_operation import (
 )
 from app.models.consultation_cancellation import ConsultationCancellation as ConsultationCancellation
 from app.models.refund_request import RefundRequest as RefundRequest
+from app.models.refund_request_reminder import RefundRequestReminder as RefundRequestReminder
 from app.models.refund_request_receipt import RefundRequestReceipt as RefundRequestReceipt
 from app.models.refund_request_notification import (
     RefundRequestNotification as RefundRequestNotification,

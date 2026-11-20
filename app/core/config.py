@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     TELEGRAM_CHAT_ID: str | None = None
     PURCHASE_ALERT_DELIVERY_ENABLED: bool = False
     REFUND_REQUEST_ALERT_DELIVERY_ENABLED: bool = False
+    REFUND_REQUEST_REMINDER_DELIVERY_ENABLED: bool = False
 
     CALENDLY_CONSULTATION_URL: str | None = None  # Legacy environment compatibility.
     CALENDLY_CONSULTATION_EVENT_TYPE_URI: str | None = None

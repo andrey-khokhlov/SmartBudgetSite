@@ -1280,7 +1280,7 @@ schedule, sanitized failure category and confirmed acceptance timestamp.
 The outbox is separate from purchase-delivery incidents. Alerts include only
 the internal request ID and an instruction to review it in Admin. Admin shows
 channel status alongside the request lifecycle status and its age. Notification
-failure leaves the request intact. Operator reminders remain pending.
+failure leaves the request intact. R53-4B uses a separate outbox for reminders.
 
 R53-1 persists a separate pending `RefundRequest` with a restrictive Sale
 foreign key, purchase identity, UTC submission time, language, optional
@@ -1326,9 +1326,26 @@ Administrative closure requires a recorded first response.
 
 Receipts, operator notifications, refund operations, and Sale status changes
 leave request lifecycle state untouched. The Admin action records the operator's
-attestation of a response already sent. `submitted_at` remains the deadline
-reference for future reminders. Deadline calculation, reminders, and escalation
-remain open under R53-4.
+attestation of a response already sent. `submitted_at` starts the R53-4B
+service-target clock.
+
+R53-4B calculates first-response and normal review targets at three and five
+business days from `submitted_at`, preserving the UTC time of day and counting
+Monday through Friday without holiday exclusions. A pending request gets one
+reminder per weekday from its one-business-day slot. A responded request gets
+reminders from the five-business-day review slot until it is closed. The current
+cycle combines overdue review and unanswered first-response concerns when both
+apply. These targets leave mandatory deadlines independent.
+
+The reminder outbox has one row per request and UTC business date. The
+dispatcher works on the current day's eligible slots and does not replay
+missed dates. It rechecks lifecycle status under the request row lock before
+each committed send claim, and keeps the transaction out of provider I/O.
+An already in-flight call can finish after response or closure. Reminder
+acceptance and retry state are separate from initial notifications and receipts.
+Definitive rejections allow retries or SMTP fallback. An unknown provider
+outcome or expired send lease is terminal for that cycle because it may have
+been accepted. The next eligible business-day cycle can still send.
 
 The first-release amendment defers bundle item-accounting implementation and
 keeps exceptional or historical cases under the operator procedure. Preserve the current

@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite Refund Request Deadline Reminders
+
+[Timer]
+OnCalendar=*-*-* *:*:50 UTC
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

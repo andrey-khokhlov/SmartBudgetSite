@@ -11,7 +11,9 @@ from app.core.config import settings
 NETWORK_TIMEOUT = 5
 
 
-def send_telegram_alert(message: str) -> str | None:
+def send_telegram_alert(
+    message: str, *, require_confirmed_rejection: bool = False
+) -> str | None:
     token = settings.TELEGRAM_BOT_TOKEN or ""
     if (
         not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]+", token)
@@ -29,6 +31,16 @@ def send_telegram_alert(message: str) -> str | None:
         )
         response = connection.getresponse()
         if response.status in (408, 429) or response.status >= 500:
+            if require_confirmed_rejection:
+                if response.status != 429:
+                    return "ambiguous"
+                body = json.loads(response.read(16 * 1024))
+                if not (
+                    isinstance(body, dict)
+                    and body.get("ok") is False
+                    and body.get("error_code") == 429
+                ):
+                    return "ambiguous"
             return "temporary"
         if response.status >= 400:
             return "permanent"

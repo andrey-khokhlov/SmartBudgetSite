@@ -881,8 +881,12 @@ Before paid public sales:
   request visibility, and operational follow-up. R53-4A adds durable Admin
   response and closure attestations. Apply revision `6e4f8c2a9b17` before
   deploying that code. Verify historical requests remain pending and the two
-  actions retain their original UTC timestamps on replay. Deadline calculations
-  and automated reminders remain open. Keep money movement operator-controlled.
+  actions retain their original UTC timestamps on replay. R53-4B implements
+  deadline calculations and daily operator reminders locally. Apply revision
+  `9f3b1a7c2d84` and validate the [reminder job](operations.md#refund-request-deadline-reminders),
+  delivery and fallback, suppression after response or closure, restart
+  coalescing, and independent Healthchecks.io failure detection. R53 release
+  validation remains open. Keep money movement operator-controlled.
 - R39-A adds single-use Share provisioning and verified reconciliation.
   R39-B adds automatic expiry revocation. Validate the timer and provider
   outcomes in the release environment.

@@ -17,7 +17,6 @@ from tests.test_purchase_email_failure_classification_postgres import (  # noqa:
 )
 
 PREVIOUS = "1c6ea8b50d37"
-REVISION = "6e4f8c2a9b17"
 
 
 def test_refund_request_lifecycle_migration_and_row_lock(
@@ -62,7 +61,7 @@ def test_refund_request_lifecycle_migration_and_row_lock(
             {"sale_id": sale_id, "submitted": submitted},
         )
 
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     alembic("check")
     columns = {
         column["name"]: column
@@ -75,7 +74,7 @@ def test_refund_request_lifecycle_migration_and_row_lock(
     alembic("downgrade", PREVIOUS)
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT id FROM refund_requests")) == request_id
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     with Session(engine) as db:
         entry = db.get(RefundRequest, request_id)
         assert entry.submitted_at == submitted

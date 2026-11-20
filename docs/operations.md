@@ -1050,6 +1050,43 @@ and required follow-up. The actions record attestations, and their timestamps
 remain unchanged on replay. Continue to handle refund execution in Sale Detail.
 An automated receipt does not satisfy the first-response target.
 
+### Refund request deadline reminders
+
+Apply revision `9f3b1a7c2d84` before starting the reminder job. The migration
+adds a separate outbox without backfilling delivery history. Downgrade is
+blocked once reminder history exists. Leave
+`REFUND_REQUEST_REMINDER_DELIVERY_ENABLED=false` until release validation.
+Use `python -m scripts.dispatch_refund_request_reminders --dry-run` to
+inspect up to 20 eligible requests without writing or sending. The live
+one-pass command uses a PostgreSQL advisory lock and the existing operator
+Telegram and administrative SMTP settings. The prepared timer runs every
+minute at :50 UTC. A pass selects up to 20 requests and retires up to 20 old
+or expired cycles. Each selected request allows at most one attempt per
+channel in that pass.
+
+The job calculates each weekday slot from the request's UTC submission time.
+After downtime it starts with the current eligible weekday slot and skips
+unsent older cycles. After a definitive temporary rejection, retry at
+1, 2, 5, 15, 30 and 60 minutes, up to seven attempts per channel within the
+same cycle. Confirmed configuration or permanent failures stop that channel.
+An ambiguous result or a two-minute expired send lease ends that cycle as
+unconfirmed. Investigate ambiguous and failed outcomes in the journal and
+durable outbox. The next eligible weekday cycle starts with Telegram.
+The job rechecks status before each claim. A provider call already in flight
+can finish after an operator records a response or closes the request.
+
+During release validation, provision a dedicated
+[external job heartbeat](#g13d-3-operational-monitoring-target) in
+Healthchecks.io with the timer cadence and a grace period that covers the
+validated runtime. Configure the release job wrapper to report success only
+after a live run exits successfully with `status=completed`. Exclude dry runs,
+disabled passes and lock skips from success heartbeats. Deliver missed or
+failed heartbeat alerts independently of the app host and its dispatchers.
+Verify detection by stopping the job in the validation environment.
+Use journal and outbox outcomes separately to verify provider acceptance,
+fallback, and backlog age. Installation, enablement, and external monitoring
+validation remain open.
+
 ### Pre-release refund operations
 
 `REFUND_REQUEST_ALERT_DELIVERY_ENABLED` defaults to `false` and controls

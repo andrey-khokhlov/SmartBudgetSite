@@ -205,16 +205,24 @@ def test_failed_claim_commit_never_sends(db_session, incident, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("status", "body", "expected"),
+    ("status", "body", "confirmed_rejection", "expected"),
     [
-        (200, b'{"ok":true}', None),
-        (200, b'{"ok":false}', "ambiguous"),
-        (200, b"malformed", "ambiguous"),
-        (429, b"", "temporary"),
-        (403, b"", "permanent"),
+        (200, b'{"ok":true}', False, None),
+        (200, b'{"ok":false}', False, "ambiguous"),
+        (200, b"malformed", False, "ambiguous"),
+        (429, b"", False, "temporary"),
+        (403, b"", False, "permanent"),
+        (200, b'{"ok":true}', True, None),
+        (429, b'{"ok":false,"error_code":429}', True, "temporary"),
+        (429, b"", True, "ambiguous"),
+        (408, b"", True, "ambiguous"),
+        (502, b"", True, "ambiguous"),
+        (403, b"", True, "permanent"),
     ],
 )
-def test_telegram_adapter_classifies_responses(monkeypatch, status, body, expected):
+def test_telegram_adapter_classifies_responses(
+    monkeypatch, status, body, confirmed_rejection, expected
+):
     monkeypatch.setattr(settings, "TELEGRAM_BOT_TOKEN", "123:fake")
     monkeypatch.setattr(settings, "TELEGRAM_CHAT_ID", "456")
 
@@ -236,7 +244,9 @@ def test_telegram_adapter_classifies_responses(monkeypatch, status, body, expect
             pass
 
     monkeypatch.setattr(transport, "HTTPSConnection", FakeConnection)
-    assert transport.send_telegram_alert("test message") == expected
+    assert transport.send_telegram_alert(
+        "test message", require_confirmed_rejection=confirmed_rejection
+    ) == expected
 
 
 @pytest.mark.parametrize(
