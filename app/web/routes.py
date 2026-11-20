@@ -430,6 +430,26 @@ async def faq(request: Request):
     )
 
 
+@router.get("/legal/seller-information", response_class=HTMLResponse)
+async def seller_information_page(request: Request):
+    if not settings.seller_information_available:
+        raise HTTPException(status_code=404)
+
+    address = (
+        settings.SELLER_ADDRESS_RU
+        if get_lang(request) == "ru"
+        else settings.SELLER_ADDRESS_EN
+    )
+    return render(
+        request,
+        "seller_information.html",
+        {
+            "seller_address": address.strip(),
+            "seller_phone": settings.SELLER_CONTACT_PHONE.strip(),
+        },
+    )
+
+
 @router.get("/feedback", response_class=HTMLResponse)
 async def feedback_page(
     request: Request,

@@ -5,6 +5,7 @@ from urllib.parse import parse_qsl, urljoin, urlsplit
 
 import pytest
 
+from app.core.config import settings
 from app.models.product import Product
 from app.models.product_price import ProductPrice
 from app.models.service_addon import ServiceAddon
@@ -137,7 +138,8 @@ def test_language_segments_preserve_query_values_and_persist_locale(
 @pytest.mark.parametrize(
     "lang,feedback_label", [("en", "Feedback"), ("ru", "Обратная связь")]
 )
-def test_shared_footer_has_only_approved_links(client, path, lang, feedback_label):
+def test_shared_footer_has_only_approved_links(client, monkeypatch, path, lang, feedback_label):
+    monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "")
     response = client.get(path, params={"lang": lang})
     assert response.status_code == 200
     footer = re.search(r"<footer\b[^>]*>(.*?)</footer>", response.text, re.S)

@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     PURCHASE_EMAIL_RECOVERY_PENDING_DELAY_MINUTES: int = Field(default=5, gt=0)
     PUBLIC_BASE_URL: str | None = None
 
+    SELLER_ADDRESS_RU: str = Field(default="", repr=False)
+    SELLER_ADDRESS_EN: str = Field(default="", repr=False)
+    SELLER_CONTACT_PHONE: str = Field(default="", repr=False)
+
     MAIL_SMTP_HOST: str = ""
     MAIL_SMTP_PORT: int = 587
     MAIL_SMTP_USER: str = ""
@@ -85,6 +89,17 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="forbid",
     )
+
+    @property
+    def seller_information_available(self) -> bool:
+        return all(
+            value.strip()
+            for value in (
+                self.SELLER_ADDRESS_RU,
+                self.SELLER_ADDRESS_EN,
+                self.SELLER_CONTACT_PHONE,
+            )
+        )
 
     @model_validator(mode="after")
     def validate_consultation_capacity(self) -> "Settings":

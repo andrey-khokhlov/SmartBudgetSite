@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("seller_information_title") }} · SmartBudget{% endblock %}
+
+{% block content %}
+<article aria-labelledby="seller-information-heading">
+  <h1 id="seller-information-heading">{{ t("seller_information_title") }}</h1>
+  <p><strong>{{ t("seller_information_name") }}</strong></p>
+  <p>{{ t("seller_information_tax_status") }}</p>
+  <dl>
+    <dt class="muted">{{ t("seller_information_address_label") }}</dt>
+    <dd><p>{{ seller_address }}</p></dd>
+    <dt class="muted">{{ t("seller_information_phone_label") }}</dt>
+    <dd><p>{{ seller_phone }}</p></dd>
+    <dt class="muted">{{ t("seller_information_support_label") }}</dt>
+    <dd><a href="mailto:{{ t('footer_support_email') }}">{{ t("footer_support_email") }}</a></dd>
+  </dl>
+</article>
+{% endblock %}

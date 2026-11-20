@@ -898,9 +898,10 @@ Before paid public sales:
   unconfirmed.
   The voluntary 14-day refund policy and mandatory customer rights remain in
   force.
-- Securely obtain the owner-supplied geographical address and telephone. Publish
-  the bilingual seller-information page with policy §9, neutral footer and
-  pre-payment Checkout links. Verify disclosure before payment.
+- G15-A implements the bilingual seller-information page and conditional neutral
+  footer link locally. Securely obtain and [configure the seller details](operations.md#configuration-completion-rule).
+  Verify both locales and the footer link in the release environment. Policy §9
+  and pre-payment Checkout links and disclosure validation remain open.
 - Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
   only after aligning Checkout, FAQ, purchase email and actual operations,
   including support targets and approved R54 wording. Keep R55 exclusions.

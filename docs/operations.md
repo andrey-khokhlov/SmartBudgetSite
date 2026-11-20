@@ -252,6 +252,16 @@ A configuration change is not complete until the example and active development
 configuration are updated. Secrets, tokens, credentials, and provider signing
 secrets must never be committed or accepted from request input.
 
+G15-A Seller Information uses `SELLER_ADDRESS_RU` and `SELLER_ADDRESS_EN`
+for the localized representations of the same complete geographical address,
+and `SELLER_CONTACT_PHONE` for the shared contact telephone. Add the
+owner-supplied values securely to the application's release environment,
+outside version control. All three settings must contain non-blank text for
+`/legal/seller-information` and the neutral footer link to appear. Incomplete
+configuration hides the footer link and yields HTTP 404 on direct requests.
+Keep development values empty or fictional and verify both languages and the
+footer link after configuring the release environment.
+
 `BUNDLE_CHECKOUT_ENABLED` defaults to `false`. Keep it false for the first
 public release. It controls new public product-plus-consultation purchases.
 Product-only and standalone consultation checkout use separate Sales and

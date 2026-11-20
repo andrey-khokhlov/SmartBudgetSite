@@ -10,6 +10,26 @@ def build_settings(**values: Any) -> Settings:
     return Settings(_env_file=None, **values)  # type: ignore[call-arg]
 
 
+def test_seller_information_availability_from_environment(monkeypatch):
+    fields = ("SELLER_ADDRESS_RU", "SELLER_ADDRESS_EN", "SELLER_CONTACT_PHONE")
+    for field in fields:
+        monkeypatch.delenv(field, raising=False)
+    assert not build_settings().seller_information_available
+
+    monkeypatch.setenv("SELLER_ADDRESS_RU", "Вымышленный адрес")
+    monkeypatch.setenv("SELLER_ADDRESS_EN", "Fictional address")
+    assert not build_settings().seller_information_available
+    monkeypatch.setenv("SELLER_CONTACT_PHONE", "   ")
+    assert not build_settings().seller_information_available
+    monkeypatch.setenv("SELLER_CONTACT_PHONE", "+1 202-555-0147")
+
+    configured = build_settings()
+    assert configured.seller_information_available
+    assert configured.SELLER_ADDRESS_RU == "Вымышленный адрес"
+    assert configured.SELLER_ADDRESS_EN == "Fictional address"
+    assert configured.SELLER_CONTACT_PHONE == "+1 202-555-0147"
+
+
 def test_consultation_capacity_defaults_and_overrides(monkeypatch):
     config = build_settings()
     assert config.CONSULTATION_CAPACITY_LIMIT == 4

@@ -1,5 +1,7 @@
 from fastapi import Request
 
+from app.core.config import settings
+
 
 def public_navigation_context(request: Request) -> dict[str, object]:
     """Provide shared header state without echoing capability paths or hosts."""
@@ -11,6 +13,8 @@ def public_navigation_context(request: Request) -> dict[str, object]:
         section = "products"
     elif path == "/consultations" or path.startswith("/consultations/checkout/"):
         section = "consultations"
+    elif path == "/legal/seller-information":
+        section = "seller_information"
     else:
         section = None
 
@@ -22,4 +26,5 @@ def public_navigation_context(request: Request) -> dict[str, object]:
     return {
         "public_navigation_section": section,
         "language_switch_url": language_switch_url,
+        "seller_information_available": settings.seller_information_available,
     }
