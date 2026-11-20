@@ -918,6 +918,13 @@ Before paid public sales:
   refund request form remains linked regardless of policy availability. The
   policy link appears when the policy is available. Verify both links and
   the approved summaries in both locales during release validation.
+- G15-C3 implements the approved RU/EN refund and cancellation summaries in
+  product-only and standalone consultation purchase emails. When the policy
+  is available, verify the absolute HTTPS policy URL in plain text and the
+  clickable policy title in HTML in the release environment. Use the
+  [purchase-email cutover check](operations.md#g13-purchase-email-template-cutover)
+  before changing templates or policy availability in the release environment,
+  as either can change the payload of an unresolved send.
 - Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
   only after aligning Checkout, FAQ, purchase email and actual operations,
   including support targets and approved R54 wording. Keep R55 exclusions.

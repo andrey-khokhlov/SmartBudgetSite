@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
+from app.core.config import settings
 from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.models.enums import SaleItemType
 from app.models.sale import Sale
@@ -12,7 +13,7 @@ from app.models.sale import Sale
 TEMPLATE_DIRECTORY = (
     Path(__file__).resolve().parents[1] / "templates" / "purchase_email"
 )
-LINK_MARKER = re.compile(r"\[\[(download|booking):([^\[\]{}\n]+)\]\]")
+LINK_MARKER = re.compile(r"\[\[(download|booking|refund_policy):([^\[\]{}\n]+)\]\]")
 PRODUCT_PLACEHOLDER = "{{ product_name }}"
 REFERENCE_PLACEHOLDER = "{{ sale_reference }}"
 COPY_PLACEHOLDER = re.compile(
@@ -37,14 +38,14 @@ class RenderedPurchaseEmail:
 
 
 def _validate_template(
-    subject: str, source: str, links: dict[str, str], product_name: str
+    subject: str, source: str, links: dict[str, str | None], product_name: str
 ) -> None:
     markers = list(LINK_MARKER.finditer(source))
     if sorted(marker[1] for marker in markers) != sorted(links) or any(
         not marker[2].strip() for marker in markers
     ):
         raise PurchaseEmailRenderError(
-            "Purchase email template has invalid access markers."
+            "Purchase email template has invalid link markers."
         )
 
     expected_product_names = int("download" in links)
@@ -69,7 +70,7 @@ def _validate_template(
 
 
 def _render_bodies(
-    source: str, links: dict[str, str], product_name: str, sale_reference: str
+    source: str, links: dict[str, str | None], product_name: str, sale_reference: str
 ) -> tuple[str, str]:
     text_parts: list[str] = []
     html_parts: list[str] = []
@@ -87,14 +88,21 @@ def _render_bodies(
     start = 0
     for marker in LINK_MARKER.finditer(source):
         append_copy(source[start : marker.start()])
-        text_parts.append(links[marker[1]])
-        url = escape(links[marker[1]], quote=True)
-        label = escape(marker[2])
-        html_parts.append(
-            '<a style="display:inline-block;padding:10px 16px;background:#1d4ed8;'
-            'color:#fff;border-radius:6px;text-decoration:none" '
-            f'href="{url}">{label}</a>'
-        )
+        kind, label = marker.groups()
+        url = links[kind]
+        if url is None:
+            text_parts.append(label)
+            html_parts.append(escape(label))
+        elif kind == "refund_policy":
+            text_parts.append(f"{label} ({url})")
+            html_parts.append(f'<a href="{escape(url, quote=True)}">{escape(label)}</a>')
+        else:
+            text_parts.append(url)
+            html_parts.append(
+                '<a style="display:inline-block;padding:10px 16px;background:#1d4ed8;'
+                'color:#fff;border-radius:6px;text-decoration:none" '
+                f'href="{escape(url, quote=True)}">{escape(label)}</a>'
+            )
         start = marker.end()
     append_copy(source[start:])
     html_body = "".join(
@@ -116,7 +124,7 @@ def render_purchase_email(
     if not sale.sale_reference or not SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference):
         raise PurchaseEmailRenderError("Purchase has an invalid purchase reference.")
 
-    links = {}
+    links: dict[str, str | None] = {}
     product_name = ""
     for item in sale.items:
         if item.item_type == SaleItemType.PRODUCT:
@@ -147,6 +155,11 @@ def render_purchase_email(
         composition = "bundle"
     else:
         composition = "product" if "download" in links else "consultation"
+        links["refund_policy"] = None
+        if settings.refund_policy_available:
+            public_url = urlsplit(base_url)
+            if public_url.scheme == "https" and public_url.netloc:
+                links["refund_policy"] = f"{base_url}/legal/refund-policy"
     language = "ru" if sale.purchase_language == "ru" else "en"
     template = TEMPLATE_DIRECTORY / f"{composition}_{language}.txt"
     try:

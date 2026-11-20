@@ -1484,6 +1484,8 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 Если вам потребуется изменить время уже забронированной консультации, воспользуйтесь ссылкой для переноса в подтверждении записи.
 
+Условия отмены: Вы можете отменить консультацию до начала её проведения и получить полный возврат стоимости услуги. Подробности — в [Политике отмены и возвратов](/legal/refund-policy).
+
 Если возникнут вопросы или трудности с записью, свяжитесь с нами через форму обратной связи или по адресу support@neocitrix.com.
 
 С уважением, Команда SmartBudget
@@ -1507,6 +1509,8 @@ Please select a convenient time from the available slots. You must book your con
 Once your booking is confirmed, you will receive a separate confirmation with the date, time, and instructions for joining the online meeting.
 
 If you need to change your appointment, use the rescheduling link in your booking confirmation.
+
+Cancellation terms: You can cancel your consultation before it starts and receive a full refund of the amount paid for the service. Details are available in the [Cancellation and Refund Policy](/legal/refund-policy).
 
 If you have any questions or experience difficulties booking your consultation, contact us through the feedback form or at support@neocitrix.com.
 
@@ -1536,6 +1540,8 @@ Best regards, The SmartBudget Team
 
 Рекомендуем скачать файл и сохранить его на своём устройстве.
 
+Условия возврата: Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты. Подробности — в [Политике отмены и возвратов](/legal/refund-policy).
+
 Если у вас возникнут вопросы или сложности со скачиванием, обратитесь через форму обратной связи на сайте или напишите нам на support@neocitrix.com.
 
 С уважением,\
@@ -1562,6 +1568,8 @@ Thank you for purchasing SmartBudget. Your payment has been successfully confirm
 This limit applies only to downloading the file. You can continue using your purchased version of SmartBudget indefinitely.
 
 We recommend downloading the file and saving it to your device.
+
+Refund terms: You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation. Details are available in the [Cancellation and Refund Policy](/legal/refund-policy).
 
 If you have any questions or experience difficulties downloading your purchase, please use the feedback form on our website or contact us at support@neocitrix.com.
 
