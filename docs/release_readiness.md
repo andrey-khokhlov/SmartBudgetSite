@@ -879,14 +879,22 @@ Before paid public sales:
   operator outbox with administrative SMTP fallback and timer templates. Validate
   the deployed flag and schedule, channel retries and acceptance evidence, pending
   request visibility, and operational follow-up. R53-4A adds durable Admin
-  response and closure attestations. Apply revision `6e4f8c2a9b17` before
-  deploying that code. Verify historical requests remain pending and the two
-  actions retain their original UTC timestamps on replay. R53-4B implements
-  deadline calculations and daily operator reminders locally. Apply revision
-  `9f3b1a7c2d84` and validate the [reminder job](operations.md#refund-request-deadline-reminders),
-  delivery and fallback, suppression after response or closure, restart
-  coalescing, and independent Healthchecks.io failure detection. R53 release
-  validation remains open. Keep money movement operator-controlled.
+  response and closure attestations. R53-4B implements deadline calculations
+  and daily operator reminders locally. On 2026-11-20 the owner supplied
+  and verified command outputs for development `smartbudget` and review
+  `smartbudget_review` on PostgreSQL at `localhost:5433`. Both upgraded from
+  `1c6ea8b50d37` through `6e4f8c2a9b17` to `9f3b1a7c2d84` (head).
+  `alembic check` reported `No new upgrade operations detected.` in both databases.
+  Pre-migration custom-format backups passed `pg_restore` archive checks and
+  the copied files matched by SHA-256. No database restore was performed.
+  Production migration and deployment remain open. Apply both revisions
+  before starting the updated production code. Verify that historical
+  requests remain pending and both actions retain their original UTC timestamps
+  on replay. Validate [reminder scheduling](operations.md#refund-request-deadline-reminders),
+  Telegram/SMTP delivery and fallback, suppression after response or closure,
+  restart coalescing, and independent Healthchecks.io failure detection in
+  the release environment. R53 release validation remains open. Keep money
+  movement operator-controlled.
 - R39-A adds single-use Share provisioning and verified reconciliation.
   R39-B adds automatic expiry revocation. Validate the timer and provider
   outcomes in the release environment.
