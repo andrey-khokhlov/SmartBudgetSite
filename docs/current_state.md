@@ -744,7 +744,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
 | R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
-| R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ group remains open |
+| R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ deferred to UI/UX Polish before public release; align copy with separate purchases, catalog-owned prices, and verified Calendly behavior. Does not block Functional Freeze. |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Products, Buy and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
