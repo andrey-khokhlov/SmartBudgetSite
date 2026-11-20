@@ -888,11 +888,16 @@ Before paid public sales:
   and provider-side verification, mandatory operator follow-up on failure,
   and booking disposition before refunds. Check outage handling against
   mandatory deadlines and preserve booked-entitlement evidence.
-- Implement the R50 initially unchecked digital delivery request where legally
-  applicable. Separate it from other agreements and any applicable consultation
-  early-start consent. Verify durable order evidence and purchase communication,
-  including applicability, supply-start, and no-consent handling for supported
-  flows. Preserve the voluntary 14-day policy and mandatory rights.
+- On 2026-11-20 the owner deferred [R50 implementation](release_uiux_requirements.md#r50--conditional-immediate-supply-consent)
+  until a concrete legal requirement is established. Market-specific pre-sale
+  legal validation remains mandatory and open. Before enabling affected paid
+  sales, independently determine applicable obligations and verify that the
+  sales flow satisfies them. If validation establishes that R50 is required for
+  an intended market, reconsider implementation before enabling those sales.
+  EU and UK legal applicability and obligations for immediate supply remain
+  unconfirmed.
+  The voluntary 14-day refund policy and mandatory customer rights remain in
+  force.
 - Securely obtain the owner-supplied geographical address and telephone. Publish
   the bilingual seller-information page with policy §9, neutral footer and
   pre-payment Checkout links. Verify disclosure before payment.

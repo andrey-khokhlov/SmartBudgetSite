@@ -27,8 +27,10 @@ This is a requirements source, not an implementation report or a second backlog.
   assessment is claimed by this documentation revision.
 - Appendix A preserves the October 28 source. The [November 14 owner-approved
   publication candidate](#appendix-b--approved-refund-policy-publication-candidate)
-  supersedes it. R49–R54, synchronization of FAQ, Checkout, email and operations,
-  and applicable legal validation remain pre-sale requirements.
+  supersedes it. R49 and R51–R54, synchronization of FAQ, Checkout, email and
+  operations, and applicable legal validation remain pre-sale requirements.
+  See [R50](#r50--conditional-immediate-supply-consent) for the implementation
+  deferral.
 - R47 supplements the older security-sheet guidance; final public RU/EN ActiveX
   wording remains pending editorial approval. Excel 2021 validation does not
   establish the complete Microsoft 365 scenario.
@@ -241,7 +243,7 @@ and R55's technical exclusions remain internal.
 | R47 | ActiveX onboarding and customer guidance; full requirement below | Required pre-release; public copy/editorial and remaining Microsoft 365 validation pending | Acceptance and validation: see R47 below | Owner planning amendment, 2026-11-04 |
 | R48 | Updated RC / Walkthrough artifacts require review-release replacement; full requirement below | Validated in review; Gate 2 complete | Acceptance and validation: see R48 below | Owner planning amendment, 2026-11-04 |
 | R49 | No universal refund-right waiver; full requirement below | High; approved no-universal-waiver boundary and disclosure pending | Acceptance and validation: see R49 below | Owner planning amendment, 2026-11-04 |
-| R50 | Conditional immediate-supply consent; full requirement below | High; D4 approved, applicable consent implementation pending | Acceptance and validation: see R50 below | Owner planning amendment, 2026-11-04 |
+| R50 | Conditional immediate-supply consent; full requirement below | Deferred until a concrete legal requirement is established. Market-specific pre-sale legal validation remains mandatory and open | Acceptance and validation: see R50 below | Owner decisions of 2026-11-04 and 2026-11-20 |
 | R51 | Product / consultation / bundle refund-consent separation; full requirement below | High; D4 approved, composition-specific implementation pending | Acceptance and validation: see R51 below | Owner planning amendment, 2026-11-04 |
 | R52 | Refund Policy revision before paid sales; full requirement below | High; D4 approved, synchronized publication gate open | Acceptance and validation: see R52 below | Owner planning amendment, 2026-11-04 |
 | R53 | Applicable online withdrawal/cancellation path; full requirement below | High; D4 approved, persisted request flow pending | Acceptance and validation: see R53 below | Owner planning amendment, 2026-11-04 |
@@ -2147,7 +2149,11 @@ language, SKU, currency, citizenship or payment method.
 
 Status:
 
-`High; D4 decision complete. Applicable implementation and validation pending.`
+`Deferred by the 2026-11-20 owner decision until a concrete legal requirement is established.`
+
+Market-specific pre-sale legal validation remains mandatory and open. If
+validation establishes that R50 is required for an intended market, reconsider
+implementation before enabling applicable paid sales.
 
 ## R51 — Product / consultation / bundle refund-consent separation
 
@@ -2174,7 +2180,7 @@ in force.
 
 Status:
 
-`High; D4 decision complete. Separate purchases implemented; R50 consent and G15 synchronized publication pending.`
+`High; D4 decision complete. Separate purchases implemented. G15 synchronized publication and applicable legal validation remain open.`
 
 ## R52 — Refund Policy revision before paid sales
 
@@ -2340,7 +2346,7 @@ recovered copy remains available as source material.
 | R42/R51, Appendix A section 4 | One Lava.top refund action per transaction is an execution limit. D4 permits an alternative method for a later required refund only with explicit customer agreement and evidence. | Validate later-request handling and record evidence. The one-operation-per-Sale constraint remains; alternative confirmation is implemented locally |
 | R06/R23/R38/R40/R51 | D3 approves standalone `ServiceAddon` and separate service provider mapping. Product-only and standalone consultation initiation are implemented locally. | Validate provider and paid entitlement behavior in the release environment |
 | R35/R40 | D5 approves persisted Sale-level order language. G13 uses that snapshot for localized rendering. | Release-environment delivery validation |
-| R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | Implement R50 applicable Checkout/confirmation flows; R53 intake is implemented locally. Synchronize the new policy with actual behavior |
+| R49–R53 | D4 approves separate applicable supply and early-start consents, durable order evidence, and persisted customer request/confirmation. | R50 implementation is deferred until a concrete legal requirement is established. Market-specific pre-sale legal validation remains mandatory and open. R53 intake is implemented locally. Synchronize the new policy with actual behavior |
 | R48 | ProductRelease identity `(product_id, version)` is immutable/idempotent; differing filename, size, SHA-256 or normalized notes conflict; unique opaque keys prevent overwrites | Review replacement and verification completed at version 1.0 after zero-reference inspection. Retain immutable identity and distinct R2 keys for later releases |
 
 Product-release evidence checked in `app/models/product_release.py` (unique

@@ -569,8 +569,8 @@ and seller-information model. The [approved publication candidate](release_uiux_
 awaits implementation alignment, publication and independent legal validation.
 The owner confirms all transactions to date are tests, with no commercial sales.
 The first-release amendment defers bundle item accounting and preserves the
-commercial launch cutoff for Product Refund Rate. R42 operations, R50 consent,
-R53 operational follow-up and G15 publication remain open. R55 excludes activation and DRM.
+commercial launch cutoff for Product Refund Rate. R42 operations, R53 operational
+follow-up and G15 publication remain open. R55 excludes activation and DRM.
 These are owner-approved product and architecture decisions.
 
 The owner-reported clean review environment uses `smartbudget_review` and
@@ -620,7 +620,7 @@ R53-3 — Customer Receipt Retry is implemented locally.
 2. R39/R42 — Refund and cancellation workflow (implemented locally; release-environment validation open).
 3. Consultation Capacity Management (implemented locally).
 4. G13B/G13C — Administrative recovery (implemented locally for product-only Sales).
-5. R50/G15 — Refund policy, consent and legal publication.
+5. G15 — Refund policy, seller disclosure and pre-sale legal validation.
 6. Functional Freeze.
 7. UI/UX Polish.
 8. Production Deployment.
@@ -764,7 +764,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
 | R49 | Partial | G10 product Checkout displays composition-sensitive delivery information. The no-universal-waiver boundary remains in force. | G15 synchronized policy disclosure and link under D4 |
-| R50 | Required | No immediate-supply consent mechanism exists. D4 approves separate express consent where legally applicable and durable order evidence. | Bounded implementation and applicable supply, no-consent and confirmation validation |
+| R50 | Deferred until a concrete legal requirement is established | On 2026-11-20 the owner deferred the R50 Checkout checkbox, server-side validation, new Sale fields, migrations and purchase-email changes. | [Market-specific pre-sale legal validation](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) remains mandatory and open. If R50 is required for an intended market, reconsider implementation before enabling applicable paid sales |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 release-environment validation, applicable early-start consent and G15 composition-specific wording |
 | R52 | Required | Approved RU/EN policy candidate supersedes Appendix A. | G15 publication and market-specific legal validation before applicable paid sales |
 | R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts, bounded SMTP recovery and read-only Admin receipt status. | Validate deployed notifications, receipt recovery and operational follow-up. Operator reminders remain pending. Refund execution remains operator-controlled |
@@ -1042,7 +1042,7 @@ Implementation, publication and external validation remain separately tracked.
 | D1 — Landing prices | **Decision complete.** Price-free Hero. The concluding section may show the current database-owned price and link to Buy. The approved 2,990 RUB / 49 EUR launch values are recorded in [commerce architecture](architecture/commerce_and_delivery.md#smartbudget-10-launch-pricing-and-product-use-rights). | G9 offer locally validated. Release-environment catalog validation remains open |
 | D2 — Public contact boundary | **Decision complete.** Feedback and `support@neocitrix.com` where applicable are the official support path. Personal Telegram, WhatsApp, Facebook, VK, LinkedIn and email are excluded as public contact channels. Paid consultation remains separate. | G2B locally validated. UX-001 release-environment validation remains open |
 | D3 — Standalone consultation checkout | **Architecture decision complete.** Standalone `ServiceAddon` and separate service provider mapping under [commerce architecture](architecture/commerce_and_delivery.md#standalone-service-routing-d3). | G11 and G12 implemented locally. Real provider validation remains open |
-| D4 — Refund, withdrawal and seller information | **Product and architecture decision complete.** [Approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4) and [consent and seller boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary) define the target. | Separate R42/R50/R53 capabilities, G15 synchronized publication, final seller details and operational validation |
+| D4 — Refund, withdrawal and seller information | **Product and architecture decision complete.** [Approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4) and [consent and seller boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary) define the target. | R42/R53 follow-up, G15 synchronized publication, final seller details and applicable validation. R50 implementation is deferred until a concrete legal requirement is established |
 | D5 — Purchase-email language | **Implemented locally.** Both public Checkout flows persist the order language on Sale at creation. Rendering and retries use the stored language. | Release-environment delivery validation remains open |
 | D6 — Updates and support | **Decision complete.** Indefinite use of the purchased release, separately purchased new releases, possible corrected file as a defect remedy, and separate ordinary support and paid consultation. See [commerce terms](architecture/commerce_and_delivery.md#release-updates-and-support-d6). | G14 and synchronized customer-facing terms |
 
@@ -1083,9 +1083,9 @@ surface-specific slices, not duplicate requirements.
 
 R42 original-provider and alternative full-Sale confirmations are implemented
 locally. Release-environment validation remains open.
-R50 applicable consent and the outstanding R53 operational requirements need
-their own bounded scopes. G15 owns synchronized publication. R39 and R45 remain validation
-work. R46 is complete, R48 is validated, and R55 remains deferred.
+The outstanding R53 operational requirements need a bounded scope. G15 owns
+synchronized publication. R39 and R45 remain validation work. R46 is complete,
+R48 is validated, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
 G6 foundation and the R18 requirements link are also implemented. G10 completes
