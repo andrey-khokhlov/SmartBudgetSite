@@ -53,6 +53,10 @@
           <span class="footer-sep" aria-hidden="true">·</span>
           <a class="footer-text-link" href="/legal/seller-information"{% if public_navigation_section == "seller_information" %} aria-current="page"{% endif %}>{{ t("footer_legal_information") }}</a>
         {% endif %}
+        {% if refund_policy_available %}
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a class="footer-text-link" href="/legal/refund-policy"{% if public_navigation_section == "refund_policy" %} aria-current="page"{% endif %}>{{ t("footer_refund_policy") }}</a>
+        {% endif %}
       </div>
     </div>
   </footer>

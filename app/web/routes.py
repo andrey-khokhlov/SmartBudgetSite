@@ -450,6 +450,18 @@ async def seller_information_page(request: Request):
     )
 
 
+@router.get("/legal/refund-policy", response_class=HTMLResponse)
+async def refund_policy_page(request: Request):
+    if not settings.refund_policy_available:
+        raise HTTPException(status_code=404)
+
+    return render(
+        request,
+        "refund_policy.html",
+        {"publication_date": settings.REFUND_POLICY_PUBLICATION_DATE},
+    )
+
+
 @router.get("/feedback", response_class=HTMLResponse)
 async def feedback_page(
     request: Request,

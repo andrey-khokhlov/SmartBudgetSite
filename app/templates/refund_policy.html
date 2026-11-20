@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("refund_policy_title") }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/refund_policy.css') }}?v=1">
+{% endblock %}
+
+{% block content %}
+<article class="refund-policy" aria-labelledby="refund-policy-heading">
+  <h1 id="refund-policy-heading">{{ t("refund_policy_title") }}</h1>
+  <p class="refund-policy__date">
+    <strong>{{ t("refund_policy_last_updated") }}</strong>
+    <time datetime="{{ publication_date }}">{{ publication_date }}</time>
+  </p>
+  {% if lang == "ru" %}
+    {% include "refund_policy/ru.html" %}
+  {% else %}
+    {% include "refund_policy/en.html" %}
+  {% endif %}
+</article>
+{% endblock %}

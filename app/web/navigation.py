@@ -15,6 +15,8 @@ def public_navigation_context(request: Request) -> dict[str, object]:
         section = "consultations"
     elif path == "/legal/seller-information":
         section = "seller_information"
+    elif path == "/legal/refund-policy":
+        section = "refund_policy"
     else:
         section = None
 
@@ -27,4 +29,5 @@ def public_navigation_context(request: Request) -> dict[str, object]:
         "public_navigation_section": section,
         "language_switch_url": language_switch_url,
         "seller_information_available": settings.seller_information_available,
+        "refund_policy_available": settings.refund_policy_available,
     }

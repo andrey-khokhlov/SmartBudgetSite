@@ -2371,11 +2371,12 @@ Implementation groups belong in `current_state.md`.
 
 ## Appendix B — Approved Refund Policy publication candidate
 
-Owner-approved on 2026-11-14. This bilingual revision supersedes the
-recovered October 28 policy in Appendix A for publication. This is the
-approved publication candidate. Implementation, publication and independent
-legal validation remain pending. The publication date remains a placeholder.
-The refund request and seller-information links are approved future routes.
+Owner-approved on 2026-11-14 and amended in Section 7 on 2026-11-20. This
+bilingual revision supersedes the recovered October 28 policy in Appendix A.
+G15-B renders this candidate at `/legal/refund-policy`. The date placeholders
+below are replaced on the page by the owner-approved publication date in
+[release configuration](operations.md#configuration-completion-rule).
+Production publication and independent legal validation remain open.
 
 ### SmartBudget — Политика отмены и возвратов
 
@@ -2507,7 +2508,7 @@ SmartBudget предоставляет платные индивидуальны
 
 Для запроса отмены покупки или возврата денежных средств воспользуйтесь специальной [формой возврата на сайте SmartBudget](/refund-request).
 
-Укажите адрес электронной почты, использованный при покупке, сведения, позволяющие определить заказ, и тип обращения.
+Укажите адрес электронной почты, использованный при покупке, и сведения, позволяющие определить заказ.
 
 При запросе добровольного возврата SmartBudget в течение 14 календарных дней объяснять причину не требуется. В остальных случаях вы можете описать обстоятельства обращения, чтобы мы могли определить применимые условия возврата.
 
@@ -2571,7 +2572,7 @@ SmartBudget предоставляет платные индивидуальны
 
 Для цифрового содержимого и услуг могут действовать различные правила отказа от договора, начала исполнения и предоставления согласия покупателя.
 
-В случаях, когда законодательство требует отдельного согласия на немедленное предоставление цифрового продукта, такое согласие запрашивается отдельно. Оно не отменяет добровольное право на полный возврат стоимости SmartBudget в течение 14 календарных дней, предусмотренное разделом 2 настоящей Политики.
+Необходимость отдельного согласия на немедленное предоставление цифрового продукта определяется применимым законодательством. Это не ограничивает добровольное право на полный возврат стоимости SmartBudget в течение 14 календарных дней, предусмотренное разделом 2 настоящей Политики.
 
 Условия отмены консультаций применяются отдельно от правил предоставления цифровых продуктов.
 
@@ -2729,7 +2730,7 @@ Technical difficulties do not limit mandatory consumer rights.
 
 To request a purchase cancellation or refund, use the dedicated [refund request form on the SmartBudget website](/refund-request).
 
-Provide the email address used for the purchase, information sufficient to identify your order, and the type of request.
+Provide the email address used for the purchase and information sufficient to identify your order.
 
 You do not need to give a reason when requesting a voluntary SmartBudget refund within 14 calendar days of payment confirmation. For other requests, you may describe the circumstances so that we can assess the applicable refund terms.
 
@@ -2793,7 +2794,7 @@ Depending on the circumstances of the purchase and the applicable law, customers
 
 Different withdrawal, performance, and consent requirements may apply to digital content and services.
 
-Where applicable law requires separate consent for the immediate supply of a digital product, that consent is requested separately. It does not affect the voluntary right to a full SmartBudget refund within 14 calendar days, as described in Section 2 of this Policy.
+Whether separate consent is required for immediate digital product delivery depends on applicable law. This does not limit the voluntary right to a full SmartBudget refund within 14 calendar days, as described in Section 2 of this Policy.
 
 Consultation cancellation terms apply separately from digital product supply rules.
 

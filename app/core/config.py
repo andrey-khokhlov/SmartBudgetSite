@@ -1,8 +1,9 @@
 import os
+from datetime import date
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ENV_FILE allows switching environments (dev/prod/test)
@@ -40,6 +41,7 @@ class Settings(BaseSettings):
     SELLER_ADDRESS_RU: str = Field(default="", repr=False)
     SELLER_ADDRESS_EN: str = Field(default="", repr=False)
     SELLER_CONTACT_PHONE: str = Field(default="", repr=False)
+    REFUND_POLICY_PUBLICATION_DATE: date | None = None
 
     MAIL_SMTP_HOST: str = ""
     MAIL_SMTP_PORT: int = 587
@@ -100,6 +102,26 @@ class Settings(BaseSettings):
                 self.SELLER_CONTACT_PHONE,
             )
         )
+
+    @property
+    def refund_policy_available(self) -> bool:
+        return (
+            self.REFUND_POLICY_PUBLICATION_DATE is not None
+            and self.seller_information_available
+        )
+
+    @field_validator("REFUND_POLICY_PUBLICATION_DATE", mode="before")
+    @classmethod
+    def parse_refund_policy_publication_date(cls, value: str | date | None) -> date | None:
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return None
+            publication_date = date.fromisoformat(value)
+            if publication_date.isoformat() != value:
+                raise ValueError("Use YYYY-MM-DD for the refund policy publication date")
+            return publication_date
+        return value
 
     @model_validator(mode="after")
     def validate_consultation_capacity(self) -> "Settings":

@@ -262,6 +262,15 @@ configuration hides the footer link and yields HTTP 404 on direct requests.
 Keep development values empty or fictional and verify both languages and the
 footer link after configuring the release environment.
 
+G15-B uses `REFUND_POLICY_PUBLICATION_DATE` for the public policy's displayed
+last-updated date. Leave it blank until the owner approves the actual
+publication date and the [publication prerequisites](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate)
+are satisfied. Set that date as `YYYY-MM-DD` in the application environment.
+Invalid non-blank dates fail Settings validation. With a blank date or
+incomplete seller details, `/legal/refund-policy` returns HTTP 404 and its
+footer link is hidden. After configuring publication, verify the date, both
+languages, and the Refund Request, Legal Information and Feedback links.
+
 `BUNDLE_CHECKOUT_ENABLED` defaults to `false`. Keep it false for the first
 public release. It controls new public product-plus-consultation purchases.
 Product-only and standalone consultation checkout use separate Sales and
