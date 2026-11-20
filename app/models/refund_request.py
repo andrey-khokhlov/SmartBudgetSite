@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -17,6 +17,12 @@ class RefundRequest(Base):
     __table_args__ = (
         UniqueConstraint(
             "submission_token", name="uq_refund_requests_submission_token"
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND first_responded_at IS NULL AND closed_at IS NULL) OR "
+            "(status = 'responded' AND first_responded_at IS NOT NULL AND closed_at IS NULL) OR "
+            "(status = 'closed' AND first_responded_at IS NOT NULL AND closed_at IS NOT NULL)",
+            name="ck_refund_requests_lifecycle",
         ),
     )
 
@@ -39,3 +45,5 @@ class RefundRequest(Base):
     window_status: Mapped[str | None] = mapped_column(String(16))
     window_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(16))
+    first_responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

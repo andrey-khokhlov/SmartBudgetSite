@@ -76,6 +76,10 @@ def test_fallback_and_privacy(db_session, queued, providers, failure, caplog):
     smtp.assert_called_once_with(message, subject="SmartBudget refund request")
     assert states(db_session)["smtp"] == ("delivered", 1, None)
     assert states(db_session)["telegram"][2] == failure
+    with db_session.begin():
+        request = db_session.get(RefundRequest, request_id)
+        assert request.status == "pending"
+        assert request.first_responded_at is None and request.closed_at is None
     assert (
         "buyer@example.com" not in caplog.text and "Private message" not in caplog.text
     )

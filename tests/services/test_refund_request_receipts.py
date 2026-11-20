@@ -83,6 +83,10 @@ def test_initial_acceptance_and_replay(db_session, submission):
         receipts.deliver_refund_request_receipt(db_session, request_id) == "not_claimed"
     )
     sender.assert_called_once()
+    with db_session.begin():
+        request = db_session.get(RefundRequest, request_id)
+        assert request.status == "pending"
+        assert request.first_responded_at is None and request.closed_at is None
 
 
 @pytest.mark.parametrize(

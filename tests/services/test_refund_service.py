@@ -20,6 +20,7 @@ from app.models.refund_operation import (
     RefundOperation,
     RefundOperationStatus,
 )
+from app.models.refund_request import RefundRequest
 from app.models.sale import Sale
 from app.models.sale_item import SaleItem
 from app.models.service_addon import ServiceAddon
@@ -242,6 +243,19 @@ def test_existing_terminal_or_uncertain_operation_prevents_second_refund(
 
 def test_confirmation_refunds_sale_and_is_idempotent(db_session):
     sale, download, _ = create_sale(db_session)
+    sale.sale_reference = "PAY-AAAAAAAAAAAAAA"
+    request = RefundRequest(
+        submission_token="a" * 64,
+        sale_id=sale.id,
+        purchase_reference=sale.sale_reference,
+        customer_email=sale.customer_email,
+        submitted_at=datetime.now(UTC),
+        language="en",
+        composition="product",
+        status="pending",
+    )
+    db_session.add(request)
+    db_session.commit()
     operation = start_full_refund(db_session, sale_id=sale.id)
 
     first = confirm_full_refund(
@@ -265,6 +279,9 @@ def test_confirmation_refunds_sale_and_is_idempotent(db_session):
     assert operation.confirmation_method == RefundConfirmationMethod.ORIGINAL_PROVIDER
     assert operation.confirmed_at is not None
     assert download.status == DownloadEntitlementStatus.CANCELLED.value
+    db_session.refresh(request)
+    assert request.status == "pending"
+    assert request.first_responded_at is None and request.closed_at is None
 
 
 def test_confirmation_requires_explicit_provider_verification(db_session):

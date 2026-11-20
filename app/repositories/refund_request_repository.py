@@ -17,6 +17,15 @@ def find_refund_request_by_token(db: Session, token: str) -> RefundRequest | Non
     )
 
 
+def lock_refund_request(db: Session, request_id: int) -> RefundRequest | None:
+    return db.scalar(
+        select(RefundRequest)
+        .where(RefundRequest.id == request_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
 def find_paid_sale_for_request(db: Session, email: str, reference: str) -> Sale | None:
     return db.scalar(
         select(Sale)

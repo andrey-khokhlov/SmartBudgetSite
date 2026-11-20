@@ -1279,8 +1279,8 @@ Telegram acceptance is unconfirmed. Each channel retains its attempt count,
 schedule, sanitized failure category and confirmed acceptance timestamp.
 The outbox is separate from purchase-delivery incidents. Alerts include only
 the internal request ID and an instruction to review it in Admin. Admin shows
-channel status alongside the pending request and its age. Notification failure
-leaves the request intact. Operator reminders remain pending.
+channel status alongside the request lifecycle status and its age. Notification
+failure leaves the request intact. Operator reminders remain pending.
 
 R53-1 persists a separate pending `RefundRequest` with a restrictive Sale
 foreign key, purchase identity, UTC submission time, language, optional
@@ -1288,8 +1288,8 @@ message, composition and applicable window evidence. Purchase verification
 failures share one public response. Product-only requests use the voluntary
 window assessment, including expired and unknown timestamps. Standalone
 consultations have no SmartBudget deadline. Mixed and other legacy compositions
-require manual review. The protected read-only Admin list shows pending
-requests and their age without adding refund controls.
+require manual review. The protected Admin list shows requests and their age.
+Any refund execution still takes place through the separate Sale workflow.
 
 Public POSTs use the existing HMAC-based per-IP rate limit and require a
 signed per-form CSRF cookie and matching form token before intake. Each form
@@ -1314,6 +1314,21 @@ Permanent, configuration and exhausted failures become `failed`. SMTP
 `accepted` confirms server acceptance only. An ambiguous outcome can lead
 to a duplicate receipt. Admin shows sanitized receipt state and retry timing
 independently of operator notifications.
+
+R53-4A adds an operator-controlled request lifecycle. New and historical requests
+start as `pending` with no response or closure timestamp. From the protected
+Admin list, the operator records a substantive response already sent to the
+customer, moving the request to `responded` and setting `first_responded_at`.
+After review and required follow-up, the operator closes the request, moving it
+to `closed` and setting `closed_at`. The service locks the request row,
+records the UTC timestamps once, and treats repeated actions as no-ops.
+Administrative closure requires a recorded first response.
+
+Receipts, operator notifications, refund operations, and Sale status changes
+leave request lifecycle state untouched. The Admin action records the operator's
+attestation of a response already sent. `submitted_at` remains the deadline
+reference for future reminders. Deadline calculation, reminders, and escalation
+remain open under R53-4.
 
 The first-release amendment defers bundle item-accounting implementation and
 keeps exceptional or historical cases under the operator procedure. Preserve the current

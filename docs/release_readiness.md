@@ -878,8 +878,11 @@ Before paid public sales:
   implemented and independently validated. It provides a durable Telegram-first
   operator outbox with administrative SMTP fallback and timer templates. Validate
   the deployed flag and schedule, channel retries and acceptance evidence, pending
-  request visibility, and operational follow-up. Keep money movement
-  operator-controlled. R53 remains open.
+  request visibility, and operational follow-up. R53-4A adds durable Admin
+  response and closure attestations. Apply revision `6e4f8c2a9b17` before
+  deploying that code. Verify historical requests remain pending and the two
+  actions retain their original UTC timestamps on replay. Deadline calculations
+  and automated reminders remain open. Keep money movement operator-controlled.
 - R39-A adds single-use Share provisioning and verified reconciliation.
   R39-B adds automatic expiry revocation. Validate the timer and provider
   outcomes in the release environment.

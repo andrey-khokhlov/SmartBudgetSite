@@ -119,8 +119,12 @@ from app.services.refund_eligibility_service import assess_voluntary_refund_wind
 from app.services.refund_request_service import (
     MAX_MESSAGE_LENGTH,
     SUBMISSION_TOKEN_PATTERN,
+    RefundRequestAction,
+    RefundRequestConflictError,
+    RefundRequestNotFoundError,
     RefundRequestPersistenceError,
     RefundRequestValidationError,
+    record_refund_request_action,
     submit_refund_request,
 )
 from secrets import token_hex
@@ -172,6 +176,7 @@ ADMIN_COOKIE_NAME = "admin_token"
 admin_router = APIRouter(dependencies=[Depends(require_admin)])
 CAPACITY_ADMIN_ACTION = "/admin/consultation-offers/capacity"
 CAPACITY_CSRF_CONTEXT = "consultation-capacity-csrf:v1"
+REFUND_REQUEST_ADMIN_CSRF_CONTEXT = "refund-request-admin-lifecycle-csrf:v1"
 
 
 def render(
@@ -2637,12 +2642,17 @@ def admin_refund_requests(
         )
         for entry in entries
     }
+    csrf_cookie_id = csrf_token = ""
+    if settings.SECRET_KEY.strip() and any(entry.status != "closed" for entry in entries):
+        csrf_cookie_id, csrf_token = token_hex(16), token_hex(32)
     response = render(
         request, "admin_refund_requests.html",
         {
             "requests": entries, "page": page,
             "has_next": len(requests) > page_size,
             "submitted_at": submitted_at,
+            "csrf_cookie_id": csrf_cookie_id,
+            "csrf_token": csrf_token,
             "utc": UTC,
             "ages_hours": {
                 entry.id: max(0, int((now - submitted_at[entry.id]).total_seconds() // 3600))
@@ -2652,7 +2662,53 @@ def admin_refund_requests(
         document_lang="en",
     )
     response.headers["Cache-Control"] = "private, no-store"
+    if csrf_token:
+        response.set_cookie(
+            f"refund_request_admin_csrf_{csrf_cookie_id}",
+            create_csrf_cookie_value(
+                csrf_cookie_id, csrf_token, context=REFUND_REQUEST_ADMIN_CSRF_CONTEXT
+            ),
+            path="/admin/refund-requests",
+            max_age=900,
+            httponly=True,
+            secure=settings.APP_ENV == "prod" or request.url.scheme == "https",
+            samesite="strict",
+        )
     return response
+
+
+@admin_router.post("/admin/refund-requests/{request_id}/{action}")
+def admin_record_refund_request_action(
+    request_id: int,
+    action: RefundRequestAction,
+    request: Request,
+    page: int = Query(1, ge=1, le=1_000_000),
+    csrf_cookie_id: str = Form(default=""),
+    csrf_token: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    if not settings.SECRET_KEY.strip() or not verify_csrf_token(
+        csrf_cookie_id,
+        csrf_token,
+        request.cookies.get(f"refund_request_admin_csrf_{csrf_cookie_id}"),
+        context=REFUND_REQUEST_ADMIN_CSRF_CONTEXT,
+    ):
+        raise HTTPException(status_code=403, detail="Invalid refund request action form")
+
+    try:
+        record_refund_request_action(db, request_id=request_id, action=action)
+    except RefundRequestNotFoundError:
+        raise HTTPException(status_code=404, detail="Refund request not found") from None
+    except RefundRequestConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    except RefundRequestPersistenceError:
+        raise HTTPException(
+            status_code=503, detail="Could not record refund request action"
+        ) from None
+    return RedirectResponse(
+        url=f"/admin/refund-requests?page={page}#refund-request-{request_id}",
+        status_code=303,
+    )
 
 
 router.include_router(admin_router)

@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import UTC, datetime
+from typing import Literal
 
 from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -14,6 +15,7 @@ from app.models.refund_request_receipt import RefundRequestReceipt
 from app.repositories.refund_request_repository import (
     find_paid_sale_for_request,
     find_refund_request_by_token,
+    lock_refund_request,
 )
 from app.repositories.refund_operation_repository import RefundOperationRepository
 from app.services.consultation_cancellation_service import close_consultation_access
@@ -27,6 +29,7 @@ logger = logging.getLogger(__name__)
 EMAIL_ADAPTER = TypeAdapter(EmailStr)
 MAX_MESSAGE_LENGTH = 2000
 SUBMISSION_TOKEN_PATTERN = re.compile(r"[0-9a-f]{64}")
+RefundRequestAction = Literal["respond", "close"]
 
 
 class RefundRequestValidationError(ValueError):
@@ -35,6 +38,42 @@ class RefundRequestValidationError(ValueError):
 
 class RefundRequestPersistenceError(Exception):
     pass
+
+
+class RefundRequestNotFoundError(Exception):
+    pass
+
+
+class RefundRequestConflictError(Exception):
+    pass
+
+
+def record_refund_request_action(
+    db: Session, *, request_id: int, action: RefundRequestAction
+) -> None:
+    """Record an operator attestation under the request row lock."""
+    try:
+        with db.begin():
+            entry = lock_refund_request(db, request_id)
+            if entry is None:
+                raise RefundRequestNotFoundError
+            if action == "respond":
+                if entry.status == "pending":
+                    entry.first_responded_at = datetime.now(UTC)
+                    entry.status = "responded"
+            elif action == "close":
+                if entry.status == "pending":
+                    raise RefundRequestConflictError(
+                        "Record the first response before closing the request."
+                    )
+                if entry.status == "responded":
+                    entry.closed_at = datetime.now(UTC)
+                    entry.status = "closed"
+            else:
+                raise ValueError("Invalid refund request action.")
+    except SQLAlchemyError:
+        logger.error("Could not record refund request action")
+        raise RefundRequestPersistenceError from None
 
 
 def _verify_replay(existing: RefundRequest, email: str, reference: str) -> str:

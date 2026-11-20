@@ -1037,6 +1037,19 @@ attempts, timestamps and sanitized failure classification. Investigate
 failed receipts through the existing operator follow-up. SMTP acceptance
 does not establish inbox delivery. Older requests have no receipt record.
 
+### Refund request lifecycle
+
+Apply Alembic revision `6e4f8c2a9b17` before starting R53-4A code. It adds
+nullable UTC response and closure timestamps. Existing requests remain
+`pending` with both timestamps empty. Downgrade is blocked once lifecycle
+history exists.
+
+In Admin Refund Requests, use **Mark first response sent** after sending a
+substantive reply to the customer. Use **Close request** after completing review
+and required follow-up. The actions record attestations, and their timestamps
+remain unchanged on replay. Continue to handle refund execution in Sale Detail.
+An automated receipt does not satisfy the first-response target.
+
 ### Pre-release refund operations
 
 `REFUND_REQUEST_ALERT_DELIVERY_ENABLED` defaults to `false` and controls

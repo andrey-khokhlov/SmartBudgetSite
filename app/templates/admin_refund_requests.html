@@ -8,7 +8,7 @@
 <div class="admin-form sales-page">
     <h1 class="admin-form-title">Refund requests</h1>
     {% for entry in requests %}
-    <section>
+    <section id="refund-request-{{ entry.id }}">
         <h2>Request #{{ entry.id }}</h2>
         <dl>
             <dt>Submitted (UTC)</dt><dd>{{ submitted_at[entry.id].isoformat(sep=" ") }}</dd>
@@ -25,7 +25,16 @@
             <dt>Deadline (UTC)</dt><dd>{{ deadline.isoformat(sep=" ") }}</dd>
             {% endif %}
             <dt>Customer message</dt><dd>{{ entry.message or "—" }}</dd>
-            <dt>Status</dt><dd>{{ entry.status }}</dd>
+            <dt>Request status</dt><dd>{{ entry.status }}</dd>
+            {% for label, timestamp in (("First response sent", entry.first_responded_at), ("Closed", entry.closed_at)) %}
+            <dt>{{ label }} (UTC)</dt>
+            {% if timestamp %}
+            {% set timestamp_utc = timestamp.astimezone(utc) if timestamp.tzinfo else timestamp.replace(tzinfo=utc) %}
+            <dd>{{ timestamp_utc.isoformat(sep=" ") }}</dd>
+            {% else %}
+            <dd>—</dd>
+            {% endif %}
+            {% endfor %}
             <dt>Customer receipt</dt>
             {% if entry.receipt %}
             <dd>
@@ -50,6 +59,19 @@
             <dt>Operator notifications</dt><dd>No delivery record</dd>
             {% endfor %}
         </dl>
+        {% if csrf_token and entry.status in ("pending", "responded") %}
+        <form method="post" action="/admin/refund-requests/{{ entry.id }}/{{ 'respond' if entry.status == 'pending' else 'close' }}?page={{ page }}">
+            <input type="hidden" name="csrf_cookie_id" value="{{ csrf_cookie_id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if entry.status == "pending" %}
+            <p>Confirm you already sent a substantive response to the customer.</p>
+            <div class="form-actions"><button type="submit" class="btn-secondary">Mark first response sent</button></div>
+            {% else %}
+            <p>Confirm review and required follow-up are complete.</p>
+            <div class="form-actions"><button type="submit" class="btn-secondary">Close request</button></div>
+            {% endif %}
+        </form>
+        {% endif %}
     </section>
     {% else %}
     <p>No refund requests.</p>

@@ -22,7 +22,6 @@ from tests.test_purchase_email_failure_classification_postgres import (  # noqa:
 )
 
 PREVIOUS = "4a2d8c71ef36"
-REVISION = "1c6ea8b50d37"
 
 
 def test_refund_confirmation_migration_retains_legacy_history_and_serializes_methods(
@@ -61,7 +60,7 @@ def test_refund_confirmation_migration_retains_legacy_history_and_serializes_met
             {"sale_id": legacy_id},
         )
 
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     alembic("check")
     with Session(engine) as db:
         verified = confirm_full_refund(
@@ -80,7 +79,7 @@ def test_refund_confirmation_migration_retains_legacy_history_and_serializes_met
     assert "confirmation_method" not in {
         column["name"] for column in inspect(engine).get_columns("refund_operations")
     }
-    alembic("upgrade", REVISION)
+    alembic("upgrade", "head")
     with Session(engine) as db:
         sale, grant, _ = create_sale(db)
         sale_id, grant_id = sale.id, grant.id
