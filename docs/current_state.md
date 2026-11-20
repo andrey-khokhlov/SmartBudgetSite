@@ -626,6 +626,22 @@ R53-3 — Customer Receipt Retry is implemented locally.
 8. Production Deployment.
 9. Live Validation.
 
+**Functional Freeze — owner-approved on 2026-11-20.**
+
+The approved baseline is commit `35b0176`
+(`docs: defer consultations FAQ to UI UX polish`).
+
+The first-release feature scope, approved business behavior, and architecture
+are frozen. No additional features or speculative enhancements are authorized.
+
+Permitted follow-up work includes UI/UX Polish, R30 Consultations FAQ
+completion, regression fixes, release-blocking security or correctness fixes,
+required legal compliance changes, deployment preparation, and operational
+validation. Material scope or architecture changes require explicit owner approval.
+
+Functional Freeze does not close the outstanding pre-sale legal, operational,
+production deployment, or live-validation gates.
+
 Local implementation and validation are tracked separately from deployment
 and live validation. Existing release gates and publication prerequisites
 still apply. After launch, SmartBudgetSite moves to maintenance and the
