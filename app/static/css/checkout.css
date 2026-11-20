@@ -115,6 +115,34 @@
     margin: 6px 0;
 }
 
+.checkout-legal {
+    border-top: 1px solid #e3e6ea;
+    padding-top: 12px;
+    color: #4b5563;
+    font-size: 13px;
+}
+
+.checkout-legal h2 {
+    margin: 0 0 6px;
+    color: #1f2937;
+    font-size: 15px;
+}
+
+.checkout-legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checkout-legal-links a {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .payment-result p {
     line-height: 1.6;
 }

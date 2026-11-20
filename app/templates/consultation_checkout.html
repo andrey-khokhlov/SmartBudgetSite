@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% from "_checkout_legal.html" import checkout_legal with context %}
 
 {% block title %}{{ t("checkout.title") }} · SmartBudget{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=4">
 <link rel="stylesheet" href="{{ url_for('static', path='css/consultations.css') }}">
 {% endblock %}
 
@@ -26,6 +27,7 @@
             <input id="checkout-email" name="customer_email" type="email" autocomplete="email"
                    maxlength="200" required aria-describedby="checkout-delivery">
             <p class="checkout-hint" id="checkout-delivery">{{ t("consultations_booking") }}</p>
+            {{ checkout_legal("checkout.consultation_refund") }}
             <button class="payment-button payment-button-primary" type="submit">{{ t("checkout.continue_payment") }}</button>
         </form>
     </div>

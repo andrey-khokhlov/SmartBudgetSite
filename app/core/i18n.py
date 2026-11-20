@@ -254,6 +254,9 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "purchase_compatibility.requirements": "SmartBudget 1.0 requires Windows 10/11 and Microsoft Excel 2019 or later (desktop version). VBA macros and ActiveX controls must be enabled.",
         "purchase_compatibility.restrictions": "Excel for Mac and Excel for the web are not supported. If your organization's security settings block VBA or ActiveX, SmartBudget will not function fully.",
         "checkout.continue_payment": "Continue to secure payment",
+        "checkout.legal_heading": "Purchase and Refund Terms",
+        "checkout.product_refund": "You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation.",
+        "checkout.consultation_refund": "You can cancel your consultation before it starts and receive a full refund of the amount paid for the service. The terms applicable after a consultation has started and the refund request procedure are described in the Refund Policy.",
         "payment_result.title": "Payment status",
         "payment_result.pending_title": "Payment is being verified",
         "payment_result.pending_message": (
@@ -718,6 +721,9 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "purchase_compatibility.requirements": "SmartBudget 1.0 работает в Windows 10/11 с настольной версией Microsoft Excel 2019 или новее. Для работы необходимо разрешить макросы VBA и элементы ActiveX.",
         "purchase_compatibility.restrictions": "Excel для Mac и браузерная версия Excel не поддерживаются. Если корпоративные настройки запрещают VBA или ActiveX, SmartBudget не сможет работать полноценно.",
         "checkout.continue_payment": "Перейти к безопасной оплате",
+        "checkout.legal_heading": "Условия покупки и возврата",
+        "checkout.product_refund": "Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты.",
+        "checkout.consultation_refund": "Вы можете отменить консультацию до начала её проведения и получить полный возврат стоимости услуги. Условия после начала консультации и порядок обращения указаны в Политике возвратов.",
         "payment_result.title": "Статус оплаты",
         "payment_result.pending_title": "Платёж проверяется",
         "payment_result.pending_message": (

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% from "_product_language.html" import product_language with context %}
+{% from "_checkout_legal.html" import checkout_legal with context %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', path='css/checkout.css') }}?v=4">
 {% endblock %}
 
 {% block title %}{{ t("checkout.title") }} · SmartBudget{% endblock %}
@@ -69,6 +70,7 @@
 
                 {% if product.family_slug == "smartbudget" %}
                     {% include "_purchase_compatibility.html" %}
+                    {{ checkout_legal("checkout.product_refund") }}
                 {% endif %}
 
                 <button class="payment-button payment-button-primary" type="submit">

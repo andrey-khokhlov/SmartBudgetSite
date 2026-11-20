@@ -9,6 +9,7 @@ from tests.web.test_public_consultations import seed_consultations
 
 
 @pytest.mark.browser
+@pytest.mark.usefixtures("checkout_legal_pages")
 @pytest.mark.parametrize("width", [1280, 375])
 @pytest.mark.parametrize(
     "lang,currency,price,switched_price",
@@ -59,6 +60,12 @@ def test_consultation_navigation_and_checkout(
             "защищённую ссылку для записи" if lang == "ru" else "secure booking link"
         )
         expect(page.locator("#checkout-email")).to_have_attribute("required", "")
+        expect(page.locator(".checkout-legal a")).to_have_text(
+            ["Политика возвратов", "Юридическая информация"]
+            if lang == "ru"
+            else ["Refund Policy", "Legal Information"]
+        )
+        expect(page.locator(".checkout-legal + button")).to_be_enabled()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.screenshot(
             path=str(tmp_path / "consultation-checkout.png"), full_page=True

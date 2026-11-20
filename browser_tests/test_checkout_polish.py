@@ -14,6 +14,7 @@ from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
+@pytest.mark.usefixtures("checkout_legal_pages")
 @pytest.mark.parametrize("width", [1280, 375])
 @pytest.mark.parametrize(
     "lang,package,currency,total",
@@ -33,7 +34,6 @@ def test_localized_buy_checkout_and_review_navigation(
     total,
 ):
     monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", True)
-    monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "")
     with review_sessions() as db:
         Base.metadata.create_all(db.get_bind())
         for edition, code, amount, addon_amount in (
@@ -116,6 +116,16 @@ def test_localized_buy_checkout_and_review_navigation(
                 if lang == "ru"
                 else "If you've purchased"
             )
+            expect(page.locator(".checkout-legal a")).to_have_text(
+                ["Политика возвратов", "Юридическая информация"]
+                if lang == "ru"
+                else ["Refund Policy", "Legal Information"]
+            )
+            expect(page.locator(".checkout-legal + button")).to_be_enabled()
+            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+            page.screenshot(
+                path=str(tmp_path / "product-checkout.png"), full_page=True
+            )
             page.go_back()
             selected_card.locator(".product-addon__checkbox").check()
             link.click()
@@ -187,6 +197,8 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(page.locator("html")).to_have_attribute("lang", lang)
             expect(page.locator(".checkout-total strong")).to_have_text(total)
             page.screenshot(path=str(tmp_path / "checkout.png"), full_page=True)
+            # Keep the existing footer layout checks in their incomplete-config scenario.
+            monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "")
             page.goto(f"{base_url}/products/smartbudget")
             expect(page.locator(".sb-hero__reviews a")).to_have_count(0)
             page.goto(f"{base_url}/reviews")

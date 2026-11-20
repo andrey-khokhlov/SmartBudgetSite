@@ -1,8 +1,11 @@
+from datetime import date
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.core.db import Base
 from app.dependencies import get_db
 from app.main import app
@@ -10,6 +13,14 @@ from app.models.consultation_capacity import ConsultationCapacityState
 from app.models.feedback import FeedbackMessage
 from app.models.product import Product
 from app.models.product_price import ProductPrice
+
+
+@pytest.fixture
+def checkout_legal_pages(monkeypatch):
+    monkeypatch.setattr(settings, "REFUND_POLICY_PUBLICATION_DATE", date(2000, 1, 2))
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_RU", "Учебный адрес")
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_EN", "Fictional Seller Address")
+    monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "+1 202-555-0147")
 
 
 @pytest.fixture

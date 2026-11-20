@@ -1,0 +1,16 @@
+{% macro checkout_legal(refund_text_key) %}
+<section class="checkout-legal" aria-labelledby="checkout-legal-heading">
+    <h2 id="checkout-legal-heading">{{ t("checkout.legal_heading") }}</h2>
+    <p>{{ t(refund_text_key) }}</p>
+    {% if refund_policy_available or seller_information_available %}
+        <ul class="checkout-legal-links">
+            {% if refund_policy_available %}
+                <li><a href="/legal/refund-policy">{{ t("footer_refund_policy") }}</a></li>
+            {% endif %}
+            {% if seller_information_available %}
+                <li><a href="/legal/seller-information">{{ t("footer_legal_information") }}</a></li>
+            {% endif %}
+        </ul>
+    {% endif %}
+</section>
+{% endmacro %}

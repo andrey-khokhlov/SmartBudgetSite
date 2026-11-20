@@ -901,12 +901,18 @@ Before paid public sales:
 - G15-A implements the bilingual seller-information page and conditional neutral
   footer link locally. Securely obtain and [configure the seller details](operations.md#configuration-completion-rule).
   Verify both locales and the footer link in the release environment.
-  Pre-payment Checkout links and disclosure validation remain open.
 - G15-B implements the bilingual refund policy page and footer link locally,
   including the November 20 Section 7 amendment and the seller link in §9.
-  Obtain the owner-approved publication date. Verify both locales and all
-  policy links in the release environment with complete seller details and
-  the [publication date configured](operations.md#configuration-completion-rule).
+  The owner approved **2026-12-01** as the intended publication date.
+  Release-environment activation remains a separate pre-sale step. Set the
+  [publication date](operations.md#configuration-completion-rule) only at
+  the approved rollout, once the publication prerequisites are satisfied.
+  Verify both locales and all policy links in the release environment.
+- G15-C1 implements the bilingual refund and seller disclosures in product
+  and standalone consultation Checkout. The summaries remain visible with
+  incomplete configuration, and each link appears when its page is available.
+  Before enabling public paid Checkout, verify that both legal pages are
+  accessible from both Checkout flows in both languages before payment.
 - Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
   only after aligning Checkout, FAQ, purchase email and actual operations,
   including support targets and approved R54 wording. Keep R55 exclusions.
