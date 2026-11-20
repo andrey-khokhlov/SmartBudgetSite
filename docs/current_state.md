@@ -744,7 +744,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
 | R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
-| R30 | Partial | Localized title and data-driven grouped native accordions implemented; About SmartBudget (4), Before You Buy (7), and Purchase and Delivery (7) groups render, with no empty placeholders. | Remaining FAQ groups belong to G12/G15 |
+| R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ group remains open |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Products, Buy and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
@@ -755,10 +755,10 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
 | R39 | Requires validation | R39-A implements Share provisioning and booking reconciliation. R39-B implements expiry revocation. R39-C coordinates access closure, early revocation and meeting disposition. | Validate live webhook delivery, booking, rescheduling, revocation and cancellation coordination |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. All six variants include the permanent Sale-level PAY reference. | Real purchase email and Calendly confirmation validation remain open |
-| R41 | Partial | G15-B implements the bilingual policy page and footer link using the November 14 candidate as amended on November 20. G15-C1 adds conditional pre-payment links in both Checkout flows. | Policy activation, FAQ synchronization and release validation remain open |
+| R41 | Partial | G15-B implements the bilingual policy page and footer link using the November 14 candidate as amended on November 20. G15-C1 adds conditional pre-payment links in both Checkout flows. G15-C2 adds a conditional policy link and direct refund form access in the FAQ. | Policy activation and release validation remain open |
 | R42 | Partial | Founder full-Sale refund confirmation supports Lava.top and verified alternative transfers locally. Both paths use Sale-bound CSRF and preserve the same Sale and entitlement reconciliation. R42a–c implement authoritative `Sale.paid_at` and the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock) on Admin Sale Detail. | Validate separate-purchase refunds and the alternative procedure in the release environment. Bundle item accounting is deferred under the first-release amendment |
 | R43 | Partial | G15-A implements the bilingual Seller Information page and neutral footer link. G15-B links to the seller page from policy §9. G15-C1 links to it from both Checkout flows when the seller details are complete. | Securely configure and verify the owner-supplied details and pre-payment access in the release environment |
-| R44 | Partial | Support and founder refund operations exist. The G15-B policy states the 2/5/10-business-day response, review and bank-settlement distinctions. | G15 synchronized publication and separate support-capacity validation |
+| R44 | Partial | Support and founder refund operations exist. The G15-B policy and G15-C2 FAQ state the 2/5/10-business-day response, review and bank-settlement distinctions. | G15 synchronized publication and separate support-capacity validation |
 | R45 | Requires validation | Gate 3 remains open; prior audit/browser tests do not establish repeat review of the updated interface. | Applicable implementation complete, then desktop/mobile/accessibility review |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
@@ -896,10 +896,9 @@ open. Requirement definitions were not modified. No commit or push was made.
 Implemented against clean `main` at `55cc6f2`. `app/faq_content.py` contains only
 presentation data with explicit translation keys and paragraph/link blocks;
 `faq.html` loops ordinary semantic group headings and native details/summary
-questions. There is no CMS, persistence or accordion JavaScript. Only the ready
-About SmartBudget (4 questions) and Before You Buy (7 questions) groups render.
-Future approved groups can use the same shape under G12/G14/G15, without empty
-placeholder groups now. The approved 5.6.1/5.6.2 copy remains intact.
+questions. There is no CMS, persistence or accordion JavaScript. G6 implemented
+About SmartBudget (4 questions) and Before You Buy (7 questions). Subsequent
+groups use the same structure. The approved 5.6.1/5.6.2 copy remains intact.
 
 The owner update supersedes the older R47 restriction against final public copy
 and the older restart-free behavior. Narrow factual additions disclose the
@@ -914,7 +913,7 @@ with new-tab/noopener behavior; RU retains official English targets.
 Products adds a catalog-driven localized requirements link beside its conditions
 to `/faq#system-requirements`, with sticky-header scroll clearance. G5 layout,
 price-free content and product-details CTA are retained. R18/R31/R47 are
-Implemented. R30 stays Partial for G12/G14/G15 content. G10 completes the
+Implemented. R30 stays Partial for the Consultations FAQ group. G10 completes the
 remaining Buy and Checkout disclosures under R32. The owner-verified Microsoft 365
 environment is Excel 2608 Click-to-Run Current Channel on Windows, not an
 independent Codex product test. 32-bit Excel was not separately practically
@@ -1079,7 +1078,7 @@ surface-specific slices, not duplicate requirements.
 | G13C — Reissue Download Access | REL-001 | Implemented locally. Recovery rotates the existing token for 24 hours, snapshots previous attempts and provides a separate operator-triggered Resend send. [Production validation remains open](release_readiness.md#g13c--reissue-download-access). |
 | G13D — Purchase Delivery Monitoring | REL-001 | G13D-1 local detection and PostgreSQL incident history are complete. G13D-2a [Lava.top recovery](operations.md#g13d-2a-lavatop-payment-recovery), G13D-2b [Resend webhook monitoring](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring), and G13D-2c [safe automatic purchase-email recovery](operations.md#g13d-2c-purchase-email-recovery) are implemented and locally validated. G13D-3a implements the PostgreSQL notification outbox and materializer. G13D-3b implements the [one-pass Alert Dispatcher](operations.md#g13d-3-operational-monitoring-target) with Telegram-first delivery and SMTP fallback. G13D-3c prepares [systemd unit templates](operations.md#g13d-3c-systemd-unit-templates). Deployment rendering, installation, and live validation remain open under the [release gate](release_readiness.md#g13d--purchase-delivery-monitoring). |
 | G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery, interrupted and repeat download, and Gate 3 repeat review remain open. |
-| G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | G15-A and G15-B implement the seller and policy pages and footer links. G15-C1 implements pre-payment disclosures in both Checkout flows. The [pre-sale gate](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) records the intended publication date and release validation. FAQ, purchase email and refund operations alignment and independent legal validation remain open. |
+| G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | G15-A and G15-B implement the seller and policy pages and footer links. G15-C1 implements pre-payment disclosures in both Checkout flows. G15-C2 implements the bilingual Support and Refunds FAQ. The [pre-sale gate](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) records the intended publication date and release validation. Purchase-email and refund-operations alignment and independent legal validation remain open. |
 
 R42 original-provider and alternative full-Sale confirmations are implemented
 locally. Release-environment validation remains open.

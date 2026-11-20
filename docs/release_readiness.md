@@ -760,7 +760,8 @@ Products card with three capabilities and Windows/local-data/one-time-purchase c
 R17/R18/R19 are implemented, including the G6 link to the actual FAQ compatibility
 section. G6 renders the approved four-question overview and seven-question
 Before You Buy group with final manual ActiveX/restart guidance and approved
-Microsoft links. R31/R47 are implemented. R30 still awaits G12/G14/G15 FAQ groups.
+Microsoft links. R31/R47 are implemented. G14 and G15-C2 add the Purchase and
+Delivery and Support and Refunds groups. R30 still awaits the Consultations group.
 G10 is implemented and locally validated for the product purchase flow. Buy
 shows equal language cards and the optional add-on terms. Checkout shows the
 selected items and composition-sensitive delivery information. Both surfaces
@@ -913,6 +914,10 @@ Before paid public sales:
   incomplete configuration, and each link appears when its page is available.
   Before enabling public paid Checkout, verify that both legal pages are
   accessible from both Checkout flows in both languages before payment.
+- G15-C2 implements the five-question bilingual Support and Refunds FAQ. The
+  refund request form remains linked regardless of policy availability. The
+  policy link appears when the policy is available. Verify both links and
+  the approved summaries in both locales during release validation.
 - Publish the [owner-approved policy candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
   only after aligning Checkout, FAQ, purchase email and actual operations,
   including support targets and approved R54 wording. Keep R55 exclusions.

@@ -1,13 +1,22 @@
+from datetime import date
+
 import pytest
 from playwright.sync_api import expect, sync_playwright
 
+from app.core.config import settings
 from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
 @pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("width", [1280, 375])
-def test_faq_groups_native_accordions_and_products_anchor(tmp_path, lang, width):
+def test_faq_groups_native_accordions_and_products_anchor(
+    tmp_path, monkeypatch, lang, width
+):
+    monkeypatch.setattr(settings, "REFUND_POLICY_PUBLICATION_DATE", date(2000, 1, 2))
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_RU", "Учебный адрес")
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_EN", "Fictional Seller Address")
+    monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "+1 202-555-0147")
     errors = []
     with _running_app() as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, channel="chromium")
@@ -59,9 +68,9 @@ def test_faq_groups_native_accordions_and_products_anchor(tmp_path, lang, width)
             "Частые вопросы" if lang == "ru" else "Frequently Asked Questions"
         )
         expect(page.locator(".faq-group h2")).to_have_text(
-            ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта"]
+            ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта", "Поддержка и возвраты"]
             if lang == "ru"
-            else ["About SmartBudget", "Before You Buy", "Purchase and Delivery"]
+            else ["About SmartBudget", "Before You Buy", "Purchase and Delivery", "Support and Refunds"]
         )
         target = page.locator("#system-requirements-question")
         expect(target).to_have_attribute("open", "")
@@ -132,5 +141,33 @@ def test_faq_groups_native_accordions_and_products_anchor(tmp_path, lang, width)
             "href", "mailto:support@neocitrix.com"
         )
         purchase.screenshot(path=str(tmp_path / f"faq-purchase-{lang}-{width}.png"))
+        support = page.locator("#support-and-refunds")
+        expect(support.locator("summary")).to_have_count(5)
+        refund = support.locator("details").last
+        refund_form = refund.locator('a[href="/refund-request"]')
+        expect(refund_form).to_have_text(
+            "формой возврата" if lang == "ru" else "refund request form"
+        )
+        expect(refund.locator('a[href="/legal/refund-policy"]')).to_have_text(
+            "Политике отмены и возвратов"
+            if lang == "ru"
+            else "Cancellation and Refund Policy"
+        )
+        refund.locator("summary").focus()
+        page.keyboard.press("Tab")
+        expect(refund_form).to_be_focused()
+        expect(refund_form).to_have_css("outline-style", "solid")
+        refund.evaluate("element => element.scrollIntoView({block: 'start'})")
+        page.screenshot(path=str(tmp_path / f"faq-support-{lang}-{width}.png"))
+
+        other = "en" if lang == "ru" else "ru"
+        page.locator(".language-switch a").click()
+        expect(page.locator("html")).to_have_attribute("lang", other)
+        expect(support.locator("h2")).to_have_text(
+            "Поддержка и возвраты" if other == "ru" else "Support and Refunds"
+        )
+        expect(support.locator("details")).to_have_count(5)
+        expect(support.locator("details[open]")).to_have_count(0)
+        page.wait_for_load_state("networkidle")
         browser.close()
     assert errors == []

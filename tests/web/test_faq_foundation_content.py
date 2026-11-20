@@ -1,10 +1,12 @@
 import re
+from datetime import date
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
 
+from app.core.config import settings
 from app.core.i18n import TRANSLATIONS
 
 PUBLIC_COMPATIBILITY = {
@@ -75,9 +77,8 @@ class FAQContent(HTMLParser):
 
 def approved_section(number):
     source = Path("docs/release_uiux_requirements.md").read_text(encoding="utf-8")
-    return source.split(f"#### 5.6.{number}.", 1)[1].split(
-        f"#### 5.6.{number + 1}.", 1
-    )[0]
+    section = source.split(f"#### 5.6.{number}.", 1)[1]
+    return re.split(r"^#{1,4} ", section, maxsplit=1, flags=re.MULTILINE)[0]
 
 
 def approved_questions(block, lang):
@@ -101,13 +102,14 @@ def test_faq_has_only_ready_groups_and_four_exact_overview_questions(client, lan
         "about-smartbudget",
         "system-requirements",
         "purchase-and-delivery",
+        "support-and-refunds",
     ]
     assert [group["title"] for group in page.groups] == (
-        ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта"]
+        ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта", "Поддержка и возвраты"]
         if lang == "ru"
-        else ["About SmartBudget", "Before You Buy", "Purchase and Delivery"]
+        else ["About SmartBudget", "Before You Buy", "Purchase and Delivery", "Support and Refunds"]
     )
-    assert [len(group["questions"]) for group in page.groups] == [4, 7, 7]
+    assert [len(group["questions"]) for group in page.groups] == [4, 7, 7, 5]
     for actual, approved in zip(
         page.groups[0]["questions"],
         approved_questions(approved_section(1), lang),
@@ -132,6 +134,51 @@ def test_purchase_faq_matches_approved_copy_order_and_support_links(client, lang
         f"/feedback?lang={lang}",
         "mailto:support@neocitrix.com",
     ]
+
+
+@pytest.mark.parametrize("lang", ["ru", "en"])
+@pytest.mark.parametrize("publication_state", ["available", "no_date", "no_seller_phone"])
+def test_support_faq_matches_approved_copy_and_keeps_refund_form_available(
+    client, monkeypatch, lang, publication_state
+):
+    monkeypatch.setattr(
+        settings,
+        "REFUND_POLICY_PUBLICATION_DATE",
+        None if publication_state == "no_date" else date(2000, 1, 2),
+    )
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_RU", "Учебный адрес")
+    monkeypatch.setattr(settings, "SELLER_ADDRESS_EN", "Fictional Seller Address")
+    monkeypatch.setattr(
+        settings,
+        "SELLER_CONTACT_PHONE",
+        "" if publication_state == "no_seller_phone" else "+1 202-555-0147",
+    )
+    response = client.get("/faq", params={"lang": lang})
+    assert response.status_code == 200
+    group = FAQContent(response.text).groups[3]
+    assert group["id"] == "support-and-refunds"
+    approved = approved_questions(approved_section(5), lang)
+    assert [
+        [question["title"], *question["paragraphs"]]
+        for question in group["questions"]
+    ] == [
+        [re.sub(r"\[([^\]]+)\](?:\(/[^)]+\))?", r"\1", line) for line in question]
+        for question in approved
+    ]
+
+    policy_href = "/legal/refund-policy"
+    email = "mailto:support@neocitrix.com"
+    feedback = f"/feedback?lang={lang}"
+    expected = [feedback, email, feedback, email, "/refund-request", email]
+    available = publication_state == "available"
+    if available:
+        expected.append(policy_href)
+    assert [link["href"] for link in group["links"]] == expected
+    for href in (feedback, "/refund-request"):
+        target = client.get(href)
+        assert target.status_code == 200
+        assert f'<html lang="{lang}">' in target.text
+    assert client.get(policy_href).status_code == (200 if available else 404)
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])

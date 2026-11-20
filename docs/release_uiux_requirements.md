@@ -1259,6 +1259,8 @@ If you cannot find the link or have difficulty rescheduling, please contact supp
 
 **Статус вопросов 1–4:** содержательная редакция поддержки, сохранённая в обсуждении. Канал и набор сведений согласованы; не требовать раскрытия бюджета для обычного обращения.
 
+**Статус вопроса 5:** редакция ниже утверждена владельцем для публикации и заменяет предыдущий предварительный ответ. Ссылку на Политику показывать, когда страница доступна.
+
 ##### RU — Поддержка
 
 ###### 1. Как связаться со службой поддержки SmartBudget?
@@ -1292,6 +1294,14 @@ If you cannot find the link or have difficulty rescheduling, please contact supp
 Если письмо не найдено, ссылка недействительна или возникла другая проблема с заказом, обратитесь через форму обратной связи или по адресу support@neocitrix.com.
 
 Укажите email покупки и опишите проблему.
+
+###### 5. Можно ли вернуть оплату за SmartBudget или консультацию?
+
+Да. Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты. Консультацию можно отменить с полным возвратом стоимости до начала её проведения.
+
+Для обращения воспользуйтесь [формой возврата](/refund-request). Если форма временно недоступна, напишите на support@neocitrix.com. Подробные условия, включая возвраты после проведения консультации, изложены в [Политике отмены и возвратов](/legal/refund-policy).
+
+Мы стремимся предоставить первый ответ в течение 2 рабочих дней. Обычное рассмотрение запроса, как правило, занимает до 5 рабочих дней. После оформления возврата зачисление денежных средств обычно занимает до 10 рабочих дней в зависимости от банка и способа оплаты.
 
 ##### EN — Support
 
@@ -1327,33 +1337,13 @@ If you cannot find the email, your download link does not work, or you experienc
 
 Include your purchase email address and describe the problem.
 
-**Вопрос о возврате — последняя отдельная редакция FAQ из обсуждения:**
+###### 5. Can I request a refund for SmartBudget or a consultation?
 
-##### RU — Можно ли вернуть оплату за SmartBudget или консультацию?
+Yes. You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation. You can also cancel a consultation before it starts and receive a full refund of the amount paid.
 
-Да, вы можете обратиться с запросом на возврат через форму обратной связи или по адресу support@neocitrix.com.
+To request a refund, use the [refund request form](/refund-request). If the form is temporarily unavailable, email support@neocitrix.com. Full terms, including refunds after a completed consultation, are described in the [Cancellation and Refund Policy](/legal/refund-policy).
 
-Если у вас возникли технические проблемы со SmartBudget, мы прежде всего постараемся помочь их устранить. Если продукт не удаётся использовать в соответствии с заявленными системными требованиями, мы рассмотрим возможность возврата оплаты.
-
-Если вы приобрели консультацию, но ваши планы изменились, вы можете воспользоваться переносом записи или обратиться в поддержку для рассмотрения отмены.
-
-Возвраты рассматриваются в соответствии с опубликованной политикой возвратов и применимым законодательством.
-
-После оформления возврата банку покупателя может потребоваться до 10 рабочих дней для зачисления средств.
-
-##### EN — Can I request a refund for SmartBudget or a consultation?
-
-Yes. You can submit a refund request through our feedback form or by emailing support@neocitrix.com.
-
-If you experience technical difficulties with SmartBudget, we'll first help you troubleshoot the issue. If the product cannot be used in an environment that meets the stated system requirements, we'll review your refund request.
-
-If you've purchased a consultation and your plans change, you can reschedule your appointment or contact support to discuss cancellation.
-
-Refunds are reviewed in accordance with our published refund policy and applicable law.
-
-Once a refund has been processed, it may take up to 10 business days for your bank to credit the funds.
-
-**Статус этого ответа:** в переписке он предложен как предварительный до утверждения отдельной политики. Позднее общая политика сохранена в C и полностью приведена в приложении А. Ответ необходимо сверить с публикуемой политикой и дать на неё кликабельную ссылку; не обозначать FAQ как прошедший юридическую проверку. Это ограничение исходного согласования, а не утрата текста.
+We aim to provide an initial response within 2 business days. Standard requests are normally reviewed within 5 business days. After a refund is processed, funds are typically credited within 10 business days, depending on the bank and payment method.
 
 ### 5.7. Consultations / «Консультации» · R06/R38 · B 129–135, 179–184
 

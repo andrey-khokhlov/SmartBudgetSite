@@ -136,4 +136,23 @@ FAQ_GROUPS = (
             for number, paragraph_count in enumerate((3, 2, 2, 2, 2, 3, 3), start=1)
         ],
     },
+    {
+        "id": "support-and-refunds",
+        "title_key": "faq_support_title",
+        "questions": [
+            {
+                "question_key": f"faq_support_q{number}",
+                "body": [
+                    {
+                        "text_key": f"faq_support_a{number}_{paragraph}",
+                        "support_links": (number, paragraph) in ((1, 1), (4, 2)),
+                        "feedback_text_key": "faq_support_feedback",
+                        "refund_links": (number, paragraph) == (5, 2),
+                    }
+                    for paragraph in range(1, 4)
+                ],
+            }
+            for number in range(1, 6)
+        ],
+    },
 )
