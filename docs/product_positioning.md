@@ -107,6 +107,21 @@ access belong in `architecture/commerce_and_delivery.md`. The approved D6
 update and support terms are recorded there. Align customer-facing wording
 before publication under `release_readiness.md`.
 
+### International MVP market strategy
+
+Owner-approved on 2026-11-20. The first commercial release uses an
+internationally accessible bilingual RU/EN digital-product website to validate
+actual customer demand. A predefined country allowlist, geographic download
+restrictions, and country-specific Checkout variants are outside the baseline
+MVP scope. Consider international VAT/GST infrastructure or extensive
+country-specific compliance automation only when an established requirement
+calls for it.
+
+Public website accessibility, intended marketing geography, and legal
+eligibility to accept paid transactions are distinct. Applicable
+paid sales remain subject to the
+[mandatory pre-sale gate](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate).
+
 ## Entitlement-Based Platform Philosophy
 
 SmartBudgetSite should represent purchased customer rights as backend-owned entitlements rather than as files, external links, or provider-controlled access.

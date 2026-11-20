@@ -946,11 +946,16 @@ Before paid public sales:
   normally 5 for review, and an estimated bank settlement of up to 10. Mandatory
   deadlines take precedence. Verify the approved R54 wording and keep R55
   exclusions.
-- VAT integration, a payment-provider change and additional tax infrastructure
-  remain deferred. Complete market-specific legal and tax validation and satisfy
-  all obligations it identifies, including any required tax registration or
-  tax handling, before selling into the relevant market. Merchant of Record
-  status and automatic international VAT handling are unverified.
+- Follow the [international MVP market strategy](product_positioning.md#international-mvp-market-strategy).
+  Before enabling applicable paid sales, verify and satisfy the relevant legal,
+  tax, payment-provider, and personal-data obligations, including any required
+  tax registration or handling. VAT/GST integration, a payment-provider change,
+  and additional tax infrastructure remain deferred. Merchant of Record status
+  and automatic international VAT handling remain unverified.
+- Review the applicability of personal-data requirements to the planned
+  Netherlands-hosted production database and collection of personal data from
+  Russian users. Verify the concrete hosting and data flows before deciding
+  whether a hosting migration is required.
 
 The approval records the owner’s product and architecture decisions. It does
 not establish legal compliance or external provider validation.
