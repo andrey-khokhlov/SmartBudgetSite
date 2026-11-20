@@ -136,9 +136,15 @@ def test_language_segments_preserve_query_values_and_persist_locale(
 
 @pytest.mark.parametrize("path", ["/", "/products", "/faq", "/feedback"])
 @pytest.mark.parametrize(
-    "lang,feedback_label", [("en", "Feedback"), ("ru", "Обратная связь")]
+    "lang,feedback_label,support_label",
+    [
+        ("en", "Feedback", "Contact Support"),
+        ("ru", "Обратная связь", "Написать в поддержку"),
+    ],
 )
-def test_shared_footer_has_only_approved_links(client, monkeypatch, path, lang, feedback_label):
+def test_shared_footer_has_only_approved_links(
+    client, monkeypatch, path, lang, feedback_label, support_label
+):
     monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "")
     response = client.get(path, params={"lang": lang})
     assert response.status_code == 200
@@ -148,7 +154,7 @@ def test_shared_footer_has_only_approved_links(client, monkeypatch, path, lang, 
     assert re.findall(r'<a\b[^>]*\bhref="([^"]+)"[^>]*>(.*?)</a>', footer[1], re.S) == [
         ("/faq", "FAQ"),
         ("/feedback", feedback_label),
-        ("mailto:support@neocitrix.com", "support@neocitrix.com"),
+        ("mailto:support@neocitrix.com", support_label),
     ]
 
 

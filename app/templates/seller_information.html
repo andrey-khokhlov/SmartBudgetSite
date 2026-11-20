@@ -2,18 +2,32 @@
 
 {% block title %}{{ t("seller_information_title") }} · SmartBudget{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/seller_information.css') }}?v=1">
+{% endblock %}
+
 {% block content %}
-<article aria-labelledby="seller-information-heading">
+<article class="seller-information" aria-labelledby="seller-information-heading">
   <h1 id="seller-information-heading">{{ t("seller_information_title") }}</h1>
-  <p><strong>{{ t("seller_information_name") }}</strong></p>
-  <p>{{ t("seller_information_tax_status") }}</p>
-  <dl>
-    <dt class="muted">{{ t("seller_information_address_label") }}</dt>
-    <dd><p>{{ seller_address }}</p></dd>
-    <dt class="muted">{{ t("seller_information_phone_label") }}</dt>
-    <dd><p>{{ seller_phone }}</p></dd>
-    <dt class="muted">{{ t("seller_information_support_label") }}</dt>
-    <dd><a href="mailto:{{ t('footer_support_email') }}">{{ t("footer_support_email") }}</a></dd>
-  </dl>
+  <div class="seller-information__panel">
+    <div>
+      <p class="seller-information__name"><strong>{{ t("seller_information_name") }}</strong></p>
+      <p class="seller-information__tax-status">{{ t("seller_information_tax_status") }}</p>
+    </div>
+    <dl class="seller-information__details">
+      <div>
+        <dt>{{ t("seller_information_address_label") }}</dt>
+        <dd>{{ seller_address }}</dd>
+      </div>
+      <div>
+        <dt>{{ t("seller_information_phone_label") }}</dt>
+        <dd>{{ seller_phone }}</dd>
+      </div>
+      <div>
+        <dt>{{ t("seller_information_support_label") }}</dt>
+        <dd><a href="mailto:{{ t('footer_support_email') }}">{{ t("footer_support_email") }}</a></dd>
+      </div>
+    </dl>
+  </div>
 </article>
 {% endblock %}

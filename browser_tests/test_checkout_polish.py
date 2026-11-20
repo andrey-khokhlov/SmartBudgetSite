@@ -33,6 +33,7 @@ def test_localized_buy_checkout_and_review_navigation(
     total,
 ):
     monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", True)
+    monkeypatch.setattr(settings, "SELLER_CONTACT_PHONE", "")
     with review_sessions() as db:
         Base.metadata.create_all(db.get_bind())
         for edition, code, amount, addon_amount in (
@@ -198,7 +199,8 @@ def test_localized_buy_checkout_and_review_navigation(
 
             footer = page.locator("footer")
             expect(footer.get_by_role("link")).to_have_count(3)
-            support = footer.get_by_role("link", name="support@neocitrix.com")
+            support_label = "Contact Support" if lang == "en" else "Написать в поддержку"
+            support = footer.get_by_role("link", name=support_label)
             expect(support).to_be_visible()
             expect(support).to_have_attribute("href", "mailto:support@neocitrix.com")
             assert footer.evaluate(

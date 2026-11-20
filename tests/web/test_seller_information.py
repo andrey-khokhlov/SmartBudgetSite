@@ -51,7 +51,10 @@ def test_seller_information_uses_site_language_selection(
     assert FICTIONAL_ADDRESSES[lang] in response.text
     assert FICTIONAL_ADDRESSES[other] not in response.text
     assert FICTIONAL_PHONE in response.text
-    assert 'href="mailto:support@neocitrix.com"' in response.text
+    assert (
+        'href="mailto:support@neocitrix.com">support@neocitrix.com</a>'
+        in response.text
+    )
     assert response.cookies[COOKIE_NAME] == lang
 
     switch = re.search(r'href="(\?lang=' + other + r')"', response.text)
