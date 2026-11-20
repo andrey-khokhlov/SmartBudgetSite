@@ -1155,15 +1155,42 @@ founder's explicit verification of the manual full refund is the authoritative
 operator action permitting internal confirmation; it is not a claim of bank or
 card settlement.
 
-Unresolved provider capability: authoritative refund verification/reconciliation
-through API, webhook, lookup, or another machine-readable mechanism remains
-unconfirmed while Lava.top support investigates and prepares a response.
-Neither public documentation nor the live observations establish a provider
-refund identifier, refund-status lookup contract, idempotency contract, refund
-webhook, or complete status lifecycle. SmartBudgetSite must not claim independent
-machine-readable verification of refund completion until such a contract is
-confirmed. This pending question is separate from confirmed API initiation
-unavailability.
+### Lava.top refund and chargeback webhooks — post-MVP opportunity
+
+As of 2026-11-20, the official Lava.top API documentation describes
+two webhook events introduced in August 2026:
+
+- `refund.success` — a full or partial refund executed by Lava.top,
+  regardless of who initiated it. The payload includes `event_id`,
+  `refund_id`, refund type, amount, currency, product and customer email.
+- `chargeback.initiated` — a payment dispute initiated through the
+  customer's bank. The event does not establish the final dispute outcome.
+
+Source: https://developers.lava.top/en
+
+The published `refund.success` payload example does not contain an
+unambiguous original invoice ID. A safe correlation between the event
+and the exact SmartBudgetSite Sale is therefore not established.
+Matching by customer email, product and amount alone is insufficient.
+
+The documentation establishes a refund webhook event and a refund ID,
+but does not establish an API refund-initiation endpoint, an
+authoritative refund-status lookup, or confirmation of final bank/card
+settlement. The 2026-11-20 Lava.top support response referred to the
+API portal without resolving the invoice-correlation question.
+
+**Decision: deferred beyond the first public commercial release.**
+
+The existing founder-operated manual full-refund workflow, explicit
+provider-evidence verification and Sale/entitlement reconciliation
+remain unchanged. Do not enable the new webhook event types or
+automatically change Sale status or customer access in MVP.
+
+A future integration requires a verified invoice-to-refund mapping,
+authenticated and idempotent event handling, duplicate/out-of-order
+delivery protection, and explicit reconciliation rules. It must
+preserve the distinction between provider-side refund execution
+and customer bank/card settlement.
 
 ### Persisted refund operation
 
