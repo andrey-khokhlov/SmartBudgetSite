@@ -16,7 +16,7 @@
 {% block title %}SmartBudget{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=5">
+<link rel="stylesheet" href="{{ url_for('static', path='css/sm_landing.css') }}?v=9">
 {% endblock %}
 
 {% block content %}
@@ -26,7 +26,11 @@
     <p class="sb-hero__lead">{{ t("sb_landing_lead") }}</p>
     <p class="sb-hero__note">{{ t("sb_landing_note") }}</p>
     <div class="sb-hero__cta">
-      <a class="sb-hero__explore" href="#sb-capabilities">{{ t("sb_landing_cta_primary") }}</a>
+      <a class="sb-hero__explore" href="#sb-capabilities">
+        <span class="sb-hero__explore-desktop">{{ t("sb_landing_cta_primary") }}</span>
+        <span class="sb-hero__explore-mobile">{{ t("sb_landing_cta_mobile") }}</span>
+        <span class="sb-hero__explore-arrow" aria-hidden="true">↓</span>
+      </a>
       <p class="sb-hero__faq"><a href="/faq">{{ t("sb_landing_faq_link") }}</a></p>
       {% if show_reviews_link %}
         <p class="sb-hero__faq sb-hero__reviews"><a href="/reviews">{{ t("sb_landing_reviews_link") }}</a></p>

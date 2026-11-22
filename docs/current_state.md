@@ -876,6 +876,39 @@ verification of workbook financial calculations was performed. Assets were
 supplied as final by the owner, not regenerated. Final owner/editorial and repeat
 R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks.
 
+### UX-LAND-01 mobile Landing polish
+
+The [mobile amendment](release_uiux_requirements.md#landing-mobile-presentation-amendment--2026-11-22)
+centers the mobile H1 and section H2s at 23 and 21 px respectively. The Hero
+uses a shorter underlined anchor link with a separate down arrow and a 44 px
+touch target. A non-breaking space keeps the Russian practical-heading dash
+with the preceding word. A 32 px mobile gap separates the commercial heading
+from the product title, and the final Buy CTA fills the offer width.
+
+The savings chart fits across the page and shows the overall trend. Its
+small axis and legend labels require the linked original for detail. The
+desktop reconciliation pair matches the centered text column, with two equal
+figures and a 24 px gap. Both previews fit the mobile content width as a
+vertical stack. The future-expense PLAN
+and PLAN/ACTUAL crops use 580 and 520 px preview widths on phones to show
+the first numeric column at 375 and 390 px. At 320 px, the wide crops still
+need local panning to reach the values. All five figures link to their
+original assets for fine labels and cell values. Functional Freeze remains
+in effect, with Gate 3 and R45 open.
+
+Local validation on the `9394bfc` baseline passed 85 focused web tests and
+eight Chromium cases in RU/EN at 320, 375, 390 and 1280 px. The browser cases
+verified heading alignment, the Russian dash wrapping, keyboard focus and the
+Hero anchor, image proportions and overflow, local panning, original-image
+access, the offer heading gap and the full-width mobile Buy link. Visual
+checks at 320, 375 and 390 px covered heading wrapping, image visibility and
+offer spacing. No document overflow was detected. The reconciliation follow-up
+passed 23 Landing web tests and all eight Chromium cases. RU/EN captures at
+1280 and 390 px confirmed text-column alignment, corresponding captions and
+readable proportional images without internal horizontal scrolling. Both
+390 px screenshots matched the prior renders exactly. Ruff, Black on the
+edited test blocks and `git diff --check` passed.
+
 ### G5 About / Products implementation and validation
 
 Implemented against `9aec0b7`. About uses the complete approved 5.2 RU/EN copy

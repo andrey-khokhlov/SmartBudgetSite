@@ -66,7 +66,8 @@
   scroll-margin-top: 130px;
 }
 
-.sb-section__text {
+.sb-section__text,
+.sb-reconciliation-pair {
   max-width: 780px;
 }
 
@@ -138,7 +139,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
-  max-width: 1036px;
   margin-inline: auto;
 }
 
@@ -190,14 +190,35 @@
   outline-offset: -3px;
 }
 
+.sb-hero__explore {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  color: #334155;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.sb-hero__explore:hover {
+  background: #f1f5f9;
+  border-color: #475569;
+}
+
+.sb-hero__explore-mobile,
+.sb-hero__explore-arrow {
+  display: none;
+}
+
 @media (max-width: 640px) {
-  /* Preserve readable spreadsheet text and local panning on narrow screens. */
-  .sb-image-link {
-    min-width: 740px;
+  /* Wide workbook views retain local panning at a reduced scale. */
+  #sb-future-expense .sb-image-link {
+    min-width: 580px;
   }
 
-  .sb-figure--compact .sb-image-link {
-    min-width: 420px;
+  #sb-plan-actual .sb-image-link {
+    min-width: 520px;
   }
 
   .sb-shot {
@@ -209,6 +230,21 @@
     padding: 20px 0 32px;
   }
 
+  .sb-hero__title,
+  .sb-section h2 {
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .sb-hero__title {
+    font-size: 23px;
+  }
+
+  .sb-section h2 {
+    font-size: 21px;
+    font-weight: 600;
+  }
+
   .sb-hero__lead {
     font-size: 17px;
   }
@@ -217,6 +253,43 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 14px;
+  }
+
+  .sb-hero__explore {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .sb-hero__explore:hover {
+    background: transparent;
+    color: #1d4ed8;
+  }
+
+  .sb-landing .sb-hero__explore:focus-visible {
+    outline-offset: 2px;
+  }
+
+  .sb-hero__explore-desktop {
+    display: none;
+  }
+
+  .sb-hero__explore-mobile,
+  .sb-hero__explore-arrow {
+    display: block;
+  }
+
+  .sb-hero__explore-mobile {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .sb-hero__explore-arrow {
+    flex: none;
   }
 
   .sb-section {
@@ -236,6 +309,15 @@
   .sb-practical-benefits {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .sb-offer h2 {
+    margin-bottom: 32px;
+  }
+
+  .sb-offer .btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* Center constrained content while preserving left-aligned reading. */
@@ -251,20 +333,4 @@
 
 .sb-hero__cta {
   max-width: 780px;
-}
-
-.sb-hero__explore {
-  display: inline-block;
-  padding: 10px 14px;
-  border: 1px solid #94a3b8;
-  border-radius: 8px;
-  color: #334155;
-  font-weight: 600;
-  line-height: 1.5;
-  text-decoration: none;
-}
-
-.sb-hero__explore:hover {
-  background: #f1f5f9;
-  border-color: #475569;
 }

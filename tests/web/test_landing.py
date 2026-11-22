@@ -115,6 +115,12 @@ def test_landing_uses_final_localized_original_images_and_demo_anchor(client, la
         if lang == "ru"
         else "See how SmartBudget works ↓"
     ) in " ".join(landing.text)
+    mobile_label = (
+        "Как работает SmartBudget" if lang == "ru" else "See how SmartBudget works"
+    )
+    assert (
+        f'<span class="sb-hero__explore-mobile">{mobile_label}</span>' in response.text
+    )
     assert 'class="sb-image-open"' not in response.text
     assert 'class="sb-image-hint"' not in response.text
     assert [section.get("id") for section in landing.sections] == [

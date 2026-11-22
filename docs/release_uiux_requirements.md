@@ -295,6 +295,27 @@ If the link is unavailable or you experience difficulties rescheduling, please c
 
 The 14-day booking window applies to your initial booking, not the date of an already scheduled appointment.
 
+## Landing mobile presentation amendment — 2026-11-22
+
+UX-LAND-01 centers the primary Landing headings and reduces their font size
+to 23 px for H1 and 21 px for H2 on mobile. Keep subheadings and body copy
+left-aligned. Keep the Russian practical-section dash with the preceding
+word. Give the purchase heading more space above the product title. The
+final Buy CTA uses the available content width and centers its label.
+
+The existing demonstration link uses the compact mobile labels
+**Как работает SmartBudget** and **See how SmartBudget works** with a separate
+down arrow. Keep its anchor, visible keyboard focus, touch target, and the
+adjacent FAQ link.
+
+Fit the savings chart to the mobile content width as an overview. Fit both
+reconciliation screenshots to show all columns. On desktop, center the
+equal-width pair within the main text column. Show more columns in the
+wide PLAN and ACTUAL views at a reduced scale and preserve their local
+keyboard panning. Keep every original-image link and aspect ratio. Preserve
+the rest of the desktop presentation, the RU/EN wording and the catalog-owned
+price. This work is within UI/UX Polish under Functional Freeze.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
