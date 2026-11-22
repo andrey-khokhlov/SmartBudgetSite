@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/products.css') }}?v=3">
+<link rel="stylesheet" href="{{ url_for('static', path='css/products.css') }}?v=4">
 {% endblock %}
 
 {% block content %}
@@ -21,7 +21,12 @@
         {% if p.requirements_url %}
           <p class="product-requirements"><a href="{{ p.requirements_url }}">{{ t(p.requirements_label_key) }}</a></p>
         {% endif %}
-        <a class="product-cta" href="/products/{{ p.slug }}">{{ t(p.cta_key) }}</a>
+        <div class="product-actions">
+          {% if p.slug == "smartbudget" %}
+            <a class="product-buy-cta" href="/products/smartbudget/buy">{{ t("sb_landing_cta_buy") }}</a>
+          {% endif %}
+          <a class="product-cta" href="/products/{{ p.slug }}">{{ t(p.cta_key) }}</a>
+        </div>
       </article>
     {% endfor %}
   </div>

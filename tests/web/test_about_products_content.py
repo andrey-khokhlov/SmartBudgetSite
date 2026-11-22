@@ -102,7 +102,9 @@ def test_about_preserves_complete_approved_biography_without_old_content(client,
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
-def test_products_approved_card_is_price_free_and_links_to_landing(client, lang):
+def test_products_approved_card_is_price_free_and_links_to_buy_and_landing(
+    client, lang
+):
     response = client.get(f"/products?lang={lang}")
     assert response.status_code == 200
     page = PageContent(response.text)
@@ -119,22 +121,22 @@ def test_products_approved_card_is_price_free_and_links_to_landing(client, lang)
     for paragraph in copy:
         assert blocks.count(" ".join(paragraph.split())) == 1
     assert [b["text"] for b in page.blocks if b["tag"] == "li"] == copy[4:7]
-    assert len(page.links) == 2
-    details = next(
-        link for link in page.links if link["href"] == "/products/smartbudget"
-    )
-    requirements = next(
-        link
-        for link in page.links
-        if link["href"] == "/faq?open=system-requirements#system-requirements-question"
+    requirements, buy, details = page.links
+    assert (
+        requirements["href"]
+        == "/faq?open=system-requirements#system-requirements-question"
     )
     assert requirements["text"].strip() == (
         "Полные системные требования" if lang == "ru" else "Full System Requirements"
     )
+    assert buy["href"] == "/products/smartbudget/buy"
+    assert buy["text"].strip() == (
+        "Купить SmartBudget" if lang == "ru" else "Buy SmartBudget"
+    )
+    assert details["href"] == "/products/smartbudget"
     assert details["text"].strip() == copy[8]
     assert client.get(details["href"]).status_code == 200
     assert not re.search(r"[$€₽]|\b(?:RUB|EUR|USD)\b|\d+[.,]\d{2}", " ".join(page.text))
-    assert "/products/smartbudget/buy" not in response.text
     assert 'class="products-section"' not in response.text
 
 

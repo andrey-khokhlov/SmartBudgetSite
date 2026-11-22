@@ -1,4 +1,4 @@
-/* One restrained card level, with navigation to the detailed product page. */
+/* One restrained card level for the product and its actions. */
 .products-page {
   max-width: 820px;
   margin-inline: auto;
@@ -62,9 +62,33 @@
   line-height: 1.65;
 }
 
-.product-cta {
-  display: inline-block;
+.product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
   margin-top: 20px;
+}
+
+.product-buy-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.product-buy-cta:hover {
+  background: #1d4ed8;
+}
+
+.product-cta {
   color: #334155;
   font-weight: 600;
   text-decoration: underline;
@@ -75,6 +99,7 @@
   color: #1d4ed8;
 }
 
+.product-buy-cta:focus-visible,
 .product-cta:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 4px;

@@ -87,6 +87,22 @@ applicable. R51 applies to separate public purchases. R53 requires durable
 request intake and notifications. R54 public wording follows policy §6,
 and R55's technical exclusions remain internal.
 
+## R18 Products purchase CTA owner amendment — 2026-11-22
+
+The owner approved UX-PROD-01 during Commercial UX Review. On `/products`, the
+SmartBudget card has a primary **Купить SmartBudget** (RU) / **Buy SmartBudget**
+(EN) link to `/products/smartbudget/buy`. The existing **Подробнее о
+SmartBudget** (RU) / **Explore SmartBudget** (EN) link remains secondary and
+leads to `/products/smartbudget`. Retain the approved description, Windows
+compatibility line and localized system requirements link. Keep the card
+price-free.
+
+This supersedes the earlier R18 decision to omit a Buy CTA. The original
+register and §5.3 copy below are retained for history. The amendment is within
+UI/UX Polish under Functional Freeze and uses the existing product-only purchase
+path. Verify both locales, keyboard focus and desktop/mobile layout. Gate 3
+and R45 still require the repeat review.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

@@ -1,14 +1,44 @@
+from decimal import Decimal
+
 import pytest
 from playwright.sync_api import expect, sync_playwright
 
+from app.core.config import settings
+from app.models.product import Product
+from app.models.product_price import ProductPrice
 from browser_tests.test_feedback_form import _running_app
 
 
 @pytest.mark.browser
-@pytest.mark.usefixtures("review_sessions")
 @pytest.mark.parametrize("lang", ["ru", "en"])
-@pytest.mark.parametrize("width", [1280, 375])
-def test_about_products_are_readable_restrained_and_navigable(tmp_path, lang, width):
+@pytest.mark.parametrize("width", [1280, 390])
+def test_about_products_are_readable_restrained_and_navigable(
+    tmp_path, review_sessions, monkeypatch, lang, width
+):
+    monkeypatch.setattr(settings, "BUNDLE_CHECKOUT_ENABLED", False)
+    with review_sessions.begin() as db:
+        for package, currency, amount in (
+            ("ru", "RUB", "2990.00"),
+            ("int", "EUR", "49.00"),
+        ):
+            product = Product(
+                family_slug="smartbudget",
+                slug=f"smartbudget-{package}-standard",
+                name="SmartBudget",
+                edition="Standard",
+                archive_path="",
+                status="in_sale",
+            )
+            db.add(product)
+            db.flush()
+            db.add(
+                ProductPrice(
+                    product_id=product.id,
+                    currency_code=currency,
+                    amount=Decimal(amount),
+                )
+            )
+
     errors = []
     with _running_app() as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, channel="chromium")
@@ -106,19 +136,41 @@ def test_about_products_are_readable_restrained_and_navigable(tmp_path, lang, wi
             page.locator(".products-section, .product-card .product-card")
         ).to_have_count(0)
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-        cta = card.locator(".product-cta")
-        expect(cta).to_have_text(
-            "Подробнее о SmartBudget" if lang == "ru" else "Explore SmartBudget"
+        buy = card.get_by_role(
+            "link", name="Купить SmartBudget" if lang == "ru" else "Buy SmartBudget"
         )
-        expect(cta).to_have_attribute("href", "/products/smartbudget")
-        assert cta.evaluate(
-            "e => getComputedStyle(e).backgroundColor === 'rgba(0, 0, 0, 0)'"
+        details = card.get_by_role(
+            "link",
+            name="Подробнее о SmartBudget" if lang == "ru" else "Explore SmartBudget",
         )
+        expect(buy).to_be_visible()
+        expect(details).to_be_visible()
+        expect(buy).to_have_attribute("href", "/products/smartbudget/buy")
+        expect(details).to_have_attribute("href", "/products/smartbudget")
+        expect(buy).to_have_css("background-color", "rgb(37, 99, 235)")
+        expect(details).to_have_css("background-color", "rgba(0, 0, 0, 0)")
         page.screenshot(
             path=str(tmp_path / f"products-{lang}-{width}.png"), full_page=True
         )
-        cta.focus()
-        cta.press("Enter")
+        card.locator(".product-requirements a").focus()
+        page.keyboard.press("Tab")
+        expect(buy).to_be_focused()
+        expect(buy).to_have_css("outline-style", "solid")
+        page.keyboard.press("Tab")
+        expect(details).to_be_focused()
+        expect(details).to_have_css("outline-style", "solid")
+        page.keyboard.press("Shift+Tab")
+        expect(buy).to_be_focused()
+        page.keyboard.press("Enter")
+        page.wait_for_url(f"{base_url}/products/smartbudget/buy")
+        expect(page.locator("html")).to_have_attribute("lang", lang)
+        expect(page.locator(".product-buy h1")).to_be_visible()
+        expect(page.locator(".product-buy .checkout-link")).to_have_count(2)
+        expect(page.locator(".product-addon__checkbox")).to_have_count(0)
+
+        page.go_back(wait_until="networkidle")
+        details.focus()
+        page.keyboard.press("Enter")
         page.wait_for_url(f"{base_url}/products/smartbudget")
         page.wait_for_load_state("networkidle")
         expect(page.locator("html")).to_have_attribute("lang", lang)

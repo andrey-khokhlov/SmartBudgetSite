@@ -748,8 +748,8 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure. | G9 locally validated |
 | R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
-| R18 | Implemented | Approved catalog content and restrained G5 card retained; localized Full System Requirements link now targets `/faq#system-requirements`. | G6 link/anchor validated in RU/EN desktop/mobile; no price or Buy CTA |
-| R19 | Implemented | Products uses one restrained bordered card without nested gradient framing or oversized shadow; CTA is a navigation link. | G5 RU/EN desktop/mobile browser and render checks complete; final R45 review remains open |
+| R18 | Implemented | The price-free SmartBudget card has a primary Buy link to `/products/smartbudget/buy`, a secondary product-details link and a localized system requirements link that opens the relevant FAQ question. | See [UX-PROD-01](#ux-prod-01-products-purchase-cta) for amendment and verification |
+| R19 | Implemented | Products uses one restrained bordered card with a blue primary Buy link and an underlined secondary details link. | G5 and UX-PROD-01 RU/EN desktop/mobile checks complete; final R45 review remains open |
 | R20 | Implemented | Buy uses equal cards with localized product-language labels, the same-features explanation and catalog-owned prices. | G10 locally validated |
 | R21 | Implemented | Buy describes the optional 60-minute online setup session and booking instructions after payment. The add-on price and availability come from the catalog. | G10 locally validated. Booking platform validation remains separate |
 | R22 | Implemented | Checkout shows the selected product, language and item prices under Your order, emphasizes Total, and preserves email and hosted payment initiation. | G10 locally validated |
@@ -906,6 +906,24 @@ to the actual compatibility section (see G6 below). G5 itself did not add FAQ,
 G3/G4, G9, checkout, consultation, footer/contact or backend behavior work. Full-suite,
 live-customer and screen-reader validation were not run; final R45 review remains
 open. Requirement definitions were not modified. No commit or push was made.
+
+### UX-PROD-01 Products purchase CTA
+
+The [2026-11-22 R18 amendment](release_uiux_requirements.md#r18-products-purchase-cta-owner-amendment--2026-11-22)
+adds the localized primary Buy CTA as UI/UX Polish under Functional Freeze.
+The link uses the existing purchase-selection route and the Landing Buy copy.
+The card retains the approved content, secondary details link and system
+requirements link. Products stays price-free. The Buy page continues to resolve
+availability from the configured catalog. Gate 3 and R45 remain open.
+
+Local validation on the `3f4dea9` baseline passed 109 focused pytest cases
+covering Products, public navigation, document language, FAQ, Landing and
+Checkout. Four Chromium cases covered RU/EN at 1280 and 390 px with an isolated
+catalog. They verified visible keyboard focus, Enter navigation, locale
+continuity, product-only Buy options and no horizontal overflow. All four
+Products screenshots were visually inspected. Four existing Chromium FAQ cases
+also passed, including navigation from the Products requirements link. Focused
+Ruff, Black and `git diff --check` passed.
 
 ### G6 Compatibility / FAQ foundation implementation and validation
 
