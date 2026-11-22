@@ -762,7 +762,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ deferred to UI/UX Polish before public release; align copy with separate purchases, catalog-owned prices, and verified Calendly behavior. Does not block Functional Freeze. |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
-| R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Products and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-BUY-01](#ux-buy-01-buy-compatibility-presentation). |
+| R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Buy and Checkout use four paragraphs with emphasis on unsupported platforms. Products and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-BUY-02](#ux-buy-02-compatibility-disclosure-readability). |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
 | R34 | Partial | Landing, Buy, Checkout and Consultations use catalog prices. Consultations shows matching add-on pricing for information. | Remaining applicable FAQ disclosures and release-environment catalog validation |
 | R35 | Implemented | New download entitlements default to 24 hours. RU/EN product and bundle emails show the 24-hour notice. Delivery blocks known-expired download links. | Verify the release configuration and validate delivery in the release environment |
@@ -1046,6 +1046,23 @@ the link's absence on Buy and its presence on product-only and bundle Checkout,
 plus FAQ and public navigation regressions. RU and EN Buy screenshots at 1280
 and 375 px were inspected, with readable text and no horizontal overflow.
 Chromium also exercised the default-off bundle path. Ruff and
+`git diff --check` passed.
+
+### UX-BUY-02 compatibility disclosure readability
+
+The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-compatibility-disclosure-readability-amendment--2026-11-22)
+splits the existing RU/EN Buy and Checkout copy into four paragraphs. The
+unsupported Mac and web platforms sentence uses `<strong>`. Buy adds paragraph
+spacing and a 1.65 line height. Checkout uses its existing paragraph styling.
+The UX-BUY-01 link behavior is preserved. Functional Freeze remains in effect,
+and Gate 3 and R45 remain open.
+
+Local validation on the `7ac05d9` baseline passed 97 focused web tests and six
+Chromium cases. A direct comparison confirmed the four sentences match the
+prior wording exactly in both languages. The tests verified paragraph order,
+semantic emphasis, FAQ link behavior and absence of horizontal overflow.
+Buy and product-only Checkout screenshots were inspected in RU and EN at
+1280 and 390 px. Focused Ruff, Black on the edited test blocks and
 `git diff --check` passed.
 
 ### G11 standalone payment boundary implementation and validation

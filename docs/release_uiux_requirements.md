@@ -115,6 +115,16 @@ to follow their existing requirements.
 This amendment applies only to the Buy presentation under Functional Freeze.
 It supersedes the inclusion of the final link on Buy in §5.4 below.
 
+## R32 compatibility disclosure readability amendment — 2026-11-22
+
+The owner approved UX-BUY-02 as UI/UX Polish under Functional Freeze. On Buy
+and Checkout, present the existing RU/EN compatibility copy in four paragraphs.
+Cover supported Windows and Excel versions, VBA and ActiveX requirements,
+unsupported Mac and web versions, and corporate security restrictions in that
+order. Use semantic emphasis for the unsupported-platform sentence. Keep
+paragraph spacing and line height readable at desktop and mobile widths. Under
+UX-BUY-01, only Checkout shows the FAQ link within the shared disclosure.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

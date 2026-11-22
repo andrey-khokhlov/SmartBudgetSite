@@ -71,6 +71,11 @@
     color: #172033;
 }
 
+.product-buy .purchase-compatibility p {
+    margin-top: 0.65em;
+    line-height: 1.65;
+}
+
 .checkout-link {
     display: inline-flex;
     align-items: center;

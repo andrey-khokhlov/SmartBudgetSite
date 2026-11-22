@@ -15,7 +15,7 @@ from browser_tests.test_feedback_form import _running_app
 
 @pytest.mark.browser
 @pytest.mark.usefixtures("checkout_legal_pages")
-@pytest.mark.parametrize("width", [1280, 375])
+@pytest.mark.parametrize("width", [1280, 390])
 @pytest.mark.parametrize(
     "lang,package,currency,total",
     [
@@ -105,15 +105,23 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(compatibility.get_by_role("heading")).to_be_visible()
             expect(compatibility.locator("a")).to_have_count(0)
             paragraphs = compatibility.locator("p")
-            expect(paragraphs).to_have_count(2)
+            expect(paragraphs).to_have_count(4)
+            expect(paragraphs.nth(2).locator("strong")).to_be_visible()
             for paragraph in paragraphs.all():
                 expect(paragraph).to_be_visible()
+            assert paragraphs.evaluate_all(
+                """elements => elements.slice(1).every((element, i) =>
+                    element.getBoundingClientRect().top > elements[i].getBoundingClientRect().bottom
+                )"""
+            )
             page.screenshot(path=str(tmp_path / "buy.png"), full_page=True)
             checkout_path = f"/checkout/smartbudget-{package}-standard"
             link = page.locator(f'.checkout-link[data-base-url^="{checkout_path}?"]')
             selected_card = cards.filter(has=link)
             link.click()
             expect(page.locator('input[name="consultation"]')).to_have_value("0")
+            expect(paragraphs).to_have_count(5)
+            expect(paragraphs.nth(2).locator("strong")).to_be_visible()
             requirements_link = compatibility.get_by_role(
                 "link",
                 name=(
@@ -236,16 +244,19 @@ def test_localized_buy_checkout_and_review_navigation(
             )
             footer_links = footer.locator(".footer-center")
             expect(footer_links.locator(".footer-sep")).to_have_count(2)
-            expect(support).to_have_css("font-size", "13px" if width == 375 else "14px")
+            mobile_footer = width <= 767
+            expect(support).to_have_css(
+                "font-size", "13px" if mobile_footer else "14px"
+            )
             expect(footer_links).to_have_css(
-                "column-gap", "4px" if width == 375 else "8px"
+                "column-gap", "4px" if mobile_footer else "8px"
             )
             bounds = footer_links.locator(":scope > *").evaluate_all(
                 "items => items.map(item => item.getBoundingClientRect().toJSON())"
             )
             centers = [box["y"] + box["height"] / 2 for box in bounds]
             assert max(centers) - min(centers) <= 1
-            if width == 375:
+            if mobile_footer:
                 links_center = (bounds[0]["left"] + bounds[-1]["right"]) / 2
                 assert abs(links_center - width / 2) <= 1
                 page.set_viewport_size({"width": 320, "height": 900})
@@ -273,7 +284,7 @@ def test_localized_buy_checkout_and_review_navigation(
 
 
 @pytest.mark.browser
-@pytest.mark.parametrize(("width", "lang"), [(1280, "en"), (375, "ru")])
+@pytest.mark.parametrize(("width", "lang"), [(1280, "en"), (390, "ru")])
 def test_disabled_bundle_is_hidden_in_browser(
     review_sessions, monkeypatch, tmp_path, width, lang
 ):
