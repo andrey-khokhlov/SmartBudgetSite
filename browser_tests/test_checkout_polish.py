@@ -101,15 +101,31 @@ def test_localized_buy_checkout_and_review_navigation(
             assert page.evaluate(
                 "document.documentElement.scrollWidth <= window.innerWidth"
             )
-            expect(page.locator(".purchase-compatibility a")).to_have_attribute(
-                "href", "/faq#system-requirements"
-            )
+            compatibility = page.locator(".purchase-compatibility")
+            expect(compatibility.get_by_role("heading")).to_be_visible()
+            expect(compatibility.locator("a")).to_have_count(0)
+            paragraphs = compatibility.locator("p")
+            expect(paragraphs).to_have_count(2)
+            for paragraph in paragraphs.all():
+                expect(paragraph).to_be_visible()
             page.screenshot(path=str(tmp_path / "buy.png"), full_page=True)
             checkout_path = f"/checkout/smartbudget-{package}-standard"
             link = page.locator(f'.checkout-link[data-base-url^="{checkout_path}?"]')
             selected_card = cards.filter(has=link)
             link.click()
             expect(page.locator('input[name="consultation"]')).to_have_value("0")
+            requirements_link = compatibility.get_by_role(
+                "link",
+                name=(
+                    "Полные системные требования"
+                    if lang == "ru"
+                    else "Full System Requirements"
+                ),
+            )
+            expect(requirements_link).to_be_visible()
+            expect(requirements_link).to_have_attribute(
+                "href", "/faq#system-requirements"
+            )
             expect(page.locator(".checkout-row--price")).to_have_count(1)
             expect(page.locator("#checkout-delivery")).not_to_contain_text(
                 "Если вы приобрели консультацию"

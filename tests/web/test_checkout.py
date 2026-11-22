@@ -4,6 +4,7 @@ from html import unescape
 
 import pytest
 
+from app.core.i18n import TRANSLATIONS
 from app.models.product import Product
 from app.models.product_price import ProductPrice
 from app.models.service_addon import ServiceAddon
@@ -115,11 +116,17 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
     assert download in unescape(product_only.text)
     assert booking not in unescape(product_only.text)
     assert 'name="consultation" value="0"' in product_only.text
-    for response in (buy, checkout):
+    requirements_link = 'href="/faq#system-requirements"'
+    assert requirements_link not in buy.text
+    assert requirements_link in product_only.text
+    assert requirements_link in checkout.text
+    for response in (buy, product_only, checkout):
         assert f'id="purchase-compatibility-heading">{heading}</h2>' in response.text
-        assert 'href="/faq#system-requirements"' in response.text
-        for requirement in ("Windows 10/11", "2019", "VBA", "ActiveX", "Excel", "Mac"):
-            assert requirement in response.text
+        for key in (
+            "purchase_compatibility.requirements",
+            "purchase_compatibility.restrictions",
+        ):
+            assert f"<p>{TRANSLATIONS[lang][key]}</p>" in unescape(response.text)
 
 
 @pytest.mark.usefixtures("enable_bundle_checkout")

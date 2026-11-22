@@ -75,7 +75,9 @@
         {% endfor %}
     </div>
     {% if family_slug == "smartbudget" %}
-        {% include "_purchase_compatibility.html" %}
+        {% with show_system_requirements_link=false %}
+            {% include "_purchase_compatibility.html" %}
+        {% endwith %}
     {% endif %}
 </div>
 

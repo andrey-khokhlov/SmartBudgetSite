@@ -103,6 +103,18 @@ UI/UX Polish under Functional Freeze and uses the existing product-only purchase
 path. Verify both locales, keyboard focus and desktop/mobile layout. Gate 3
 and R45 still require the repeat review.
 
+## R32 Buy compatibility presentation owner amendment — 2026-11-22
+
+The owner approved UX-BUY-01 during Commercial UX Review. On
+`/products/smartbudget/buy`, retain the complete existing RU/EN **Важно перед
+покупкой** / **Important Before Purchasing** disclosure and omit its final
+**Полные системные требования** / **Full System Requirements** FAQ link.
+Checkout retains the link. The standalone FAQ and other navigation continue
+to follow their existing requirements.
+
+This amendment applies only to the Buy presentation under Functional Freeze.
+It supersedes the inclusion of the final link on Buy in §5.4 below.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
