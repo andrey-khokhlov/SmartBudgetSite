@@ -137,6 +137,29 @@ FAQ_GROUPS = (
         ],
     },
     {
+        "id": "consultations",
+        "title_key": "nav_consultations",
+        "questions": [
+            {
+                "question_key": f"faq_consultations_q{number}",
+                "body": [
+                    {
+                        "text_key": f"faq_consultations_a{number}_{paragraph}",
+                        "consultations_link": (number, paragraph) == (3, 2),
+                        "support_links": (number, paragraph) in ((6, 3), (8, 2)),
+                        "feedback_text_key": (
+                            "faq_consultations_feedback"
+                            if number == 6
+                            else "faq_support_feedback"
+                        ),
+                    }
+                    for paragraph in range(1, paragraph_count + 1)
+                ],
+            }
+            for number, paragraph_count in enumerate((3, 2, 2, 2, 2, 3, 2, 3), start=1)
+        ],
+    },
+    {
         "id": "support-and-refunds",
         "title_key": "faq_support_title",
         "questions": [

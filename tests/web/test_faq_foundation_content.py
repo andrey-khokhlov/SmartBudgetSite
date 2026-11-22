@@ -81,12 +81,16 @@ def approved_section(number):
     return re.split(r"^#{1,4} ", section, maxsplit=1, flags=re.MULTILINE)[0]
 
 
-def approved_questions(block, lang):
-    locales = re.split(r"^##### (RU|EN)(?: — .*?)?\n", block, flags=re.MULTILINE)
+def approved_questions(block, lang, locale_heading="#####"):
+    locales = re.split(
+        rf"^{locale_heading} (RU|EN)(?: — .*?)?\n", block, flags=re.MULTILINE
+    )
     localized = dict(zip(locales[1::2], locales[2::2], strict=True))[lang.upper()]
     return [
         chunk.strip().split("\n\n")
-        for chunk in re.split(r"###### \d+\. ", localized)[1:]
+        for chunk in re.split(
+            rf"^{locale_heading}# \d+\. ", localized, flags=re.MULTILINE
+        )[1:]
     ]
 
 
@@ -102,14 +106,27 @@ def test_faq_has_only_ready_groups_and_four_exact_overview_questions(client, lan
         "about-smartbudget",
         "system-requirements",
         "purchase-and-delivery",
+        "consultations",
         "support-and-refunds",
     ]
     assert [group["title"] for group in page.groups] == (
-        ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта", "Поддержка и возвраты"]
+        [
+            "О SmartBudget",
+            "Перед покупкой",
+            "Покупка и получение продукта",
+            "Консультации",
+            "Поддержка и возвраты",
+        ]
         if lang == "ru"
-        else ["About SmartBudget", "Before You Buy", "Purchase and Delivery", "Support and Refunds"]
+        else [
+            "About SmartBudget",
+            "Before You Buy",
+            "Purchase and Delivery",
+            "Consultations",
+            "Support and Refunds",
+        ]
     )
-    assert [len(group["questions"]) for group in page.groups] == [4, 7, 7, 5]
+    assert [len(group["questions"]) for group in page.groups] == [4, 7, 7, 8, 5]
     for actual, approved in zip(
         page.groups[0]["questions"],
         approved_questions(approved_section(1), lang),
@@ -137,6 +154,34 @@ def test_purchase_faq_matches_approved_copy_order_and_support_links(client, lang
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])
+def test_consultations_faq_matches_final_copy_and_links(client, lang):
+    response = client.get("/faq", params={"lang": lang})
+    assert response.status_code == 200
+    group = FAQContent(response.text).groups[3]
+    assert group["id"] == "consultations"
+    source = Path("docs/release_uiux_requirements.md").read_text(encoding="utf-8")
+    amendment = source.split("## R30 Consultations FAQ owner amendment", 1)[1]
+    amendment = amendment.split("\n## ", 1)[0]
+    assert [
+        [question["title"], *question["paragraphs"]] for question in group["questions"]
+    ] == approved_questions(amendment, lang, locale_heading="###")
+
+    feedback = f"/feedback?lang={lang}"
+    email = "mailto:support@neocitrix.com"
+    assert [link["href"] for link in group["links"]] == [
+        "/consultations",
+        feedback,
+        email,
+        feedback,
+        email,
+    ]
+    for href in ("/consultations", feedback):
+        target = client.get(href)
+        assert target.status_code == 200
+        assert f'<html lang="{lang}">' in target.text
+
+
+@pytest.mark.parametrize("lang", ["ru", "en"])
 @pytest.mark.parametrize("publication_state", ["available", "no_date", "no_seller_phone"])
 def test_support_faq_matches_approved_copy_and_keeps_refund_form_available(
     client, monkeypatch, lang, publication_state
@@ -155,7 +200,7 @@ def test_support_faq_matches_approved_copy_and_keeps_refund_form_available(
     )
     response = client.get("/faq", params={"lang": lang})
     assert response.status_code == 200
-    group = FAQContent(response.text).groups[3]
+    group = FAQContent(response.text).groups[4]
     assert group["id"] == "support-and-refunds"
     approved = approved_questions(approved_section(5), lang)
     assert [

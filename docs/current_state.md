@@ -760,7 +760,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
 | R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
-| R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ deferred to UI/UX Polish before public release; align copy with separate purchases, catalog-owned prices, and verified Calendly behavior. Does not block Functional Freeze. |
+| R30 | Implemented | Localized native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), Consultations (8), and Support and Refunds (5). | See [R30 local verification](#r30-consultations-faq). Gate 3, R39 and R45 remain open. |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Buy and Checkout use four paragraphs with emphasis on unsupported platforms. Products links to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-CHECK-01](#ux-check-01-checkout-compatibility-link-removal). |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
@@ -947,7 +947,8 @@ with new-tab/noopener behavior; RU retains official English targets.
 Products adds a catalog-driven localized requirements link beside its conditions
 to `/faq#system-requirements`, with sticky-header scroll clearance. G5 layout,
 price-free content and product-details CTA are retained. R18/R31/R47 are
-Implemented. R30 stays Partial for the Consultations FAQ group. G10 completes the
+Implemented. The subsequent [R30 work](#r30-consultations-faq) completes the
+Consultations FAQ group. G10 completes the
 remaining Buy and Checkout disclosures under R32. The owner-verified Microsoft 365
 environment is Excel 2608 Click-to-Run Current Channel on Windows, not an
 independent Codex product test. 32-bit Excel was not separately practically
@@ -1152,6 +1153,30 @@ overflow. The four 1280 px Consultations screenshots matched the prior desktop
 renders exactly. Ruff, Black on the edited test block and `git diff --check`
 passed.
 
+### R30 Consultations FAQ
+
+The [owner-approved amendment](release_uiux_requirements.md#r30-consultations-faq-owner-amendment--2026-11-22)
+adds eight RU/EN questions between Purchase and Delivery and Support and
+Refunds through the existing native accordion. The price answer links to
+Consultations for the current standalone offer. The booking and rescheduling
+answers use the existing feedback form and support address.
+
+Internally, payment confirmation records `Sale.paid_at` and creates the
+consultation entitlement in the same reconciliation transaction. The booking
+deadline uses the entitlement creation time plus 14 days. The approved FAQ
+uses payment confirmation as the customer-facing reference and clarifies
+that the period applies to initial booking. Functional Freeze remains in
+effect, with Gate 3, R39 and R45 open.
+
+Local validation on the `c0e2545` baseline passed 103 focused web and service
+tests and six Chromium cases. The tests verified all five groups in order,
+the exact RU/EN Consultations questions and paragraphs, the price and support
+links, keyboard and pointer accordion use, visible focus, and language
+switching. The four pre-existing FAQ groups and their translations were
+compared with the baseline. Chromium checks in RU/EN at 1280, 375 and 390 px
+found no horizontal overflow. The 1280 and 390 px renders were visually
+inspected. Ruff, Black on the edited test blocks and `git diff --check` passed.
+
 ### Decision dependencies
 
 The owner has completed D1–D6 at the product and architecture level.
@@ -1187,7 +1212,7 @@ surface-specific slices, not duplicate requirements.
 | G3 — Feedback polish | R24–R27 | **Implemented and focused-validated.** See [G3 validation](#g3-feedback-polish-and-validation). |
 | G4 — Reviews visibility | R28–R29 | **Implemented and focused-validated.** See [G4 validation](#g4-reviews-visibility-and-validation). |
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
-| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. R30 later groups remain with G12/G14/G15. |
+| G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. See [R30](#r30-consultations-faq) for completion of the FAQ groups. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
 | G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
 | G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, visible compatibility disclosure, database-priced concluding offer, Buy CTA and optional add-on note. |
@@ -1209,7 +1234,7 @@ R48 is validated, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
 G6 foundation and the R18 requirements link are also implemented. G10 completes
-R32, while R30 remains Partial for later FAQ groups. Further bounded tasks must
+R32, and R30 now includes all five FAQ groups. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 completes the seven-block Landing. G11 precedes
 G12. Gate 2 is complete. Follow the

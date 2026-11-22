@@ -9,7 +9,7 @@ from browser_tests.test_feedback_form import _running_app
 
 @pytest.mark.browser
 @pytest.mark.parametrize("lang", ["ru", "en"])
-@pytest.mark.parametrize("width", [1280, 375])
+@pytest.mark.parametrize("width", [1280, 375, 390])
 def test_faq_groups_native_accordions_and_products_anchor(
     tmp_path, monkeypatch, lang, width
 ):
@@ -68,9 +68,21 @@ def test_faq_groups_native_accordions_and_products_anchor(
             "Частые вопросы" if lang == "ru" else "Frequently Asked Questions"
         )
         expect(page.locator(".faq-group h2")).to_have_text(
-            ["О SmartBudget", "Перед покупкой", "Покупка и получение продукта", "Поддержка и возвраты"]
+            [
+                "О SmartBudget",
+                "Перед покупкой",
+                "Покупка и получение продукта",
+                "Консультации",
+                "Поддержка и возвраты",
+            ]
             if lang == "ru"
-            else ["About SmartBudget", "Before You Buy", "Purchase and Delivery", "Support and Refunds"]
+            else [
+                "About SmartBudget",
+                "Before You Buy",
+                "Purchase and Delivery",
+                "Consultations",
+                "Support and Refunds",
+            ]
         )
         target = page.locator("#system-requirements-question")
         expect(target).to_have_attribute("open", "")
@@ -118,6 +130,28 @@ def test_faq_groups_native_accordions_and_products_anchor(
         )
         expect(microsoft_link).to_have_attribute("target", "_blank")
         expect(microsoft_link).to_have_attribute("rel", "noopener")
+        consultations = page.locator("#consultations")
+        questions = consultations.locator("details")
+        expect(questions).to_have_count(8)
+        booking_window = questions.nth(5)
+        booking_summary = booking_window.locator("summary")
+        booking_summary.focus()
+        expect(booking_summary).to_be_focused()
+        expect(booking_summary).to_have_css("outline-style", "solid")
+        booking_summary.press("Enter")
+        expect(booking_window).to_have_attribute("open", "")
+        page.keyboard.press("Tab")
+        feedback = booking_window.locator(f'a[href="/feedback?lang={lang}"]')
+        expect(feedback).to_be_focused()
+        expect(feedback).to_have_css("outline-style", "solid")
+        page.keyboard.press("Tab")
+        expect(
+            booking_window.locator('a[href="mailto:support@neocitrix.com"]')
+        ).to_be_focused()
+        booking_summary.focus()
+        booking_summary.press("Space")
+        expect(booking_window).not_to_have_attribute("open", "")
+
         for details in page.locator("details").all():
             if details.get_attribute("open") is None:
                 details.locator("summary").click()
@@ -141,6 +175,13 @@ def test_faq_groups_native_accordions_and_products_anchor(
             "href", "mailto:support@neocitrix.com"
         )
         purchase.screenshot(path=str(tmp_path / f"faq-purchase-{lang}-{width}.png"))
+        expect(questions.nth(2).locator('a[href="/consultations"]')).to_be_visible()
+        expect(
+            questions.nth(7).locator(f'a[href="/feedback?lang={lang}"]')
+        ).to_be_visible()
+        consultations.screenshot(
+            path=str(tmp_path / f"faq-consultations-{lang}-{width}.png")
+        )
         support = page.locator("#support-and-refunds")
         expect(support.locator("summary")).to_have_count(5)
         refund = support.locator("details").last
@@ -163,6 +204,11 @@ def test_faq_groups_native_accordions_and_products_anchor(
         other = "en" if lang == "ru" else "ru"
         page.locator(".language-switch a").click()
         expect(page.locator("html")).to_have_attribute("lang", other)
+        expect(consultations.locator("h2")).to_have_text(
+            "Консультации" if other == "ru" else "Consultations"
+        )
+        expect(questions).to_have_count(8)
+        expect(consultations.locator("details[open]")).to_have_count(0)
         expect(support.locator("h2")).to_have_text(
             "Поддержка и возвраты" if other == "ru" else "Support and Refunds"
         )

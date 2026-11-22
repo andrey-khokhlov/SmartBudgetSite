@@ -23,6 +23,9 @@
                     {% set before, after = t(part.text_key).split("{feedback}") %}
                     {% set between, end = after.split("{email}") %}
                     <p>{{ before }}<a href="/feedback?lang={{ lang }}">{{ t(part.feedback_text_key | default("faq_purchase_feedback")) }}</a>{{ between }}<a href="mailto:support@neocitrix.com">support@neocitrix.com</a>{{ end }}</p>
+                  {% elif part.consultations_link %}
+                    {% set before, after = t(part.text_key).split("{consultations}") %}
+                    <p>{{ before }}<a href="/consultations">{{ t("nav_consultations") }}</a>{{ after }}</p>
                   {% elif part.refund_links %}
                     {% set before_form, after_form = t(part.text_key).split("{refund_form}") %}
                     {% set before_email, after_email = after_form.split("{email}") %}

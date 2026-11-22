@@ -670,9 +670,8 @@ scope are also implemented and regression/browser-validated. G9 completes R07
 under approved D1 and is locally validated. The overall UI/UX gate remains open.
 G5 About/Products presentation is implemented and web/browser-validated. G6 now
 completes R18's compatibility link and implements the grouped FAQ foundation,
-R31 and R47. R30 remains Partial for later FAQ groups. G10 completes the
-pre-purchase compatibility disclosures under R32. No empty future FAQ groups
-are rendered.
+R31 and R47. R30 now renders all five FAQ groups. G10 completes the
+pre-purchase compatibility disclosures under R32.
 R01–R55 define the recovered/agreed scope: proceed through bounded implementation
 groups rather than mining old chats or adding speculative features.
 Ordinary enhancements go post-release; genuine defects, architecture conflicts,
@@ -761,7 +760,8 @@ R17/R18/R19 are implemented, including the G6 link to the actual FAQ compatibili
 section. G6 renders the approved four-question overview and seven-question
 Before You Buy group with final manual ActiveX/restart guidance and approved
 Microsoft links. R31/R47 are implemented. G14 and G15-C2 add the Purchase and
-Delivery and Support and Refunds groups. R30 still awaits the Consultations group.
+Delivery and Support and Refunds groups. The eight-question Consultations
+group completes R30. See the [local verification](current_state.md#r30-consultations-faq).
 G10 is implemented and locally validated for the product purchase flow. Buy
 shows equal language cards and the optional add-on terms. Checkout shows the
 selected items and composition-sensitive delivery information. Both surfaces

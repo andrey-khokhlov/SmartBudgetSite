@@ -173,6 +173,128 @@ unavailable notice on mobile while retaining its background, border, padding
 and contrast. Preserve the RU/EN copy order and desktop presentation. This
 layout work is within UI/UX Polish under Functional Freeze.
 
+## R30 Consultations FAQ owner amendment — 2026-11-22
+
+The owner approved the final RU/EN copy for the public Consultations FAQ.
+Place its eight questions between Purchase and Delivery and Support and
+Refunds. This amendment supersedes the historical draft in §5.6.4.
+Refer customers to the Consultations page for the current standalone price.
+Use the existing feedback form and support address for booking or rescheduling
+difficulties. The rescheduling answer remains conditional on a link being
+available in the confirmation. Live Calendly validation under R39 remains open.
+
+### RU — Консультации
+
+#### 1. По каким вопросам можно получить консультацию?
+
+Консультация поможет разобраться в SmartBudget, настроить финансовую модель под вашу ситуацию и научиться использовать её для планирования и принятия решений.
+
+Мы можем обсудить первоначальную настройку, планирование доходов и расходов, финансовые обязательства, кредитные карты, резервы, прогнозы и анализ отклонений фактических показателей от плана.
+
+Также можно обсудить более общие вопросы финансового планирования, моделирования и аналитики в пределах моей профессиональной компетенции.
+
+#### 2. Нужно ли покупать SmartBudget, чтобы получить консультацию?
+
+Нет. Консультацию можно приобрести отдельно, без покупки SmartBudget.
+
+Сам SmartBudget рассчитан на самостоятельное использование и сопровождается подробным пошаговым руководством. Консультация — дополнительная услуга для тех, кто предпочитает персональную помощь или хочет подробнее разобраться в своей финансовой ситуации.
+
+#### 3. Сколько стоит консультация?
+
+Продолжительность индивидуальной консультации — 60 минут.
+
+Актуальная стоимость указана на странице «Консультации». Консультация приобретается отдельно от SmartBudget.
+
+#### 4. Как проходит консультация?
+
+Консультация проводится индивидуально, в онлайн-формате, и длится 60 минут.
+
+Мы можем обсудить ваши вопросы, разобрать финансовые расчёты и при необходимости использовать демонстрацию экрана для совместной работы со SmartBudget.
+
+#### 5. Как записаться на консультацию после оплаты?
+
+После подтверждения оплаты вы получите на указанный email письмо с инструкциями и защищённой ссылкой для записи.
+
+Перейдя по ссылке, вы сможете выбрать подходящие дату и время консультации из доступных вариантов.
+
+#### 6. Сколько времени даётся на запись?
+
+Записаться на консультацию необходимо в течение 14 дней после подтверждения оплаты.
+
+Это срок для выбора и бронирования времени, а не требование провести консультацию в течение этих 14 дней. Сама встреча может состояться позднее.
+
+Если возникли сложности с записью или подходящих свободных слотов нет, воспользуйтесь формой обратной связи на сайте или напишите на support@neocitrix.com.
+
+#### 7. Нужно ли готовиться к консультации?
+
+Специальная подготовка не требуется, но полезно заранее сформулировать вопросы, которые вы хотите обсудить.
+
+Если консультация касается SmartBudget, желательно иметь под рукой файл продукта и примеры расчётов или ситуаций, с которыми возникли сложности.
+
+#### 8. Можно ли перенести консультацию на другое время?
+
+Если в подтверждении записи доступна ссылка для переноса встречи, вы можете воспользоваться ею, чтобы выбрать другое свободное время.
+
+Если ссылка отсутствует или возникли сложности с переносом, обратитесь в службу поддержки через форму обратной связи или по адресу support@neocitrix.com.
+
+14-дневный срок относится к первоначальной записи, а не к дате проведения уже забронированной встречи.
+
+### EN — Consultations
+
+#### 1. What can I discuss during a consultation?
+
+A consultation can help you understand SmartBudget, adapt your financial model to your circumstances, and use it more effectively for planning and decision-making.
+
+Topics may include initial setup, income and expense planning, financial commitments, credit cards, reserves, forecasting, and analysing differences between planned and actual results.
+
+We can also discuss broader financial planning, modelling, and analytics questions within my professional expertise.
+
+#### 2. Do I need to purchase SmartBudget to book a consultation?
+
+No. You can purchase a consultation separately without buying SmartBudget.
+
+SmartBudget is designed for independent use and comes with a detailed step-by-step user guide. A consultation is an optional service for customers who prefer personalised assistance or want to explore their financial situation in greater detail.
+
+#### 3. How much does a consultation cost?
+
+Each individual consultation lasts 60 minutes.
+
+The current price is displayed on the Consultations page. Consultations are purchased separately from SmartBudget.
+
+#### 4. How are consultations conducted?
+
+Consultations are individual online sessions lasting 60 minutes.
+
+We can discuss your questions, review financial calculations, and use screen sharing when helpful to work through SmartBudget together.
+
+#### 5. How do I book my consultation after payment?
+
+Once your payment is confirmed, you'll receive an email with booking instructions and a secure link.
+
+Follow the link to choose a suitable date and time from the available appointment slots.
+
+#### 6. How long do I have to book my consultation?
+
+You need to book your consultation within 14 days of payment confirmation.
+
+This is the time available to select and book an appointment, not a requirement to attend the consultation within those 14 days. Your session may take place later.
+
+If you have difficulty booking or cannot find a suitable available slot, please use the website's feedback form or email support@neocitrix.com.
+
+#### 7. Do I need to prepare for the consultation?
+
+No special preparation is required, but it helps to think about the questions you would like to discuss beforehand.
+
+If your consultation concerns SmartBudget, having your workbook and relevant examples or calculations available can make the session more productive.
+
+#### 8. Can I reschedule my consultation?
+
+If your booking confirmation includes a rescheduling link, you can use it to select another available time.
+
+If the link is unavailable or you experience difficulties rescheduling, please contact support through the feedback form or at support@neocitrix.com.
+
+The 14-day booking window applies to your initial booking, not the date of an already scheduled appointment.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
@@ -1218,6 +1340,10 @@ If you cannot find the email, the link does not work, or it has expired, contact
 Include the email address used for your purchase and briefly describe the issue. We'll review your request and help resolve the problem.
 
 #### 5.6.4. Консультации / Consultations · R34/R38/R39 · B 172–184
+
+The draft below is historical. Use the
+[owner-approved R30 amendment](#r30-consultations-faq-owner-amendment--2026-11-22)
+for the public Consultations FAQ.
 
 **Статус:** содержание предварительно согласовано. Цены — действующие значения каталога вместо квадратных скобок; видеосвязь нейтральна до проверки. Ответ № 8 и сообщения о подтверждениях публиковать после реального теста Calendly. Формат и продолжительность обоих предложений — одинаковые; назначение add-on остаётся первоначальной настройкой.
 
