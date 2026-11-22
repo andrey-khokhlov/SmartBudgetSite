@@ -768,7 +768,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R35 | Implemented | New download entitlements default to 24 hours. RU/EN product and bundle emails show the 24-hour notice. Delivery blocks known-expired download links. | Verify the release configuration and validate delivery in the release environment |
 | R36 | Implemented | The public download page shows expiry in the browser timezone with its offset and a server-rendered UTC fallback. Chromium verified DST, fractional offsets and download submission without JavaScript. | Release-environment download validation |
 | R37 | Partial | Expired-link pages explain indefinite use and provide the existing Feedback support path with support reference and prefill. Local GET and POST checks cover expiry and token confidentiality. | Verify real interrupted and repeat downloads and the deployed support path |
-| R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. | Real booking and meeting platform validation remain open |
+| R38 | Partial | G12 presents standalone and add-on options distinctly with catalog prices and neutral online format wording. [UX-CONS-01](#ux-cons-01-public-consultations-presentation) updates the public booking copy and unavailable notice. | Real booking and meeting platform validation remain open |
 | R39 | Requires validation | R39-A implements Share provisioning and booking reconciliation. R39-B implements expiry revocation. R39-C coordinates access closure, early revocation and meeting disposition. | Validate live webhook delivery, booking, rescheduling, revocation and cancellation coordination |
 | R40 | Partial | G13 renders the approved subjects and copy for all three order compositions in RU/EN from the stored Sale language. All six variants include the permanent Sale-level PAY reference. G15-C3 adds refund and cancellation summaries with conditional policy links to product-only and standalone consultation emails. | Real purchase email and Calendly confirmation validation remain open |
 | R41 | Partial | G15-B implements the bilingual policy page and footer link using the November 14 candidate as amended on November 20. G15-C1 adds conditional pre-payment links in both Checkout flows. G15-C2 adds a conditional policy link and direct refund form access in the FAQ. | Policy activation and release validation remain open |
@@ -1113,6 +1113,24 @@ and 375 px. External validation still covers hosted payment, purchase-email
 receipt with the protected booking link, first Calendly booking, confirmation
 and meeting link, rescheduling, cancellation, guest access, screen sharing and
 the meeting-platform fallback. R39 remains open for booking validation.
+
+### UX-CONS-01 public Consultations presentation
+
+The [2026-11-22 amendment](release_uiux_requirements.md#consultations-booking-copy-and-unavailable-notice-amendment--2026-11-22)
+updates the RU/EN booking paragraph to explain the email and secure link after
+payment confirmation. The standalone Checkout delivery hint uses the same
+translation. The existing unavailable message appears in a light-gray notice
+when the page withholds the purchase action. Functional Freeze remains in
+effect, with Gate 3, R39 and R45 open.
+
+Local validation on the `5648201` baseline passed 73 focused web tests and four
+Chromium cases. Tests verified exact RU/EN booking copy, standalone Checkout
+navigation, and the existing availability behavior. The Chromium cases
+exercised both purchase states at 1280 and 390 px using isolated catalog data
+and manual sales suspension. All eight Consultations screenshots were inspected
+and showed readable text with no horizontal overflow. The notice text contrast
+was 7.07:1, above the WCAG AA minimum for normal text. Ruff, Black on the edited
+test blocks and `git diff --check` passed.
 
 ### Decision dependencies
 

@@ -4,13 +4,14 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from app.core.db import Base
+from app.services.consultation_capacity_service import set_consultation_sales_suspended
 from browser_tests.test_feedback_form import _running_app
 from tests.web.test_public_consultations import seed_consultations
 
 
 @pytest.mark.browser
 @pytest.mark.usefixtures("checkout_legal_pages")
-@pytest.mark.parametrize("width", [1280, 375])
+@pytest.mark.parametrize("width", [1280, 390])
 @pytest.mark.parametrize(
     "lang,currency,price,switched_price",
     [
@@ -38,6 +39,11 @@ def test_consultation_navigation_and_checkout(
         expect(nav.last).to_have_attribute("aria-current", "page")
         expect(page.locator("html")).to_have_attribute("lang", lang)
         expect(page.locator(".consultations-price")).to_have_text(price)
+        notice = page.locator(".consultations-unavailable")
+        expect(notice).to_have_count(0)
+        booking = page.locator("#consultation-booking-heading + p")
+        expect(booking).to_be_visible()
+        booking_copy = booking.inner_text()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.screenshot(path=str(tmp_path / "consultations.png"), full_page=True)
 
@@ -56,9 +62,7 @@ def test_consultation_navigation_and_checkout(
         expect(page).to_have_url(f"{base_url}{path}?currency={currency}")
         expect(nav.last).to_have_attribute("aria-current", "page")
         expect(page.locator(".checkout-total strong")).to_have_text(price)
-        expect(page.locator("#checkout-delivery")).to_contain_text(
-            "защищённую ссылку для записи" if lang == "ru" else "secure booking link"
-        )
+        expect(page.locator("#checkout-delivery")).to_have_text(booking_copy)
         expect(page.locator("#checkout-email")).to_have_attribute("required", "")
         expect(page.locator(".checkout-legal a")).to_have_text(
             ["Политика возвратов", "Юридическая информация"]
@@ -80,4 +84,22 @@ def test_consultation_navigation_and_checkout(
         }
         expect(page.locator('input[name="currency"]')).to_have_value(currency)
         page.wait_for_load_state("networkidle")
+
+        with review_sessions() as db:
+            set_consultation_sales_suspended(db, suspended=True)
+        page.goto(f"{base_url}/consultations?lang={lang}")
+        expect(booking).to_have_text(booking_copy)
+        expect(notice).to_be_visible()
+        expect(notice).to_have_text(
+            "Оформление консультации сейчас недоступно."
+            if lang == "ru"
+            else "Consultation checkout is currently unavailable."
+        )
+        expect(notice).to_have_css("background-color", "rgb(246, 247, 249)")
+        expect(notice).to_have_css("color", "rgb(71, 85, 105)")
+        expect(page.locator(".consultations-offer a")).to_have_count(0)
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.screenshot(
+            path=str(tmp_path / "consultations-unavailable.png"), full_page=True
+        )
         browser.close()

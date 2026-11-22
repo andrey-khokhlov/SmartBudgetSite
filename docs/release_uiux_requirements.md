@@ -137,6 +137,30 @@ Products retains its system requirements link to the standalone FAQ. Checkout
 retains the existing legal disclosures and links. This presentation amendment
 is within UI/UX Polish under Functional Freeze.
 
+## Consultations booking copy and unavailable notice amendment — 2026-11-22
+
+The owner approved UX-CONS-01 for the public Consultations page under R06/R38.
+Use the following copy under the existing booking heading in §5.7.2.
+The standalone Checkout delivery hint uses the same translation.
+
+**RU**
+
+После подтверждения оплаты вы получите на указанный email письмо с инструкциями и защищённой ссылкой для записи. Перейдя по ссылке, вы сможете выбрать подходящие дату и время консультации из доступных вариантов.
+
+**EN**
+
+Once your payment is confirmed, you'll receive an email with booking instructions and a secure link. Follow the link to choose a suitable date and time from the available appointment slots.
+
+When consultation checkout is unavailable, present the existing message in a
+subtle light-gray notice with muted text, modest padding, rounded corners, a
+restrained border and WCAG AA text contrast.
+
+- RU — Оформление консультации сейчас недоступно.
+- EN — Consultation checkout is currently unavailable.
+
+This presentation amendment is within UI/UX Polish under Functional Freeze.
+Gate 3, R39 and R45 remain open.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
@@ -1438,6 +1462,9 @@ Duration: 60 minutes.
 Consultations can be purchased separately, including by customers who have already purchased SmartBudget.
 
 #### 5.7.2. Коммерческий блок и запись
+
+See [UX-CONS-01](#consultations-booking-copy-and-unavailable-notice-amendment--2026-11-22)
+for the active booking paragraph and unavailable notice.
 
 **Статус:** согласованный текст со значениями каталога и нейтральной платформой. Покупка/письмо/защищённая ссылка/календарь проверяются до публикации.
 

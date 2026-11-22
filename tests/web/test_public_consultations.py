@@ -1,4 +1,5 @@
 from decimal import Decimal
+from html import unescape
 from unittest.mock import Mock
 
 import pytest
@@ -63,14 +64,25 @@ def test_localized_catalog_and_checkout(
     assert page.text.count('href="/consultations/checkout/') == 1
     assert f'href="{path}?currency={currency}"' in page.text
     assert "private-" not in page.text
+    assert 'class="consultations-unavailable"' not in page.text
+    booking_copy = (
+        "После подтверждения оплаты вы получите на указанный email письмо с инструкциями "
+        "и защищённой ссылкой для записи. Перейдя по ссылке, вы сможете выбрать подходящие "
+        "дату и время консультации из доступных вариантов."
+        if lang == "ru"
+        else "Once your payment is confirmed, you'll receive an email with booking instructions "
+        "and a secure link. Follow the link to choose a suitable date and time from the "
+        "available appointment slots."
+    )
+    booking_heading = 'aria-labelledby="consultation-booking-heading">'
+    booking = page.text.split(booking_heading, 1)[1].split("</section>", 1)[0]
+    assert f"<p>{booking_copy}</p>" in unescape(booking)
     checkout = client.get(f"{path}?currency={currency}")
     assert checkout.status_code == 200
     assert price in checkout.text and addon not in checkout.text
     assert f'<html lang="{lang}">' in checkout.text
     assert f'action="{path}?lang={lang}"' in checkout.text
-    assert (
-        "защищённую ссылку для записи" if lang == "ru" else "secure booking link"
-    ) in checkout.text
+    assert f'id="checkout-delivery">{booking_copy}</p>' in unescape(checkout.text)
     assert "secure link to download" not in checkout.text
     assert "ссылку для скачивания" not in checkout.text
     other = "en" if lang == "ru" else "ru"
@@ -92,7 +104,10 @@ def test_catalog_withholds_purchase_when_unavailable(client, db_session, conditi
     page = client.get("/consultations?lang=ru")
     assert page.status_code == 200
     assert 'href="/consultations/checkout/' not in page.text
-    assert "Оформление консультации сейчас недоступно." in page.text
+    assert (
+        '<p class="consultations-unavailable">Оформление консультации сейчас недоступно.</p>'
+        in page.text
+    )
 
 
 @pytest.fixture
