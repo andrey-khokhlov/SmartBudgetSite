@@ -120,20 +120,12 @@ def test_localized_buy_checkout_and_review_navigation(
             selected_card = cards.filter(has=link)
             link.click()
             expect(page.locator('input[name="consultation"]')).to_have_value("0")
-            expect(paragraphs).to_have_count(5)
+            expect(compatibility.get_by_role("heading")).to_be_visible()
+            expect(compatibility.locator("a")).to_have_count(0)
+            expect(paragraphs).to_have_count(4)
             expect(paragraphs.nth(2).locator("strong")).to_be_visible()
-            requirements_link = compatibility.get_by_role(
-                "link",
-                name=(
-                    "Полные системные требования"
-                    if lang == "ru"
-                    else "Full System Requirements"
-                ),
-            )
-            expect(requirements_link).to_be_visible()
-            expect(requirements_link).to_have_attribute(
-                "href", "/faq#system-requirements"
-            )
+            for paragraph in paragraphs.all():
+                expect(paragraph).to_be_visible()
             expect(page.locator(".checkout-row--price")).to_have_count(1)
             expect(page.locator("#checkout-delivery")).not_to_contain_text(
                 "Если вы приобрели консультацию"
@@ -157,9 +149,7 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(page.locator(".checkout-title")).to_have_text(
                 "Ваш заказ" if lang == "ru" else "Your order"
             )
-            expect(page.locator(".purchase-compatibility a")).to_have_attribute(
-                "href", "/faq#system-requirements"
-            )
+            expect(compatibility.locator("a")).to_have_count(0)
             expect(page.locator(".checkout-total strong")).to_have_text(total)
             expect(page.locator(".checkout-summary strong")).to_have_count(1)
             expect(page.locator(".checkout-value")).to_have_count(4)

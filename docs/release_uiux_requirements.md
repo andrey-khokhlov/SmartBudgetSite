@@ -125,6 +125,18 @@ order. Use semantic emphasis for the unsupported-platform sentence. Keep
 paragraph spacing and line height readable at desktop and mobile widths. Under
 UX-BUY-01, only Checkout shows the FAQ link within the shared disclosure.
 
+## R32 Checkout compatibility link removal amendment — 2026-11-22
+
+The owner approved UX-CHECK-01 during Commercial UX Review. Remove the
+**Полные системные требования** / **Full System Requirements** link from product
+Checkout in RU and EN. This supersedes the Checkout link retention in
+UX-BUY-01 and UX-BUY-02. Buy and product Checkout display all four compatibility
+paragraphs with semantic emphasis on the Mac and web restriction.
+
+Products retains its system requirements link to the standalone FAQ. Checkout
+retains the existing legal disclosures and links. This presentation amendment
+is within UI/UX Polish under Functional Freeze.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

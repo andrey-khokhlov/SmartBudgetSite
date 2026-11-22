@@ -117,25 +117,18 @@ def test_buy_to_checkout_preserves_language_and_bundle_total(
     assert booking not in unescape(product_only.text)
     assert 'name="consultation" value="0"' in product_only.text
     copy = TRANSLATIONS[lang]
-    buy_paragraphs = [
+    expected_paragraphs = [
         copy["purchase_compatibility.supported_platforms"],
         copy["purchase_compatibility.vba_activex_requirements"],
         f'<strong>{copy["purchase_compatibility.unsupported_platforms"]}</strong>',
         copy["purchase_compatibility.security_restrictions"],
     ]
-    checkout_paragraphs = [
-        *buy_paragraphs,
-        f'<a href="/faq#system-requirements">{copy["product_requirements_label"]}</a>',
-    ]
     section_start = '<section class="purchase-compatibility"'
-    for response, paragraphs in (
-        (buy, buy_paragraphs),
-        (product_only, checkout_paragraphs),
-        (checkout, checkout_paragraphs),
-    ):
+    for response in (buy, product_only, checkout):
+        assert 'href="/faq#system-requirements"' not in response.text
         disclosure = response.text.split(section_start, 1)[1].split("</section>", 1)[0]
         assert f'id="purchase-compatibility-heading">{heading}</h2>' in disclosure
-        assert re.findall(r"<p>(.*?)</p>", unescape(disclosure)) == paragraphs
+        assert re.findall(r"<p>(.*?)</p>", unescape(disclosure)) == expected_paragraphs
 
 
 @pytest.mark.usefixtures("enable_bundle_checkout")

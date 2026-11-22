@@ -762,7 +762,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Partial | Localized title and data-driven native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), and Support and Refunds (5). | Consultations FAQ deferred to UI/UX Polish before public release; align copy with separate purchases, catalog-owned prices, and verified Calendly behavior. Does not block Functional Freeze. |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
-| R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Buy and Checkout use four paragraphs with emphasis on unsupported platforms. Products and Checkout link to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-BUY-02](#ux-buy-02-compatibility-disclosure-readability). |
+| R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Buy and Checkout use four paragraphs with emphasis on unsupported platforms. Products links to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-CHECK-01](#ux-check-01-checkout-compatibility-link-removal). |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
 | R34 | Partial | Landing, Buy, Checkout and Consultations use catalog prices. Consultations shows matching add-on pricing for information. | Remaining applicable FAQ disclosures and release-environment catalog validation |
 | R35 | Implemented | New download entitlements default to 24 hours. RU/EN product and bundle emails show the 24-hour notice. Delivery blocks known-expired download links. | Verify the release configuration and validate delivery in the release environment |
@@ -1035,10 +1035,9 @@ Real hosted payments, email delivery and booking remain release-validation work.
 ### UX-BUY-01 Buy compatibility presentation
 
 The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-buy-compatibility-presentation-owner-amendment--2026-11-22)
-removes the final FAQ link from the Buy compatibility disclosure. Buy retains
-both existing localized paragraphs. The shared template renders the link by
-default, including on Checkout. Functional Freeze remains in effect, and Gate 3
-and R45 remain open.
+removed the final FAQ link from the Buy compatibility disclosure and kept both
+localized paragraphs. Checkout retained the link at this stage. Functional
+Freeze remained in effect, with Gate 3 and R45 open.
 
 Local validation on the `66fa949` baseline passed 97 focused web pytest cases and
 six Chromium cases. The tests verified both localized disclosure paragraphs,
@@ -1054,8 +1053,8 @@ The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-compatibility-di
 splits the existing RU/EN Buy and Checkout copy into four paragraphs. The
 unsupported Mac and web platforms sentence uses `<strong>`. Buy adds paragraph
 spacing and a 1.65 line height. Checkout uses its existing paragraph styling.
-The UX-BUY-01 link behavior is preserved. Functional Freeze remains in effect,
-and Gate 3 and R45 remain open.
+This change kept the UX-BUY-01 link behavior in effect at the time. Functional
+Freeze remained in effect, with Gate 3 and R45 open.
 
 Local validation on the `7ac05d9` baseline passed 97 focused web tests and six
 Chromium cases. A direct comparison confirmed the four sentences match the
@@ -1064,6 +1063,23 @@ semantic emphasis, FAQ link behavior and absence of horizontal overflow.
 Buy and product-only Checkout screenshots were inspected in RU and EN at
 1280 and 390 px. Focused Ruff, Black on the edited test blocks and
 `git diff --check` passed.
+
+### UX-CHECK-01 Checkout compatibility link removal
+
+The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-checkout-compatibility-link-removal-amendment--2026-11-22)
+removes the compatibility FAQ link from Checkout and deletes the shared
+template's link toggle. Buy and product Checkout continue to display the four
+RU/EN paragraphs and the emphasized Mac and web restriction. Products retains
+its link to the standalone FAQ. Checkout retains the refund policy and seller
+information links. Functional Freeze remains in effect, with Gate 3 and R45 open.
+
+Local validation on the `c6cf03c` baseline passed 102 focused web tests and 10
+Chromium cases. Buy and product Checkout showed all four paragraphs with
+semantic emphasis and without the compatibility FAQ link in both languages.
+Screenshot inspection and browser checks at 1280 and 390 px showed readable
+disclosures with no horizontal overflow. Products-to-FAQ navigation and
+Checkout legal link regressions passed. Ruff, Black on the edited test blocks
+and `git diff --check` passed.
 
 ### G11 standalone payment boundary implementation and validation
 
