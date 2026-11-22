@@ -316,6 +316,27 @@ keyboard panning. Keep every original-image link and aspect ratio. Preserve
 the rest of the desktop presentation, the RU/EN wording and the catalog-owned
 price. This work is within UI/UX Polish under Functional Freeze.
 
+## Refund Request form presentation amendment — 2026-11-22
+
+The owner approved UX-REFUND-01 for the existing bilingual `/refund-request`
+form under Functional Freeze. Use a restrained, responsive card with
+left-aligned headings (28 px desktop, 24 px mobile), labels, controls, help
+text and feedback. Use full-width fields and a blue, full-width submit
+button consistent with Feedback and Checkout. Keep hover and keyboard focus
+visible. Scope the styling to this page.
+
+Show the following hint directly below the required purchase reference and
+associate it with the field through `aria-describedby`.
+
+- RU — Номер покупки указан в письме с подтверждением оплаты. Он начинается с PAY-.
+- EN — You can find your purchase reference in the confirmation email sent after payment. It starts with PAY-.
+
+Preserve the existing FAQ entry point, form copy, validation, submission
+protections and refund processing. No new navigation or footer entry is
+approved. Verify the initial form, validation and confirmation in RU/EN at
+320, 390 and 1280 px, including keyboard focus, layout and download-page
+regression coverage.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

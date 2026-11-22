@@ -792,6 +792,30 @@ notification and PostgreSQL tests, 25 passing model registration and schema
 parity tests, and 49 passing G13D recovery and dispatcher regressions. Ruff
 passed for relevant changed Python files, and diff checks passed.
 
+### UX-REFUND-01 Refund Request form polish
+
+Implemented locally on 2026-11-22 against `d20172b` under Functional Freeze.
+The form uses a dedicated stylesheet and a responsive card with left-aligned
+fields, help text and submission feedback. Full-width controls and the blue
+submit button have visible keyboard focus. The [approved RU/EN PAY- hint](release_uiux_requirements.md#refund-request-form-presentation-amendment--2026-11-22)
+appears immediately below the required reference and is linked through
+`aria-describedby`. The FAQ entry point, form protections, request processing
+and shared download styles remain as before.
+
+- Focused refund intake, Admin lifecycle, download, refund policy and FAQ pytest
+  regressions passed (**92 cases**, `ux-refund-01-web`).
+- Local Chromium passed (**12 cases**, `ux-refund-01-after`). Six refund form
+  cases checked RU/EN at 320, 390 and 1280 px, with native required-field and
+  email validation, the accessible hint, keyboard focus, hover, server
+  rejection, success and absence of horizontal overflow. Each successful test
+  submission recorded exactly one request without creating a refund operation.
+  Six download cases passed. Baseline form screenshots are in
+  `ux-refund-01-before`. The after run captured the initial, error and success
+  states.
+
+R53 stays Partial. Gate 3, R45, deployment and live operational validation
+remain open.
+
 ### G1 implementation and validation
 
 Implemented on 2026-11-04 against `df8ab87`. `app/web/navigation.py` supplies shared
