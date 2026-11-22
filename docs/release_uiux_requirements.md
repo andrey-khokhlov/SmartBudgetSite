@@ -161,6 +161,18 @@ restrained border and WCAG AA text contrast.
 This presentation amendment is within UI/UX Polish under Functional Freeze.
 Gate 3, R39 and R45 remain open.
 
+## Consultations mobile layout amendment — 2026-11-22
+
+UX-CONS-02 centers the public Consultations heading on mobile. Use consistent
+RU/EN typography so both headings wrap naturally to two lines at 390 px and
+can wrap to more lines at 320 px. Use the regular left-aligned paragraph
+styles for the introduction and explanatory text within the page gutters.
+Keep the offer and booking sections distinct, and keep the offer heading
+and card readable at 320 and 390 px. Center the text in the UX-CONS-01
+unavailable notice on mobile while retaining its background, border, padding
+and contrast. Preserve the RU/EN copy order and desktop presentation. This
+layout work is within UI/UX Polish under Functional Freeze.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.
