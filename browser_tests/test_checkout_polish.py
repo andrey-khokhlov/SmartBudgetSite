@@ -224,7 +224,7 @@ def test_localized_buy_checkout_and_review_navigation(
             expect(page).to_have_url(f"{base_url}/products/smartbudget")
 
             footer = page.locator("footer")
-            expect(footer.get_by_role("link")).to_have_count(3)
+            expect(footer.get_by_role("link")).to_have_count(4)
             support_label = "Contact Support" if lang == "en" else "Написать в поддержку"
             support = footer.get_by_role("link", name=support_label)
             expect(support).to_be_visible()
@@ -233,7 +233,7 @@ def test_localized_buy_checkout_and_review_navigation(
                 "element => element.scrollWidth <= element.clientWidth"
             )
             footer_links = footer.locator(".footer-center")
-            expect(footer_links.locator(".footer-sep")).to_have_count(2)
+            expect(footer_links.locator(".footer-sep")).to_have_count(3)
             mobile_footer = width <= 767
             expect(support).to_have_css(
                 "font-size", "13px" if mobile_footer else "14px"
@@ -245,10 +245,13 @@ def test_localized_buy_checkout_and_review_navigation(
                 "items => items.map(item => item.getBoundingClientRect().toJSON())"
             )
             centers = [box["y"] + box["height"] / 2 for box in bounds]
-            assert max(centers) - min(centers) <= 1
             if mobile_footer:
-                links_center = (bounds[0]["left"] + bounds[-1]["right"]) / 2
-                assert abs(links_center - width / 2) <= 1
+                for center in set(centers):
+                    row = [
+                        box for box, y in zip(bounds, centers) if abs(y - center) <= 1
+                    ]
+                    row_center = (row[0]["left"] + row[-1]["right"]) / 2
+                    assert abs(row_center - width / 2) <= 1
                 page.set_viewport_size({"width": 320, "height": 900})
                 assert page.evaluate(
                     "document.documentElement.scrollWidth <= window.innerWidth"
@@ -257,6 +260,8 @@ def test_localized_buy_checkout_and_review_navigation(
                     "element => element.scrollWidth <= element.clientWidth"
                 )
                 page.set_viewport_size({"width": width, "height": 900})
+            else:
+                assert max(centers) - min(centers) <= 1
             support.focus()
             expect(support).to_be_focused()
             footer.get_by_role("link", name="FAQ").click()

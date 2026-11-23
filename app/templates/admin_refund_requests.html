@@ -78,5 +78,6 @@
     {% endfor %}
     {% if page > 1 %}<a href="?page={{ page - 1 }}">Previous</a>{% endif %}
     {% if has_next %}<a href="?page={{ page + 1 }}">Next</a>{% endif %}
+    <p class="admin-page-navigation"><a href="/admin">Back to admin dashboard</a></p>
 </div>
 {% endblock %}

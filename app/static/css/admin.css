@@ -200,6 +200,87 @@ main.container {
     border-color: #d0d5dd;
 }
 
+/* Consultation sales capacity */
+.admin-capacity {
+    max-width: 680px;
+    margin-block: 20px;
+    padding: 16px 20px;
+    background: #f9fafb;
+    border: 1px solid #e6e8ec;
+    border-radius: 12px;
+}
+
+.admin-capacity h2 {
+    margin-bottom: 12px;
+    font-size: 1.125rem;
+}
+
+.admin-capacity__summary,
+.admin-capacity__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 32px;
+}
+
+.admin-capacity__summary {
+    align-items: start;
+}
+
+.admin-capacity dt {
+    color: #475569;
+    font-size: 0.875rem;
+}
+
+.admin-capacity__metric {
+    margin-top: 4px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.admin-capacity__status {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.admin-capacity__status--available {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.admin-capacity__details {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e6e8ec;
+    gap: 4px 20px;
+    font-size: 0.875rem;
+}
+
+.admin-capacity__details > div {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-capacity__details dd {
+    font-weight: 600;
+}
+
+.admin-capacity form,
+.admin-capacity__details + p {
+    margin-top: 12px;
+}
+
+.admin-capacity button {
+    cursor: pointer;
+}
+
 /* =========================
    Admin: Tables
    ========================= */

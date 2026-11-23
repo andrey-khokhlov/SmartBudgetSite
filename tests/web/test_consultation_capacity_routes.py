@@ -114,10 +114,11 @@ def test_admin_capacity_action_is_protected_and_preserves_offers(
     client.cookies.set("admin_token", settings.ADMIN_TOKEN)
     assert client.post(path, data={"action": "suspend"}).status_code == 403
     page = client.get(listing)
-    assert "Outstanding consultations</dt><dd>0" in page.text
+    assert "Outstanding consultations</dt>" in page.text
+    assert '<dd class="admin-capacity__metric">0 / 4</dd>' in page.text
     assert "Warning threshold</dt><dd>3" in page.text
-    assert "Capacity limit</dt><dd>4" in page.text
-    assert "New consultation sales</dt><dd>Available" in page.text
+    assert "New consultation sales</dt>" in page.text
+    assert 'admin-capacity__status--available">Available</span>' in page.text
     assert "Manual suspension</dt><dd>Inactive" in page.text
 
     def submit(page, action):
@@ -135,7 +136,7 @@ def test_admin_capacity_action_is_protected_and_preserves_offers(
     assert submit(page, "suspend").status_code == 303
     page = client.get(listing)
     assert "Manual suspension</dt><dd>Active" in page.text
-    assert "New consultation sales</dt><dd>Unavailable" in page.text
+    assert 'class="admin-capacity__status">Unavailable</span>' in page.text
     assert db_session.get(ServiceAddon, catalog["EUR"]).is_active
     assert (
         client.get(f"/consultations/checkout/{catalog['EUR']}?currency=EUR").status_code

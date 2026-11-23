@@ -47,6 +47,10 @@
         <a class="footer-text-link" href="/faq">{{ t("footer_faq") }}</a>
         <span class="footer-sep" aria-hidden="true">·</span>
         <a class="footer-text-link" href="/feedback">{{ t("footer_feedback") }}</a>
+        {% if request.url.path != '/admin' and not request.url.path.startswith('/admin/') %}
+          <span class="footer-sep" aria-hidden="true">·</span>
+          <a class="footer-text-link" href="/feedback?message_type=product_feedback">{{ t("footer_leave_review") }}</a>
+        {% endif %}
         <span class="footer-sep" aria-hidden="true">·</span>
         <a class="footer-text-link" href="mailto:{{ t('footer_support_email') }}">{{ t("footer_support_action") }}</a>
         {% if seller_information_available %}

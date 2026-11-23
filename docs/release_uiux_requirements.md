@@ -337,6 +337,28 @@ approved. Verify the initial form, validation and confirmation in RU/EN at
 320, 390 and 1280 px, including keyboard focus, layout and download-page
 regression coverage.
 
+## Admin Review and public review entry amendments — 2026-11-23
+
+- **UX-ADMIN-CAP-01.** On `/admin/consultation-offers`, show the outstanding
+  consultation count as `outstanding / limit` and label new sales
+  **Available** or **Unavailable**. Place the warning threshold and manual
+  suspension state below in a compact row. Keep the English-only panel, the
+  protected Suspend/Resume control, and fail-closed behavior when capacity is
+  unknown. Existing capacity calculations and sales rules apply.
+- **UX-ADMIN-NAV-01.** At the bottom of `/admin/refund-requests`, show
+  **Back to admin dashboard** in both empty and populated lists. Keep
+  pagination and refund request handling as approved.
+- **UX-REVIEW-01 (R04, R27).** Add **Оставить отзыв** / **Leave a review**
+  to the public footer alongside Feedback and support. Its destination is
+  `/feedback?message_type=product_feedback`. Keep the selected review topic
+  when switching languages. The general Feedback link retains the empty
+  default topic. Only the existing purchase/download topic may resolve and
+  retain a valid download support reference. Product reviews still require
+  a qualifying purchase and the existing Admin publication decision.
+
+These changes are within Functional Freeze. Production validation and the
+remaining release gates stay open.
+
 ## Как пользоваться документом
 
 1. Разделы 1–4 задают границы, действующие условия, историю пересмотров и реестр решений.

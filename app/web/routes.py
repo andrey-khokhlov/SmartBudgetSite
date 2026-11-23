@@ -475,8 +475,8 @@ async def feedback_page(
     db: Session = Depends(get_db),
 ):
     preselected_type = (
-        "purchase_or_download_issue"
-        if message_type == "purchase_or_download_issue"
+        message_type
+        if message_type in {"purchase_or_download_issue", "product_feedback"}
         else None
     )
     prefill_context = (
@@ -485,7 +485,8 @@ async def feedback_page(
             support_reference,
             get_lang(request),
         )
-        if preselected_type is not None and support_reference is not None
+        if preselected_type == "purchase_or_download_issue"
+        and support_reference is not None
         else None
     )
     return render(

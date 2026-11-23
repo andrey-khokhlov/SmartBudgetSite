@@ -734,7 +734,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R01 | Implemented | Shared RU/EN segments expose the active language as a non-link current state; inactive link supports keyboard/focus. | G1 focused/browser validation complete |
 | R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
 | R03 | Implemented | About, Products and Consultations use the shared active-state navigation. Locale continuity and the segmented switch are locally validated. | Final R45 review remains open |
-| R04 | Implemented | The shared RU/EN footer has FAQ, Feedback and the official support email. Personal contact links are removed. | G2B locally validated. UX-001 release-environment validation remains open |
+| R04 | Implemented | The shared RU/EN public footer has FAQ, Feedback, Leave a review and the official support email. Personal contact links are removed. | G2B and UX-REVIEW-01 locally validated. UX-001 release-environment validation remains open |
 | R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete |
 | R06 | Implemented | G12 adds public Consultations navigation, catalog and standalone Checkout on the G11 payment boundary. | Real payment and booking validation remain open |
 | R07 | Implemented | All seven Landing sections render in the approved RU/EN order. The Hero CTA opens the on-page demonstrations. | G7–G9 locally validated |
@@ -757,7 +757,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R24 | Implemented | Full-width primary submit and contained native file picker with visible focus. | Attachment types, limits and retry retention preserved |
 | R25 | Implemented | Approved RU/EN post-submit guidance and prominent localized confirmation with message ID. | Existing status and alert announcements retained |
 | R26 | Implemented | Customers-only review label and pre-purchase General question available. | Verified purchase remains required for reviews, with optional email for general enquiries |
-| R27 | Implemented | Fresh form and successful reset select the required empty topic. | Download-support preselection and prefill retained |
+| R27 | Implemented | General Feedback and successful reset select the required empty topic. The direct public review link preselects the buyer-only review topic. | Download-support preselection and prefill retained |
 | R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
 | R30 | Implemented | Localized native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), Consultations (8), and Support and Refunds (5). | See [R30 local verification](#r30-consultations-faq). Gate 3, R39 and R45 remain open. |
@@ -815,6 +815,35 @@ and shared download styles remain as before.
 
 R53 stays Partial. Gate 3, R45, deployment and live operational validation
 remain open.
+
+### Admin Review and public review entry
+
+Implemented locally on 2026-11-23 against `b12185c` under Functional Freeze.
+The [owner-approved amendments](release_uiux_requirements.md#admin-review-and-public-review-entry-amendments--2026-11-23)
+cover the compact English Sales capacity panel, the Refund Requests dashboard
+link in empty and populated lists, and the localized public review link.
+The review entry retains its topic across language switches. It uses the
+existing qualifying-purchase lookup, submission validation and Admin
+publication workflow. Download support references are resolved only for the
+purchase/download topic.
+
+- **164 focused pytest cases passed** for Admin offers and capacity,
+  refund intake and Admin lifecycle, public navigation, Feedback prefill,
+  reviews, download routes and Feedback API (`ux-admin-review-web`).
+- **31 Chromium cases passed** across the regression run and focused
+  review-entry rerun. At 1280 and 390 px, the capacity panel showed available,
+  manually suspended and limit-reached states, and the protected controls
+  suspended and resumed sales. With the capacity state missing, the panel
+  reported sales closed and offered no control. In RU/EN, the footer opened
+  the preselected review form, the topic survived language switching, an
+  unqualified email kept submission disabled, and a qualifying purchase
+  produced a stored, unpublished review. Capacity and review screenshots are
+  in `ux-admin-review-browser` and `ux-admin-review-entry`.
+- Two existing 375 px Reviews return-link border-color assertions failed in
+  RU/EN and reproduced on clean `b12185c` (`ux-admin-review-baseline`).
+
+Gate 3 and R45 remain open. Production capacity, refund operations and other
+outstanding release-environment checks still require separate validation.
 
 ### G1 implementation and validation
 

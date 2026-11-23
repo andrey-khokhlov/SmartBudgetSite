@@ -17,7 +17,7 @@
             <option value="" disabled{% if not preselected_type %} selected{% endif %}>{{ t("feedback_type_placeholder") }}</option>
             <option value="site_issue">{{ t("feedback_type_site_issue") }}</option>
             <option value="general_question">{{ t("feedback_type_general_question") }}</option>
-            <option value="product_feedback">{{ t("feedback_type_product_feedback") }}</option>
+            <option value="product_feedback"{% if preselected_type == "product_feedback" %} selected{% endif %}>{{ t("feedback_type_product_feedback") }}</option>
             <option value="purchase_or_download_issue"{% if preselected_type == "purchase_or_download_issue" %} selected{% endif %}>{{ t("feedback_type_purchase_or_download_issue") }}</option>
         </select>
 

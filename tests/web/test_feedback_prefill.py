@@ -226,16 +226,48 @@ def test_feedback_prefill_render_does_not_expose_secrets_or_internal_ids(
     assert "entitlement_id" not in response.text
 
 
-def test_feedback_get_ignores_invalid_prefill_values(client):
+def test_review_preselection_does_not_resolve_or_propagate_download_context(
+    client, db_session, monkeypatch
+):
+    entitlement, _, sale = create_prefill_download(db_session)
+
+    def reject_lookup(*args):
+        pytest.fail("Review preselection must not resolve a download reference")
+
+    monkeypatch.setattr(
+        "app.web.routes.get_download_feedback_prefill_context", reject_lookup
+    )
     response = client.get(
         "/feedback",
         params={
-            "message_type": "<script>alert(1)</script>",
+            "message_type": "product_feedback",
+            "support_reference": entitlement.support_reference,
+            "lang": "ru",
+        },
+    )
+
+    assert response.status_code == 200
+    assert 'value="product_feedback" selected' in response.text
+    assert "?message_type=product_feedback&amp;lang=en" in response.text
+    assert entitlement.support_reference not in response.text
+    assert sale.customer_email not in response.text
+    assert 'name="support_reference"' not in response.text
+
+
+@pytest.mark.parametrize(
+    "message_type", ["<script>alert(1)</script>", "site_issue", "general_question"]
+)
+def test_feedback_get_ignores_invalid_prefill_values(client, message_type):
+    response = client.get(
+        "/feedback",
+        params={
+            "message_type": message_type,
             "support_reference": "/download/private-token",
         },
     )
 
     assert response.status_code == 200
+    assert 'value="" disabled selected' in response.text
     assert "<script>alert(1)</script>" not in response.text
     assert "/download/private-token" not in response.text
     assert 'name="support_reference"' not in response.text

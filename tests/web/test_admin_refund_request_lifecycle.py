@@ -51,6 +51,13 @@ def csrf_fields(page):
     return {key: page.context[key] for key in ("csrf_cookie_id", "csrf_token")}
 
 
+def test_empty_refund_request_list_links_to_dashboard(auth_client):
+    page = auth_client.get(PATH)
+    assert page.status_code == 200
+    assert "No refund requests." in page.text
+    assert '<a href="/admin">Back to admin dashboard</a>' in page.text
+
+
 def test_admin_records_write_once_response_and_closure(
     auth_client, db_session, monkeypatch, request_id
 ):
@@ -60,6 +67,7 @@ def test_admin_records_write_once_response_and_closure(
     pending = auth_client.get(PATH)
     response_form = csrf_fields(pending)
     assert f'action="{base}/respond?page=1"' in pending.text
+    assert '<a href="/admin">Back to admin dashboard</a>' in pending.text
     assert "Mark first response sent" in pending.text
     assert "Close request" not in pending.text
 
