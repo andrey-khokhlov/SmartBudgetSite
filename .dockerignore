@@ -1,0 +1,15 @@
+# Keep runtime inputs only. Local settings, uploads, tooling and Git history
+# are outside the build context.
+**
+!Dockerfile.prod
+!requirements.txt
+!app/
+!app/**
+!alembic/
+!alembic/**
+!alembic.ini
+!scripts/
+!scripts/*.py
+**/__pycache__
+**/*.pyc
+**/.env*

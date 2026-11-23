@@ -1,0 +1,20 @@
+{
+	admin off
+	servers {
+		protocols h1 h2
+	}
+	# Request and proxy error logs can contain capability-bearing URLs.
+	log {
+		exclude http.log.access http.log.error http.handlers.reverse_proxy
+	}
+}
+
+https://{$SMARTBUDGET_HOST} {
+	# Caddy is the direct edge. Strip incoming hints before reverse_proxy
+	# generates its standard X-Forwarded-For, -Proto and -Host values.
+	request_header -Forwarded
+	request_header -X-Forwarded-*
+	request_header -X-Real-IP
+
+	reverse_proxy app:4000
+}

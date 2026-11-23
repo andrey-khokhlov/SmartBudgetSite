@@ -142,16 +142,144 @@ Do not touch the existing `ha-cloudflare` or `ollama-tunnel` tunnels.
 |---:|---|---|---|
 | `8000` | Fallback `APP_PORT` from `Settings` | Any environment without an `APP_PORT` override | Application bind port |
 | `8800` | Normal configured local SmartBudgetSite listener | Local development through `.env`, initially copied from `.env.example` | Application bind port |
-| `4000` | Internal SmartBudgetSite listener in the production environment | Production through `.env.prod` when that file is selected | Application bind port; not a public reverse-proxy port |
+| `4000` | Internal SmartBudgetSite listener in the production environment | Production Docker configuration | Application bind port |
+| `80`, `443` | Caddy HTTP and HTTPS listeners | Production Docker configuration | Public IPv4 host ports |
 | `5433` | Local host access to the development PostgreSQL container | Local Docker development | Host-side database port mapping |
 | `5432` | PostgreSQL listener inside the container | Local Docker network/container | Container port |
 | `5173` | Allowed origin for a separately run frontend development server | Local frontend development only | Frontend development origin; not a SmartBudgetSite bind port |
 | `587` | Configured outbound SMTP submission endpoint | Environments using the example SMTP configuration | External provider port; not a local bind port |
 
-Docker Compose maps host port `5433` to PostgreSQL container port `5432`.
-Production reverse-proxy, public HTTPS, and host-port selection remain part of
-`REL-002`; the internal application port `4000` does not define that deployment
-architecture.
+Development Compose maps host port `5433` to PostgreSQL container port `5432`.
+Production Compose publishes only Caddy's HTTP and HTTPS ports.
+
+## Production Docker configuration (REL-002)
+
+`compose.prod.yml` uses `Dockerfile.prod` for the FastAPI image, PostgreSQL 16
+for the database and the official Caddy 2.11 image with
+`deploy/Caddyfile.prod` for automatic HTTPS. Use `-f compose.prod.yml` explicitly
+from the repository root. Its project name is `smartbudget-production`.
+Development still uses `docker-compose.yml` and `python run.py`.
+
+The Caddy service belongs to the `public` Compose profile.
+A default Compose startup does not activate the public reverse proxy.
+Enable the `public` profile explicitly only after the required SEC-012
+perimeter controls, DNS/HTTPS configuration, and pre-exposure checks
+have been approved and validated. Do not treat a successful container
+startup as authorization to expose the application publicly.
+
+### Runtime and configuration contract
+
+- FastAPI runs as an unprivileged user with `APP_ENV=prod`, port `4000`,
+  exactly one Uvicorn worker and reload disabled. The application rate limiter
+  remains enabled. PostgreSQL and FastAPI have no published host ports.
+- Only FastAPI and PostgreSQL join the internal database network. FastAPI and
+  Caddy share the proxy bridge, which also provides outbound access for
+  application integrations and Caddy's certificate automation. Keep other
+  containers off the proxy bridge and verify its `172.30.192.0/28` subnet
+  does not overlap a route on the deployment host.
+- Caddy is the direct public IPv4 edge. It strips incoming `Forwarded`,
+  `X-Forwarded-*` and `X-Real-IP` values. Its reverse proxy sets the standard
+  forwarded client IP, scheme and host from the connection and request.
+  Uvicorn accepts forwarded IP and scheme only from Caddy's fixed bridge
+  address (`172.30.192.2`). Compose uses the same address for both settings.
+  Keep DNS IPv4-only for this topology. Adding IPv6 ingress, a CDN or another
+  proxy requires separate client-IP and trust-boundary validation.
+- The `postgres_data`, `feedback_data`, `caddy_data` and `caddy_config` named
+  volumes retain database files, private uploads, certificate state and Caddy
+  configuration state across container replacement. Keep the same project
+  name on redeploy and omit `--volumes` from teardown. Keep the upload volume
+  writable by the app's UID/GID `10001` when restoring it. Caddy has no mount
+  of the upload volume.
+- The database probe checks that the server accepts TCP connections. Compose
+  starts the app after that probe passes, and Caddy after the app responds on
+  its loopback `/v1/health`. These probes cover process startup only.
+  Database authentication, schema, persistence, public HTTPS and provider
+  readiness require separate checks.
+
+Use two restricted runtime files, for example `/etc/smartbudget/compose.env`
+and `/etc/smartbudget/app.env`. Base them on `.env.production.example` and
+`.env.production.app.example` respectively. Point `SMARTBUDGET_APP_ENV_FILE`
+at the absolute app file. The Compose file supplies the database bootstrap
+values only to PostgreSQL and the bare public DNS hostname only to Caddy.
+Use the corresponding `https://` origin as the app's `PUBLIC_BASE_URL`.
+Keep private settings outside Git and the image. Use the production examples
+as the starting point and consult `.env.example` for the existing optional
+provider settings. Keep delivery switches off until their prerequisites are
+verified. Use a dedicated shell with the intended environment and avoid
+printing a rendered Compose configuration containing real values.
+
+The database bootstrap login is separate from the app login. Provision or
+restore the `POSTGRES_DB` database with a dedicated non-superuser database
+owner before the first application migration. Set the app's `DATABASE_URL`
+to use that role with `postgresql+psycopg`, host `db` and port `5432`.
+Use a generated URL-safe password such as random hex to avoid URL escapes in
+the existing Alembic configuration interpolation. PostgreSQL bootstrap
+environment values initialize an empty volume only. Verify the roles and
+credentials in the target database when using an existing volume.
+
+### Local verification
+
+In a dedicated PowerShell session, use only the example files and a synthetic
+database value for Compose interpolation. This check creates no containers
+and avoids dumping the rendered environment.
+
+```powershell
+$env:SMARTBUDGET_APP_ENV_FILE = ".env.production.app.example"
+$env:POSTGRES_PASSWORD = "local-config-check-only"
+docker compose --env-file .env.production.example -f compose.prod.yml config --quiet
+```
+
+When a matching Caddy binary or image is already available locally, validate
+the Caddyfile with the example hostname. For the cached image, use an
+isolated validation process without published ports or network access.
+
+```powershell
+$caddyConfig = Join-Path $PWD.Path "deploy/Caddyfile.prod"
+docker run --rm --pull never --network none --env SMARTBUDGET_HOST=smartbudget.example.invalid --mount "type=bind,source=$caddyConfig,target=/etc/caddy/Caddyfile,readonly" caddy:2.11-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+```
+
+In an authorized disposable release environment, validate the image build,
+application upload permissions and volume retention across recreation.
+Use an external client on the intended Linux host topology to verify that
+only Caddy is reachable, that the app observes the actual client IP and
+HTTPS scheme, and that client-provided forwarding headers do not change its
+rate-limit identity. Local Docker Desktop behavior cannot establish those
+Linux ingress results.
+
+### Controlled migrations and release prerequisites
+
+The application startup command runs Uvicorn only. During an authorized
+deployment window, build the app image, start and check the database, and
+complete the backup and database-role checks. Run migration commands as
+separate one-off app containers on the private database network with the
+intended deployment settings. Record the starting revision and plan recovery
+before applying changes.
+
+```bash
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run --rm --no-deps app python -m alembic current
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run --rm --no-deps app python -m alembic upgrade head
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run --rm --no-deps app python -m alembic current
+```
+
+Confirm the expected revision before serving traffic. The configuration is
+local REL-002 preparation. The following release obligations remain open.
+
+- **OPS-001 backup and restore.** Verify off-host backup and recovery for
+  PostgreSQL, private attachments, object storage and deployment
+  configuration. Treat certificate storage as sensitive.
+- **SEC-012 perimeter.** Complete and validate trusted-host and proxy policy,
+  production security headers and HSTS, the required perimeter rate limits
+  and capability-safe logging. The standard Caddy configuration does not
+  implement the required perimeter rate limits. Complete the perimeter
+  before public exposure.
+- **DNS and HTTPS.** Verify the public DNS A record, host reachability on
+  TCP 80/443, certificate issuance and renewal, and HTTPS redirects.
+- **Live integrations.** Verify payment, storage, email and Calendly in the
+  release environment using the approved validation paths.
+- **Operational monitoring.** Validate production startup, recovery, the
+  scheduled jobs and their external heartbeats, plus host, database and
+  public availability monitoring under G13D-3. Container health is only one
+  input to that work.
 
 ## Codex pytest validation environment
 
@@ -332,8 +460,9 @@ Signed R2 GET responses specify `private, no-store, max-age=0` and an already
 expired response date while retaining the configured short TTL and attachment
 content disposition.
 
-The production reverse proxy and CDN are not configured in this repository.
-Their release configuration must:
+The production Docker Caddyfile leaves HTTP access logging disabled and
+excludes HTTP and upstream request error logs. It does not cache responses.
+The deployed reverse proxy and any CDN must:
 
 - disable access logging for both capability route families;
 - avoid request-line, URI, query-string, and Referer values in related error
@@ -391,9 +520,9 @@ The production perimeter must provide:
 | Calendly webhook | 300/min, burst 100 |
 | Lava.top payment-result webhook | 300/min, burst 100 |
 
-No proxy technology is selected in this repository. Production configuration
-must return HTTP 429 rather than a technology-default 503 for quota rejection
-and must supply an integer `Retry-After`.
+The production Docker configuration uses Caddy. The required perimeter limits
+remain open under SEC-012. Perimeter quota rejection must return HTTP 429
+with an integer `Retry-After`.
 
 Application code uses only the validated ASGI `request.client.host`; it never
 parses `Forwarded` or `X-Forwarded-For`. IPv4 is canonicalized normally and
@@ -720,7 +849,8 @@ exit status and termination so timeout cleanup cannot leave a detached job.
 REL-002 must also decide how the job receives server-owned settings, how
 application and database readiness are established, and what dependencies
 the rendered unit needs. Keep secrets outside unit files and Git. The
-repository's Docker Compose definition runs PostgreSQL only.
+production app image includes the existing Python job modules. Compose
+starts no job timers.
 
 Before later installation, verify the selected runtime, account access,
 working directory, migrated PostgreSQL database, and provider settings.

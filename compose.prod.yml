@@ -1,0 +1,105 @@
+name: smartbudget-production
+
+# This is the only peer whose forwarded headers Uvicorn accepts.
+x-caddy-address: &caddy-address 172.30.192.2
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set the PostgreSQL bootstrap user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set the PostgreSQL bootstrap password}
+      POSTGRES_DB: ${POSTGRES_DB:?Set the application database name}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - database
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    env_file:
+      - ${SMARTBUDGET_APP_ENV_FILE:?Set the private application environment file path}
+    environment:
+      APP_ENV: prod
+      APP_HOST: 0.0.0.0
+      APP_PORT: "4000"
+      UPLOAD_DIR: /var/lib/smartbudget/uploads
+      UVICORN_RELOAD: "false"
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "4000"
+      - --workers
+      - "1"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - *caddy-address
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - feedback_data:/var/lib/smartbudget
+    networks:
+      - proxy
+      - database
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:4000/v1/health', timeout=3).close()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  caddy:
+    profiles: [ "public" ]
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    environment:
+      SMARTBUDGET_HOST: ${SMARTBUDGET_HOST:?Set the public DNS hostname}
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - type: bind
+        source: ./deploy/Caddyfile.prod
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      proxy:
+        ipv4_address: *caddy-address
+
+networks:
+  proxy:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.192.0/28
+  database:
+    internal: true
+
+volumes:
+  postgres_data:
+  feedback_data:
+  caddy_data:
+  caddy_config:

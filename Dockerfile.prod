@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /srv/smartbudget
+
+COPY requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+COPY app/ app/
+COPY alembic/ alembic/
+COPY alembic.ini .
+COPY scripts/ scripts/
+
+RUN groupadd --gid 10001 smartbudget \
+    && useradd --uid 10001 --gid 10001 --no-create-home --no-log-init smartbudget \
+    && install -d -m 0700 -o smartbudget -g smartbudget /var/lib/smartbudget/uploads
+
+USER smartbudget
+EXPOSE 4000

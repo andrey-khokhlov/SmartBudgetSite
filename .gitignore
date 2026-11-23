@@ -2,12 +2,14 @@
 __pycache__/
 *.pyc
 
-# Env
+# Environment files and secrets
 .venv/
-.env
-.env.dev
-.env.*.local
+.env*
+
+# Public configuration templates
 !.env.example
+!.env.production.example
+!.env.production.app.example
 
 # IDE
 .idea/
