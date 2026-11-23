@@ -667,7 +667,8 @@ of analysis is not runtime/provider validation or closure of a release gate.
 G1's accepted language/navigation scope is implemented and regression-validated
 as recorded in current state. G2A and the accepted G7/G8 first-five-block Landing
 scope are also implemented and regression/browser-validated. G9 completes R07
-under approved D1 and is locally validated. The overall UI/UX gate remains open.
+under approved D1 and is locally validated. Gate 3 / R45 pre-deployment UI/UX acceptance was completed on 2026-11-23.
+Production integration and operational validation remain open under Gate 4.
 G5 About/Products presentation is implemented and web/browser-validated. G6 now
 completes R18's compatibility link and implements the grouped FAQ foundation,
 R31 and R47. R30 now renders all five FAQ groups. G10 completes the
@@ -721,15 +722,17 @@ both objects (fingerprints `9d9dc76b9c29aa53` and `c6796b51c7675889`) through
 the Cloudflare R2 Dashboard. The broad `--delete-orphans` mode was not used.
 The verified active RU and EN version 1.0 objects remain current.
 
-Gate 3 is the next open pre-deployment gate. This evidence covers the dedicated
-review environment.
+Gate 3 / R45 pre-deployment UI/UX acceptance was completed on 2026-11-23.
+Gate 2 artifact validation remains scoped to the dedicated review environment.
+Production deployment and live integration validation remain open.
 
 #### Gate 3 — SmartBudgetSite UI/UX implementation and repeat review
 
 G3 Feedback polish (R24–R27) is implemented and focused-validated. The
 [current-state evidence](current_state.md#g3-feedback-polish-and-validation)
 covers neutral topic/reset, review verification, native upload, and accessible
-submission status in RU/EN desktop and mobile checks. Final R45 review remains open.
+submission status in RU/EN desktop and mobile checks. Final R45 review was completed on 2026-11-23 as part of Gate 3
+pre-deployment UI/UX acceptance.
 
 G4 Reviews visibility (R28–R29) is implemented and focused-validated. The
 [current-state evidence](current_state.md#g4-reviews-visibility-and-validation)
@@ -738,21 +741,28 @@ covers exact-SKU Landing visibility and the single localized empty message.
 G14 publishes the approved RU/EN Purchase and Delivery FAQ, displays expiry
 in the browser timezone with a UTC fallback, and explains expired-link support
 while preserving Feedback prefill. Local pytest and Chromium checks passed.
-Gate 3 repeat review and deployed delivery validation remain open, including
-real interrupted and repeat downloads.
+Gate 3 repeat UI/UX review was completed on 2026-11-23.
+Deployed delivery validation remains open, including real interrupted
+and repeat downloads.
 
-**Open; mapping complete.** Proceed through the accepted bounded implementation
-groups in [current state](current_state.md#accepted-implementation-groups). G1's
-accepted scope, G2A and the scoped G7/G8 work are implemented and validated.
-G12 adds Consultations navigation and completes R03.
-[D1–D6 are approved](current_state.md#decision-dependencies). G2A removed the
-obsolete Telegram block. G2B/R04 is implemented and locally validated in RU/EN
-on desktop and mobile. UX-001 release-environment validation remains open.
-Landing now has all seven approved RU/EN sections. G9 adds the practical
-conditions and visible compatibility disclosure, then the concluding offer
-with catalog-owned price and currency, the Buy link and the short optional
-add-on note. Local validation used isolated catalog data in RU/EN Chromium
-at 1280 px and 375 px. Release-environment catalog validation remains open.
+**Completed — pre-deployment UI/UX acceptance (2026-11-23, R45).**
+
+The owner completed the final visual review of public pages and Admin,
+including RU/EN desktop and mobile layouts and keyboard accessibility
+checks for Feedback.
+
+The complete Chromium browser regression suite passed 73 tests.
+The ordinary backend regression suite passed 1,241 tests, with
+14 PostgreSQL integration tests intentionally skipped because they
+require explicit opt-in.
+
+The approved UI/UX changes are implemented, reviewed, and committed.
+No unresolved release-blocking UI/UX defects were identified.
+
+Gate 3 and R45 are closed for pre-deployment UI/UX acceptance.
+Production deployment, live integrations, real payment and delivery
+journeys, and operational validation remain open under their
+respective release gates.
 
 G5 uses the complete approved About biography and a restrained catalog-driven
 Products card with three capabilities and Windows/local-data/one-time-purchase conditions.
@@ -775,17 +785,20 @@ implemented. R38 remains Partial pending real booking and meeting validation.
 Before release, verify Lava.top payment, purchase-email receipt and the
 protected booking link, first Calendly booking, confirmation and meeting link,
 rescheduling, cancellation, guest access, screen sharing and platform fallback.
-Owner-verified Microsoft 365 validation is bounded to Excel 2608 Click-to-Run Current Channel
-on Windows; both Excel bitnesses are not claimed practically validated. Focused browser
-checks and screenshot inspection do not replace the final R45 review. Respect conditional statuses
-and R55's first-release exclusion. Keep validation/operational tasks separate from
-implementation; concrete findings may justify later bounded changes. Execute
-required non-live validation, then repeat desktop/mobile/
-accessibility review against the actually updated interface and resolve
-release-blocking findings. The detailed source retains the full copy, image
-specifications, acceptance criteria and validation checklists. Apply the approved
-D1–D6 rules in the affected bounded sprints. Validate the implemented behavior
-before publishing customer-facing commitments.
+Owner-verified Microsoft 365 validation is bounded to Excel 2608,
+Click-to-Run Current Channel on Windows; both Excel bitnesses are not
+claimed practically validated.
+
+The final R45 pre-deployment UI/UX review was completed on 2026-11-23.
+Respect conditional statuses and R55's first-release exclusion.
+Keep deployment, provider, legal and operational validation separate
+from the completed UI/UX acceptance. Concrete findings from those
+checks may justify later bounded changes.
+
+The detailed UI/UX requirements retain the approved copy, images,
+acceptance criteria and validation checklists. Apply the approved
+D1–D6 decisions and validate customer-facing commitments against
+actual release-environment behavior before public sales.
 
 #### Gate 4 — Production deployment and live integration validation
 
