@@ -58,9 +58,11 @@ def test_about_products_are_readable_restrained_and_navigable(
         photo = page.locator(".about-photo")
         expect(photo).to_be_visible()
         assert photo.evaluate("e => e.complete && e.naturalWidth > 0")
-        assert photo.bounding_box()["width"] <= 320
+        photo_width = photo.bounding_box()["width"]
         if width == 1280:
-            assert photo.bounding_box()["width"] == 320
+            assert photo_width == 350
+        else:
+            assert photo_width <= 320
         expect(page.locator(".about-page section")).to_have_count(4)
         expect(page.locator(".about-activity")).to_have_count(3)
         visuals = page.locator(".about-activity img")

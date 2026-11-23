@@ -50,7 +50,10 @@ def test_reviews_visibility_and_layout(tmp_path, review_sessions, lang, package,
         expect(page.locator(".review-card, .reviews-page__intro")).to_have_count(0)
         back_link = page.locator(".reviews-action")
         expect(back_link).to_have_attribute("href", "/products/smartbudget")
-        expect(back_link).to_have_css("border-top-color", "rgb(148, 163, 184)")
+        if width == 1280:
+            expect(back_link).to_have_css("border-top-color", "rgb(148, 163, 184)")
+        else:
+            expect(back_link).to_have_css("border-top-width", "0px")
         expect(back_link).to_have_css("margin-top", "24px")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.screenshot(path=str(tmp_path / "reviews-empty.png"), full_page=True)

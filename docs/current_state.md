@@ -747,7 +747,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure. | G9 locally validated |
-| R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. Existing photo capped at 320 px; left-aligned narrative replaces old bullets/cards. | G5 focused web/browser and render checks complete; final R45 review remains open |
+| R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. The existing portrait renders at 350 px on desktop and up to 320 px on mobile. The narrative is left-aligned. | G5 focused web/browser and render checks complete; final R45 review remains open |
 | R18 | Implemented | The price-free SmartBudget card has a primary Buy link to `/products/smartbudget/buy`, a secondary product-details link and a localized system requirements link that opens the relevant FAQ question. | See [UX-PROD-01](#ux-prod-01-products-purchase-cta) for amendment and verification |
 | R19 | Implemented | Products uses one restrained bordered card with a blue primary Buy link and an underlined secondary details link. | G5 and UX-PROD-01 RU/EN desktop/mobile checks complete; final R45 review remains open |
 | R20 | Implemented | Buy uses equal cards with localized product-language labels, the same-features explanation and catalog-owned prices. | G10 locally validated |
@@ -841,6 +841,13 @@ purchase/download topic.
   in `ux-admin-review-browser` and `ux-admin-review-entry`.
 - Two existing 375 px Reviews return-link border-color assertions failed in
   RU/EN and reproduced on clean `b12185c` (`ux-admin-review-baseline`).
+
+Follow-up Gate 3 / R45 regression (2026-11-23): the complete Chromium
+browser suite passed all 73 cases after correcting outdated test
+expectations for the approved About portrait dimensions and the
+mobile Reviews return-link border. No application behavior or
+production CSS was changed. Gate 3 and R45 remain open pending
+final acceptance.
 
 Gate 3 and R45 remain open. Production capacity, refund operations and other
 outstanding release-environment checks still require separate validation.
@@ -966,10 +973,11 @@ edited test blocks and `git diff --check` passed.
 
 Implemented against `9aec0b7`. About uses the complete approved 5.2 RU/EN copy
 without shortening, semantic headings and left-aligned readable paragraphs. The
-existing `/static/img/me.jpg` remains unchanged and is capped at 320 px. Old
-biography/bullets/cards are no longer rendered. ACCA qualification versus former
-FCCA status and the two-year GeekBrains Full-Stack Developer training wording
-are preserved exactly.
+existing `/static/img/me.jpg` was capped at 320 px in G5. The later portrait
+refinement sets its width to 350 px on desktop and retains the 320 px mobile
+maximum. Old biography/bullets/cards are no longer rendered. ACCA qualification
+versus former FCCA status and the two-year GeekBrains Full-Stack Developer
+training wording are preserved exactly.
 
 Products retains its catalog-driven presentation, with explicit description,
 capabilities-heading and conditions translation keys. The approved 5.3 copy,
