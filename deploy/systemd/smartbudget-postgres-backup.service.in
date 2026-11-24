@@ -6,9 +6,9 @@ After=docker.service network-online.target
 
 [Service]
 Type=oneshot
-User=root
+User=@JOB_USER@
 WorkingDirectory=@JOB_WORKING_DIRECTORY@
-ExecStart=/usr/bin/python3 -m scripts.backup_postgres
+ExecStart=@PYTHON_COMMAND@ -m scripts.backup_postgres
 UMask=0077
 TimeoutStartSec=3600s
 TimeoutStopSec=30s

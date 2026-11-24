@@ -353,9 +353,21 @@ the actual permission scope before relying on the scheduled policy.
 ### Installation and monitoring validation
 
 After independent review, render
-`deploy/systemd/smartbudget-postgres-backup.service.in` with
-`@JOB_WORKING_DIRECTORY@` set to `/opt/smartbudget` and use the matching
-`smartbudget-postgres-backup.timer`. Validate the rendered files with
+`deploy/systemd/smartbudget-postgres-backup.service.in` with the approved
+production values and use the matching `smartbudget-postgres-backup.timer`.
+
+| Placeholder | Production value |
+| --- | --- |
+| `@JOB_USER@` | `root` |
+| `@JOB_WORKING_DIRECTORY@` | `/opt/smartbudget` |
+| `@PYTHON_COMMAND@` | `/usr/bin/python3` |
+
+The backup job uses a 30-second stop timeout. The extra time beyond the
+standard 15 seconds allows the interrupted job to remove local temporary
+files and attempt to remove its pending encrypted upload before systemd
+forces termination.
+
+Validate the rendered files with
 `systemd-analyze verify` and the schedule with
 `systemd-analyze calendar '*-*-* 03:00:00 UTC'`. Before enablement, confirm the
 non-public database deployment, then verify one authorized run, the next and
