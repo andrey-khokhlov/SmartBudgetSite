@@ -1,0 +1,18 @@
+[Unit]
+Description=SmartBudgetSite PostgreSQL Backup
+Requires=docker.service
+Wants=network-online.target
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=@JOB_WORKING_DIRECTORY@
+ExecStart=/usr/bin/python3 -m scripts.backup_postgres
+UMask=0077
+TimeoutStartSec=3600s
+TimeoutStopSec=30s
+Restart=no
+RemainAfterExit=no
+StandardOutput=journal
+StandardError=journal

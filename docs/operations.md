@@ -281,6 +281,112 @@ local REL-002 preparation. The following release obligations remain open.
   public availability monitoring under G13D-3. Container health is only one
   input to that work.
 
+## Automated PostgreSQL backup and retention (OPS-001)
+
+### Verified manual recovery evidence
+
+On 2026-11-24, the owner verified encrypted upload and download through the
+existing `gdrive_crypt` remote, plaintext SHA-256 equality and an isolated
+PostgreSQL 16 restore of the 2026-11-23 post-migration dump. The restored
+database contained 29 tables and Alembic revision `9f3b1a7c2d84`. The
+temporary database and test files were removed. This was a manual recovery
+check. Automated installation, scheduled execution and recovery from an
+automated archive remain separate checks.
+
+### Approved schedule and retention
+
+- Run daily at 03:00 UTC. The persistent systemd timer runs once on return
+  after a missed schedule.
+- Keep seven successful automated local archives and fifteen successful
+  encrypted off-site archives. The job uses PostgreSQL CUSTOM format and
+  orders backups by the UTC timestamp in
+  `smartbudget-auto-YYYYMMDDTHHMMSSffffffZ.dump`.
+- Local archives live under `/var/backups/smartbudget`. Off-site archives
+  use `gdrive_crypt:postgresql-automated`, a dedicated directory under the
+  existing encrypted Drive remote. Preserve the existing OAuth and crypt
+  settings. Manual, pre-migration, post-migration and unrelated files are
+  outside automated retention.
+
+### Job behavior and prerequisites
+
+The host runs `python3 -m scripts.backup_postgres` from `/opt/smartbudget`.
+It uses `docker compose` with `compose.prod.yml` and the existing private
+`/etc/smartbudget/compose.env`. It executes `pg_dump` in the running `db`
+service as the `smartbudget` database role through the container's local
+PostgreSQL socket. Verify that this role can dump the app database without
+a password prompt using existing socket authentication. Keep both production
+environment files root-only. The job does not read, copy or log the app
+database password, and it does not fall back to the bootstrap role.
+
+Before installing the rendered unit, verify the host's Python 3.11+
+interpreter, Compose access, existing root rclone configuration and
+available disk space. Restrict write access to the deployment checkout to
+authorized administrators because the unit runs it as root. The job requires
+a real backup directory owned by the service user with no group or other
+permissions. Use mode `0700`. If the
+root rclone config is not in rclone's default location, set `RCLONE_CONFIG`
+to the existing private path in a local systemd drop-in. Keep credentials
+and encryption settings outside the repository and unit templates.
+
+The script holds a nonblocking host file lock for the entire run.
+It creates a private temporary archive and runs `pg_restore --file=/dev/null`
+to read and decompress it without restoring a database. It uploads a
+uniquely named pending object, streams the decrypted bytes back through
+rclone and compares SHA-256. It then promotes that verified object within
+the same encrypted remote and atomically publishes the local archive.
+Both retention plans must be valid before the job removes prior archives.
+Remote listing errors, malformed or duplicate entries, and a missing or
+out-of-order new backup fail closed. A failed deletion stops the remaining
+retention work and can leave extra backups until a subsequent successful run.
+
+The job deletes exact expired names using `rclone deletefile
+--drive-use-trash=false`. This bypasses Drive trash for the targeted objects.
+It makes no account-wide trash changes. Temporary files are removed on
+handled failures and the job attempts exact-name cleanup of its own pending
+object. After an abrupt interruption or cleanup failure, review the journal
+and reconcile leftover temporary files or pending objects individually while
+the job is inactive. These artifacts are excluded from retention counts.
+The selected rclone commands and Drive flag are present in upstream
+1.60.1. Validate the behavior with the installed `1.60.1-DEV` build and
+the actual permission scope before relying on the scheduled policy.
+
+### Installation and monitoring validation
+
+After independent review, render
+`deploy/systemd/smartbudget-postgres-backup.service.in` with
+`@JOB_WORKING_DIRECTORY@` set to `/opt/smartbudget` and use the matching
+`smartbudget-postgres-backup.timer`. Validate the rendered files with
+`systemd-analyze verify` and the schedule with
+`systemd-analyze calendar '*-*-* 03:00:00 UTC'`. Before enablement, confirm the
+non-public database deployment, then verify one authorized run, the next and
+missed-run scheduling, encrypted retention including targeted permanent
+deletion, and an isolated restore of a scheduled archive. Keep the public
+Compose profile disabled.
+
+Use the existing [external job heartbeat approach](#g13d-3-operational-monitoring-target)
+with a dedicated daily Healthchecks.io check and a grace period covering the
+validated runtime. The job exits `0` and logs `status=completed` only on
+success. Failures exit `1` and a lock skip exits `75`. Configure a
+success-only `ExecStartPost` heartbeat or the approved deployment wrapper
+after provisioning the check. Keep its URL in a root-only configuration
+file. A systemd drop-in can use the following command with the provisioned
+success URL stored as the `url` setting in the mode-`0600` curl file.
+
+```ini
+[Service]
+ExecStartPost=/usr/bin/curl --silent --fail --output /dev/null --max-time 10 --config /etc/smartbudget/postgres-backup-heartbeat.curl
+```
+
+A failed or missed run must alert through the external monitor,
+independently of the VPS and the application dispatcher. Exercise a failure
+and a missed run in validation and inspect `journalctl -u
+smartbudget-postgres-backup.service` for the sanitized failure stage.
+Installation, scheduled runs and the alert path remain unverified.
+
+OPS-001 remains open for this automation's production validation, recovery
+from an automated archive, and backup and restore of private feedback files,
+object storage and deployment configuration.
+
 ## Codex pytest validation environment
 
 Codex pytest runs must keep temporary and cache data outside the repository.
@@ -1379,19 +1485,20 @@ Do not disable or alter emergency access without validating recovery.
 
 ### Pending deployment work
 
-The following work has not been completed:
+The owner has verified PostgreSQL 16 provisioning and a manual encrypted
+backup and restore. See [OPS-001 verification](#verified-manual-recovery-evidence).
+The following work remains open:
 
-- Installation and configuration of the container runtime.
-- Production PostgreSQL provisioning and database backups.
-- Application deployment and process lifecycle configuration.
+- Production backup automation and scheduled retention validation.
+- Application deployment and process lifecycle validation.
 - Reverse proxy, DNS, HTTPS, and production perimeter validation.
-- Production migrations, health checks, monitoring, and recovery tests.
+- Production startup checks, operational monitoring and recovery drills.
 - End-to-end production payment and delivery validation.
 
 Vultr instance backups alone are not considered sufficient evidence
 of application/database recovery readiness.
 
-Production application deployment remains deferred until the
+Public application exposure remains deferred until the
 applicable pre-deployment release gates are satisfied, as defined
 in `release_readiness.md`.
 

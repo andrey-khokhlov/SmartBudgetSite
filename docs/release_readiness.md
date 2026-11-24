@@ -1147,9 +1147,14 @@ criteria are verified.
 
 ### Backup and recovery (`OPS-001`)
 
-- PostgreSQL backup and off-host retention;
-- restore validation;
-- object-storage and configuration recovery procedures.
+The owner verified manual encrypted PostgreSQL backup recovery on
+2026-11-24, including a SHA-256 match and an isolated restore of the
+2026-11-23 post-migration dump. Automated daily backup and retention are
+implemented locally. OPS-001 remains open for production installation,
+scheduled execution and off-site retention validation, failure and
+missed-run alerts, and restore from an automated archive. Private feedback
+uploads, object-storage and configuration backup and recovery also remain open.
+See the [OPS-001 runbook](operations.md#automated-postgresql-backup-and-retention-ops-001).
 
 ### Public deployment perimeter (`SEC-012`)
 

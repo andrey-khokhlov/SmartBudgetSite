@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule SmartBudgetSite PostgreSQL Backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+AccuracySec=1s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

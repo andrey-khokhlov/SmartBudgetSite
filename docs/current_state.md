@@ -371,10 +371,20 @@ Infrastructure and quality:
   Kernel 6.8.0-149-generic is running after a verified reboot.
   SSH access and package dependency checks succeeded.
   Three Ubuntu phased updates remain deferred.
-  Docker, application deployment, PostgreSQL, public HTTPS,
-  monitoring, and production integration validation have not been
-  completed. Deployment remains deferred under the approved
-  pre-deployment release gates. See `operations.md` for details.
+  The owner subsequently verified the private PostgreSQL 16 deployment.
+  Public Caddy exposure, operational monitoring and production integration
+  validation remain open. See `operations.md` for details.
+- OPS-001 remains open. The owner verified encrypted upload, download,
+  SHA-256 equality and an isolated PostgreSQL restore on 2026-11-24 using
+  the 2026-11-23 post-migration dump. The restored database contained 29
+  tables and revision `9f3b1a7c2d84`. The daily 03:00 UTC backup script and
+  persistent systemd timer are prepared locally, with seven local and fifteen
+  encrypted off-site automated archives retained after verification.
+  Local tests exercised failure isolation and retention with simulated external
+  commands. Disposable checks exercised PostgreSQL 16 archive validation,
+  Linux file locking and encrypted rclone storage over a local filesystem.
+  Installation, scheduled execution, alerting and restore from an automated
+  archive remain open. See [OPS-001 operations](operations.md#automated-postgresql-backup-and-retention-ops-001).
 - The Windows workstation uses Hiddify with XRay/VLESS Reality as the primary
   censorship-resistant connection and AmneziaVPN with AmneziaWG2 as the
   fallback. The XRay server configuration was independently validated through
