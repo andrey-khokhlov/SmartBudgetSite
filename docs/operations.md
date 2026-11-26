@@ -261,12 +261,13 @@ docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run -
 docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run --rm --no-deps app python -m alembic current
 ```
 
-Confirm the expected revision before serving traffic. The configuration is
-local REL-002 preparation. The following release obligations remain open.
+Confirm the expected revision before serving traffic. The private PostgreSQL
+deployment has been verified. Public exposure remains closed, and the
+following REL-002 and related release obligations remain open.
 
-- **OPS-001 backup and restore.** Verify off-host backup and recovery for
-  PostgreSQL, private attachments, object storage and deployment
-  configuration. Treat certificate storage as sensitive.
+- **OPS-001 backup and restore.** Continue production backup validation
+  and the remaining recovery work in the [OPS-001 runbook](#automated-postgresql-backup-and-retention-ops-001).
+  Treat certificate storage as sensitive.
 - **SEC-012 perimeter.** Complete and validate trusted-host and proxy policy,
   production security headers and HSTS, the required perimeter rate limits
   and capability-safe logging. The standard Caddy configuration does not
@@ -289,9 +290,23 @@ On 2026-11-24, the owner verified encrypted upload and download through the
 existing `gdrive_crypt` remote, plaintext SHA-256 equality and an isolated
 PostgreSQL 16 restore of the 2026-11-23 post-migration dump. The restored
 database contained 29 tables and Alembic revision `9f3b1a7c2d84`. The
-temporary database and test files were removed. This was a manual recovery
-check. Automated installation, scheduled execution and recovery from an
-automated archive remain separate checks.
+temporary database and test files were removed.
+
+### Verified production automation and restore
+
+The production `smartbudget-postgres-backup` service and timer were installed
+and validated. The timer is enabled and active for 03:00 UTC daily with
+`Persistent=true`. A manual systemd start succeeded on 2026-11-24.
+Scheduled runs on 2026-11-25 and 2026-11-26 each succeeded in about 16 seconds.
+Local and encrypted off-site archive inventories were independently confirmed.
+Local archives are root-owned with mode `0600` in the root-owned
+`/var/backups/smartbudget` directory with mode `0700`. Production pruning and
+catch-up after downtime remain unverified.
+
+The owner downloaded an automated archive created on 2026-11-24 from Google
+Drive, independently verified its SHA-256 and restored it into an isolated
+PostgreSQL database. The restore contained 29 tables at Alembic revision
+`9f3b1a7c2d84`. The temporary database and downloaded archive were removed.
 
 ### Approved schedule and retention
 
@@ -323,9 +338,9 @@ interpreter, Compose access, existing root rclone configuration and
 available disk space. Restrict write access to the deployment checkout to
 authorized administrators because the unit runs it as root. The job requires
 a real backup directory owned by the service user with no group or other
-permissions. Use mode `0700`. If the
-root rclone config is not in rclone's default location, set `RCLONE_CONFIG`
-to the existing private path in a local systemd drop-in. Keep credentials
+permissions. Use mode `0700`. If the root rclone config is outside rclone's
+default location, set `RCLONE_CONFIG` to the existing private path in a local
+systemd drop-in. Keep credentials
 and encryption settings outside the repository and unit templates.
 
 The script holds a nonblocking host file lock for the entire run.
@@ -350,9 +365,9 @@ The selected rclone commands and Drive flag are present in upstream
 1.60.1. Validate the behavior with the installed `1.60.1-DEV` build and
 the actual permission scope before relying on the scheduled policy.
 
-### Installation and monitoring validation
+### Systemd installation and monitoring
 
-After independent review, render
+When reinstalling, render the reviewed
 `deploy/systemd/smartbudget-postgres-backup.service.in` with the approved
 production values and use the matching `smartbudget-postgres-backup.timer`.
 
@@ -367,37 +382,125 @@ standard 15 seconds allows the interrupted job to remove local temporary
 files and attempt to remove its pending encrypted upload before systemd
 forces termination.
 
-Validate the rendered files with
-`systemd-analyze verify` and the schedule with
-`systemd-analyze calendar '*-*-* 03:00:00 UTC'`. Before enablement, confirm the
-non-public database deployment, then verify one authorized run, the next and
-missed-run scheduling, encrypted retention including targeted permanent
-deletion, and an isolated restore of a scheduled archive. Keep the public
-Compose profile disabled.
+On reinstall, validate the rendered files with `systemd-analyze verify` and
+the schedule with `systemd-analyze calendar '*-*-* 03:00:00 UTC'`. Confirm the
+non-public database deployment before enablement. Keep the public Compose
+profile disabled.
 
-Use the existing [external job heartbeat approach](#g13d-3-operational-monitoring-target)
-with a dedicated daily Healthchecks.io check and a grace period covering the
-validated runtime. The job exits `0` and logs `status=completed` only on
-success. Failures exit `1` and a lock skip exits `75`. Configure a
-success-only `ExecStartPost` heartbeat or the approved deployment wrapper
-after provisioning the check. Keep its URL in a root-only configuration
-file. A systemd drop-in can use the following command with the provisioned
-success URL stored as the `url` setting in the mode-`0600` curl file.
+Production monitoring uses the Better Stack heartbeat **SmartBudgetSite —
+PostgreSQL Backup**, with a 24-hour interval, a one-hour grace period, and
+email notifications. The job exits `0` and logs `status=completed` on
+success. Failures exit `1` and a lock skip exits `75`. The production
+systemd drop-in at
+`/etc/systemd/system/smartbudget-postgres-backup.service.d/override.conf`
+uses a success-only `ExecStartPost`. Failed executions are recorded in the
+systemd journal. Better Stack sends a missed-heartbeat alert only after the
+configured interval and grace period have elapsed without a success heartbeat.
 
 ```ini
 [Service]
 ExecStartPost=/usr/bin/curl --silent --fail --output /dev/null --max-time 10 --config /etc/smartbudget/postgres-backup-heartbeat.curl
 ```
 
-A failed or missed run must alert through the external monitor,
-independently of the VPS and the application dispatcher. Exercise a failure
-and a missed run in validation and inspect `journalctl -u
-smartbudget-postgres-backup.service` for the sanitized failure stage.
-Installation, scheduled runs and the alert path remain unverified.
+The curl configuration is root-owned with mode `0600`. Use this format with
+the private heartbeat URL.
 
-OPS-001 remains open for this automation's production validation, recovery
-from an automated archive, and backup and restore of private feedback files,
-object storage and deployment configuration.
+```ini
+url = "YOUR_HEARTBEAT_URL"
+```
+
+The KeePassXC entry is
+**SmartBudgetSite — Better Stack PostgreSQL Heartbeat**. Rotate the URL before
+commercial release because it was inadvertently exposed during configuration
+review. Update the private curl file and the vault entry, then confirm receipt
+with the new URL.
+
+Better Stack received the production heartbeat after a manually initiated
+systemd backup, and the test notification email arrived.
+A separate temporary heartbeat with a one-minute interval and one-minute
+grace period detected a missed heartbeat, created an incident, sent email,
+and resolved the incident automatically after the next heartbeat. The
+temporary heartbeat and demonstration monitor were removed.
+
+Verify heartbeat receipt from a scheduled backup on 2026-11-27 or later.
+Production backup failure monitoring still needs validation. Check the
+sanitized failure stage with
+`journalctl -u smartbudget-postgres-backup.service`, confirm the failed run
+sends no success heartbeat, and verify the independent email alert after
+the configured interval and grace period expire.
+Before public commercial release, confirm eligibility for the intended Better
+Stack plan. The provider describes its free tier as intended for personal
+projects. [Better Stack pricing](https://betterstack.com/pricing)
+
+### Independent Windows recovery from Google Drive
+
+Recovery requires access to the original Google account and the original
+dedicated OAuth desktop client. Use a new rclone configuration and obtain
+fresh OAuth authorization. The verified procedure used Windows rclone
+v1.76.0 and KeePassXC.
+
+| KeePassXC entry | Recovery value |
+| --- | --- |
+| `SmartBudgetSite — Account Email` | Original Google account for browser authorization |
+| `SmartBudgetSite — Google Drive OAuth` | OAuth client ID in Username and client secret in Password |
+| `SmartBudgetSite — rclone Crypt Encryption` | Original primary password in Password and original second password in the `rclone_password2` custom attribute |
+
+1. Create an empty, access-restricted Windows recovery directory. Start the
+   interactive setup with `rclone --config <recovery-config-path> config`
+   and use that same isolated config path in every command.
+2. Create a Google Drive remote named `gdrive` using the original desktop
+   client ID and secret. Select `drive.file` scope and authorize in the
+   browser with the original Google account. Keep the new OAuth tokens in the
+   isolated config.
+3. Create a crypt remote named `gdrive_crypt` targeting
+   `gdrive:SmartBudgetSite/backups-encrypted`. Set filename encryption to
+   `standard` and directory name encryption to `true`. Enter both original
+   encryption passwords in the interactive setup. Preserve the existing
+   production encryption parameters. [rclone Drive configuration](https://rclone.org/drive/) · [rclone crypt configuration](https://rclone.org/crypt/)
+4. List the automated archives through the crypt remote and select an
+   available archive. Download it to the private recovery directory and
+   compare its SHA-256 with an independently recorded reference if one is
+   available for that archive.
+
+```powershell
+$recoveryDir = "C:\path\to\private\recovery"
+$recoveryConfig = Join-Path $recoveryDir "rclone-recovery.conf"
+rclone --config $recoveryConfig lsf gdrive_crypt:postgresql-automated --files-only
+$archive = Read-Host "Enter an available archive filename from the listing"
+$download = Join-Path $recoveryDir $archive
+rclone --config $recoveryConfig copyto "gdrive_crypt:postgresql-automated/$archive" $download
+Get-FileHash -Algorithm SHA256 -LiteralPath $download
+```
+
+On 2026-11-26, this isolated setup listed existing encrypted objects, decrypted
+the filenames, and accessed all five automated archives without copying VPS
+configuration or OAuth tokens. The archive
+`smartbudget-auto-20261124T182037355263Z.dump` matched the independently
+verified SHA-256
+`6f1f438274b96ae26a1b5ada38bb3f1ce1d54338a57181482104ea31ff98214b`.
+The filename and checksum are historical verification evidence. Retention
+will eventually remove that archive. The owner removed the temporary
+configuration and downloaded archive.
+
+Independent reference hashes are currently retained for selected archives
+only, so a later download may lack a reference for an independent SHA-256
+comparison. Before publishing each completed backup, the job reads back the
+decrypted upload and compares its SHA-256 with the local archive. rclone crypt
+separately authenticates the encrypted data as it decrypts it.
+
+Keep secrets out of command arguments and reports. Perform any database restore
+against an isolated target and remove the recovery artifacts when finished.
+
+### Remaining OPS-001 obligations
+
+- Verify production pruning of both local and encrypted off-site archives at
+  the approved retention counts and persistent catch-up after downtime.
+- Verify the scheduled heartbeat, production failure monitoring, URL
+  rotation and commercial plan eligibility.
+- Verify backup and recovery for private feedback attachments, object storage
+  and deployment configuration, and independently verify the KeePassXC
+  database backup.
+- Validate full infrastructure disaster recovery.
 
 ## Codex pytest validation environment
 
@@ -860,7 +963,7 @@ create or use a Full Access key for management or replay. See
 
 Resend delivery monitoring uses webhooks. During release validation, verify
 live webhook delivery and the Dashboard fallback separately from the
-Healthchecks.io heartbeat.
+Better Stack scheduled-job heartbeat.
 
 Use the existing monitoring pass to surface deferred confirmation after five
 minutes and remove receipts at 90 days from first receipt. Resolve a reviewed
@@ -989,8 +1092,8 @@ the service timeout, and the next calendar activation. The templates keep
 the existing CLI safety switches and send stdout and stderr to the journal.
 
 Stagger the scheduled runs, prevent overlapping executions of each job, and
-keep their failures independent. Use Healthchecks.io for external scheduled-job
-heartbeats and an independent check for public HTTP/HTTPS availability. Verify
+keep their failures independent. Use Better Stack for external scheduled-job
+heartbeats and a separate check for public HTTP/HTTPS availability. Verify
 that missed-job and availability failures can be detected even when the local
 Alert Dispatcher is unavailable.
 
@@ -1009,6 +1112,19 @@ Use the [verified Vultr monitoring and pre-deployment baseline](#vultr-monitorin
 as a starting point. Select additional tools and production thresholds during
 REL-002 using the deployed environment and observed workload. Previously
 discussed CPU, RAM, and disk thresholds are provisional examples.
+
+### External monitoring provider
+
+On 2026-11-26, the owner replaced Healthchecks.io with Better Stack for
+external job heartbeats. Healthchecks.io registration and login emails did
+not arrive across repeated attempts, including alternative registrations.
+The owner sent a support request on 2026-11-24 and had received no response
+when making the decision. The cause of the missing emails was unconfirmed.
+
+The [production PostgreSQL backup heartbeat](#systemd-installation-and-monitoring)
+is the first verified Better Stack integration. Other scheduled jobs and
+public HTTP/HTTPS monitoring still require configuration and validation under
+REL-002 and G13D-3.
 
 The Telegram bot `@SmartBudgetOpsAlertBot` was created and a direct Bot API
 message succeeded from the local environment. Application integration and
@@ -1324,9 +1440,9 @@ The job rechecks status before each claim. A provider call already in flight
 can finish after an operator records a response or closes the request.
 
 During release validation, provision a dedicated
-[external job heartbeat](#g13d-3-operational-monitoring-target) in
-Healthchecks.io with the timer cadence and a grace period that covers the
-validated runtime. Configure the release job wrapper to report success only
+[Better Stack heartbeat](#external-monitoring-provider) with the timer
+cadence and a grace period that covers the validated runtime. Configure
+the release job wrapper to report success only
 after a live run exits successfully with `status=completed`. Exclude dry runs,
 disabled passes and lock skips from success heartbeats. Deliver missed or
 failed heartbeat alerts independently of the app host and its dispatchers.
@@ -1497,14 +1613,18 @@ Do not disable or alter emergency access without validating recovery.
 
 ### Pending deployment work
 
-The owner has verified PostgreSQL 16 provisioning and a manual encrypted
-backup and restore. See [OPS-001 verification](#verified-manual-recovery-evidence).
+The owner has verified PostgreSQL 16 provisioning, scheduled encrypted
+backups, an isolated restore from an automated archive, and a production
+heartbeat from a manually initiated backup. See the
+[OPS-001 evidence and runbook](#automated-postgresql-backup-and-retention-ops-001).
 The following work remains open:
 
-- Production backup automation and scheduled retention validation.
+- Production backup pruning, persistent catch-up, scheduled heartbeat and
+  production backup failure monitoring validation.
 - Application deployment and process lifecycle validation.
 - Reverse proxy, DNS, HTTPS, and production perimeter validation.
-- Production startup checks, operational monitoring and recovery drills.
+- Production startup checks, monitoring for the other jobs and public
+  availability, and full infrastructure recovery drills.
 - End-to-end production payment and delivery validation.
 
 Vultr instance backups alone are not considered sufficient evidence

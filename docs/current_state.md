@@ -372,19 +372,27 @@ Infrastructure and quality:
   SSH access and package dependency checks succeeded.
   Three Ubuntu phased updates remain deferred.
   The owner subsequently verified the private PostgreSQL 16 deployment.
-  Public Caddy exposure, operational monitoring and production integration
-  validation remain open. See `operations.md` for details.
-- OPS-001 remains open. The owner verified encrypted upload, download,
-  SHA-256 equality and an isolated PostgreSQL restore on 2026-11-24 using
-  the 2026-11-23 post-migration dump. The restored database contained 29
-  tables and revision `9f3b1a7c2d84`. The daily 03:00 UTC backup script and
-  persistent systemd timer are prepared locally, with seven local and fifteen
-  encrypted off-site automated archives retained after verification.
-  Local tests exercised failure isolation and retention with simulated external
-  commands. Disposable checks exercised PostgreSQL 16 archive validation,
-  Linux file locking and encrypted rclone storage over a local filesystem.
-  Installation, scheduled execution, alerting and restore from an automated
-  archive remain open. See [OPS-001 operations](operations.md#automated-postgresql-backup-and-retention-ops-001).
+  The public perimeter remains closed. REL-002 and G13D-3 remain open for
+  the remaining deployment checks, operational jobs, public availability
+  monitoring and live integration validation.
+- The production PostgreSQL backup service and persistent 03:00 UTC timer
+  were installed and validated. The manual systemd run on 2026-11-24 and
+  scheduled runs on 2026-11-25 and 2026-11-26 succeeded. The owner independently
+  confirmed local and encrypted off-site inventories, verified SHA-256, and
+  restored a 2026-11-24 automated archive into an isolated PostgreSQL
+  database with 29 tables and Alembic revision `9f3b1a7c2d84`. On 2026-11-26,
+  the owner rebuilt Windows rclone access with fresh authorization from
+  KeePassXC records and independently retrieved and verified an off-site
+  archive. Prior local tests covered failure isolation, retention, PostgreSQL
+  16 archive validation, Linux locking and rclone encryption on a local
+  filesystem. OPS-001 remains open. See the
+  [production evidence, recovery procedure and remaining checks](operations.md#automated-postgresql-backup-and-retention-ops-001).
+- Better Stack is the approved external heartbeat provider as of 2026-11-26.
+  The owner verified the production backup heartbeat after a manual
+  systemd run, test email delivery, and missed-heartbeat detection and
+  recovery with a temporary monitor. Scheduled heartbeat receipt, production
+  backup failure monitoring, URL rotation and commercial plan eligibility
+  remain open. See the [monitoring runbook](operations.md#systemd-installation-and-monitoring).
 - The Windows workstation uses Hiddify with XRay/VLESS Reality as the primary
   censorship-resistant connection and AmneziaVPN with AmneziaWG2 as the
   fallback. The XRay server configuration was independently validated through
@@ -793,7 +801,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R50 | Deferred until a concrete legal requirement is established | On 2026-11-20 the owner deferred the R50 Checkout checkbox, server-side validation, new Sale fields, migrations and purchase-email changes. | [Market-specific pre-sale legal validation](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) remains mandatory and open. If R50 is required for an intended market, reconsider implementation before enabling applicable paid sales |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 release-environment validation, applicable early-start consent and G15 composition-specific wording |
 | R52 | Partial | G15-B renders the approved RU/EN Appendix B candidate with the Section 7 amendment. | G15 publication and market-specific legal validation before applicable paid sales |
-| R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts and bounded SMTP recovery. R53-4A adds protected Admin response and closure attestations with write-once UTC timestamps. R53-4B implements UTC weekday service targets and a separate durable reminder outbox with a one-pass dispatcher. The owner verified the R53-4A and R53-4B migrations through `9f3b1a7c2d84` and schema checks in development and review on 2026-11-20. | Apply the migrations in production and validate the lifecycle, notifications, receipt recovery, reminder timer, provider outcomes and external heartbeat. Refund execution remains operator-controlled |
+| R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts and bounded SMTP recovery. R53-4A adds protected Admin response and closure attestations with write-once UTC timestamps. R53-4B implements UTC weekday service targets and a separate durable reminder outbox with a one-pass dispatcher. The owner verified the R53-4A and R53-4B migrations through `9f3b1a7c2d84` and schema checks in development and review on 2026-11-20. The isolated production archive restore confirmed revision `9f3b1a7c2d84` in the archived database. | Confirm the target production revision before enabling the jobs. Validate the lifecycle, notifications, receipt recovery, reminder timer, provider outcomes and external heartbeat. Refund execution remains operator-controlled |
 | R54 | Partial | Full refunds revoke future protected access. Downloaded local copies remain under customer control. G15-B renders the approved stop-use/delete wording, subject to law and licence. | G15 synchronized publication. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 

@@ -900,13 +900,14 @@ Before paid public sales:
   `alembic check` reported `No new upgrade operations detected.` in both databases.
   Pre-migration custom-format backups passed `pg_restore` archive checks and
   the copied files matched by SHA-256. No database restore was performed.
-  Production migration and deployment remain open. Apply both revisions
-  before starting the updated production code. Verify that historical
+  The 2026-11-23 post-migration production archive restored at revision
+  `9f3b1a7c2d84`. Confirm the target database revision before enabling
+  the production jobs. Verify that historical
   requests remain pending and both actions retain their original UTC timestamps
   on replay. Validate [reminder scheduling](operations.md#refund-request-deadline-reminders),
   Telegram/SMTP delivery and fallback, suppression after response or closure,
-  restart coalescing, and independent Healthchecks.io failure detection in
-  the release environment. R53 release validation remains open. Keep money
+  restart coalescing, and independent Better Stack heartbeat failure detection
+  in the release environment. R53 release validation remains open. Keep money
   movement operator-controlled.
 - R39-A adds single-use Share provisioning and verified reconciliation.
   R39-B adds automatic expiry revocation. Validate the timer and provider
@@ -1128,7 +1129,7 @@ webhook monitoring and replay, safe automatic purchase-email recovery,
 and the 30-minute critical detection SLO under the documented evidence limits.
 Validate the four [G13D-3 scheduled jobs](operations.md#g13d-3-operational-monitoring-target),
 their execution metrics, PostgreSQL outbox delivery with independent SMTP and
-Telegram retry outcomes, external Healthchecks.io job heartbeats, independent
+Telegram retry outcomes, external Better Stack job heartbeats, independent
 public availability checks, and VPS, PostgreSQL, and public application
 monitoring. Configure and validate infrastructure monitoring during
 [REL-002](#production-deployment-rel-002) after the relevant application and
@@ -1138,23 +1139,33 @@ criteria are verified.
 
 ### Production deployment (`REL-002`)
 
+The private production PostgreSQL 16 deployment and backup service are
+verified. Better Stack has received a production backup heartbeat from a
+manual systemd run. The public perimeter remains closed. Remaining REL-002
+work includes:
+
 - production application and VPS deployment definition;
 - reverse proxy and process lifecycle;
 - public DNS and HTTPS;
 - production startup, migration, persistence, and health validation;
 - detailed G13D-3 infrastructure monitoring configuration and validation
-  once the relevant production application and database components exist.
+  for the other operational jobs and public availability.
 
 ### Backup and recovery (`OPS-001`)
 
-The owner verified manual encrypted PostgreSQL backup recovery on
-2026-11-24, including a SHA-256 match and an isolated restore of the
-2026-11-23 post-migration dump. Automated daily backup and retention are
-implemented locally. OPS-001 remains open for production installation,
-scheduled execution and off-site retention validation, failure and
-missed-run alerts, and restore from an automated archive. Private feedback
-uploads, object-storage and configuration backup and recovery also remain open.
-See the [OPS-001 runbook](operations.md#automated-postgresql-backup-and-retention-ops-001).
+Production backup installation, the 2026-11-25 and 2026-11-26 scheduled runs,
+and an isolated restore from a SHA-256-verified automated off-site archive
+were verified. The owner independently rebuilt Windows rclone access without
+VPS configuration or tokens and matched the downloaded archive checksum.
+
+OPS-001 remains open for production local and off-site pruning, persistent
+timer catch-up, scheduled Better Stack heartbeat receipt, and production
+backup failure monitoring. Rotate the exposed production heartbeat URL and
+confirm commercial plan eligibility before public release. Private feedback
+attachments, object storage and deployment configuration need backup and
+recovery validation. Independent KeePassXC database backup verification and
+full infrastructure disaster recovery validation remain open. See the
+[OPS-001 runbook](operations.md#automated-postgresql-backup-and-retention-ops-001).
 
 ### Public deployment perimeter (`SEC-012`)
 

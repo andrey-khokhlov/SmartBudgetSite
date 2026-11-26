@@ -669,7 +669,7 @@ outside its scope. Safe automatic purchase-email recovery belongs to G13D-2c.
 The 30-minute critical detection SLO applies when reliable provider evidence
 reaches the endpoint. Provider outages, failed delivery attempts and endpoint
 disablement can extend detection latency despite automatic webhook retries.
-Healthchecks.io monitors our monitoring infrastructure. Establish successful
+External Better Stack heartbeats monitor scheduled jobs. Establish successful
 Resend-to-application delivery separately through the
 [Dashboard delivery history](../operations.md#g13d-2b-resend-webhook-operations).
 
@@ -748,17 +748,19 @@ deliveries. Review resolved, skipped, and recurring incidents
 during a weekly operational review. Weekly review does not
 replace immediate alerting for open incidents.
 
-Use Healthchecks.io to monitor scheduled job heartbeats externally. Monitor
-public HTTP/HTTPS availability with a separate external check. Detection of
-monitoring failures must remain possible when local jobs or the Alert
-Dispatcher are unavailable. See the
+Use Better Stack to monitor scheduled job heartbeats externally under the
+[2026-11-26 provider decision](../operations.md#external-monitoring-provider).
+Monitor public HTTP/HTTPS availability with a separate external check. The
+external checks must detect monitoring failures even when local jobs or the
+Alert Dispatcher are unavailable. See the
 [operational targets and measurements](../operations.md#g13d-3-operational-monitoring-target).
 
-Vultr telemetry and provider alerts are already configured. Host-level,
-application-level, and PostgreSQL-specific monitoring integration remains
-unimplemented. Select additional tools and production thresholds using the
-actual deployed environment and observed workload. Complete integration and
-validation before public sales.
+Vultr telemetry and provider alerts are already configured. The PostgreSQL
+backup heartbeat was verified on a manual production run. Host, application
+and PostgreSQL metrics integration and the remaining heartbeat and availability
+checks still require configuration and validation. Select additional tools and
+production thresholds using the deployed environment and observed workload.
+Complete integration and validation before public sales.
 
 #### Purchase email transport and protected URLs
 
