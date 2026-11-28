@@ -1831,15 +1831,14 @@ Do not disable or alter emergency access without validating recovery.
   app or database ports. The pre-deployment backup and retention evidence are
   recorded in the [OPS-001 runbook](#verified-production-automation-and-restore).
 
-The temporary allowlist is implemented in the repository. Its production
-preflight, activation, and validation remain pending under the
-[controlled access runbook](#controlled-https-access-and-rollback). The
-following work remains open:
+The subsequent [Stage 2 closeout](#controlled-https-deployment-evidence)
+records activation and validation of the temporary allowlist. The following
+work remains open:
 
 - Remaining [OPS-001 checks](#remaining-ops-001-obligations), including
   off-site pruning, catch-up, scheduled heartbeat receipt and failure monitoring.
 - Deployment lifecycle verification for the subsequent rollout stages.
-- Controlled Caddy ingress, DNS, HTTPS, and production perimeter validation.
+- First observed ACME renewal and perimeter validation for public exposure.
 - Monitoring for other jobs and public availability, and full infrastructure
   recovery drills.
 - End-to-end production payment and delivery validation.
@@ -1847,8 +1846,62 @@ following work remains open:
 Vultr instance backups alone are not considered sufficient evidence
 of application/database recovery readiness.
 
-This evidence establishes the private deployment stage. `REL-002`, `OPS-001`,
-`SEC-012`, and live integration validation remain open under the
+### Controlled HTTPS deployment evidence
+
+**2026-11-28 Stage 2 closeout, verified by the owner.** The production checkout
+was at `8b62247d68c61ff4ee61c12e917a16634d735355` and the running application
+image was built from `5c894f0`. A pre-deployment PostgreSQL backup, Compose
+preflight, and Caddy configuration validation passed. Caddy 2.11.9 activated
+with the operator VPN IPv4 `/32` allowlist. FastAPI and PostgreSQL remained
+healthy throughout. The existing application image and schema were used.
+
+- **Network and TLS.** The DNS A record was verified. There was no AAAA record
+  or effective public IPv6 ingress. Caddy published IPv4 TCP 80 and 443 only.
+  FastAPI, PostgreSQL, and Caddy administration were unreachable externally.
+  Caddy's deployed address matched the application's trusted proxy peer. HTTP
+  redirected to HTTPS with `308`. The VPN received `200` for the landing page
+  and health endpoint. Let's Encrypt issued a certificate valid from
+  2026-11-28 through 2027-02-26, with hostname and chain verified. Persistent
+  Caddy data and configuration volumes, restart policy, and the read-only
+  Caddyfile mount were verified. ACME renewal readiness was confirmed. The
+  first actual renewal remains unobserved.
+- **Access isolation.** From an independent non-allowlisted network, GET
+  requests to landing, health, admin login, download, and consultation
+  capability paths returned `403`. Ten GET and POST probes from the
+  non-allowlisted production VPS returned `403` with spoofed forwarding
+  headers. The owner accepted the combined evidence and approved omitting
+  POST testing from a second independent external network. Checkout and all
+  three provider webhooks remain restricted. The internal perimeter
+  authorization endpoint returned `404` to an authorized external request.
+- **Response protection.** Required security headers were verified. Download
+  and consultation responses retained cache and referrer protection, and the
+  payment result retained `no-store` and `no-referrer`. The tested Caddy `403`
+  and application `429` responses preserved the applicable capability
+  protection headers.
+- **Rate limiting.** Production logs confirmed the two policy identifiers,
+  real client IP attribution, and coalesced perimeter warnings. No synthetic
+  capability tokens appeared in the inspected output. Runtime quota
+  verification covered the two policies below. The other policies and the
+  shared global quota remain outside this evidence.
+
+  | Policy | Result | `Retry-After` |
+  | --- | --- | --- |
+  | Application `download_post_ip_15m` | 10 admitted, 11th returned `429`. Varying the spoofed client IP left the quota in effect. | 868 seconds |
+  | Perimeter `perimeter_download_get` | 25 parallel requests, 20 admitted and 5 returned `429`. | 1 second |
+
+- **Lava.top purchase isolation.** Price by request through API was enabled.
+  The provider UI indicated that this mode prevents direct platform purchases.
+  The anonymous storefront showed an empty product catalogue, and the direct
+  product page offered no purchase action. Public tipping remained visible as
+  a separate feature. The validation evidence cites the provider FAQ for
+  payment-link validity of 15 minutes for USD and EUR and 24 hours for RUB.
+  The owner confirmed that no real payment contracts were created in the
+  preceding 24 hours. A complete provider-side contract inventory remains
+  unverified. The checks ran without provider settings changes or real payments.
+
+Controlled HTTPS remains active behind the temporary allowlist. Provider
+webhook exceptions remain disabled. Stage 3 requires separate owner
+authorization under the
 [four-stage rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
 ## Deployment and external integration validation
@@ -1856,8 +1909,8 @@ This evidence establishes the private deployment stage. `REL-002`, `OPS-001`,
 Before deploying the intended revision, verify production environment settings,
 domain integration for the planned stage, startup checks, and operational logging.
 
-Use Stage 3 controlled HTTPS to validate the deployed implementation while
-access remains restricted:
+After the owner authorizes Stage 3, use controlled HTTPS to validate the
+deployed implementation while access remains restricted:
 
 1. Configure Calendly Share access as described below. Create and validate the
    Calendly webhook subscription, capture a real `invitee.created` payload,

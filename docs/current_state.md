@@ -347,9 +347,10 @@ Infrastructure and quality:
   applies a shared 3,000-per-60-second cap and nine independent per-IP token
   buckets with bounded state separate from application quotas. Generic Admin
   covers the protected feedback API and release routes outside `/admin`.
-  Stage 1 network recreation and private checks passed. The app received
-  `172.30.192.9`, leaving `172.30.192.2` free for Caddy. Production perimeter
-  validation remains open during controlled HTTPS.
+  Stage 2 verified the controlled production perimeter, including the
+  application and perimeter download quotas exercised in the
+  [production evidence](operations.md#controlled-https-deployment-evidence).
+  Perimeter validation for public exposure remains open.
 - `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
   The port contract now distinguishes fallback, local, production-internal,
   Docker host/container, frontend-origin, and external-provider ports while
@@ -620,18 +621,17 @@ owns that evidence, which applies to the temporary review environment.
 owner verified the private production checkout at `d76adb8`, healthy FastAPI
 and PostgreSQL 16, and the deployed SEC-012 application controls and Lava.top
 Checkout Return Flow. Private HTTP checks and the proxy network recreation
-passed. Caddy remains inactive. General external access and commercial sales
-remain closed. See the
+passed with Caddy inactive. See the
 [deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
 
-The temporary Caddy allowlist is implemented in the repository. It requires
-one operator VPN IPv4 `/32` and restricts all HTTPS application requests,
-including provider webhooks. The next priority is the production preflight
-and separately authorized activation under the
-[controlled access runbook](operations.md#controlled-https-access-and-rollback).
-Stage 2 has yet to start.
-Controlled HTTPS, live integration validation, and public commercial release
-remain ahead under the [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
+**Stage 2 Controlled HTTPS Validation complete — 2026-11-28.** Controlled
+HTTPS is active behind the temporary operator VPN IPv4 `/32` allowlist.
+The owner accepted the POST validation deviation documented in the
+[production evidence](operations.md#controlled-https-deployment-evidence).
+Provider webhook exceptions remain disabled. Stage 3 live integration
+validation awaits separate owner authorization. General visitor access and
+commercial sales remain closed under the
+[owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
 ### Pre-release operational readiness
 

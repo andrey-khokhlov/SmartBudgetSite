@@ -810,15 +810,18 @@ and commercial sales require the Stage 4 authorization below.
    access closed. Verify the intended revision and private deployment evidence
    before opening controlled HTTPS.
 2. **Controlled HTTPS Validation.** Activate Caddy, DNS, and HTTPS behind the
-   approved temporary Caddy IP allowlist. Allow the verified operator VPN egress
-   IP and only the external integration exceptions that are required. Validate
-   SEC-012 in the actual topology, including proxy trust, forwarding-header
+   approved temporary Caddy IP allowlist for the verified operator VPN egress
+   IP. Keep provider webhook exceptions disabled. Validate SEC-012 in the
+   actual topology, including proxy trust, forwarding-header
    sanitization, isolation, rate limits, HTTPS headers, capability protection,
    and effective firewall and IPv4/IPv6 exposure. Confirm default-deny access
    and provider purchase isolation before starting live validation. General
-   visitor access and public sales stay closed.
-3. **Live Integration Validation.** Retain controlled HTTPS access while
-   verifying Lava.top, Calendly, R2, Resend, required end-to-end journeys,
+   visitor access and public sales stay closed. The owner closed Stage 2 on
+   2026-11-28 with the documented POST validation deviation.
+   [Production evidence](operations.md#controlled-https-deployment-evidence)
+3. **Live Integration Validation.** Begin only with separate owner
+   authorization. Retain controlled HTTPS access while verifying Lava.top,
+   Calendly, R2, Resend, required end-to-end journeys,
    operational monitoring, recovery procedures, and applicable release gates.
    Allow only explicitly authorized test transactions. Prevent ordinary
    customer purchases through SmartBudgetSite and external purchase entry
@@ -832,7 +835,8 @@ and commercial sales require the Stage 4 authorization below.
    Pre-release test payments and refunds remain excluded under those rules.
 
 `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and the other
-Expected Release Gaps retain their own completion criteria.
+Expected Release Gaps retain their own completion criteria. WQ-003 remains
+open. Public commercial launch remains unauthorized.
 
 ### Operational readiness — mandatory pre-sale gate
 
@@ -1053,7 +1057,7 @@ creation, browser returns before and after confirmation, and privacy headers.
 REL-001 remains open for the live Lava.top return and deployed customer journey.
 Verify all three outcomes, preservation of `lang`, the returned invoice ID,
 the page before webhook confirmation and after refresh, and delivery through
-the existing webhook flow. Production SEC-012 validation remains open.
+the existing webhook flow. SEC-012 validation for public exposure remains open.
 
 The first authoritative confirmation and fulfillment slice is implemented:
 authenticated Lava.top Payment-result events and explicit invoice lookup share
@@ -1174,9 +1178,11 @@ The owner verified Stage 1 technical completion on 2026-11-28, including the
 updated FastAPI deployment, PostgreSQL 16 health, migrations, and proxy network
 recreation. See the
 [private deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
-`REL-002` stays open for deployment lifecycle verification in subsequent
-stages, controlled Caddy ingress, DNS and HTTPS, and G13D-3 monitoring of the
-remaining jobs and public availability. Stage 2 has yet to start.
+Stage 2 verified controlled Caddy ingress, DNS, HTTPS, and ACME renewal
+readiness. Actual certificate renewal remains unverified. `REL-002` remains
+open for subsequent deployment lifecycle checks and G13D-3 monitoring of the
+remaining jobs and public availability.
+[Controlled HTTPS evidence](operations.md#controlled-https-deployment-evidence)
 
 ### Backup and recovery (`OPS-001`)
 
@@ -1209,13 +1215,12 @@ per-IP token buckets with separate bounded state. Generic Admin includes the
 protected feedback API and release routes outside `/admin`. Application rate
 limiting remains mandatory with a single Uvicorn worker.
 
-SEC-012 remains open for release-environment validation before public exposure.
-Verify host allowlisting and loopback health, exact proxy trust and forwarding
-sanitization, isolation of Uvicorn and the authorization endpoint, global and
-per-IP perimeter limits, application quota enforcement, and `429` with
-`Retry-After` through Caddy. Verify HTTPS redirects, response headers, and
-capability-safe caching and logging. See the
-[production Docker runbook](operations.md#production-docker-configuration-rel-002).
+Stage 2 verified the controlled perimeter, with runtime quota evidence for
+two download policies. SEC-012 remains open for validation of the final
+public configuration. Recheck the controlled perimeter findings and verify
+host allowlisting and loopback health, perimeter policy coverage and the shared
+global quota, and application quota enforcement through Caddy.
+[Controlled HTTPS evidence](operations.md#controlled-https-deployment-evidence)
 
 `/payment/result` performs one indexed status lookup per syntactically valid
 invoice UUID and has no dedicated SEC-007 or SEC-012 quota. Before public
