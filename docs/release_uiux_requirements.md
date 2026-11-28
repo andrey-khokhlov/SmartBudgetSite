@@ -31,9 +31,9 @@ This is a requirements source, not an implementation report or a second backlog.
   operations, and applicable legal validation remain pre-sale requirements.
   See [R50](#r50--conditional-immediate-supply-consent) for the implementation
   deferral.
-- R47 supplements the older security-sheet guidance; final public RU/EN ActiveX
-  wording remains pending editorial approval. Excel 2021 validation does not
-  establish the complete Microsoft 365 scenario.
+- R47 defines the approved RU/EN ActiveX guidance in §5.6.2. Its evidence
+  section distinguishes owner-verified Excel 2021 and Microsoft 365 from the
+  supported compatibility matrix.
 - R48 records owner-complete workbook/Walkthrough/ZIP revisions. Replacement
   and artifact verification are complete in the dedicated review environment.
 - Implementation status, completed mapping against `cd5190b` and the current
@@ -64,7 +64,7 @@ for implementation status and remaining validation.
 | --- | --- |
 | R02, R06, R10, R20–R23, R33–R34, R38–R39 | SmartBudget checkout is product-only. Consultations use standalone checkout with a separate Sale and payment, subject to capacity safeguards. Suppress bundle offers, add-on pricing and combined-order prompts on Landing, Buy, Checkout, Consultations and FAQ in RU/EN. Verify language switching for both public paths and server rejection of direct bundle submissions with the default-off flag. |
 | R35, R40 and section 7.2 | Validate product-only and standalone consultation as the two new public paid journeys, with separate localized emails and appropriate protected access. Retain bundle rendering and fulfillment regression coverage and historical access. |
-| R41–R44, R49–R54 and section 7.4 | Align the new RU/EN policy, FAQ, Checkout and email with separate purchases and applicable consents. Retain full-Sale refunds and exceptional or historical operator handling. Defer bundle item accounting as a launch deliverable. R42 and R53 remain open, including persisted request intake and confirmation and review of requests received after the voluntary window. Customer rights remain in force. |
+| R41–R44, R49–R54 and section 7.4 | Align the RU/EN policy, FAQ, Checkout and email with separate purchases and applicable consents. R42 full-Sale refunds and R53 request intake and follow-up are implemented locally. Production and live validation remain open, including review of requests received after the voluntary window. Exceptional or historical cases remain operator-controlled. Bundle item accounting is deferred. Customer rights remain in force. |
 | R55 | First release excludes workbook activation expiry, DRM, mandatory post-purchase codes and remote disabling. |
 
 Retain the original bundle copy and scenarios for historical support and
@@ -100,8 +100,8 @@ price-free.
 This supersedes the earlier R18 decision to omit a Buy CTA. The original
 register and §5.3 copy below are retained for history. The amendment is within
 UI/UX Polish under Functional Freeze and uses the existing product-only purchase
-path. Verify both locales, keyboard focus and desktop/mobile layout. Gate 3
-and R45 still require the repeat review.
+path. Acceptance covers both locales, keyboard focus and desktop/mobile layout.
+See [Gate 3 acceptance](release_readiness.md#gate-3--smartbudgetsite-uiux-implementation-and-repeat-review).
 
 ## R32 Buy compatibility presentation owner amendment — 2026-11-22
 
@@ -159,7 +159,8 @@ restrained border and WCAG AA text contrast.
 - EN — Consultation checkout is currently unavailable.
 
 This presentation amendment is within UI/UX Polish under Functional Freeze.
-Gate 3, R39 and R45 remain open.
+Gate 3 / R45 pre-deployment acceptance is complete. R39 production booking
+validation remains open.
 
 ## Consultations mobile layout amendment — 2026-11-22
 
@@ -512,13 +513,13 @@ remaining release gates stay open.
 | R44 · сроки поддержки | Первый ответ — целевые 3 рабочих дня, обычное рассмотрение 5; банковское зачисление после возврата — до 10 рабочих дней по прежнему ответу Lava.top | High; срок первого ответа утверждён владельцем 2026-11-20; проверить операционную готовность | Сроки не подменяют законные; различаются ответ, решение и банковское зачисление | A 117–122; B 188–193; C |
 | R45 · процесс review | Сначала согласование desktop и реализация малыми связанными группами; затем повторный responsive/accessibility review | High для закрытия gate; согласовано | Проверен фактический обновлённый интерфейс, результаты сохранены по задачам | B 42–43, 74–76 |
 | R46 · сохранение результатов | Полные тексты и решения сохранять в постоянном документе; изменения версионировать, отмечать superseded/conditional | Организационное; требование настоящей передачи | Дорожная карта ссылается на этот документ; изменения публичной редакции не теряются в истории чата | A 143–150; текущий запрос |
-| R47 | ActiveX onboarding and customer guidance; full requirement below | Required pre-release; public copy/editorial and remaining Microsoft 365 validation pending | Acceptance and validation: see R47 below | Owner planning amendment, 2026-11-04 |
+| R47 | ActiveX onboarding and customer guidance; full requirement below | Final RU/EN guidance implemented; owner verified Microsoft 365 on the recorded configuration | Acceptance and evidence limits: see R47 below | Owner planning amendment, 2026-11-04 |
 | R48 | Updated RC / Walkthrough artifacts require review-release replacement; full requirement below | Validated in review; Gate 2 complete | Acceptance and validation: see R48 below | Owner planning amendment, 2026-11-04 |
 | R49 | No universal refund-right waiver; full requirement below | High; G15-C1 pre-payment disclosures implemented locally. Release validation remains open | Acceptance and validation: see R49 below | Owner planning amendment, 2026-11-04 |
 | R50 | Conditional immediate-supply consent; full requirement below | Deferred until a concrete legal requirement is established. Market-specific pre-sale legal validation remains mandatory and open | Acceptance and validation: see R50 below | Owner decisions of 2026-11-04 and 2026-11-20 |
 | R51 | Product / consultation / bundle refund-consent separation; full requirement below | High; D4 approved, composition-specific implementation pending | Acceptance and validation: see R51 below | Owner planning amendment, 2026-11-04 |
 | R52 | Refund Policy revision before paid sales; full requirement below | High; D4 approved, synchronized publication gate open | Acceptance and validation: see R52 below | Owner planning amendment, 2026-11-04 |
-| R53 | Applicable online withdrawal/cancellation path; full requirement below | High; D4 approved, persisted request flow pending | Acceptance and validation: see R53 below | Owner planning amendment, 2026-11-04 |
+| R53 | Applicable online withdrawal/cancellation path; full requirement below | High; request intake through reminder dispatch implemented locally | Release-environment acceptance and validation: see R53 below | Owner planning amendment, 2026-11-04 |
 | R54 | Full-refund consequences for digital-product use; full requirement below | Medium; D4 approved, synchronized wording pending | Acceptance and validation: see R54 below | Owner planning amendment, 2026-11-04 |
 | R55 | Defer anti-abuse activation controls; full requirement below | Deferred post-release hypothesis; excluded from first release | Acceptance and validation: see R55 below | Owner planning amendment, 2026-11-04 |
 
@@ -1575,7 +1576,7 @@ If you cannot find the link or have difficulty rescheduling, please contact supp
 
 Да. Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты. Консультацию можно отменить с полным возвратом стоимости до начала её проведения.
 
-Для обращения воспользуйтесь [формой возврата](/refund-request). Если форма временно недоступна, напишите на support@neocitrix.com. Подробные условия, включая возвраты после проведения консультации, изложены в [Политике отмены и возвратов](/legal/refund-policy).
+Для обращения воспользуйтесь формой возврата (`/refund-request`). Если форма временно недоступна, напишите на support@neocitrix.com. Подробные условия, включая возвраты после проведения консультации, изложены в Политике отмены и возвратов (`/legal/refund-policy`).
 
 Мы стремимся предоставить первый ответ в течение 3 рабочих дней. Обычное рассмотрение запроса, как правило, занимает до 5 рабочих дней. После оформления возврата зачисление денежных средств обычно занимает до 10 рабочих дней в зависимости от банка и способа оплаты.
 
@@ -1617,7 +1618,7 @@ Include your purchase email address and describe the problem.
 
 Yes. You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation. You can also cancel a consultation before it starts and receive a full refund of the amount paid.
 
-To request a refund, use the [refund request form](/refund-request). If the form is temporarily unavailable, email support@neocitrix.com. Full terms, including refunds after a completed consultation, are described in the [Cancellation and Refund Policy](/legal/refund-policy).
+To request a refund, use the refund request form (`/refund-request`). If the form is temporarily unavailable, email support@neocitrix.com. Full terms, including refunds after a completed consultation, are described in the Cancellation and Refund Policy (`/legal/refund-policy`).
 
 We aim to provide an initial response within 3 business days. Standard requests are normally reviewed within 5 business days. After a refund is processed, funds are typically credited within 10 business days, depending on the bank and payment method.
 
@@ -1763,7 +1764,7 @@ If Google Meet is unavailable on your device or network, please contact support 
 
 Если вам потребуется изменить время уже забронированной консультации, воспользуйтесь ссылкой для переноса в подтверждении записи.
 
-Условия отмены: Вы можете отменить консультацию до начала её проведения и получить полный возврат стоимости услуги. Подробности — в [Политике отмены и возвратов](/legal/refund-policy).
+Условия отмены: Вы можете отменить консультацию до начала её проведения и получить полный возврат стоимости услуги. Подробности — в Политике отмены и возвратов (`/legal/refund-policy`).
 
 Если возникнут вопросы или трудности с записью, свяжитесь с нами через форму обратной связи или по адресу support@neocitrix.com.
 
@@ -1789,7 +1790,7 @@ Once your booking is confirmed, you will receive a separate confirmation with th
 
 If you need to change your appointment, use the rescheduling link in your booking confirmation.
 
-Cancellation terms: You can cancel your consultation before it starts and receive a full refund of the amount paid for the service. Details are available in the [Cancellation and Refund Policy](/legal/refund-policy).
+Cancellation terms: You can cancel your consultation before it starts and receive a full refund of the amount paid for the service. Details are available in the Cancellation and Refund Policy (`/legal/refund-policy`).
 
 If you have any questions or experience difficulties booking your consultation, contact us through the feedback form or at support@neocitrix.com.
 
@@ -1819,7 +1820,7 @@ Best regards, The SmartBudget Team
 
 Рекомендуем скачать файл и сохранить его на своём устройстве.
 
-Условия возврата: Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты. Подробности — в [Политике отмены и возвратов](/legal/refund-policy).
+Условия возврата: Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты. Подробности — в Политике отмены и возвратов (`/legal/refund-policy`).
 
 Если у вас возникнут вопросы или сложности со скачиванием, обратитесь через форму обратной связи на сайте или напишите нам на support@neocitrix.com.
 
@@ -1848,7 +1849,7 @@ This limit applies only to downloading the file. You can continue using your pur
 
 We recommend downloading the file and saving it to your device.
 
-Refund terms: You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation. Details are available in the [Cancellation and Refund Policy](/legal/refund-policy).
+Refund terms: You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation. Details are available in the Cancellation and Refund Policy (`/legal/refund-policy`).
 
 If you have any questions or experience difficulties downloading your purchase, please use the feedback form on our website or contact us at support@neocitrix.com.
 
@@ -2172,9 +2173,8 @@ D4 заменяет прежнее решение о публикации без
 
 ## R47 — ActiveX onboarding and customer guidance
 
-Record the following accepted product/UX direction.
-
-SmartBudget is an Excel-based application using VBA and ActiveX functionality, including the Excel `WebBrowser` component.
+SmartBudget uses VBA and ActiveX functionality, including the Excel
+`WebBrowser` component.
 
 Current supported release target remains:
 
@@ -2194,10 +2194,11 @@ Expected product behavior:
 3. If ActiveX is available, normal SmartBudget startup continues.
 4. If ActiveX is blocked, SmartBudget explains the problem and provides guidance.
 5. SmartBudget can help the user open Excel security settings.
-6. The user changes the ActiveX configuration manually.
-7. SmartBudget can repeat the diagnostic.
-8. If the diagnostic succeeds, startup can continue without requiring the workbook to be closed and reopened.
-9. If the user declines to change the required configuration, only SmartBudget closes; Excel itself is not closed.
+6. The user changes the ActiveX configuration manually and restarts Excel.
+7. On the next launch, SmartBudget runs a fresh availability check and starts
+   when the required component is available.
+8. If the user declines to change the required configuration, only SmartBudget
+   closes and Excel stays open.
 
 Important security boundary:
 
@@ -2235,45 +2236,21 @@ Also record:
 - Company-managed devices may prevent customers from changing the required settings.
 - If VBA or required ActiveX functionality cannot be enabled, SmartBudget cannot function fully.
 
-SmartBudget currently uses:
+Use the approved RU/EN FAQ wording in §5.6.2 for the manual setting, Safe Mode,
+Excel restart, next-launch check, and company-managed restrictions. The earlier
+experimental `{UP}` SendKeys navigation was unverified and abandoned because it
+depended on UI focus.
 
-`Application.CommandBars.ExecuteMso "MacroSecurity"`
-
-to help open Excel security settings.
-
-A possible automatic navigation approach using:
-
-`Application.SendKeys "{UP}", False`
-
-has been discussed but is not considered reliable or validated because of UI focus dependency.
-
-Therefore public copy must not claim:
-
-“SmartBudget automatically configures ActiveX.”
-
-The approved conceptual direction is:
-
-SmartBudget checks whether required components are available and helps the user configure Excel if ActiveX is blocked.
-
-Do not create final RU/EN FAQ wording in this sprint.
-
-The detailed public wording remains pending editorial approval.
-
-Validation state supplied by the owner:
-
-- Excel 2021 ActiveX detection: verified;
-- blocked ActiveX detection: verified;
-- opening Trust Center from VBA: verified;
-- required ActiveX configuration: verified;
-- continuing startup after fixing ActiveX: verified;
-- automatic `{UP}` navigation: not verified;
-- complete Microsoft 365 scenario: still requires confirmation unless newer repository evidence proves otherwise.
-
-Do not turn Excel 2021 evidence into an unsupported Microsoft 365 validation claim.
-
-Status:
-
-`Required pre-release requirement; customer-facing copy pending editorial approval and any remaining Microsoft 365 validation.`
+The owner verified Excel 2021 detection and blocked-state handling, opening
+Trust Center from VBA, the required setting, and startup after correction.
+Newer owner verification covered desktop Microsoft 365 for Windows in
+**Excel 2608, Click-to-Run, Current Channel**. Codex did not reproduce these
+external tests independently. The owner evidence does not establish separate
+practical validation of both Excel bitnesses. In particular, 32-bit Excel was
+not separately practically reproduced. The public support matrix covers 32-bit
+and 64-bit Excel for the current release. Keep the exact validation setup and
+its limitations internal. The matrix offers no guarantee for future Excel
+releases. See [Gate 1 evidence](release_readiness.md#gate-1--smartbudget-release-candidate-and-customer-materials).
 
 ## R48 — Updated RC / Walkthrough artifacts require review-release replacement
 
@@ -2513,7 +2490,7 @@ request visibility under the [R53 architecture](architecture/commerce_and_delive
 
 Status:
 
-`High; R53-1/2/3 locally implemented. Deployment validation, operator reminders and operational follow-up remain pending.`
+`High; R53-1 through R53-4B implemented locally, including weekday reminders. Deployment, live delivery and operational follow-up validation remain open.`
 
 ## R54 — Full-refund consequences for digital-product use
 
@@ -2783,7 +2760,7 @@ SmartBudget предоставляет платные индивидуальны
 
 #### 4. Порядок обращения
 
-Для запроса отмены покупки или возврата денежных средств воспользуйтесь специальной [формой возврата на сайте SmartBudget](/refund-request).
+Для запроса отмены покупки или возврата денежных средств воспользуйтесь специальной формой возврата на сайте SmartBudget (`/refund-request`).
 
 Укажите адрес электронной почты, использованный при покупке, и сведения, позволяющие определить заказ.
 
@@ -2869,13 +2846,13 @@ SmartBudget предоставляет платные индивидуальны
 
 Продавцом цифровых продуктов SmartBudget и исполнителем консультационных услуг является Хохлов Андрей Александрович — физическое лицо, применяющее специальный налоговый режим «Налог на профессиональный доход» (самозанятый).
 
-Полные сведения о продавце, включая адрес и контактный телефон, представлены на странице [«Юридическая информация»](/legal/seller-information).
+Полные сведения о продавце, включая адрес и контактный телефон, представлены на странице «Юридическая информация» (`/legal/seller-information`).
 
 **Электронная почта:** support@neocitrix.com.
 
-**Общие вопросы:** [Форма обратной связи](/feedback).
+**Общие вопросы:** Форма обратной связи (`/feedback`).
 
-**Отмена покупки и возврат денежных средств:** [Форма возврата](/refund-request).
+**Отмена покупки и возврат денежных средств:** Форма возврата (`/refund-request`).
 
 ### SmartBudget — Cancellation and Refund Policy
 
@@ -3005,7 +2982,7 @@ Technical difficulties do not limit mandatory consumer rights.
 
 #### 4. How to Request a Cancellation or Refund
 
-To request a purchase cancellation or refund, use the dedicated [refund request form on the SmartBudget website](/refund-request).
+To request a purchase cancellation or refund, use the dedicated refund request form on the SmartBudget website (`/refund-request`).
 
 Provide the email address used for the purchase and information sufficient to identify your order.
 
@@ -3091,13 +3068,13 @@ All mandatory consumer rights under applicable law remain unaffected by changes 
 
 SmartBudget digital products and consultation services are provided by Andrey Alexandrovich Khokhlov, an individual registered under the Russian professional income tax regime (self-employed).
 
-Full seller details, including the geographical address and contact telephone number, are available on the [Legal Information](/legal/seller-information) page.
+Full seller details, including the geographical address and contact telephone number, are available on the Legal Information (`/legal/seller-information`) page.
 
 **Email:** support@neocitrix.com.
 
-**General inquiries:** [Contact form](/feedback).
+**General inquiries:** Contact form (`/feedback`).
 
-**Purchase cancellations and refunds:** [Refund request form](/refund-request).
+**Purchase cancellations and refunds:** Refund request form (`/refund-request`).
 
 
 ## Приложение А. Полный сохранённый текст политики отмены и возвратов

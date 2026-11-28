@@ -92,8 +92,8 @@ Before executing a monetary refund, check the consultation and booking
 disposition. Keep outage exceptions visible with required follow-up so that
 provider outages do not delay mandatory refunds beyond applicable deadlines.
 Preserve booked-entitlement history and existing transaction and entitlement
-ownership. Initial booking-to-entitlement matching remains unvalidated under
-R39. Webhook receipt alone cannot verify cancellation of the correct meeting.
+ownership. Live initial booking-to-entitlement matching remains open under
+R39. Verify the exact meeting and invitee before accepting cancellation evidence.
 R39-C makes unused Shares eligible for the existing R39-B revocation pass
 immediately after access closes. Verified delayed bookings and reschedules
 update disposition evidence without restoring access. The founder verifies
@@ -404,12 +404,12 @@ consultation-specific outbox. See [operation and validation](../operations.md#co
 
 ### Consultation cancellation and refund requests (D4)
 
-A consultation that has not started may be cancelled for a full refund of its
-price. The dedicated customer request identifies the purchased service item
-and follows the [approved commerce refund rules](commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
-An add-on-only cancellation preserves SmartBudget, while a SmartBudget refund
-covers the entire bundle even after consultation delivery. A later consultation
-requires a new standalone purchase at its current price. Preserve booking and
-delivery history. Consultation early-start consent, where applicable, is
-separate from immediate digital delivery consent. Request intake, item-level
-refund operations, and publication remain pending.
+The implemented R53 request intake coordinates standalone consultation refunds
+with the booking-access closure described above. The same R39-C disposition
+checks apply when the operator starts a full-Sale refund that includes a
+historical bundle. Preserve booking and delivery history. Consultation
+early-start consent, where applicable, is separate from immediate digital
+delivery consent. Commerce Architecture owns the
+[refund rules and deferred bundle item accounting](commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4).
+The [pre-sale gate](../release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate)
+owns deployment, live verification, policy publication, and legal validation.

@@ -1026,8 +1026,10 @@ separate customer request submission from operator-controlled money movement.
 
 - Only an administrator may start or confirm a refund.
 - Only a `Sale` whose payment status is `paid` is eligible for refund.
-- The implemented workflow supports full-Sale refunds only. The approved
-  consultation-only partial refund for a bundle requires separate implementation.
+- The implemented workflow supports full-Sale refunds, including historical
+  bundles. Item-level accounting for an add-on-only refund remains deferred.
+  Refer historical item-only requests to the documented operator procedure
+  while preserving applicable rights and deadlines.
 - SmartBudgetSite must preserve the originating payment provider and provider
   payment identity for every historical Sale. The normal path uses that
   provider, including for historical Lava.top Sales after a future provider
@@ -1275,12 +1277,12 @@ review the case through the operator reconciliation procedure. Preserve
 original purchase, payment and entitlement history, including evidence of
 any consultation already delivered.
 
-R53 requires a bilingual `/refund-request` form for SmartBudget and standalone
-consultation purchases. Identify the purchase, persist the explicit request
-and evidence, and send receipt confirmation. Keep the form accessible for
-requests after the voluntary deadline. A voluntary SmartBudget request within
-the window requires no reason. Feedback and support email remain available
-for support and fallback. Money movement stays operator-controlled.
+R53 implements bilingual `/refund-request` intake for SmartBudget and standalone
+consultation purchases. It verifies purchase identity, persists the request
+and evidence, and initiates receipt confirmation. The form accepts requests
+after the voluntary deadline. A voluntary SmartBudget request within the window
+requires no reason. Feedback and support email remain available for fallback.
+The separate full-Sale workflow owns operator-controlled money movement.
 
 R53-2 creates separate Telegram and administrative SMTP outbox rows in the
 same transaction as each new request. Each request has at most one row per
@@ -1356,6 +1358,12 @@ acceptance and retry state are separate from initial notifications and receipts.
 Definitive rejections allow retries or SMTP fallback. An unknown provider
 outcome or expired send lease is terminal for that cycle because it may have
 been accepted. The next eligible business-day cycle can still send.
+
+R53 intake, receipt retry, notifications, lifecycle actions, and reminders
+have local validation evidence. Deployment and live delivery and scheduling
+checks, synchronized policy publication, and independent legal validation
+remain tracked in the
+[pre-sale gate](../release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate).
 
 The first-release amendment defers bundle item-accounting implementation and
 keeps exceptional or historical cases under the operator procedure. Preserve the current

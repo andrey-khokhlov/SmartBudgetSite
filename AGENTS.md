@@ -8,24 +8,32 @@ SmartBudgetSite is the FastAPI backend and website for SmartBudget. SmartBudget 
 
 ## Source-of-truth documents
 
-Before starting non-trivial work, review:
+Always follow `AGENTS.md`. For non-trivial work, read `docs/README.md` for
+documentation ownership and check the current implementation status and relevant
+sections of `docs/current_state.md`. Load additional context according to scope:
 
-- `docs/product_positioning.md` — product vision, positioning, product philosophy, and strategic feature fit.
-- `docs/README.md` — documentation map and source-of-truth boundaries.
-- `docs/current_state.md` — current implementation state, constraints, and priorities.
-- `docs/architecture/backend.md` — backend layers, responsibility boundaries, and implementation patterns.
-- `docs/architecture/commerce_and_delivery.md` — commerce, payment, release, entitlement, and delivery rules when working in those domains.
-- `docs/architecture/consultations.md` — consultation purchase, entitlement, booking, and webhook rules when working on consultation features.
-- `docs/architecture/feedback.md` — feedback, reviews, Q&A, publication, and operational workflow rules when working on feedback features.
-- `docs/operations.md` — development, configuration, deployment, and validation procedures.
+- Release priorities, gates, validation, or obligations — `docs/release_readiness.md`.
+- Backend implementation — `docs/architecture/backend.md`.
+- Affected domains — the relevant architecture for each domain, including
+  `docs/architecture/commerce_and_delivery.md`,
+  `docs/architecture/consultations.md`, and `docs/architecture/feedback.md`.
+- Configuration, deployment, validation, or operational behavior — the
+  applicable procedures in `docs/operations.md`.
+- Product direction or strategic feature fit — `docs/product_positioning.md`.
+- UI/UX or customer-facing work — the applicable R01–R55 requirements in
+  `docs/release_uiux_requirements.md`.
 
-`docs/history/sprint_checkpoints.md` is a historical record only. It preserves
-implementation continuity and rationale but is not an active source of truth.
+Broaden context when dependencies, cross-domain risks, or contradictions justify
+it. Retain all applicable architectural, security, persistence, and operational
+constraints. Use `docs/history/sprint_checkpoints.md` only to recover rationale
+or evidence. Active documentation owns current rules and state.
 
 If these documents conflict with the requested implementation, stop and report the conflict before making changes.
 
 ## Efficient Codex workflow
 
+- Treat Codex usage as a limited engineering resource. Read the smallest set
+  of sources that reliably establishes the task's context and constraints.
 - Resolve architectural questions and solution design in ChatGPT before starting repository work.
 - Use Codex primarily for bounded implementation tasks with an explicit scope, accepted end state, and verification commands.
 - Avoid repeating repository-wide analysis unless new information invalidates the existing analysis.

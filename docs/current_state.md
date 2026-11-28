@@ -347,7 +347,7 @@ Infrastructure and quality:
   applies a shared 3,000-per-60-second cap and nine independent per-IP token
   buckets with bounded state separate from application quotas. Generic Admin
   covers the protected feedback API and release routes outside `/admin`.
-  Production deployment and validation remain open.
+  The latest SEC-012 revision awaits production deployment and validation.
 - `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
   The port contract now distinguishes fallback, local, production-internal,
   Docker host/container, frontend-origin, and external-provider ports while
@@ -367,20 +367,13 @@ Infrastructure and quality:
   no proxy technology or deployment configuration was introduced by `SEC-009`.
 - The existing Vultr VPS in Amsterdam remains dedicated to VPN
   connectivity and is separate from the SmartBudgetSite production host.
-- On 2026-11-12, a dedicated SmartBudgetSite production VPS was
-  provisioned on Vultr in Amsterdam (Ubuntu 24.04 LTS, 2 vCPU,
-  4 GB RAM, 80 GB SSD). Initial cloud-init checks, SSH key
-  authentication, administrative sudo access, SSH hardening, and
-  restricted Vultr Firewall access were verified. Automatic instance
-  backups are enabled, but recovery has not been tested.
-  Ubuntu security and system updates were installed on 2026-11-12.
-  Kernel 6.8.0-149-generic is running after a verified reboot.
-  SSH access and package dependency checks succeeded.
-  Three Ubuntu phased updates remain deferred.
-  The owner subsequently verified the private PostgreSQL 16 deployment.
-  The public perimeter remains closed. REL-002 and G13D-3 remain open for
-  the remaining deployment checks, operational jobs, public availability
-  monitoring and live integration validation.
+- The production VPS was provisioned on 2026-11-12. The owner subsequently
+  verified private FastAPI and PostgreSQL 16 deployment, migrations, and
+  internal health. The
+  [VPS runbook](operations.md#production-vps-provisioning-2026-11-12) records
+  provisioning evidence. The
+  [current deployment stage](#3-production-deployment-and-live-validation)
+  records the latest deployment status and remaining verification.
 - The production PostgreSQL backup service and persistent 03:00 UTC timer
   were installed and validated. The manual systemd run on 2026-11-24 and
   scheduled runs on 2026-11-25 and 2026-11-26 succeeded. The owner independently
@@ -472,8 +465,8 @@ approves separate SmartBudget and standalone consultation purchases. The
 default-off `BUNDLE_CHECKOUT_ENABLED` flag suppresses public RU/EN bundle
 offers and rejects direct bundle initiation. Existing bundle transactions
 continue through their original processing. Product Refund Rate is pending.
-Production will start with a fresh database without importing development or
-review Sales.
+The production database is separate. Development and review Sales remain in
+their original environments.
 
 Live validation of product-only and standalone purchases remains open.
 Standalone capacity safeguards are implemented locally and require deployed
@@ -481,12 +474,9 @@ validation. Document the commercial launch cutoff in UTC for Product Refund
 Rate so pre-release production test payments and their refunds are excluded.
 R42, R53, and the relevant release gates stay open.
 
-The remaining live validation of the approved Lava.top integration and customer
-delivery requires the real deployed HTTPS environment. Production deployment
-and that validation are intentionally deferred until the approved
-pre-deployment release gates below are complete. The implemented Lava.top
-browser return still needs live provider and production customer-journey
-validation under REL-001.
+The implemented Lava.top browser return and customer-delivery journeys still
+need live provider and end-to-end validation under REL-001 during controlled
+production HTTPS access.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.
@@ -539,9 +529,8 @@ Dashboard without using `--delete-orphans`.
 See [Gate 2 closeout](release_readiness.md#gate-2--review-productrelease-artifact-replacement)
 for the reset and publication evidence.
 
-A separate Product Description remains intentionally excluded: the bilingual
-Walkthrough is the accepted detailed customer guide. Gate 3 remains open for
-UI/UX implementation and repeat review.
+The bilingual Walkthrough is the accepted detailed customer guide. A separate
+Product Description remains excluded.
 
 ### 2. G1, G2A, G5 presentation and scoped Landing G7/G8 implemented
 
@@ -560,8 +549,9 @@ language does not navigate or clear typed input. No R04+ functionality was added
 
 **G2A and the accepted G7/G8 Landing scope are implemented** against `7034dcb`:
 Hero, resilience levels, future expense, PLAN/ACTUAL and reconciliation use the
-approved RU/EN copy and supplied final assets. The obsolete Telegram block is
-removed. **G9 is implemented and locally validated** under approved D1. The
+approved RU/EN copy and supplied final assets. R05 removed the obsolete Landing
+consultation block and Telegram CTA without replacement. **G9 is implemented
+and locally validated** under approved D1. The
 practical conditions and compatibility disclosure precede the concluding offer,
 which links to Buy and contains the short optional consultation add-on note.
 The Hero remains price-free. Landing reads the active catalog price and currency
@@ -585,12 +575,13 @@ Windows conditions line. G6 now completes R18 with a localized link to the actua
 FAQ compatibility section; G5 About/Products presentation is preserved.
 
 `release_uiux_requirements.md` remains the durable source of what is required.
-The public UI/UX implementation/review gate remains open; repeat desktop/mobile/
-accessibility review must assess the actually updated interface.
+The owner completed [Gate 3 / R45 pre-deployment acceptance](release_readiness.md#gate-3--smartbudgetsite-uiux-implementation-and-repeat-review)
+on 2026-11-23.
 
 D4 and the November 14 decisions define the target refund, consent, request
 and seller-information model. The [approved publication candidate](release_uiux_requirements.md#appendix-b--approved-refund-policy-publication-candidate)
-awaits implementation alignment, publication and independent legal validation.
+still requires synchronized publication and independent legal validation in the
+release environment.
 The owner confirms all transactions to date are tests, with no commercial sales.
 The first-release amendment defers bundle item accounting and preserves the
 commercial launch cutoff for Product Refund Rate. R42 operations, R53 operational
@@ -613,23 +604,27 @@ regression coverage: default reviews navigation selects the resolved UI
 language's exact SKU and uses a valid family back link; buy-page language
 persists into checkout through the shared rendering contract; checkout reserves
 strong emphasis for Total; and Product Releases Admin displays Moscow-local
-release timestamps without changing stored UTC values. These corrections do
-not close the overall UI/UX gate or establish production validation.
+release timestamps without changing stored UTC values.
 
-The temporary HTTPS endpoint `https://smartbudget-review.neocitrix.com` is now
-externally reachable and perimeter-validated: approved public GET review routes
-work, while privileged, API, capability, and POST surfaces are blocked at the
-Cloudflare edge. Operational details and validation evidence are in the
-temporary review environment section of `operations.md`. The overall public
-UI/UX review gate remains open; this is neither production deployment nor
-production security validation.
+The temporary review HTTPS check confirmed approved public GET routes and
+Cloudflare denial of privileged, API, capability, and POST surfaces. The
+[review runbook](operations.md#temporary-visual-only-uiux-review-environment)
+owns that evidence, which applies to the temporary review environment.
 
-### 3. Production deployment and live validation after prior gates
+### 3. Production deployment and live validation
 
-Only after those gates should SmartBudgetSite proceed to production deployment,
-public DNS and HTTPS, then resume the still-open Expected Release Gaps and live
-validation in `release_readiness.md`. This sequencing defers those obligations;
-it does not close or abandon them.
+**Stage reached — Stage 1, Private Deployment.** The owner confirmed that the
+private app and PostgreSQL 16 started, migrations were verified, and internal
+health checks passed. Existing backup and restore evidence is in
+[OPS-001](operations.md#automated-postgresql-backup-and-retention-ops-001).
+The owner reports that the latest SEC-012 and Lava.top Checkout Return Flow
+changes await production deployment. General external access and commercial
+sales remain closed.
+
+The next priority is to deploy and verify the intended revision privately,
+then prepare the approved controlled Caddy access rules for Stage 2.
+Controlled HTTPS, live integration validation, and public commercial release
+remain ahead under the [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
 ### Pre-release operational readiness
 
@@ -640,15 +635,12 @@ R53-3 — Customer Receipt Retry is implemented locally.
 
 #### Owner-approved remaining pre-release sequence
 
-1. R53-3 — Customer Receipt Retry (implemented locally).
-2. R39/R42 — Refund and cancellation workflow (implemented locally; release-environment validation open).
-3. Consultation Capacity Management (implemented locally).
-4. G13B/G13C — Administrative recovery (implemented locally for product-only Sales).
-5. G15 — Refund policy, seller disclosure and pre-sale legal validation.
-6. Functional Freeze.
-7. UI/UX Polish.
-8. Production Deployment.
-9. Live Validation.
+Receipt retry, refund and cancellation workflows, consultation capacity, and
+product-only administrative recovery are implemented locally. G15 policy and
+seller publication, pre-sale legal validation, and release-environment checks
+remain open. UI/UX acceptance is complete. Follow the
+[four-stage rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation)
+for the remaining production work.
 
 **Functional Freeze — owner-approved on 2026-11-20.**
 
@@ -658,10 +650,10 @@ The approved baseline is commit `35b0176`
 The first-release feature scope, approved business behavior, and architecture
 are frozen. No additional features or speculative enhancements are authorized.
 
-Permitted follow-up work includes UI/UX Polish, R30 Consultations FAQ
-completion, regression fixes, release-blocking security or correctness fixes,
-required legal compliance changes, deployment preparation, and operational
-validation. Material scope or architecture changes require explicit owner approval.
+Permitted follow-up work includes regression fixes, release-blocking security
+or correctness fixes, required legal compliance changes, deployment, and
+operational validation. Material scope or architecture changes require explicit
+owner approval.
 
 Functional Freeze does not close the outstanding pre-sale legal, operational,
 production deployment, or live-validation gates.
@@ -757,7 +749,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | --- | --- | --- | --- |
 | R01 | Implemented | Shared RU/EN segments expose the active language as a non-link current state; inactive link supports keyboard/focus. | G1 focused/browser validation complete |
 | R02 | Implemented | Shared query-relative switch replaces only lang and retains path, exact product/currency and add-on state. Unsent email is intentionally not persisted. | Both directions, editions/currencies and absent/off/on add-on tested |
-| R03 | Implemented | About, Products and Consultations use the shared active-state navigation. Locale continuity and the segmented switch are locally validated. | Final R45 review remains open |
+| R03 | Validated | About, Products and Consultations use shared active-state navigation with locale continuity and the segmented switch. | Pre-deployment acceptance complete under R45 |
 | R04 | Implemented | The shared RU/EN public footer has FAQ, Feedback, Leave a review and the official support email. Personal contact links are removed. | G2B and UX-REVIEW-01 locally validated. UX-001 release-environment validation remains open |
 | R05 | Implemented | Obsolete Landing consultation heading, text and Telegram CTA are completely removed in RU/EN; no replacement consultation block. | G2A complete |
 | R06 | Implemented | G12 adds public Consultations navigation, catalog and standalone Checkout on the G11 payment boundary. | Real payment and booking validation remain open |
@@ -765,15 +757,15 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R08 | Implemented | Hero is price-free. The concluding offer displays the exact locale SKU's usable active catalog price and currency and links to Buy. | G9 locally validated with isolated catalog data |
 | R09 | Implemented | Landing uses a shared screenshot macro, consistent semantic sections, localized copy keys and locale-specific asset paths; maintenance convention recorded below. | G7 foundation complete |
 | R10 | Implemented | The obsolete consultation block is gone. The concluding offer contains only the approved optional add-on note. | G9 locally validated |
-| R11 | Implemented | All ten owner-supplied final assets are used by locale without byte changes; linked originals, meaningful localized alt text and keyboard-pannable viewports are implemented. | Scoped G7/G8 browser checks complete; independent release/workbook validation and R45 remain open |
-| R12 | Implemented | First five Landing sections use text-led hierarchy, wide readable demonstrations and a responsive reconciliation pair instead of uniform feature cards. | Scoped G7/G8 desktop/mobile checks complete; repeat R45 review remains open |
+| R11 | Implemented | All ten owner-supplied final assets are used by locale without byte changes; linked originals, meaningful localized alt text and keyboard-pannable viewports are implemented. | Scoped G7/G8 browser checks complete; separate release/workbook validation remains open |
+| R12 | Implemented | First five Landing sections use text-led hierarchy, wide readable demonstrations and a responsive reconciliation pair instead of uniform feature cards. | Scoped G7/G8 desktop/mobile checks and pre-deployment R45 acceptance complete |
 | R13 | Implemented | Approved future-expense copy/caption and exact supplied warning screenshot render in RU/EN. | Supplied numerical data unchanged; G8 browser checks complete |
 | R14 | Implemented | Approved preserved-PLAN/updated-ACTUAL explanation and exact supplied transition image render in RU/EN. | Supplied example unchanged; G8 browser checks complete |
 | R15 | Implemented | Approved reconciliation explanation/caption and labelled before/after supplied screenshots render as a responsive pair. | Supplied example unchanged; G8 browser checks complete |
 | R16 | Implemented | Landing renders the four approved practical benefits and the visible compatibility disclosure. | G9 locally validated |
-| R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. The existing portrait renders at 350 px on desktop and up to 320 px on mobile. The narrative is left-aligned. | G5 focused web/browser and render checks complete; final R45 review remains open |
+| R17 | Implemented | Complete approved 5.2 RU/EN intro, SmartBudget origin, three activity areas and approach; exact ACCA/FCCA and two-year GeekBrains wording. The existing portrait renders at 350 px on desktop and up to 320 px on mobile. The narrative is left-aligned. | G5 web/browser checks and pre-deployment R45 acceptance complete |
 | R18 | Implemented | The price-free SmartBudget card has a primary Buy link to `/products/smartbudget/buy`, a secondary product-details link and a localized system requirements link that opens the relevant FAQ question. | See [UX-PROD-01](#ux-prod-01-products-purchase-cta) for amendment and verification |
-| R19 | Implemented | Products uses one restrained bordered card with a blue primary Buy link and an underlined secondary details link. | G5 and UX-PROD-01 RU/EN desktop/mobile checks complete; final R45 review remains open |
+| R19 | Implemented | Products uses one restrained bordered card with a blue primary Buy link and an underlined secondary details link. | G5 and UX-PROD-01 RU/EN checks and pre-deployment R45 acceptance complete |
 | R20 | Implemented | Buy uses equal cards with localized product-language labels, the same-features explanation and catalog-owned prices. | G10 locally validated |
 | R21 | Implemented | Buy describes the optional 60-minute online setup session and booking instructions after payment. The add-on price and availability come from the catalog. | G10 locally validated. Booking platform validation remains separate |
 | R22 | Implemented | Checkout shows the selected product, language and item prices under Your order, emphasizes Total, and preserves email and hosted payment initiation. | G10 locally validated |
@@ -784,7 +776,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R27 | Implemented | General Feedback and successful reset select the required empty topic. The direct public review link preselects the buyer-only review topic. | Download-support preselection and prefill retained |
 | R28 | Implemented | Landing shows Reviews when the exact public-language SKU has published product feedback. | Shares SKU routing with /reviews and publication filters with the public list |
 | R29 | Implemented | Direct Reviews pages for existing products show one approved RU/EN empty message and a link back to SmartBudget. | Unknown product slugs return 404 |
-| R30 | Implemented | Localized native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), Consultations (8), and Support and Refunds (5). | See [R30 local verification](#r30-consultations-faq). Gate 3, R39 and R45 remain open. |
+| R30 | Validated | Localized native accordions render About SmartBudget (4), Before You Buy (7), Purchase and Delivery (7), Consultations (8), and Support and Refunds (5). | [Local coverage](#r30-consultations-faq) and pre-deployment R45 acceptance complete. R39 live validation remains open. |
 | R31 | Implemented | Exact approved 5.6.1 RU/EN four-question overview, including final expanded audience answer, replaces legacy FAQ. | G6 focused web/browser validation complete |
 | R32 | Implemented | Landing, Buy and Checkout display the compatibility disclosure. Buy and Checkout use four paragraphs with emphasis on unsupported platforms. Products links to the FAQ requirements, which include Microsoft links and manual/restart guidance. | Pre-purchase presentation locally validated. See [UX-CHECK-01](#ux-check-01-checkout-compatibility-link-removal). |
 | R33 | Implemented | G14 publishes all seven approved Purchase and Delivery questions in RU/EN, with Feedback and support email links. | Repeat review in the release environment |
@@ -799,7 +791,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R42 | Partial | Founder full-Sale refund confirmation supports Lava.top and verified alternative transfers locally. Both paths use Sale-bound CSRF and preserve the same Sale and entitlement reconciliation. R42a–c implement authoritative `Sale.paid_at` and the [voluntary refund window assessment](architecture/commerce_and_delivery.md#voluntary-smartbudget-refund-eligibility-clock) on Admin Sale Detail. | Validate separate-purchase refunds and the alternative procedure in the release environment. Bundle item accounting is deferred under the first-release amendment |
 | R43 | Partial | G15-A implements the bilingual Seller Information page and neutral footer link. G15-B links to the seller page from policy §9. G15-C1 links to it from both Checkout flows when the seller details are complete. | Securely configure and verify the owner-supplied details and pre-payment access in the release environment |
 | R44 | Partial | Support and founder refund operations exist. G15-C4 synchronizes the policy and FAQ with the owner-approved 3/5/10-business-day response, review and bank-settlement distinctions. | G15 synchronized publication and separate support-capacity validation |
-| R45 | Validated | Final pre-deployment UI/UX review completed on 2026-11-23. Public pages and Admin passed owner visual review; RU/EN desktop/mobile and Feedback keyboard navigation were verified. Full Chromium regression: 73 passed. Full backend regression: 1241 passed, 14 PostgreSQL tests intentionally skipped. | Gate 3 UI/UX acceptance complete. Production integration and end-to-end validation remain separate release requirements. |
+| R45 | Validated | The owner completed [Gate 3 pre-deployment acceptance](release_readiness.md#gate-3--smartbudgetsite-uiux-implementation-and-repeat-review) on 2026-11-23. | Production integration and end-to-end validation remain separate release requirements. |
 | R46 | Implemented | Active R01–R55 source, documentation map and versioned supporting advisory are preserved by the documentation freeze. | None |
 | R47 | Implemented | Owner confirms desktop Microsoft 365 Excel 2608 Click-to-Run Current Channel on Windows; final manual ActiveX setting/restart/recheck flow and corporate-policy boundary are reflected in RU/EN FAQ. | External product evidence is owner-verified, not independently reproduced by Codex; both bitnesses not claimed validated |
 | R48 | Validated | Rebuilt RU/EN review releases 3 and 4 are active at version 1.0. Local ZIP, DB, R2 HEAD and downloaded-byte size/SHA-256 checks passed. | Gate 2 complete in review. The owner confirmed targeted cleanup of both old objects |
@@ -807,7 +799,7 @@ The owner-approved D1–D6 outcomes below guide the remaining work.
 | R50 | Deferred until a concrete legal requirement is established | On 2026-11-20 the owner deferred the R50 Checkout checkbox, server-side validation, new Sale fields, migrations and purchase-email changes. | [Market-specific pre-sale legal validation](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) remains mandatory and open. If R50 is required for an intended market, reconsider implementation before enabling applicable paid sales |
 | R51 | Partial | The first public release offers separate SmartBudget product and standalone consultation purchases. New public bundle checkout is disabled. Existing bundle implementation and historical test data are retained for compatibility. Current refunds remain full-Sale. | R42 release-environment validation, applicable early-start consent and G15 composition-specific wording |
 | R52 | Partial | G15-B renders the approved RU/EN Appendix B candidate with the Section 7 amendment. | G15 publication and market-specific legal validation before applicable paid sales |
-| R53 | Partial | R53-1 provides protected, idempotent bilingual intake. The owner verified its migration in local development and review databases. R53-2 is locally implemented and independently validated. R53-3 adds durable customer receipts and bounded SMTP recovery. R53-4A adds protected Admin response and closure attestations with write-once UTC timestamps. R53-4B implements UTC weekday service targets and a separate durable reminder outbox with a one-pass dispatcher. The owner verified the R53-4A and R53-4B migrations through `9f3b1a7c2d84` and schema checks in development and review on 2026-11-20. The isolated production archive restore confirmed revision `9f3b1a7c2d84` in the archived database. | Confirm the target production revision before enabling the jobs. Validate the lifecycle, notifications, receipt recovery, reminder timer, provider outcomes and external heartbeat. Refund execution remains operator-controlled |
+| R53 | Implemented | R53-1 through R53-4B cover bilingual intake, durable notifications and receipt retry, protected Admin response and closure, and UTC weekday reminders. The [pre-sale gate](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) records development/review migration evidence and the isolated production archive restore. | Confirm the target revision before enabling the jobs. Validate deployed lifecycle, notifications, receipt recovery, reminders, provider outcomes, and heartbeat. Refund execution remains operator-controlled. |
 | R54 | Partial | Full refunds revoke future protected access. Downloaded local copies remain under customer control. G15-B renders the approved stop-use/delete wording, subject to law and licence. | G15 synchronized publication. R55 excludes DRM |
 | R55 | Deferred | Preventive activation/DRM/server-contact controls are explicitly outside first release; no corresponding site mechanism was found. | No first-release group or technical-debt obligation |
 
@@ -837,7 +829,7 @@ and shared download styles remain as before.
   `ux-refund-01-before`. The after run captured the initial, error and success
   states.
 
-R53 stays Partial. Gate 3, R45, deployment and live operational validation
+R45 acceptance is complete. R53 deployment and live operational validation
 remain open.
 
 ### Admin Review and public review entry
@@ -869,12 +861,9 @@ purchase/download topic.
 Follow-up Gate 3 / R45 regression (2026-11-23): the complete Chromium
 browser suite passed all 73 cases after correcting outdated test
 expectations for the approved About portrait dimensions and the
-mobile Reviews return-link border. No application behavior or
-production CSS was changed. Gate 3 and R45 remain open pending
-final acceptance.
-
-Gate 3 and R45 remain open. Production capacity, refund operations and other
-outstanding release-environment checks still require separate validation.
+mobile Reviews return-link border. That follow-up adjusted test expectations.
+The owner completed Gate 3 and R45 acceptance on 2026-11-23. Production
+capacity, refund operations, and other release-environment checks remain open.
 
 ### G1 implementation and validation
 
@@ -956,9 +945,8 @@ pytest temp/cache paths:
   `i18n.py` whole-file Black baseline remains outside this bounded change.
 
 No full suite, live-provider/customer journey, screen-reader audit or independent
-verification of workbook financial calculations was performed. Assets were
-supplied as final by the owner, not regenerated. Final owner/editorial and repeat
-R45 UI/UX review remain open. G7/G8 completion is scoped to the first five blocks.
+verification of workbook financial calculations was performed. The owner
+supplied the final assets. G7/G8 validation is scoped to the first five blocks.
 
 ### UX-LAND-01 mobile Landing polish
 
@@ -977,8 +965,7 @@ vertical stack. The future-expense PLAN
 and PLAN/ACTUAL crops use 580 and 520 px preview widths on phones to show
 the first numeric column at 375 and 390 px. At 320 px, the wide crops still
 need local panning to reach the values. All five figures link to their
-original assets for fine labels and cell values. Functional Freeze remains
-in effect, with Gate 3 and R45 open.
+original assets for fine labels and cell values.
 
 Local validation on the `9394bfc` baseline passed 85 focused web tests and
 eight Chromium cases in RU/EN at 320, 375, 390 and 1280 px. The browser cases
@@ -1021,9 +1008,10 @@ Black checks (catalog/new tests) and `git diff --check` pass.
 R17/R19 are implemented. At the G5 baseline, R18 card/content was implemented
 while its final requirements link remained pending. G6 now completes that link
 to the actual compatibility section (see G6 below). G5 itself did not add FAQ,
-G3/G4, G9, checkout, consultation, footer/contact or backend behavior work. Full-suite,
-live-customer and screen-reader validation were not run; final R45 review remains
-open. Requirement definitions were not modified. No commit or push was made.
+G3/G4, G9, checkout, consultation, footer/contact or backend behavior work.
+The focused G5 run excluded the full suite, live-customer checks, and
+screen-reader validation. Requirement definitions were not modified. No commit
+or push was made in that slice.
 
 ### UX-PROD-01 Products purchase CTA
 
@@ -1032,7 +1020,7 @@ adds the localized primary Buy CTA as UI/UX Polish under Functional Freeze.
 The link uses the existing purchase-selection route and the Landing Buy copy.
 The card retains the approved content, secondary details link and system
 requirements link. Products stays price-free. The Buy page continues to resolve
-availability from the configured catalog. Gate 3 and R45 remain open.
+availability from the configured catalog.
 
 Local validation on the `3f4dea9` baseline passed 109 focused pytest cases
 covering Products, public navigation, document language, FAQ, Landing and
@@ -1109,7 +1097,7 @@ RU/EN at 1280 px and 375 px, with eight form and confirmation screenshots
 inspected. They exercised native keyboard and pointer file selection, purchase
 verification, support prefill and reset, and file retention on 429 and 500
 responses. Browser API responses were stubbed for those flows. The existing
-Reviews case in the browser module was deselected. Final R45 review remains open.
+Reviews case in the browser module was deselected.
 
 In a separate manual check after implementation, the owner submitted a real
 `general_question` with an empty email against local PostgreSQL. The response
@@ -1134,7 +1122,7 @@ navigation, and 1 repository test, plus 16 Chromium cases across Reviews,
 Landing, About/Products and checkout navigation. The four Reviews Chromium
 cases used isolated SQLite fixtures and covered RU/EN at 1280 px and 375 px.
 Empty and populated Reviews screenshots and representative empty Landing
-screenshots were inspected. Final R45 review remains open.
+screenshots were inspected.
 
 ### G10 Product Buy / Checkout implementation and validation
 
@@ -1155,8 +1143,7 @@ Real hosted payments, email delivery and booking remain release-validation work.
 
 The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-buy-compatibility-presentation-owner-amendment--2026-11-22)
 removed the final FAQ link from the Buy compatibility disclosure and kept both
-localized paragraphs. Checkout retained the link at this stage. Functional
-Freeze remained in effect, with Gate 3 and R45 open.
+localized paragraphs. Checkout retained the link at this stage.
 
 Local validation on the `66fa949` baseline passed 97 focused web pytest cases and
 six Chromium cases. The tests verified both localized disclosure paragraphs,
@@ -1172,8 +1159,7 @@ The [2026-11-22 R32 amendment](release_uiux_requirements.md#r32-compatibility-di
 splits the existing RU/EN Buy and Checkout copy into four paragraphs. The
 unsupported Mac and web platforms sentence uses `<strong>`. Buy adds paragraph
 spacing and a 1.65 line height. Checkout uses its existing paragraph styling.
-This change kept the UX-BUY-01 link behavior in effect at the time. Functional
-Freeze remained in effect, with Gate 3 and R45 open.
+This change kept the UX-BUY-01 link behavior in effect at the time.
 
 Local validation on the `7ac05d9` baseline passed 97 focused web tests and six
 Chromium cases. A direct comparison confirmed the four sentences match the
@@ -1190,7 +1176,7 @@ removes the compatibility FAQ link from Checkout and deletes the shared
 template's link toggle. Buy and product Checkout continue to display the four
 RU/EN paragraphs and the emphasized Mac and web restriction. Products retains
 its link to the standalone FAQ. Checkout retains the refund policy and seller
-information links. Functional Freeze remains in effect, with Gate 3 and R45 open.
+information links.
 
 Local validation on the `c6cf03c` baseline passed 102 focused web tests and 10
 Chromium cases. Buy and product Checkout showed all four paragraphs with
@@ -1239,8 +1225,7 @@ The [2026-11-22 amendment](release_uiux_requirements.md#consultations-booking-co
 updates the RU/EN booking paragraph to explain the email and secure link after
 payment confirmation. The standalone Checkout delivery hint uses the same
 translation. The existing unavailable message appears in a light-gray notice
-when the page withholds the purchase action. Functional Freeze remains in
-effect, with Gate 3, R39 and R45 open.
+when the page withholds the purchase action.
 
 Local validation on the `5648201` baseline passed 73 focused web tests and four
 Chromium cases. Tests verified exact RU/EN booking copy, standalone Checkout
@@ -1259,7 +1244,7 @@ uses the same left-aligned typography, width and spacing as the body
 paragraphs. The page uses smaller mobile side insets and tighter offer and
 booking headings. The UX-CONS-01 unavailable notice uses centered text on
 mobile, with the original background, border, padding and contrast.
-Functional Freeze remains in effect, with Gate 3, R39 and R45 open.
+R39 production validation remains open.
 
 Local validation on the `be61bdd` baseline passed 73 focused web tests and six
 Chromium cases. Browser checks covered shared introduction and body typography,
@@ -1283,8 +1268,8 @@ Internally, payment confirmation records `Sale.paid_at` and creates the
 consultation entitlement in the same reconciliation transaction. The booking
 deadline uses the entitlement creation time plus 14 days. The approved FAQ
 uses payment confirmation as the customer-facing reference and clarifies
-that the period applies to initial booking. Functional Freeze remains in
-effect, with Gate 3, R39 and R45 open.
+that the period applies to initial booking. R39 production booking validation
+remains open.
 
 Local validation on the `c0e2545` baseline passed 103 focused web and service
 tests and six Chromium cases. The tests verified all five groups in order,
@@ -1332,7 +1317,7 @@ surface-specific slices, not duplicate requirements.
 | G5 — About / Products | R17–R19 | **Implemented and validated**; R17/R19 presentation retained, R18 final compatibility link completed by G6. |
 | G6 — Compatibility / FAQ foundation | R30–R32, R47 | **Foundation implemented and validated**: grouped structure, R31, FAQ/Products R32 portion and R47. See [R30](#r30-consultations-faq) for completion of the FAQ groups. |
 | G7 — Landing foundation | R07, R09, R11–R12 | **Accepted first-five-block scope implemented and validated**; approved Hero/reserves, shared image macro and supplied assets; G9 separate. |
-| G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy; R45 review remains open. |
+| G8 — Landing demonstrations | R11, R13–R15 | **Implemented and validated** with exact supplied future-expense, PLAN/ACTUAL and reconciliation images/copy. |
 | G9 — Practical/commercial Landing | R07, R08, R10, R16, Landing portions of R32/R34 | **Implemented and locally validated**: approved practical conditions, visible compatibility disclosure, database-priced concluding offer, Buy CTA and optional add-on note. |
 | G10 — Product Buy / Checkout | R20–R23, applicable R32/R34/R49 | **Implemented and locally validated**: equal language cards, add-on terms, order summary, composition-sensitive delivery and compact compatibility disclosures. Policy publication remains with G15. |
 | G11 — Standalone payment boundary | R06, R38 | **Implemented and locally validated**: separate provider mapping, operator configuration, service-only initiation and existing paid reconciliation. |
@@ -1341,23 +1326,22 @@ surface-specific slices, not duplicate requirements.
 | G13B — Customer Email Correction | REL-001 | Implemented locally in Admin Sale Detail for paid product-only Sales after independent payment verification. Consultation-only and mixed Sales use manual support. [Production validation remains open](release_readiness.md#g13b--customer-email-correction). |
 | G13C — Reissue Download Access | REL-001 | Implemented locally. Recovery rotates the existing token for 24 hours, snapshots previous attempts and provides a separate operator-triggered Resend send. [Production validation remains open](release_readiness.md#g13c--reissue-download-access). |
 | G13D — Purchase Delivery Monitoring | REL-001 | G13D-1 local detection and PostgreSQL incident history are complete. G13D-2a [Lava.top recovery](operations.md#g13d-2a-lavatop-payment-recovery), G13D-2b [Resend webhook monitoring](architecture/commerce_and_delivery.md#g13d-2b-resend-webhook-delivery-monitoring), and G13D-2c [safe automatic purchase-email recovery](operations.md#g13d-2c-purchase-email-recovery) are implemented and locally validated. G13D-3a implements the PostgreSQL notification outbox and materializer. G13D-3b implements the [one-pass Alert Dispatcher](operations.md#g13d-3-operational-monitoring-target) with Telegram-first delivery and SMTP fallback. G13D-3c prepares [systemd unit templates](operations.md#g13d-3c-systemd-unit-templates). Deployment rendering, installation, and live validation remain open under the [release gate](release_readiness.md#g13d--purchase-delivery-monitoring). |
-| G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery, interrupted and repeat download, and Gate 3 repeat review remain open. |
+| G14 — Delivery presentation / FAQ | R33, R36–R37 | Implemented and locally validated with 55 focused pytest cases and 10 Chromium cases. Live delivery and interrupted and repeat download checks remain open. |
 | G15 — Policy publication | R41, R43–R44, R49, R51–R52, R54 | G15-A and G15-B implement the seller and policy pages and footer links. G15-C1 implements pre-payment disclosures in both Checkout flows. G15-C2 implements the bilingual Support and Refunds FAQ. G15-C3 implements the bilingual purchase-email summaries for the separate purchase paths. The [pre-sale gate](release_readiness.md#refund--cancellation-policy-and-consent--mandatory-pre-sale-gate) records the intended publication date and release validation. Refund-operations alignment and independent legal validation remain open. |
 
-R42 original-provider and alternative full-Sale confirmations are implemented
-locally. Release-environment validation remains open.
-The outstanding R53 operational requirements need a bounded scope. G15 owns
-synchronized publication. R39 and R45 remain validation work. R46 is complete,
-R48 is validated, and R55 remains deferred.
+R42 original-provider and alternative full-Sale confirmations and R53 intake
+through reminder dispatch are implemented locally. R39, R42 and R53 require
+release-environment validation. G15 owns synchronized publication. R45 and
+R46 are complete, R48 is validated in review, and R55 remains deferred.
 
 G1, G2A, G5 presentation/content and the accepted G7/G8 scope are implemented.
 G6 foundation and the R18 requirements link are also implemented. G10 completes
 R32, and R30 now includes all five FAQ groups. Further bounded tasks must
 be explicitly scoped from the accepted groups; independent work need not wait
 for unrelated decisions. G9 completes the seven-block Landing. G11 precedes
-G12. Gate 2 is complete. Follow the
-[owner-approved sequence](#owner-approved-remaining-pre-release-sequence),
-including Gate 3 repeat review before deployment and live validation.
+G12. Gate 2 is complete in review. Follow the
+[owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation)
+for remaining production work.
 
 ### Validation-only and operational dependencies
 
@@ -1376,27 +1360,20 @@ speculative code changes or provider operations:
 - Actual purchase-email receipt/content and capability-link validation after
   implementation, plus download expiry/interruption/repeat-download/support flow.
 - Later live payment/provider validation under the deployment gates.
-- Refund/provider/customer-communication validation after the approved D4
-  capabilities are implemented. Keep partial refunds outside the current
-  full-Sale workflow.
+- Validate the implemented D4 refund workflows, provider outcomes, and customer
+  communications in the release environment. Item-level refund accounting
+  remains deferred.
 - Owner confirmation of 3/5-business-day support readiness, distinct from the
   provider-reported bank settlement period.
-- Final repeat desktop/mobile/accessibility review of the updated real interface;
-  earlier screenshots or browser tests do not close R45.
 
 Concrete validation findings may justify later bounded implementation tasks.
-None of this validation or operational work was performed by the analysis or
-its documentation closeout. SmartBudgetSite is not declared release-ready.
+These are remaining release-environment checks. The current deployment stage
+is recorded [above](#3-production-deployment-and-live-validation).
 
 ## Intentionally deferred
 
 - strict one-time download completion and automatic completion detection
 - richer download-attempt audit data and backend file proxying
-- Landing consultation CTA refresh: replace the outdated direct Telegram contact
-  flow with the finalized consultation journey and rewrite the section headline,
-  supporting copy, CTA label, and destination to reflect the approved
-  Consultation → Checkout → Calendly flow; complete this during the final landing
-  page and release-polish pass
 - Public contact and social-link boundary: implementation under approved D2 is
   complete. Verify RU/EN destinations, ownership and configuration in the
   release environment under

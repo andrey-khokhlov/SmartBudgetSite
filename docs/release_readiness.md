@@ -654,10 +654,10 @@ defects.
 
 ### Pre-deployment release sequence
 
-Follow the [owner-approved remaining pre-release sequence](current_state.md#owner-approved-remaining-pre-release-sequence).
-The sequence places Functional Freeze and UI/UX Polish before Production
-Deployment, with Live Validation following deployment. Each release gate
-retains its criteria.
+Functional Freeze and the completed Gate 3 / R45 acceptance set the
+pre-deployment scope. Follow the [four-stage production rollout](#gate-4--production-deployment-and-live-integration-validation)
+and use [current state](current_state.md#3-production-deployment-and-live-validation)
+for the stage reached. Each release gate retains its criteria.
 
 The R01–R55 static repository mapping against `cd5190b` is complete and accepted.
 Its authoritative statuses, approved D1–D6 outcomes, implementation groups and separate
@@ -731,8 +731,7 @@ Production deployment and live integration validation remain open.
 G3 Feedback polish (R24–R27) is implemented and focused-validated. The
 [current-state evidence](current_state.md#g3-feedback-polish-and-validation)
 covers neutral topic/reset, review verification, native upload, and accessible
-submission status in RU/EN desktop and mobile checks. Final R45 review was completed on 2026-11-23 as part of Gate 3
-pre-deployment UI/UX acceptance.
+submission status in RU/EN desktop and mobile checks.
 
 G4 Reviews visibility (R28–R29) is implemented and focused-validated. The
 [current-state evidence](current_state.md#g4-reviews-visibility-and-validation)
@@ -741,7 +740,6 @@ covers exact-SKU Landing visibility and the single localized empty message.
 G14 publishes the approved RU/EN Purchase and Delivery FAQ, displays expiry
 in the browser timezone with a UTC fallback, and explains expired-link support
 while preserving Feedback prefill. Local pytest and Chromium checks passed.
-Gate 3 repeat UI/UX review was completed on 2026-11-23.
 Deployed delivery validation remains open, including real interrupted
 and repeat downloads.
 
@@ -789,7 +787,6 @@ Owner-verified Microsoft 365 validation is bounded to Excel 2608,
 Click-to-Run Current Channel on Windows; both Excel bitnesses are not
 claimed practically validated.
 
-The final R45 pre-deployment UI/UX review was completed on 2026-11-23.
 Respect conditional statuses and R55's first-release exclusion.
 Keep deployment, provider, legal and operational validation separate
 from the completed UI/UX acceptance. Concrete findings from those
@@ -802,12 +799,40 @@ actual release-environment behavior before public sales.
 
 #### Gate 4 — Production deployment and live integration validation
 
-Only after the applicable pre-deployment criteria are met, proceed with `REL-002`
-production deployment, public DNS, HTTPS, external integrations, real provider/
-payment validation, required end-to-end customer journeys and the final Release
-Readiness Review. Existing `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`,
-`UX-001` and other Expected Release Gaps retain their own completion criteria.
-Completed engineering remediation history is unchanged by these gates.
+The owner approved four stages. [Operations](operations.md#controlled-https-access-and-rollback)
+owns execution, access verification, and rollback. Container health, DNS
+resolution, and HTTPS availability are technical checks. Public visitor access
+and commercial sales require the Stage 4 authorization below.
+
+1. **Private Deployment.** Deploy FastAPI and PostgreSQL privately. Apply and
+   verify migrations, runtime configuration, persistence, backups, recovery
+   prerequisites, and internal health. Keep general external application
+   access closed. Verify the intended revision and private deployment evidence
+   before opening controlled HTTPS.
+2. **Controlled HTTPS Validation.** Activate Caddy, DNS, and HTTPS behind the
+   approved temporary Caddy IP allowlist. Allow the verified operator VPN egress
+   IP and only the external integration exceptions that are required. Validate
+   SEC-012 in the actual topology, including proxy trust, forwarding-header
+   sanitization, isolation, rate limits, HTTPS headers, capability protection,
+   and effective firewall and IPv4/IPv6 exposure. Confirm default-deny access
+   and provider purchase isolation before starting live validation. General
+   visitor access and public sales stay closed.
+3. **Live Integration Validation.** Retain controlled HTTPS access while
+   verifying Lava.top, Calendly, R2, Resend, required end-to-end journeys,
+   operational monitoring, recovery procedures, and applicable release gates.
+   Allow only explicitly authorized test transactions. Prevent ordinary
+   customer purchases through SmartBudgetSite and external purchase entry
+   points. Record pre-release production payments as tests.
+4. **Public Commercial Release.** Complete all applicable mandatory release
+   gates and the final [Release Readiness Review](operations.md#release-readiness-review).
+   Obtain explicit owner authorization. Remove temporary access restrictions
+   through a controlled, reversible rollout and verify the final public
+   configuration and security controls. Record the UTC commercial launch cutoff
+   for [Product Refund Rate](architecture/commerce_and_delivery.md#refund-scope-and-analytics).
+   Pre-release test payments and refunds remain excluded under those rules.
+
+`REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and the other
+Expected Release Gaps retain their own completion criteria.
 
 ### Operational readiness — mandatory pre-sale gate
 
@@ -849,8 +874,9 @@ launch, primary development returns to SmartBudget Excel.
 
 ### Refund / cancellation policy and consent — mandatory pre-sale gate
 
-**Open for implementation, publication and validation.** The owner approved D4
-at product and architecture level. Use the [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
+**Implemented workflows; production publication and validation open.** The
+owner approved D4 at product and architecture level. Use the
+[approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
 and [supply-consent and seller-information boundary](architecture/commerce_and_delivery.md#public-refund-policy-and-supply-consent-boundary).
 The November 14 publication candidate supersedes the recovered October 28
 policy, which remains in Appendix A. All completed payment activity to date
@@ -1144,17 +1170,14 @@ criteria are verified.
 
 ### Production deployment (`REL-002`)
 
-The private production PostgreSQL 16 deployment and backup service are
-verified. Better Stack has received a production backup heartbeat from a
-manual systemd run. The public perimeter remains closed. Remaining REL-002
-work includes:
-
-- production application and VPS deployment definition;
-- reverse proxy and process lifecycle;
-- public DNS and HTTPS;
-- production startup, migration, persistence, and health validation;
-- detailed G13D-3 infrastructure monitoring configuration and validation
-  for the other operational jobs and public availability.
+The owner verified the private FastAPI and PostgreSQL 16 deployment,
+migrations, and internal health. See the
+[private deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
+The latest SEC-012 and Lava.top checkout return revisions still need deployment
+and revision-specific verification. `REL-002` stays open for process lifecycle,
+target startup, migration, persistence, and health checks, controlled Caddy
+ingress, DNS and HTTPS, and G13D-3 monitoring of the remaining jobs and public
+availability. The public perimeter remains closed.
 
 ### Backup and recovery (`OPS-001`)
 
@@ -1249,10 +1272,12 @@ of the following are true:
 10. The [operational readiness gate](#operational-readiness--mandatory-pre-sale-gate)
     has been validated, including monitoring, refund operations, consultation
     capacity, and recovery procedures.
-
 Passing tests alone does not satisfy this definition. Release readiness requires
 the architectural, operational, provider, documentation, and end-to-end
 conditions to hold together in the intended public environment.
+After the final review, the owner authorizes commercial launch. Verify the
+access transition and record the UTC cutoff under the
+[four-stage rollout](#gate-4--production-deployment-and-live-integration-validation).
 
 ## 7. Maintenance Philosophy
 

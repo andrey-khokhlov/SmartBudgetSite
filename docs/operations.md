@@ -160,12 +160,12 @@ for the database and the official Caddy 2.11 image with
 from the repository root. Its project name is `smartbudget-production`.
 Development still uses `docker-compose.yml` and `python run.py`.
 
-The Caddy service belongs to the `public` Compose profile.
-A default Compose startup does not activate the public reverse proxy.
-Enable the `public` profile explicitly only after the required SEC-012
-perimeter controls, DNS/HTTPS configuration, and pre-exposure checks
-have been approved and validated. Do not treat a successful container
-startup as authorization to expose the application publicly.
+The Caddy service belongs to the `public` Compose profile. Leave the profile
+inactive during Stage 1. Before enabling it for Stage 2, prepare and validate
+the restrictive Caddy configuration described in
+[controlled HTTPS access](#controlled-https-access-and-rollback). General
+visitor access and paid public sales require
+[Stage 4 authorization](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
 ### Runtime and configuration contract
 
@@ -214,11 +214,12 @@ at the absolute app file. The Compose file supplies the database bootstrap
 values only to PostgreSQL and passes the bare `SMARTBUDGET_HOST` DNS hostname
 to Caddy and FastAPI. Production application startup requires a valid hostname.
 Use the corresponding `https://` origin as the app's `PUBLIC_BASE_URL`.
-Keep private settings outside Git and the image. Use the production examples
-as the starting point and consult `.env.example` for the existing optional
-provider settings. Keep delivery switches off until their prerequisites are
-verified. Use a dedicated shell with the intended environment and avoid
-printing a rendered Compose configuration containing real values.
+Keep private settings outside Git and the image. Limit file and parent directory
+access to the deployment owners and the processes that need it. Use the
+production examples as the starting point and consult `.env.example` for the
+existing optional provider settings. Keep delivery switches off until their
+prerequisites are verified. Use a dedicated shell with the intended environment
+and avoid printing a rendered Compose configuration containing real values.
 
 The database bootstrap login is separate from the app login. Provision or
 restore the `POSTGRES_DB` database with a dedicated non-superuser database
@@ -282,9 +283,12 @@ docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run -
 docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml run --rm --no-deps app python -m alembic current
 ```
 
-Confirm the expected revision before serving traffic. The private PostgreSQL
-deployment has been verified. Public exposure remains closed, and the
-following REL-002 and related release obligations remain open.
+For Stage 1, verify the intended revision, runtime configuration, private
+PostgreSQL access, persistent database and upload storage, backup and recovery
+prerequisites, and the app's loopback `/v1/health`. Check that Uvicorn and
+PostgreSQL are unpublished and the Caddy profile remains inactive. Review the
+[owner-confirmed evidence](#private-deployment-evidence-and-pending-work) before
+deploying newer revisions. The following release obligations remain open.
 
 - **OPS-001 backup and restore.** Continue production backup validation
   and the remaining recovery work in the [OPS-001 runbook](#automated-postgresql-backup-and-retention-ops-001).
@@ -292,7 +296,7 @@ following REL-002 and related release obligations remain open.
 - **SEC-012 perimeter.** Validate the configured trusted hosts, exact Caddy
   proxy trust, forwarding-header sanitization, application and perimeter
   quotas, HTTPS security headers, HSTS, and capability-safe logging in the
-  release environment before public exposure.
+  controlled HTTPS stage before permitting general visitor access.
 - **DNS and HTTPS.** Verify the public DNS A record, host reachability on
   TCP 80/443, certificate issuance and renewal, and HTTPS redirects.
 - **Live integrations.** Verify payment, storage, email and Calendly in the
@@ -301,6 +305,71 @@ following REL-002 and related release obligations remain open.
   scheduled jobs and their external heartbeats, plus host, database and
   public availability monitoring under G13D-3. Container health is only one
   input to that work.
+
+### Controlled HTTPS access and rollback
+
+The [four-stage rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation)
+uses an owner-approved temporary Caddy IP allowlist in Stages 2 and 3. The
+repository's Caddyfile contains the SEC-012 controls. The temporary allowlist
+still needs production configuration and validation. The `public` profile
+supplies ingress during these stages, with access limited by the temporary
+rules.
+
+1. Verify the operator's VPN egress IP from the actual connection. Restrict
+   ordinary application requests to that IP using the trusted connection peer
+   observed at Caddy. Disregard client-supplied forwarding headers for access
+   decisions. Deny other visitors by default. `robots.txt`, `noindex`, and
+   unpublished URLs are discoverability controls, so enforce denial at Caddy.
+2. Keep the traffic required by Caddy's configured ACME challenges reachable.
+   Verify DNS, issuance, renewal readiness, and redirects while keeping the
+   application restricted. Verify effective IPv4 and IPv6 exposure, including
+   A/AAAA records, Vultr and host firewall rules, and Docker-published ports.
+   The baseline deployment is direct IPv4 ingress. Any effective IPv6 exposure
+   also needs access and forwarding validation before the stage can advance.
+3. Add inbound exceptions only for integrations enabled for the validation.
+   Match the required method and exact path. The current application declares
+   these webhook entry points:
+
+   | Integration | Inbound request for controlled validation |
+   | --- | --- |
+   | Lava.top payment result | `POST /v1/webhooks/lava-top/payment-result` |
+   | Calendly | `POST /v1/webhooks/calendly` |
+   | Resend | `POST /v1/webhooks/resend` |
+
+   Check the deployed release and actual provider subscriptions before allowing
+   these routes. Keep webhook authentication, applicable perimeter quotas,
+   application rate limits, and existing protection for customer capabilities.
+   PostgreSQL and job heartbeats use outbound calls to Better Stack. For an
+   inbound availability probe, determine whether it is required and verify its
+   method, exact endpoint, and permitted source before making an exception.
+4. Validate the restricted Caddy configuration and prepare rollback before
+   enabling ingress. From the VPN, verify authorized operator access. From an
+   independent non-allowlisted network, verify denial for ordinary pages, APIs,
+   capability routes, and checkout starts. Check accepted webhook requests with
+   valid authentication at the appropriate stage, plus rejection of invalid
+   authentication, wrong methods, and adjacent paths. Verify the existing
+   SEC-012 controls, including spoofed forwarding-header rejection, origin
+   isolation, quota behavior, and security headers. Record evidence without
+   exposing secrets or customer capabilities.
+5. For Stage 3, verify the actual provider purchase settings and direct entry
+   points from an ordinary customer context. Prevent purchases through Lava.top
+   and other external entry points as well as SmartBudgetSite. Permit only
+   explicitly authorized test transactions. Keep test evidence distinct from
+   commercial sales and use the live integration and end-to-end checklists
+   below. Keep general visitor access restricted throughout the stage.
+6. For Stage 4, retain a verified restrictive Caddy configuration as the
+   rollback point. With explicit owner authorization, validate the final Caddy
+   configuration before removing temporary rules, apply the change in a
+   controlled window, and verify public access, checkout, integrations, and
+   the applicable security checks. Record the UTC launch cutoff under the
+   [Product Refund Rate rules](architecture/commerce_and_delivery.md#refund-scope-and-analytics).
+
+If an access or security check fails, restore the last verified restrictive
+configuration and retest. If a safe restrictive configuration cannot be
+confirmed, stop Caddy ingress and keep the private app, database, and backups
+running. Record the incident and reconcile any missed provider deliveries
+through the existing runbooks before resuming. Preserve test payments and
+operational evidence during rollback.
 
 ## Automated PostgreSQL backup and retention (OPS-001)
 
@@ -591,22 +660,18 @@ SELECT current_database(), current_user;
 * Keep all committed Alembic migration files in alembic/versions (this is your DB history).
 * Do NOT delete migrations unless you clearly understand consequences.
 * Delete temporary/debug scripts (like check_db.py) before commit.
-* Store all secrets (DB credentials, SECRET_KEY) only in .env.
-* Never commit .env to Git.
-
-## Current OpenAI platform notes
-
-These are current operational observations, not permanent platform guarantees:
-
-* Treat Codex usage as a limited engineering resource and reserve it for bounded repository work.
-* When a Weekly Full Reset is available, it can immediately begin a new usage period.
-* Additional Codex Credits are available separately when needed.
 
 ## Environment variables rule
 
-* Every variable added to `.env` MUST be added to `.env.example`
-* `.env.example` contains only example values (no real secrets)
-* `.env` is never committed to Git
+- For local development, use `.env` or the file selected by `ENV_FILE`. Process
+  environment values take precedence. Restrict access to local files with
+  credentials, keep them out of Git, and document variables in `.env.example`
+  with example values only.
+- For production, follow the
+  [runtime-file contract](#runtime-and-configuration-contract). Its restricted
+  Compose and application files supply production secrets outside Git and the
+  image. Keep deployment credentials, provider secrets, and signing keys in
+  their approved server-owned configuration.
 
 ## Configuration completion rule
 
@@ -1533,8 +1598,8 @@ The prepared `smartbudget-refund-request-alerts` systemd units use the
 existing job placeholders and schedule one pass each minute at :45 UTC.
 Installation, activation and live delivery validation remain open.
 
-Complete the bounded R42 refund and R53 request capabilities after G13D and
-before public sales. The [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
+Validate the implemented R42 refund and R53 request workflows in the release
+environment before public sales. The [approved refund rules](architecture/commerce_and_delivery.md#approved-refund-rules-and-customer-requests-d4)
 govern eligibility, amounts, item access and customer confirmations.
 
 1. Record the customer request, acknowledge receipt, and provide the operator
@@ -1569,11 +1634,9 @@ remains unconfirmed. Optional assisted tooling can be reviewed separately.
 
 ### Status and infrastructure
 
-A dedicated Vultr VPS has been provisioned for the future
-SmartBudgetSite production environment.
-
-This is infrastructure preparation only, not an application deployment
-or evidence of production readiness.
+A dedicated Vultr VPS was provisioned on 2026-11-12. The details below record
+that initial infrastructure baseline. The owner later verified the private
+application deployment described below.
 
 - Provider: Vultr.
 - Instance label: `SmartBudgetSite Production`.
@@ -1672,39 +1735,41 @@ Do not disable or alter emergency access without validating recovery.
 - Three packages were deferred by Ubuntu phased updates;
   no forced installation was attempted.
 
-### Pending deployment work
+### Private deployment evidence and pending work
 
-The owner has verified PostgreSQL 16 provisioning, scheduled encrypted
-backups, an isolated restore from an automated archive, and a production
-heartbeat from a manually initiated backup. See the
+The owner confirmed that the private FastAPI and PostgreSQL 16 deployment
+started successfully, migrations were applied and verified, and internal
+health checks passed. The 2026-11-23 post-migration archive restored at Alembic
+revision `9f3b1a7c2d84`. The owner also verified scheduled encrypted backups,
+an isolated restore from an automated archive, and a production heartbeat
+from a manually initiated backup. See the
 [OPS-001 evidence and runbook](#automated-postgresql-backup-and-retention-ops-001).
-The following work remains open:
+The owner reports that the latest SEC-012 and Lava.top Checkout Return Flow
+changes await production deployment. The following work remains open:
 
 - Production backup pruning, persistent catch-up, scheduled heartbeat and
   production backup failure monitoring validation.
-- Application deployment and process lifecycle validation.
-- Reverse proxy, DNS, HTTPS, and production perimeter validation.
-- Production startup checks, monitoring for the other jobs and public
-  availability, and full infrastructure recovery drills.
+- Deployment and process lifecycle validation for the intended release
+  revision, including startup, migrations, persistence, and internal health.
+- Controlled Caddy ingress, DNS, HTTPS, and production perimeter validation.
+- Monitoring for other jobs and public availability, and full infrastructure
+  recovery drills.
 - End-to-end production payment and delivery validation.
 
 Vultr instance backups alone are not considered sufficient evidence
 of application/database recovery readiness.
 
-Public application exposure remains deferred until the
-applicable pre-deployment release gates are satisfied, as defined
-in `release_readiness.md`.
-
-This infrastructure preparation does not complete `REL-002`,
-`OPS-001`, `SEC-012`, or any live integration validation gate.
+This evidence establishes the private deployment stage. `REL-002`, `OPS-001`,
+`SEC-012`, and live integration validation remain open under the
+[four-stage rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
 ## Deployment and external integration validation
 
-Before production deployment, complete the production environment variables,
-domain integration, startup validation, and operational logging review.
+Before deploying the intended revision, verify production environment settings,
+domain integration for the planned stage, startup checks, and operational logging.
 
-The first deployed public HTTPS environment must validate the existing
-implementation before prompting architecture changes:
+Use Stage 3 controlled HTTPS to validate the deployed implementation while
+access remains restricted:
 
 1. Configure Calendly Share access as described below. Create and validate the
    Calendly webhook subscription, capture a real `invitee.created` payload,
