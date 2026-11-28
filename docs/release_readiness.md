@@ -1170,26 +1170,26 @@ criteria are verified.
 
 ### Production deployment (`REL-002`)
 
-The owner verified the private FastAPI and PostgreSQL 16 deployment,
-migrations, and internal health. See the
+The owner verified Stage 1 technical completion on 2026-11-28, including the
+updated FastAPI deployment, PostgreSQL 16 health, migrations, and proxy network
+recreation. See the
 [private deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
-The latest SEC-012 and Lava.top checkout return revisions still need deployment
-and revision-specific verification. `REL-002` stays open for process lifecycle,
-target startup, migration, persistence, and health checks, controlled Caddy
-ingress, DNS and HTTPS, and G13D-3 monitoring of the remaining jobs and public
-availability. The public perimeter remains closed.
+`REL-002` stays open for deployment lifecycle verification in subsequent
+stages, controlled Caddy ingress, DNS and HTTPS, and G13D-3 monitoring of the
+remaining jobs and public availability. Stage 2 has yet to start.
 
 ### Backup and recovery (`OPS-001`)
 
-Production backup installation, the 2026-11-25 and 2026-11-26 scheduled runs,
+Production backup installation, scheduled runs through 2026-11-28,
 and an isolated restore from a SHA-256-verified automated off-site archive
 were verified. The owner independently rebuilt Windows rclone access without
 VPS configuration or tokens and matched the downloaded archive checksum.
+The 2026-11-28 pre-deployment backup exercised local pruning.
 
-OPS-001 remains open for production local and off-site pruning, persistent
-timer catch-up, scheduled Better Stack heartbeat receipt, and production
-backup failure monitoring. Rotate the exposed production heartbeat URL and
-confirm commercial plan eligibility before public release. Private feedback
+OPS-001 remains open for the retained local archive count, off-site pruning,
+persistent timer catch-up, scheduled Better Stack heartbeat receipt, and
+production backup failure monitoring. Rotate the exposed production heartbeat
+URL and confirm commercial plan eligibility before public release. Private feedback
 attachments, object storage and deployment configuration need backup and
 recovery validation. Independent KeePassXC database backup verification and
 full infrastructure disaster recovery validation remain open. See the

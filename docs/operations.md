@@ -427,10 +427,13 @@ temporary database and test files were removed.
 The production `smartbudget-postgres-backup` service and timer were installed
 and validated. The timer is enabled and active for 03:00 UTC daily with
 `Persistent=true`. A manual systemd start succeeded on 2026-11-24.
-Scheduled runs on 2026-11-25 and 2026-11-26 each succeeded in about 16 seconds.
+Scheduled backups succeeded from 2026-11-25 through 2026-11-28. The first two
+scheduled runs each took about 16 seconds.
 Local and encrypted off-site archive inventories were independently confirmed.
 Local archives are root-owned with mode `0600` in the root-owned
-`/var/backups/smartbudget` directory with mode `0700`. Production pruning and
+`/var/backups/smartbudget` directory with mode `0700`. The 2026-11-28
+pre-deployment backup `smartbudget-auto-20261128T095901457722Z.dump` succeeded
+and exercised local retention (`local_pruned=1`). Off-site pruning and timer
 catch-up after downtime remain unverified.
 
 The owner downloaded an automated archive created on 2026-11-24 from Google
@@ -552,8 +555,8 @@ grace period detected a missed heartbeat, created an incident, sent email,
 and resolved the incident automatically after the next heartbeat. The
 temporary heartbeat and demonstration monitor were removed.
 
-Verify heartbeat receipt from a scheduled backup on 2026-11-27 or later.
-Production backup failure monitoring still needs validation. Check the
+Better Stack heartbeat receipt from a scheduled run and production backup
+failure monitoring remain unverified. Check the
 sanitized failure stage with
 `journalctl -u smartbudget-postgres-backup.service`, confirm the failed run
 sends no success heartbeat, and verify the independent email alert after
@@ -623,8 +626,8 @@ against an isolated target and remove the recovery artifacts when finished.
 
 ### Remaining OPS-001 obligations
 
-- Verify production pruning of both local and encrypted off-site archives at
-  the approved retention counts and persistent catch-up after downtime.
+- Verify the retained local archive count and encrypted off-site pruning at
+  the approved retention counts, and verify persistent catch-up after downtime.
 - Verify the scheduled heartbeat, production failure monitoring, URL
   rotation and commercial plan eligibility.
 - Verify backup and recovery for private feedback attachments, object storage
@@ -1778,23 +1781,42 @@ Do not disable or alter emergency access without validating recovery.
 
 ### Private deployment evidence and pending work
 
-The owner confirmed that the private FastAPI and PostgreSQL 16 deployment
-started successfully, migrations were applied and verified, and internal
-health checks passed. The 2026-11-23 post-migration archive restored at Alembic
-revision `9f3b1a7c2d84`. The owner also verified scheduled encrypted backups,
-an isolated restore from an automated archive, and a production heartbeat
-from a manually initiated backup. See the
-[OPS-001 evidence and runbook](#automated-postgresql-backup-and-retention-ops-001).
-The owner confirmed the updated application is deployed and healthy. The
-Stage 1 proxy bridge gave the app Caddy's intended static address while Caddy
-was inactive. The corrected range awaits
-[network recreation and verification](#recreate-the-stage-1-proxy-network-after-the-ipam-change).
-The following work remains open:
+**2026-11-28 Stage 1 technical closeout, verified by the owner.**
 
-- Production backup pruning, persistent catch-up, scheduled heartbeat and
-  production backup failure monitoring validation.
-- Deployment and process lifecycle validation for the intended release
-  revision, including startup, migrations, persistence, and internal health.
+- The clean production checkout was synchronized at
+  `d76adb8e5e12f4f8b946966ac221aba5e558f503`. The deployed application image
+  was built from `5c894f0` with digest
+  `sha256:8bfad947193cd8ce807896e4596e74c07c7369b6b6899fc9af6d2ea8eb90c08d`.
+  The subsequent IPAM fix changed Compose, tests, and documentation only.
+  SEC-012 application controls and Lava.top Checkout Return Flow are deployed.
+  The rollback image is `smartbudget-production-app:rollback-3168bdc`.
+- FastAPI and PostgreSQL 16 were healthy. Alembic current and head both
+  reported `9f3b1a7c2d84`, and `alembic check` reported `No new upgrade
+  operations detected.` Application initialization and required security
+  middleware were verified, including one Uvicorn worker,
+  `--no-proxy-headers`, and enabled application rate limiting. Private HTTP
+  smoke tests returned 200 for health and both RU and EN Landing pages, and
+  400 for an invalid Host.
+- The proxy bridge was recreated with subnet `172.30.192.0/28`, dynamic range
+  `172.30.192.8/29`, and effective gateway `172.30.192.8`. The app received
+  `172.30.192.9`. Caddy's intended `172.30.192.2` was free and matched the
+  configured trusted peer. The host route check found no overlap. The database
+  container ID, database network ID, app image, and persistent volume mounts
+  stayed the same during recreation. Post-recreation checks verified app
+  database access over the internal network, a writable upload directory,
+  and HTTP health.
+- Caddy stayed inactive. There were no HTTP/HTTPS host listeners or published
+  app or database ports. The pre-deployment backup and retention evidence are
+  recorded in the [OPS-001 runbook](#verified-production-automation-and-restore).
+
+The next priority is preparation and validation of the approved temporary
+Caddy IP allowlist under the
+[controlled access runbook](#controlled-https-access-and-rollback). Stage 2
+has yet to start. The following work remains open:
+
+- Remaining [OPS-001 checks](#remaining-ops-001-obligations), including
+  off-site pruning, catch-up, scheduled heartbeat receipt and failure monitoring.
+- Deployment lifecycle verification for the subsequent rollout stages.
 - Controlled Caddy ingress, DNS, HTTPS, and production perimeter validation.
 - Monitoring for other jobs and public availability, and full infrastructure
   recovery drills.

@@ -347,11 +347,9 @@ Infrastructure and quality:
   applies a shared 3,000-per-60-second cap and nine independent per-IP token
   buckets with bounded state separate from application quotas. Generic Admin
   covers the protected feedback API and release routes outside `/admin`.
-  The owner confirmed the Stage 1 proxy bridge assigned the healthy app
-  `172.30.192.2`, Caddy's intended static address, while Caddy was inactive.
-  The repository now restricts dynamic allocation to `172.30.192.8/29`.
-  Production network recreation, allocation checks, and SEC-012 validation
-  remain open.
+  Stage 1 network recreation and private checks passed. The app received
+  `172.30.192.9`, leaving `172.30.192.2` free for Caddy. Production perimeter
+  validation remains open during controlled HTTPS.
 - `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
   The port contract now distinguishes fallback, local, production-internal,
   Docker host/container, frontend-origin, and external-provider ports while
@@ -380,7 +378,8 @@ Infrastructure and quality:
   records the latest deployment status and remaining verification.
 - The production PostgreSQL backup service and persistent 03:00 UTC timer
   were installed and validated. The manual systemd run on 2026-11-24 and
-  scheduled runs on 2026-11-25 and 2026-11-26 succeeded. The owner independently
+  scheduled runs from 2026-11-25 through 2026-11-28 succeeded. The 2026-11-28
+  pre-deployment backup exercised local pruning. The owner independently
   confirmed local and encrypted off-site inventories, verified SHA-256, and
   restored a 2026-11-24 automated archive into an isolated PostgreSQL
   database with 29 tables and Alembic revision `9f3b1a7c2d84`. On 2026-11-26,
@@ -617,16 +616,17 @@ owns that evidence, which applies to the temporary review environment.
 
 ### 3. Production deployment and live validation
 
-**Stage reached — Stage 1, Private Deployment.** The owner confirmed that the
-private app and PostgreSQL 16 started, migrations were verified, and internal
-health checks passed. Existing backup and restore evidence is in
-[OPS-001](operations.md#automated-postgresql-backup-and-retention-ops-001).
-The owner confirmed the updated app is deployed and healthy. Caddy remains
-inactive. General external access and commercial sales remain closed.
+**Stage 1 Private Deployment technical update complete — 2026-11-28.** The
+owner verified the private production checkout at `d76adb8`, healthy FastAPI
+and PostgreSQL 16, and the deployed SEC-012 application controls and Lava.top
+Checkout Return Flow. Private HTTP checks and the proxy network recreation
+passed. Caddy remains inactive. General external access and commercial sales
+remain closed. See the
+[deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
 
-The next priority is to
-[recreate and verify the proxy network](operations.md#recreate-the-stage-1-proxy-network-after-the-ipam-change)
-privately, then prepare the approved controlled Caddy access rules for Stage 2.
+The next priority is to prepare and validate the approved temporary Caddy IP
+allowlist using the [controlled access runbook](operations.md#controlled-https-access-and-rollback).
+Stage 2 has yet to start.
 Controlled HTTPS, live integration validation, and public commercial release
 remain ahead under the [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
