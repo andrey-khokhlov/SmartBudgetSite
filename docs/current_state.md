@@ -336,12 +336,19 @@ Infrastructure and quality:
   privacy-safe coalesced logs, and fail-closed capacity behavior. Checkout
   initiation uses an IP-based limit of 8 attempts per 10 minutes before any
   catalog, sale, release, provider-offer, or Lava.top work.
-- Initial production is restricted to one application worker. Counter reset on
-  restart is an accepted bounded residual risk because the documented
-  production perimeter is mandatory. Multi-worker production remains
-  unsupported until a shared atomic backend is approved.
-- The production perimeter and trusted-proxy behavior are not configured in
-  this repository and remain release-environment validation obligations.
+- Initial production requires one application worker and application rate
+  limiting. Counter reset on restart is an accepted residual risk. Multi-worker
+  production remains unsupported until a shared atomic backend is approved.
+- `SEC-012` is implemented in repository configuration. Production FastAPI
+  accepts `SMARTBUDGET_HOST` and the loopback healthcheck host. Caddy adds
+  the HTTPS security headers and host-scoped one-year HSTS, preserving
+  capability `no-referrer`. Uvicorn has no published port and delegates
+  forwarding-header handling to ASGI middleware that verifies Caddy's exact
+  TCP peer. Caddy sanitizes inbound forwarding headers. Its `forward_auth`
+  applies a shared 3,000-per-60-second cap and nine independent per-IP token
+  buckets with bounded state separate from application quotas. Generic Admin
+  covers the protected feedback API and release routes outside `/admin`.
+  Production deployment and validation remain open.
 - `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
   The port contract now distinguishes fallback, local, production-internal,
   Docker host/container, frontend-origin, and external-provider ports while

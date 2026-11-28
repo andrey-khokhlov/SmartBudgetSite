@@ -1,5 +1,7 @@
 import os
+import re
 from datetime import date
+from ipaddress import IPv4Address
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -17,6 +19,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     APP_HOST: str = "127.0.0.1"
     APP_PORT: int = 8000
+    SMARTBUDGET_HOST: str = ""
+    SMARTBUDGET_CADDY_PEER: IPv4Address | None = None
 
     BACKEND_CORS_ORIGINS: str = ""
     DATABASE_URL: str = ""
@@ -196,6 +200,20 @@ class Settings(BaseSettings):
                 "checkout is enabled in production"
             )
 
+        return self
+
+    @model_validator(mode="after")
+    def validate_production_host(self) -> "Settings":
+        if self.APP_ENV != "prod":
+            return self
+
+        hostname = self.SMARTBUDGET_HOST.lower()
+        label = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+        if len(hostname) > 253 or not re.fullmatch(rf"{label}(?:\.{label})*", hostname):
+            raise ValueError(
+                "SMARTBUDGET_HOST must be a bare DNS hostname in production"
+            )
+        self.SMARTBUDGET_HOST = hostname
         return self
 
 

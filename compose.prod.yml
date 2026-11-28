@@ -1,6 +1,6 @@
 name: smartbudget-production
 
-# This is the only peer whose forwarded headers Uvicorn accepts.
+# This is the only peer whose forwarded headers the application accepts.
 x-caddy-address: &caddy-address 172.30.192.2
 
 services:
@@ -31,6 +31,8 @@ services:
       - ${SMARTBUDGET_APP_ENV_FILE:?Set the private application environment file path}
     environment:
       APP_ENV: prod
+      SMARTBUDGET_HOST: ${SMARTBUDGET_HOST:?Set the public DNS hostname}
+      SMARTBUDGET_CADDY_PEER: *caddy-address
       APP_HOST: 0.0.0.0
       APP_PORT: "4000"
       UPLOAD_DIR: /var/lib/smartbudget/uploads
@@ -46,9 +48,7 @@ services:
       - "4000"
       - --workers
       - "1"
-      - --proxy-headers
-      - --forwarded-allow-ips
-      - *caddy-address
+      - --no-proxy-headers
     depends_on:
       db:
         condition: service_healthy

@@ -57,6 +57,7 @@ def test_app_env_accepts_supported_values(app_env: str) -> None:
         APP_ENV=app_env,
         ADMIN_TOKEN="production-admin-token",
         SECRET_KEY="production-secret-key",
+        SMARTBUDGET_HOST="smartbudget.example.test",
     )
 
     assert configured_settings.APP_ENV == app_env
@@ -96,6 +97,7 @@ def test_production_accepts_non_empty_security_secrets() -> None:
         APP_ENV="prod",
         ADMIN_TOKEN="production-admin-token",
         SECRET_KEY="production-secret-key",
+        SMARTBUDGET_HOST="smartbudget.example.test",
     )
 
     assert configured_settings.ADMIN_TOKEN == "production-admin-token"
@@ -123,6 +125,19 @@ def test_production_rejects_missing_secret_key(
         build_settings(
             APP_ENV="prod",
             ADMIN_TOKEN="production-admin-token",
+        )
+
+
+@pytest.mark.parametrize(
+    "hostname", ["", "*", "*.example.test", "https://example.test", "example.test:443"]
+)
+def test_production_requires_a_bare_dns_hostname(hostname: str) -> None:
+    with pytest.raises(ValidationError, match="SMARTBUDGET_HOST must be a bare DNS"):
+        build_settings(
+            APP_ENV="prod",
+            ADMIN_TOKEN="production-admin-token",
+            SECRET_KEY="production-secret-key",
+            SMARTBUDGET_HOST=hostname,
         )
 
 
@@ -252,6 +267,7 @@ def test_production_lava_checkout_accepts_webhook_secret() -> None:
         SECRET_KEY="production-secret-key",
         LAVA_TOP_API_KEY="outbound-key",
         LAVA_TOP_WEBHOOK_SECRET="different-inbound-key",
+        SMARTBUDGET_HOST="smartbudget.example.test",
     )
 
     assert configured_settings.LAVA_TOP_WEBHOOK_SECRET == "different-inbound-key"

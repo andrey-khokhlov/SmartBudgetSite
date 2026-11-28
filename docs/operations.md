@@ -172,6 +172,9 @@ startup as authorization to expose the application publicly.
 - FastAPI runs as an unprivileged user with `APP_ENV=prod`, port `4000`,
   exactly one Uvicorn worker and reload disabled. The application rate limiter
   remains enabled. PostgreSQL and FastAPI have no published host ports.
+- FastAPI's production `TrustedHostMiddleware` accepts the configured
+  `SMARTBUDGET_HOST` and `127.0.0.1` for the container healthcheck. It rejects
+  other hosts with HTTP 400. Development and test can use arbitrary local hosts.
 - Only FastAPI and PostgreSQL join the internal database network. FastAPI and
   Caddy share the proxy bridge, which also provides outbound access for
   application integrations and Caddy's certificate automation. Keep other
@@ -180,10 +183,18 @@ startup as authorization to expose the application publicly.
 - Caddy is the direct public IPv4 edge. It strips incoming `Forwarded`,
   `X-Forwarded-*` and `X-Real-IP` values. Its reverse proxy sets the standard
   forwarded client IP, scheme and host from the connection and request.
-  Uvicorn accepts forwarded IP and scheme only from Caddy's fixed bridge
-  address (`172.30.192.2`). Compose uses the same address for both settings.
+  Uvicorn runs with `--no-proxy-headers` so the production ASGI middleware sees
+  the TCP peer. The middleware accepts one valid IP and one HTTP(S) scheme
+  from Caddy's fixed bridge address (`172.30.192.2`) and saves that socket
+  address for the internal perimeter check. Compose supplies the same address
+  to Caddy and to the app as `SMARTBUDGET_CADDY_PEER`.
   Keep DNS IPv4-only for this topology. Adding IPv6 ingress, a CDN or another
   proxy requires separate client-IP and trust-boundary validation.
+- Caddy adds `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  and `Strict-Transport-Security: max-age=31536000` to proxied HTTPS responses.
+  HSTS is scoped to the configured hostname. Caddy defaults `Referrer-Policy`
+  to `strict-origin-when-cross-origin` when the upstream sends no policy.
+  Capability responses retain `Referrer-Policy: no-referrer`.
 - The `postgres_data`, `feedback_data`, `caddy_data` and `caddy_config` named
   volumes retain database files, private uploads, certificate state and Caddy
   configuration state across container replacement. Keep the same project
@@ -200,7 +211,8 @@ Use two restricted runtime files, for example `/etc/smartbudget/compose.env`
 and `/etc/smartbudget/app.env`. Base them on `.env.production.example` and
 `.env.production.app.example` respectively. Point `SMARTBUDGET_APP_ENV_FILE`
 at the absolute app file. The Compose file supplies the database bootstrap
-values only to PostgreSQL and the bare public DNS hostname only to Caddy.
+values only to PostgreSQL and passes the bare `SMARTBUDGET_HOST` DNS hostname
+to Caddy and FastAPI. Production application startup requires a valid hostname.
 Use the corresponding `https://` origin as the app's `PUBLIC_BASE_URL`.
 Keep private settings outside Git and the image. Use the production examples
 as the starting point and consult `.env.example` for the existing optional
@@ -238,6 +250,15 @@ $caddyConfig = Join-Path $PWD.Path "deploy/Caddyfile.prod"
 docker run --rm --pull never --network none --env SMARTBUDGET_HOST=smartbudget.example.invalid --mount "type=bind,source=$caddyConfig,target=/etc/caddy/Caddyfile,readonly" caddy:2.11-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
 
+Set `SMARTBUDGET_TEST_CADDY=1` when running `tests/test_production_perimeter.py`
+with the [Codex pytest options](#codex-pytest-validation-environment) to check
+response headers, HTTPS redirects, and perimeter authorization routing in the
+cached Caddy image. The test uses internal TLS and a stub upstream inside a
+container with no external network access or published ports. Also set
+`SMARTBUDGET_TEST_APP_IMAGE` to a cached build of `Dockerfile.prod` to run the
+real Caddy-to-Uvicorn test. It mounts the current app and Caddyfile, uses the
+Compose Uvicorn flags on an internal Docker network, and publishes no ports.
+
 In an authorized disposable release environment, validate the image build,
 application upload permissions and volume retention across recreation.
 Use an external client on the intended Linux host topology to verify that
@@ -268,11 +289,10 @@ following REL-002 and related release obligations remain open.
 - **OPS-001 backup and restore.** Continue production backup validation
   and the remaining recovery work in the [OPS-001 runbook](#automated-postgresql-backup-and-retention-ops-001).
   Treat certificate storage as sensitive.
-- **SEC-012 perimeter.** Complete and validate trusted-host and proxy policy,
-  production security headers and HSTS, the required perimeter rate limits
-  and capability-safe logging. The standard Caddy configuration does not
-  implement the required perimeter rate limits. Complete the perimeter
-  before public exposure.
+- **SEC-012 perimeter.** Validate the configured trusted hosts, exact Caddy
+  proxy trust, forwarding-header sanitization, application and perimeter
+  quotas, HTTPS security headers, HSTS, and capability-safe logging in the
+  release environment before public exposure.
 - **DNS and HTTPS.** Verify the public DNS A record, host reachability on
   TCP 80/443, certificate issuance and renewal, and HTTPS redirects.
 - **Live integrations.** Verify payment, storage, email and Calendly in the
@@ -699,14 +719,14 @@ must be disabled for them.
 ## Rate limiting and trusted client identity
 
 `RATE_LIMIT_ENABLED` defaults to `true` and cannot be `false` in production.
-`RATE_LIMIT_MAX_IDENTITIES` defaults to 10,000 and must be positive. Thresholds
-remain version-controlled application policy rather than environment strings.
-The limiter is process-local and non-persistent.
+`RATE_LIMIT_MAX_IDENTITIES` defaults to 10,000 and must be positive. It bounds
+application identities and separately bounds perimeter policy/IP buckets.
+Thresholds are version-controlled. Both limiters are process-local.
 
 Initial production must run exactly one application worker. Multi-worker
 production is unsupported until a shared atomic limiter backend is approved.
-Restarting the process resets application counters; this is an accepted bounded
-residual risk only while the required production perimeter remains active.
+Restarting the process resets application and perimeter counters. Application
+rate limiting remains mandatory.
 
 Application policies:
 
@@ -727,27 +747,46 @@ Application policies:
 | Lava.top pre-verification | 120/min per IP |
 | Lava.top post-verification | 300/5 min provider-wide |
 
-The production perimeter must provide:
+Caddy uses `forward_auth` for the nine groups below. They share a global
+rolling limit of 3,000 admissions per 60 seconds. Each group also has an
+independent per-client token bucket, initially full to the listed burst and
+refilled at the listed rate. IPv4 uses `/32` and IPv6 uses `/64`.
 
-| Boundary | Perimeter policy |
-|---|---|
-| feedback | 10/min, burst 5 |
-| purchase lookup | 30/min, burst 10 |
-| download GET family | 120/min, burst 20 |
-| download POST | 30/min, burst 10 |
-| consultation booking family | 120/min, burst 20 |
-| admin login | 20/min, burst 5 |
-| generic admin safety ceiling | 120/min |
-| Calendly webhook | 300/min, burst 100 |
-| Lava.top payment-result webhook | 300/min, burst 100 |
+| Boundary | Per minute | Burst |
+|---|---:|---:|
+| `POST /v1/feedback` | 10 | 5 |
+| `POST /v1/check-purchase` | 30 | 10 |
+| `GET /download/{token}` family | 120 | 20 |
+| `POST /download/{token}` family | 30 | 10 |
+| `/consultation/book/{token}` family | 120 | 20 |
+| `POST /admin/login` | 20 | 5 |
+| Generic Admin | 120 | 20 |
+| `POST /v1/webhooks/calendly` | 300 | 100 |
+| `POST /v1/webhooks/lava-top/payment-result` | 300 | 100 |
 
-The production Docker configuration uses Caddy. The required perimeter limits
-remain open under SEC-012. Perimeter quota rejection must return HTTP 429
-with an integer `Retry-After`.
+Generic Admin covers `/admin` and `/admin/*` except the separate login POST.
+It also covers `GET /v1/feedback/recent`, `PATCH /v1/feedback/{feedback_id}/resolve`,
+`GET` and `POST /products/{product_id}/releases/new`,
+`GET /products/{product_id}/releases`, and
+`POST /products/{product_id}/releases/{release_id}/publish`.
 
-Application code uses only the validated ASGI `request.client.host`; it never
-parses `Forwarded` or `X-Forwarded-For`. IPv4 is canonicalized normally and
-IPv6 is grouped by `/64`, then the identity is HMAC-protected before storage.
+Ordinary public pages, static assets, and healthchecks skip perimeter checks.
+Caddy rejects public requests to the authorization endpoint. Its internal
+request preserves `Host` for TrustedHost and supplies the socket client IP,
+scheme, and fixed policy name. It omits the original URI, query, body, and
+other client headers. FastAPI checks the saved TCP peer and hashes the
+validated client IP. The authorization request consumes perimeter quota only.
+An admitted original request still runs through the application policies.
+
+Perimeter denials return HTTP 429 and an integer `Retry-After`. Limiter
+failure or exhausted storage returns HTTP 503. The middleware rejects
+malformed, missing, or ambiguous forwarding values from the trusted peer with
+HTTP 400. Caddy stops forwarding if authorization fails. Capability quota
+denials and limiter errors retain the SEC-009 cache and referrer headers.
+
+The application limiter uses the validated ASGI `request.client.host`.
+It never parses `Forwarded` or `X-Forwarded-For`. IPv4 is canonicalized normally
+and IPv6 is grouped by `/64`, then the identity is HMAC-protected before storage.
 Local `python run.py` explicitly disables proxy-header interpretation.
 Production must:
 
@@ -769,10 +808,10 @@ rejection for a policy/key/window is logged. Raw IPs, capability tokens,
 purchase references, emails, credentials, cookies, webhook signatures, signed
 URLs, request targets, queries, and HMAC keys are forbidden.
 
-The production perimeter is not configured or validated in this repository.
-Release-environment validation must confirm the stated rates, bursts, 429 and
-`Retry-After` behavior, trusted-header handling, one-worker process model, and
-continued SEC-009 logging/cache behavior.
+Release-environment validation must confirm both quota layers, the global cap,
+HTTP 429 and `Retry-After` through Caddy, trusted-header handling, internal
+endpoint isolation, the one-worker process model, and continued SEC-009
+logging/cache behavior.
 
 ## Feedback attachment reconciliation
 

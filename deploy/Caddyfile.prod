@@ -10,11 +10,53 @@
 }
 
 https://{$SMARTBUDGET_HOST} {
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		# Preserve no-referrer from capability responses.
+		?Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+	}
+
 	# Caddy is the direct edge. Strip incoming hints before reverse_proxy
 	# generates its standard X-Forwarded-For, -Proto and -Host values.
 	request_header -Forwarded
 	request_header -X-Forwarded-*
 	request_header -X-Real-IP
 
-	reverse_proxy app:4000
+	# Login POST has its own bucket. The remaining admin routes share the ceiling.
+	map "{method}:{path}" {perimeter_policy} {
+		~^POST:/v1/feedback/*$ feedback
+		~^POST:/v1/check-purchase/*$ purchase_lookup
+		~^GET:/download/[^/]+ download_get
+		~^POST:/download/[^/]+ download_post
+		~^[^:]+:/consultation/book/[^/]+ consultation_booking
+		~^POST:/admin/login/*$ admin_login
+		~^[^:]+:/admin(/|$) admin
+		~^GET:/v1/feedback/recent/*$ admin
+		~^PATCH:/v1/feedback/[^/]+/resolve/*$ admin
+		~^GET:/products/[^/]+/releases(/new)?/*$ admin
+		~^POST:/products/[^/]+/releases/new/*$ admin
+		~^POST:/products/[^/]+/releases/[^/]+/publish/*$ admin
+		~^POST:/v1/webhooks/calendly/*$ calendly
+		~^POST:/v1/webhooks/lava-top/payment-result/*$ lava_top
+		default ""
+	}
+	@perimeter vars_regexp {perimeter_policy} .+
+
+	route {
+		respond /_internal/perimeter/* 404
+		forward_auth @perimeter app:4000 {
+			uri /_internal/perimeter/check?
+			# Send only the metadata needed for auth, plus the original Host.
+			header_up -*
+			header_up -X-Forwarded-Method
+			header_up -X-Forwarded-Uri
+			header_up Host {hostport}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Perimeter-Policy {perimeter_policy}
+		}
+		reverse_proxy app:4000
+	}
 }

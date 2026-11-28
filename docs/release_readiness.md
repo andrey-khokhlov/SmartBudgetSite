@@ -511,9 +511,10 @@ together even though each finding retains its own identifier.
   Change.
 - **Finding:** Public forms, purchase lookup, booking, downloads, and admin login
   have no coherent application-and-perimeter abuse policy.
-- **Accepted end state:** Every abuse-sensitive entry point has an explicit,
-  consistent limit and predictable failure behavior across the application and
-  production perimeter.
+- **Accepted end state:** Every abuse-sensitive entry point in scope has an
+  explicit application limit and predictable failure behavior. Perimeter
+  quotas for the approved route groups are tracked under
+  [SEC-012](#public-deployment-perimeter-sec-012).
 - **Completed behavior:** A project-owned, thread-safe process-local
   rolling-window limiter protects feedback before multipart parsing, purchase
   lookup by IP and normalized-email HMAC, public checkout initiation at 8
@@ -524,12 +525,11 @@ together even though each finding retains its own identifier.
   stable JSON or localized HTML, while capability responses retain SEC-009
   headers. Bounded state fails closed, rejection logging is coalesced and
   privacy-safe, and direct development disables proxy-header interpretation.
-- **Production boundary:** Initial production supports exactly one application
-  worker. Restart counter reset is an accepted bounded residual risk because
-  the documented production perimeter is mandatory. Multi-worker production is
-  prohibited until a shared atomic backend is approved. No proxy technology is
-  selected or configured here; trusted-proxy and perimeter behavior remain
-  release-environment validation obligations.
+- **Production boundary:** Initial production requires application rate
+  limiting and exactly one application worker. Restart counter reset is an
+  accepted residual risk. Multi-worker production is prohibited until a shared
+  atomic backend is approved. Validate trusted-proxy behavior and production
+  application quota enforcement under SEC-012.
 - **Regression validation:** The focused SEC-007 and affected-boundary suites
   pass 115 tests, the full ordinary suite passes 343 tests, and the Chromium
   Feedback suite passes 14 tests. Changed-file Ruff and Black checks and
@@ -1169,9 +1169,25 @@ full infrastructure disaster recovery validation remain open. See the
 
 ### Public deployment perimeter (`SEC-012`)
 
-- trusted-host and proxy policy;
-- production security headers;
-- HTTPS and HSTS behavior appropriate to the deployed environment.
+The minimum controls are implemented in repository configuration. FastAPI
+allows the configured production hostname and the loopback healthcheck host.
+Caddy sanitizes inbound forwarding headers. Production ASGI middleware records
+Caddy's exact TCP peer before applying the validated client IP and scheme.
+Uvicorn has no published host port. Caddy adds `nosniff`,
+`DENY`, a default `strict-origin-when-cross-origin` policy that preserves
+capability `no-referrer`, and one-year HSTS scoped to the configured hostname.
+Caddy `forward_auth` enforces the shared 3,000-per-60-second cap and nine
+per-IP token buckets with separate bounded state. Generic Admin includes the
+protected feedback API and release routes outside `/admin`. Application rate
+limiting remains mandatory with a single Uvicorn worker.
+
+SEC-012 remains open for release-environment validation before public exposure.
+Verify host allowlisting and loopback health, exact proxy trust and forwarding
+sanitization, isolation of Uvicorn and the authorization endpoint, global and
+per-IP perimeter limits, application quota enforcement, and `429` with
+`Retry-After` through Caddy. Verify HTTPS redirects, response headers, and
+capability-safe caching and logging. See the
+[production Docker runbook](operations.md#production-docker-configuration-rel-002).
 
 ### Public discoverability (`SEO-001`)
 

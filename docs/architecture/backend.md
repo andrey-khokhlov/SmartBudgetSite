@@ -139,10 +139,16 @@ webhook signatures are not retained as limiter keys. Capacity exhaustion or an
 unavailable limiter fails closed. Tests replace time with an injected clock and
 never wait for real windows.
 
-Initial production supports exactly one application worker. Process restart
-resets application counters; this is an accepted bounded risk only because the
-production perimeter is mandatory. Multi-worker production is prohibited until
-a shared atomic limiter backend is separately approved.
+Initial production supports exactly one application worker and requires
+application rate limiting. The Caddy perimeter uses an internal authorization
+route and a separate bounded limiter. Production ASGI forwarding middleware
+records Caddy's exact TCP peer before setting the validated client IP and
+scheme. The internal route checks the recorded peer. Perimeter token buckets
+and the shared rolling cap are debited together before Caddy forwards the
+original request.
+Application policies still run once on the original request. Process restart
+resets both limiters. Multi-worker production is prohibited until a shared
+atomic limiter backend is separately approved.
 
 ## Browser-facing static compatibility
 
