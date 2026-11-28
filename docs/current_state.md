@@ -624,8 +624,11 @@ passed. Caddy remains inactive. General external access and commercial sales
 remain closed. See the
 [deployment evidence](operations.md#private-deployment-evidence-and-pending-work).
 
-The next priority is to prepare and validate the approved temporary Caddy IP
-allowlist using the [controlled access runbook](operations.md#controlled-https-access-and-rollback).
+The temporary Caddy allowlist is implemented in the repository. It requires
+one operator VPN IPv4 `/32` and restricts all HTTPS application requests,
+including provider webhooks. The next priority is the production preflight
+and separately authorized activation under the
+[controlled access runbook](operations.md#controlled-https-access-and-rollback).
 Stage 2 has yet to start.
 Controlled HTTPS, live integration validation, and public commercial release
 remain ahead under the [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).

@@ -244,20 +244,24 @@ $env:POSTGRES_PASSWORD = "local-config-check-only"
 docker compose --env-file .env.production.example -f compose.prod.yml config --quiet
 ```
 
-When a matching Caddy binary or image is already available locally, validate
-the Caddyfile with the example hostname. For the cached image, use an
-isolated validation process without published ports or network access.
+With the production Caddy image cached, validate the entrypoint and Caddyfile
+in a disposable Compose project using the example hostname and a synthetic
+allowlist. `run --no-deps` starts only the validation container and publishes
+no host ports.
 
 ```powershell
-$caddyConfig = Join-Path $PWD.Path "deploy/Caddyfile.prod"
-docker run --rm --pull never --network none --env SMARTBUDGET_HOST=smartbudget.example.invalid --mount "type=bind,source=$caddyConfig,target=/etc/caddy/Caddyfile,readonly" caddy:2.11-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+$env:SMARTBUDGET_ALLOWED_IP = "192.0.2.10/32"
+$caddyCheckProject = "smartbudget-caddy-check-" + [guid]::NewGuid().ToString("N")
+docker compose -p $caddyCheckProject --env-file .env.production.example -f compose.prod.yml --profile public run --rm --no-deps --pull never -T caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+docker compose -p $caddyCheckProject --env-file .env.production.example -f compose.prod.yml down --volumes
 ```
 
 Set `SMARTBUDGET_TEST_CADDY=1` when running `tests/test_production_perimeter.py`
 with the [Codex pytest options](#codex-pytest-validation-environment) to check
-response headers, HTTPS redirects, and perimeter authorization routing in the
-cached Caddy image. The test uses internal TLS and a stub upstream inside a
-container with no external network access or published ports. Also set
+the allowlist startup guard, HTTPS redirects, access denials, response headers,
+and perimeter authorization with the cached Caddy image. The HTTP tests use
+internal TLS and a stub upstream inside a container with no external network
+access or published ports. Also set
 `SMARTBUDGET_TEST_APP_IMAGE` to a cached build of `Dockerfile.prod` to run the
 real Caddy-to-Uvicorn test. It mounts the current app and Caddyfile, uses the
 Compose Uvicorn flags on an internal Docker network, and publishes no ports.
@@ -351,25 +355,30 @@ deploying newer revisions. The following release obligations remain open.
 
 The [four-stage rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation)
 uses an owner-approved temporary Caddy IP allowlist in Stages 2 and 3. The
-repository's Caddyfile contains the SEC-012 controls. The temporary allowlist
-still needs production configuration and validation. The `public` profile
-supplies ingress during these stages, with access limited by the temporary
-rules.
+`public` profile supplies ingress during these stages. The production Caddyfile
+checks the immediate connection peer with `remote_ip` and returns HTTPS 403
+before perimeter authorization or app proxying. Client-supplied forwarding
+headers do not affect the decision. Edge denials on capability paths retain
+`no-store` and `no-referrer`. The initial configuration restricts every HTTPS
+application route, including all provider webhooks.
 
-1. Verify the operator's VPN egress IP from the actual connection. Restrict
-   ordinary application requests to that IP using the trusted connection peer
-   observed at Caddy. Disregard client-supplied forwarding headers for access
-   decisions. Deny other visitors by default. `robots.txt`, `noindex`, and
-   unpublished URLs are discoverability controls, so enforce denial at Caddy.
+1. Verify the operator's VPN egress IPv4 from the actual connection and set
+   `SMARTBUDGET_ALLOWED_IP` in the private Compose environment file. Supply one
+   dotted-decimal IPv4 address with a `/32` suffix. The Caddy entrypoint exits
+   before loading the Caddyfile if the value is missing, empty, malformed, a
+   wider range, IPv6, or contains more than one address. Private app/database
+   operations, backups, and Compose inspection can run with the variable unset.
+   Keep the actual VPN address out of Git and validation reports. Run the
+   preflight in a dedicated shell without an allowlist override.
 2. Keep the traffic required by Caddy's configured ACME challenges reachable.
    Verify DNS, issuance, renewal readiness, and redirects while keeping the
    application restricted. Verify effective IPv4 and IPv6 exposure, including
    A/AAAA records, Vultr and host firewall rules, and Docker-published ports.
    The baseline deployment is direct IPv4 ingress. Any effective IPv6 exposure
    also needs access and forwarding validation before the stage can advance.
-3. Add inbound exceptions only for integrations enabled for the validation.
-   Match the required method and exact path. The current application declares
-   these webhook entry points:
+3. A later live integration change may add inbound exceptions with separate
+   owner authorization. Limit each exception to the approved method and exact
+   path. The current application declares these webhook entry points:
 
    | Integration | Inbound request for controlled validation |
    | --- | --- |
@@ -383,15 +392,23 @@ rules.
    PostgreSQL and job heartbeats use outbound calls to Better Stack. For an
    inbound availability probe, determine whether it is required and verify its
    method, exact endpoint, and permitted source before making an exception.
-4. Validate the restricted Caddy configuration and prepare rollback before
-   enabling ingress. From the VPN, verify authorized operator access. From an
-   independent non-allowlisted network, verify denial for ordinary pages, APIs,
-   capability routes, and checkout starts. Check accepted webhook requests with
-   valid authentication at the appropriate stage, plus rejection of invalid
-   authentication, wrong methods, and adjacent paths. Verify the existing
-   SEC-012 controls, including spoofed forwarding-header rejection, origin
-   isolation, quota behavior, and security headers. Record evidence without
-   exposing secrets or customer capabilities.
+4. Before enabling ingress, run the Compose and Caddy preflight from the
+   intended checkout with Caddy inactive. The one-off command runs the guard
+   and validates the Caddyfile without starting dependencies or publishing
+   ports. Prepare rollback before any authorized activation.
+
+   ```sh
+   docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml --profile public config --quiet
+   docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml --profile public run --rm --no-deps --pull never -T caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+   ```
+
+   From the VPN, verify authorized operator access. From an independent
+   non-allowlisted network, verify denial for ordinary pages, APIs, capability
+   routes, checkout starts, and webhooks. Verify the existing SEC-012 controls,
+   including spoofed forwarding-header rejection, origin isolation, quota
+   behavior, and security headers. Test webhook authentication and rejection of
+   wrong methods and adjacent paths if exceptions are later authorized. Record
+   evidence without exposing secrets or customer capabilities.
 5. For Stage 3, verify the actual provider purchase settings and direct entry
    points from an ordinary customer context. Prevent purchases through Lava.top
    and other external entry points as well as SmartBudgetSite. Permit only
@@ -399,10 +416,11 @@ rules.
    commercial sales and use the live integration and end-to-end checklists
    below. Keep general visitor access restricted throughout the stage.
 6. For Stage 4, retain a verified restrictive Caddy configuration as the
-   rollback point. With explicit owner authorization, validate the final Caddy
-   configuration before removing temporary rules, apply the change in a
-   controlled window, and verify public access, checkout, integrations, and
-   the applicable security checks. Record the UTC launch cutoff under the
+   rollback point. With explicit owner authorization, remove the temporary
+   Caddyfile restriction and its Compose validation together. Validate the
+   final Caddy configuration, apply it in a controlled window, and verify public
+   access, checkout, integrations, and security controls. Record the UTC launch
+   cutoff under the
    [Product Refund Rate rules](architecture/commerce_and_delivery.md#refund-scope-and-analytics).
 
 If an access or security check fails, restore the last verified restrictive
@@ -411,6 +429,10 @@ confirmed, stop Caddy ingress and keep the private app, database, and backups
 running. Record the incident and reconcile any missed provider deliveries
 through the existing runbooks before resuming. Preserve test payments and
 operational evidence during rollback.
+
+```sh
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml --profile public stop caddy
+```
 
 ## Automated PostgreSQL backup and retention (OPS-001)
 
@@ -1809,10 +1831,10 @@ Do not disable or alter emergency access without validating recovery.
   app or database ports. The pre-deployment backup and retention evidence are
   recorded in the [OPS-001 runbook](#verified-production-automation-and-restore).
 
-The next priority is preparation and validation of the approved temporary
-Caddy IP allowlist under the
-[controlled access runbook](#controlled-https-access-and-rollback). Stage 2
-has yet to start. The following work remains open:
+The temporary allowlist is implemented in the repository. Its production
+preflight, activation, and validation remain pending under the
+[controlled access runbook](#controlled-https-access-and-rollback). The
+following work remains open:
 
 - Remaining [OPS-001 checks](#remaining-ops-001-obligations), including
   off-site pruning, catch-up, scheduled heartbeat receipt and failure monitoring.

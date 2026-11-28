@@ -70,6 +70,24 @@ services:
     restart: unless-stopped
     environment:
       SMARTBUDGET_HOST: ${SMARTBUDGET_HOST:?Set the public DNS hostname}
+      SMARTBUDGET_ALLOWED_IP: ${SMARTBUDGET_ALLOWED_IP:-}
+    # Validate here so private Compose operations do not require the allowlist.
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        ip="$${SMARTBUDGET_ALLOWED_IP:-}"
+        case "$$ip" in
+          *[!0123456789./]*) ip= ;;
+        esac
+        octet='(0|[1-9][0-9]?|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+        if ! printf '%s\n' "$$ip" | grep -Eq "^$${octet}([.]$${octet}){3}/32$$"; then
+          printf '%s\n' 'SMARTBUDGET_ALLOWED_IP must be one IPv4 /32 CIDR.' >&2
+          exit 1
+        fi
+        exec caddy "$$@"
+      - caddy
+    command: ["run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     depends_on:
       app:
         condition: service_healthy

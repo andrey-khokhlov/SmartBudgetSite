@@ -19,9 +19,18 @@ from app.api.v1.perimeter import PERIMETER_AUTH_PATH
 from app.core.config import Settings
 from app.dependencies import require_admin
 
+ROOT = Path(__file__).resolve().parents[1]
+CADDY_CONFIG = ROOT / "deploy/Caddyfile.prod"
+CADDY_CONFIG_IN_CONTAINER = "/etc/caddy/Caddyfile"
+TEST_ALLOWLIST = "127.0.0.1/32"
+uses_cached_caddy = pytest.mark.skipif(
+    os.environ.get("SMARTBUDGET_TEST_CADDY") != "1",
+    reason="set SMARTBUDGET_TEST_CADDY=1 to use the cached production Caddy image",
+)
+
 
 def test_production_proxy_reserves_caddy_address() -> None:
-    compose_path = Path(__file__).resolve().parents[1] / "compose.prod.yml"
+    compose_path = ROOT / "compose.prod.yml"
     compose = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
     (proxy_ipam,) = compose["networks"]["proxy"]["ipam"]["config"]
     subnet = ip_network(proxy_ipam["subnet"])
@@ -76,16 +85,129 @@ def test_non_production_accepts_test_client_host(monkeypatch, app_env) -> None:
         assert client.get(PERIMETER_AUTH_PATH).status_code == 404
 
 
-@pytest.mark.skipif(
-    os.environ.get("SMARTBUDGET_TEST_CADDY") != "1",
-    reason="set SMARTBUDGET_TEST_CADDY=1 to use the cached production Caddy image",
+def caddy_container(*, allowlist: str | None, config: Path = CADDY_CONFIG) -> list[str]:
+    service = yaml.safe_load((ROOT / "compose.prod.yml").read_text(encoding="utf-8"))[
+        "services"
+    ]["caddy"]
+    executable, flags, script, shell_name = service["entrypoint"]
+    env = ["--env=SMARTBUDGET_HOST=localhost"]
+    if allowlist is not None:
+        env.append(f"--env=SMARTBUDGET_ALLOWED_IP={allowlist}")
+    return [
+        *env,
+        "--mount",
+        f"type=bind,source={config},target={CADDY_CONFIG_IN_CONTAINER},readonly",
+        f"--entrypoint={executable}",
+        service["image"],
+        flags,
+        script.replace("$$", "$"),  # Compose unescapes dollars before executing.
+        shell_name,
+    ]
+
+
+@uses_cached_caddy
+def test_private_compose_renders_without_allowlist(tmp_path: Path) -> None:
+    env_file = tmp_path / "compose.env"
+    env_file.write_text(
+        "SMARTBUDGET_HOST=smartbudget.example.invalid\n"
+        "SMARTBUDGET_APP_ENV_FILE=.env.production.app.example\n"
+        "POSTGRES_USER=smartbudget_bootstrap\n"
+        "POSTGRES_PASSWORD=local-config-check-only\n"
+        "POSTGRES_DB=smartbudget\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.pop("COMPOSE_PROFILES", None)
+    env.pop("SMARTBUDGET_ALLOWED_IP", None)
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "--env-file",
+            str(env_file),
+            "-f",
+            "compose.prod.yml",
+            "config",
+            "--format",
+            "json",
+        ],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+    services = json.loads(result.stdout)["services"]
+    assert set(services) == {"app", "db"}
+    for service in services.values():
+        assert "SMARTBUDGET_ALLOWED_IP" not in service["environment"]
+        assert not service.get("ports")
+
+
+@uses_cached_caddy
+@pytest.mark.parametrize(
+    "allowlist",
+    [
+        None,
+        "",
+        "127.0.0.256/32",
+        "127.0.00.1/32",
+        "127.0.0.1",
+        "::1/128",
+        "127.0.0.0/8",
+        "127.0.0.1/32 127.0.0.2/32",
+        "127.0.0.1/32,127.0.0.2/32",
+        "127.0.0.1/32\n127.0.0.2/32",
+    ],
 )
+def test_caddy_refuses_to_start_with_invalid_allowlist(allowlist: str | None) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--pull=never",
+            "--network=none",
+            *caddy_container(allowlist=allowlist),
+            "run",
+            "--config",
+            CADDY_CONFIG_IN_CONTAINER,
+            "--adapter",
+            "caddyfile",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    assert result.returncode == 1, (result.stdout, result.stderr)
+    assert result.stderr.strip() == "SMARTBUDGET_ALLOWED_IP must be one IPv4 /32 CIDR."
+
+
+@uses_cached_caddy
+def test_caddy_adapts_and_validates_one_ipv4_host() -> None:
+    adapted = docker(
+        "run",
+        "--rm",
+        "--pull=never",
+        "--network=none",
+        *caddy_container(allowlist="192.0.2.10/32"),
+        "adapt",
+        "--config",
+        CADDY_CONFIG_IN_CONTAINER,
+        "--adapter",
+        "caddyfile",
+        "--validate",
+    )
+    assert json.loads(adapted)["apps"]["http"]["servers"]
+
+
+@uses_cached_caddy
 def test_caddy_security_headers_and_perimeter_routing(tmp_path: Path) -> None:
-    production_config = Path(__file__).resolve().parents[1] / "deploy/Caddyfile.prod"
     test_config = tmp_path / "Caddyfile"
     # Caddy uses internal TLS for localhost. Keep the production site block intact.
     test_config.write_text(
-        production_config.read_text(encoding="utf-8") + """
+        CADDY_CONFIG.read_text(encoding="utf-8") + """
 http://:4000 {
     @trusted {
         path /_internal/perimeter/check
@@ -149,10 +271,19 @@ http://:4000 {
         if isinstance(route, APIRoute) and uses_admin_dependency(route.dependant):
             path = re.sub(r"\{[^}]+\}", "1", route.path)
             probes.extend((method, path, "503", "admin") for method in route.methods)
-    requests = []
+    denied_probes = [(method, path) for method, path, _, _ in probes] + [
+        ("POST", "/checkout/probe"),
+        ("POST", "/consultations/checkout/1"),
+        ("GET", "/payment/result?probe=synthetic"),
+    ]
+    requests: list[str] = []
     for method, path, _, _ in probes:
-        requests.extend((method, "https://localhost" + path))
-    requests.extend(("GET", "http://localhost/v1/health"))
+        requests.extend(
+            ("127.0.0.1", "198.51.100.1", method, "https://localhost" + path)
+        )
+    for method, path in denied_probes:
+        requests.extend(("127.0.0.2", "127.0.0.1", method, "https://localhost" + path))
+    requests.extend(("127.0.0.2", "127.0.0.1", "GET", "http://localhost/v1/health"))
     result = subprocess.run(
         [
             "docker",
@@ -162,6 +293,7 @@ http://:4000 {
             "--network=none",
             "--add-host=app:127.0.0.1",
             "--env=SMARTBUDGET_HOST=localhost",
+            f"--env=SMARTBUDGET_ALLOWED_IP={TEST_ALLOWLIST}",
             "--mount",
             f"type=bind,source={test_config},target=/etc/caddy/Caddyfile,readonly",
             "--entrypoint=sh",
@@ -172,11 +304,12 @@ caddy run --config /etc/caddy/Caddyfile --adapter caddyfile >&2 &
 curl -4 --retry 5 --retry-connrefused --retry-delay 1 --max-time 5 \\
     --silent --show-error --insecure --output /dev/null https://localhost/v1/health
 while [ "$#" -gt 0 ]; do
-    curl -4 --max-time 5 --silent --show-error --insecure --dump-header - \\
-        --output /dev/null -X "$1" -H 'X-Forwarded-For: 198.51.100.1' \\
+    curl -4 --interface "$1" --max-time 5 --silent --show-error --insecure --dump-header - \\
+        --output /dev/null -X "$3" -H "X-Forwarded-For: $2" \\
+        -H "Forwarded: for=$2;proto=https" -H "X-Real-IP: $2" \\
         -H 'X-Forwarded-Proto: http' \\
-        -H 'X-Forwarded-Perimeter-Policy: unknown' -H 'Cookie: synthetic=value' "$2"
-    shift 2
+        -H 'X-Forwarded-Perimeter-Policy: unknown' -H 'Cookie: synthetic=value' "$4"
+    shift 4
 done
 """,
             "test-caddy",
@@ -189,8 +322,9 @@ done
     assert result.returncode == 0, result.stderr
     *responses, redirect = result.stdout.strip().split("\n\n")
     parser = HeaderParser(policy=policy.HTTP)
+    assert len(responses) == len(probes) + len(denied_probes)
     for block, (_, path, expected_status, expected_policy) in zip(
-        responses, probes, strict=True
+        responses[: len(probes)], probes, strict=True
     ):
         status, _, fields = block.partition("\n")
         assert status.split()[1] == expected_status, (path, block)
@@ -207,6 +341,27 @@ done
         assert headers.get_all("X-Content-Type-Options") == ["nosniff"]
         assert headers.get_all("X-Frame-Options") == ["DENY"]
         assert headers.get_all("Strict-Transport-Security") == ["max-age=31536000"]
+
+    for block, (_, path) in zip(responses[len(probes) :], denied_probes, strict=True):
+        status, _, fields = block.partition("\n")
+        assert status.split()[1] == "403", (path, block)
+        headers = parser.parsestr(fields)
+        assert "X-Test-Policy" not in headers
+        assert headers.get_all("X-Content-Type-Options") == ["nosniff"]
+        assert headers.get_all("X-Frame-Options") == ["DENY"]
+        assert headers.get_all("Strict-Transport-Security") == ["max-age=31536000"]
+        if path.startswith(("/download/", "/consultation/book/")):
+            assert headers.get_all("Cache-Control") == ["private, no-store, max-age=0"]
+            assert headers.get_all("Pragma") == ["no-cache"]
+            assert headers.get_all("Expires") == ["0"]
+            assert headers.get_all("Referrer-Policy") == ["no-referrer"]
+        elif path.startswith("/payment/result"):
+            assert headers.get_all("Cache-Control") == ["no-store"]
+            assert headers.get_all("Referrer-Policy") == ["no-referrer"]
+        else:
+            assert headers.get_all("Referrer-Policy") == [
+                "strict-origin-when-cross-origin"
+            ]
 
     status, _, fields = redirect.partition("\n")
     assert status.split()[1] == "308"
@@ -231,7 +386,7 @@ def docker(*arguments: str) -> str:
 def test_caddy_and_uvicorn_enforce_the_production_proxy_boundary(
     tmp_path: Path,
 ) -> None:
-    root = Path(__file__).resolve().parents[1]
+    root = ROOT
     compose = yaml.safe_load((root / "compose.prod.yml").read_text(encoding="utf-8"))
     command = compose["services"]["app"]["command"]
     probe_file = tmp_path / "perimeter_probe.py"
@@ -276,11 +431,12 @@ def proxy_probe(request: Request):
             caddy,
             "--network",
             network,
-            "--env",
-            "SMARTBUDGET_HOST=localhost",
-            "--mount",
-            f"type=bind,source={root / 'deploy/Caddyfile.prod'},target=/etc/caddy/Caddyfile,readonly",
-            "caddy:2.11-alpine",
+            *caddy_container(allowlist=TEST_ALLOWLIST),
+            "run",
+            "--config",
+            CADDY_CONFIG_IN_CONTAINER,
+            "--adapter",
+            "caddyfile",
         )
         cleanup.callback(docker, "rm", "-f", "-v", caddy)
         peer = docker(
@@ -357,12 +513,16 @@ def proxy_probe(request: Request):
             "scheme": "https",
         }
 
-        def response(path: str, spoofed_ip: str = "198.51.100.1") -> tuple[int, dict]:
+        def response(
+            path: str, spoofed_ip: str = "198.51.100.1", source: str = "127.0.0.1"
+        ) -> tuple[int, dict]:
             data = docker(
                 "exec",
                 caddy,
                 "curl",
                 "-4ksS",
+                "--interface",
+                source,
                 "--max-time",
                 "3",
                 "-o",
@@ -379,6 +539,7 @@ def proxy_probe(request: Request):
             return int(status), json.loads(headers)
 
         assert response(PERIMETER_AUTH_PATH)[0] == 404
+        assert response("/v1/health", "127.0.0.1", source="127.0.0.2")[0] == 403
         direct = docker(
             "exec",
             upstream,
