@@ -95,6 +95,7 @@ networks:
     ipam:
       config:
         - subnet: 172.30.192.0/28
+          ip_range: 172.30.192.8/29
   database:
     internal: true
 

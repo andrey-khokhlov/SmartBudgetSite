@@ -347,7 +347,11 @@ Infrastructure and quality:
   applies a shared 3,000-per-60-second cap and nine independent per-IP token
   buckets with bounded state separate from application quotas. Generic Admin
   covers the protected feedback API and release routes outside `/admin`.
-  The latest SEC-012 revision awaits production deployment and validation.
+  The owner confirmed the Stage 1 proxy bridge assigned the healthy app
+  `172.30.192.2`, Caddy's intended static address, while Caddy was inactive.
+  The repository now restricts dynamic allocation to `172.30.192.8/29`.
+  Production network recreation, allocation checks, and SEC-012 validation
+  remain open.
 - `DOC-002` and `DOC-003` are complete, closing the Official Release Backlog.
   The port contract now distinguishes fallback, local, production-internal,
   Docker host/container, frontend-origin, and external-provider ports while
@@ -617,12 +621,12 @@ owns that evidence, which applies to the temporary review environment.
 private app and PostgreSQL 16 started, migrations were verified, and internal
 health checks passed. Existing backup and restore evidence is in
 [OPS-001](operations.md#automated-postgresql-backup-and-retention-ops-001).
-The owner reports that the latest SEC-012 and Lava.top Checkout Return Flow
-changes await production deployment. General external access and commercial
-sales remain closed.
+The owner confirmed the updated app is deployed and healthy. Caddy remains
+inactive. General external access and commercial sales remain closed.
 
-The next priority is to deploy and verify the intended revision privately,
-then prepare the approved controlled Caddy access rules for Stage 2.
+The next priority is to
+[recreate and verify the proxy network](operations.md#recreate-the-stage-1-proxy-network-after-the-ipam-change)
+privately, then prepare the approved controlled Caddy access rules for Stage 2.
 Controlled HTTPS, live integration validation, and public commercial release
 remain ahead under the [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 

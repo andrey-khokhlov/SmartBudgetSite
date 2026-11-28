@@ -179,7 +179,9 @@ visitor access and paid public sales require
   Caddy share the proxy bridge, which also provides outbound access for
   application integrations and Caddy's certificate automation. Keep other
   containers off the proxy bridge and verify its `172.30.192.0/28` subnet
-  does not overlap a route on the deployment host.
+  does not overlap a route on the deployment host. Dynamic allocation is
+  restricted to `172.30.192.8/29`. Caddy's static `172.30.192.2` stays within
+  the subnet and outside that allocation range.
 - Caddy is the direct public IPv4 edge. It strips incoming `Forwarded`,
   `X-Forwarded-*` and `X-Real-IP` values. Its reverse proxy sets the standard
   forwarded client IP, scheme and host from the connection and request.
@@ -267,6 +269,45 @@ only Caddy is reachable, that the app observes the actual client IP and
 HTTPS scheme, and that client-provided forwarding headers do not change its
 rate-limit identity. Local Docker Desktop behavior cannot establish those
 Linux ingress results.
+
+### Recreate the Stage 1 proxy network after the IPAM change
+
+An existing proxy bridge must be recreated to apply the new dynamic range.
+During an authorized Stage 1 maintenance window, keep Caddy and its `public`
+profile inactive. Confirm the production project name, the current database
+container and named volume mounts, and that only the app uses the proxy bridge.
+Record the database container ID and volume names for comparison after the
+change.
+
+Stop and remove only `app`, without volume removal. Verify the Compose proxy
+network has no remaining endpoints before deleting it. With the default
+production project name, the commands are:
+
+```bash
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml rm --stop --force app
+docker network inspect --format '{{json .Containers}}' smartbudget-production_proxy
+```
+
+After verifying the empty network and its Compose ownership, remove only that
+proxy bridge. Start `app` without recreating its database dependency:
+
+```bash
+docker network rm smartbudget-production_proxy
+docker compose --env-file /etc/smartbudget/compose.env -f compose.prod.yml up -d --no-deps app
+```
+
+Keep the database container, database network, and all persistent volumes in
+place. Avoid project-wide teardown, volume removal, and pruning. Verify that
+the database container ID and volume names match the recorded values and the
+app uses its existing upload volume and passes loopback `/v1/health`.
+
+Before enabling Caddy, inspect the recreated bridge for `172.30.192.0/28` and
+`172.30.192.8/29`, confirm the app IP is in the dynamic range and that no
+endpoint holds `172.30.192.2`, and verify the exact Caddy address and
+`SMARTBUDGET_CADDY_PEER` in the intended configuration. Recheck route overlap.
+Keep Caddy inactive if any check fails. When approved Stage 2 begins, confirm
+that only Caddy receives `172.30.192.2` and perform the existing perimeter
+validation.
 
 ### Controlled migrations and release prerequisites
 
@@ -1744,8 +1785,11 @@ revision `9f3b1a7c2d84`. The owner also verified scheduled encrypted backups,
 an isolated restore from an automated archive, and a production heartbeat
 from a manually initiated backup. See the
 [OPS-001 evidence and runbook](#automated-postgresql-backup-and-retention-ops-001).
-The owner reports that the latest SEC-012 and Lava.top Checkout Return Flow
-changes await production deployment. The following work remains open:
+The owner confirmed the updated application is deployed and healthy. The
+Stage 1 proxy bridge gave the app Caddy's intended static address while Caddy
+was inactive. The corrected range awaits
+[network recreation and verification](#recreate-the-stage-1-proxy-network-after-the-ipam-change).
+The following work remains open:
 
 - Production backup pruning, persistent catch-up, scheduled heartbeat and
   production backup failure monitoring validation.

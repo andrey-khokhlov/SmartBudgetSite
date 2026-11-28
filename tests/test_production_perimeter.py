@@ -1,6 +1,7 @@
 from contextlib import ExitStack
 from email import policy
 from email.parser import HeaderParser
+from ipaddress import ip_address, ip_network
 import json
 import os
 from pathlib import Path
@@ -17,6 +18,21 @@ from app import main
 from app.api.v1.perimeter import PERIMETER_AUTH_PATH
 from app.core.config import Settings
 from app.dependencies import require_admin
+
+
+def test_production_proxy_reserves_caddy_address() -> None:
+    compose_path = Path(__file__).resolve().parents[1] / "compose.prod.yml"
+    compose = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
+    (proxy_ipam,) = compose["networks"]["proxy"]["ipam"]["config"]
+    subnet = ip_network(proxy_ipam["subnet"])
+    dynamic_range = ip_network(proxy_ipam["ip_range"])
+    services = compose["services"]
+    caddy_ip = ip_address(services["caddy"]["networks"]["proxy"]["ipv4_address"])
+
+    assert dynamic_range.subnet_of(subnet)
+    assert caddy_ip in subnet
+    assert caddy_ip not in dynamic_range
+    assert str(caddy_ip) == services["app"]["environment"]["SMARTBUDGET_CADDY_PEER"]
 
 
 def uses_admin_dependency(dependant) -> bool:
