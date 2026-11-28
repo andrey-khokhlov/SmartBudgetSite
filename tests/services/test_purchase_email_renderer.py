@@ -40,7 +40,7 @@ def test_purchase_template_matches_approved_copy(section, kind, language):
     )
     documented = renderer.LINK_MARKER.sub(
         lambda marker: (
-            f"[{marker[2]}]({POLICY_PATH})"
+            f"{marker[2]} (`{POLICY_PATH}`)"
             if marker[1] == "refund_policy"
             else f"[{marker[2]}]"
         ),

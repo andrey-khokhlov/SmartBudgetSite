@@ -835,8 +835,8 @@ and commercial sales require the Stage 4 authorization below.
    Pre-release test payments and refunds remain excluded under those rules.
 
 `REL-001`, `REL-002`, `OPS-001`, `SEC-012`, `SEO-001`, `UX-001`, and the other
-Expected Release Gaps retain their own completion criteria. WQ-003 remains
-open. Public commercial launch remains unauthorized.
+Expected Release Gaps retain their own completion criteria. Public commercial
+launch remains unauthorized.
 
 ### Operational readiness — mandatory pre-sale gate
 

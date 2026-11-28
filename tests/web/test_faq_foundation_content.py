@@ -203,11 +203,16 @@ def test_support_faq_matches_approved_copy_and_keeps_refund_form_available(
     group = FAQContent(response.text).groups[4]
     assert group["id"] == "support-and-refunds"
     approved = approved_questions(approved_section(5), lang)
+    # The approved copy annotates link destinations outside the visible text.
     assert [
-        [question["title"], *question["paragraphs"]]
-        for question in group["questions"]
+        [question["title"], *question["paragraphs"]] for question in group["questions"]
     ] == [
-        [re.sub(r"\[([^\]]+)\](?:\(/[^)]+\))?", r"\1", line) for line in question]
+        [
+            re.sub(r"\[([^\]]+)\](?:\(/[^)]+\))?", r"\1", line)
+            .replace(" (`/refund-request`)", "")
+            .replace(" (`/legal/refund-policy`)", "")
+            for line in question
+        ]
         for question in approved
     ]
 
@@ -223,7 +228,10 @@ def test_support_faq_matches_approved_copy_and_keeps_refund_form_available(
         target = client.get(href)
         assert target.status_code == 200
         assert f'<html lang="{lang}">' in target.text
-    assert client.get(policy_href).status_code == (200 if available else 404)
+    policy_response = client.get(policy_href)
+    assert policy_response.status_code == (200 if available else 404)
+    if available:
+        assert f'<html lang="{lang}">' in policy_response.text
 
 
 @pytest.mark.parametrize("lang", ["ru", "en"])

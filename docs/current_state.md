@@ -633,6 +633,9 @@ validation awaits separate owner authorization. General visitor access and
 commercial sales remain closed under the
 [owner-approved rollout](release_readiness.md#gate-4--production-deployment-and-live-integration-validation).
 
+The local ordinary pytest baseline was restored before Stage 3 with 1,326
+passed and 29 skipped after updating the bilingual approved-copy comparisons.
+
 ### Pre-release operational readiness
 
 G13D Purchase Delivery Monitoring is complete locally. Production deployment,

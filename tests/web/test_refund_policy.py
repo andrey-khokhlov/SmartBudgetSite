@@ -60,7 +60,11 @@ def approved_policy_blocks(lang):
         elif line.startswith("#### "):
             blocks.append(("h2", line[5:]))
         else:
-            plain = re.sub(r"\[([^\]]+)\]\(/[^)]+\)", r"\1", line).replace("**", "")
+            plain = re.sub(
+                r" \(`/(?:refund-request|legal/seller-information|feedback)`\)",
+                "",
+                line,
+            ).replace("**", "")
             blocks.append(("p", plain))
     return blocks
 
