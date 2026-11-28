@@ -89,12 +89,12 @@ Commerce and delivery:
   as separate `SaleItem` rows, the `Sale` total is derived from those snapshots,
   and successful Lava.top invoice creation returns an HTTP 303 redirect to the
   hosted checkout URL.
-- `/payment/result` now provides a neutral verification state and controlled
-  initiation-error state. No Lava.top browser return is currently integrated,
-  and the buyer may remain on Lava.top after payment. The route does not treat
-  browser navigation as payment proof,
-  mark sales paid, create entitlements, expose delivery or booking access, or
-  send purchase email.
+- Lava.top invoice creation now includes localized browser return URLs from
+  the server-owned `PUBLIC_BASE_URL` wherever an HTTPS base is configured.
+  `/payment/result` reads the stored Sale status by exact Lava.top invoice ID
+  and renders generic RU/EN outcomes. Initiation and capacity errors retain
+  their existing presentation. Browser results are read-only and protected
+  against caching and referrer disclosure.
 - Authoritative Lava.top payment confirmation is implemented through a
   dedicated inbound `X-Api-Key` webhook for `payment.success` and
   `payment.failed`, plus an explicit server-to-server invoice lookup/manual
@@ -198,11 +198,10 @@ Commerce and delivery:
   confirm live product-only and bundle Resend delivery plus protected access;
   provider click-tracking behavior for capability links and the remaining
   customer journeys remain unvalidated.
-- The approved MVP checkout uses hosted Lava.top checkout. No Lava.top browser
-  return is currently integrated, so the buyer may remain on Lava.top after
-  payment; `/payment/result` remains a neutral verification route. Paid state,
-  entitlements, customer content, and purchase emails require the authenticated
-  webhook or founder-operated explicit server-to-server verification.
+- Hosted Lava.top checkout and the browser return have local regression
+  coverage. Confirmed payment, entitlements, customer access, and purchase
+  emails remain controlled by authoritative webhook and server-to-server
+  reconciliation workflows.
 - The catalog-defined selected price determines currency: RUB for Russian
   customers and EUR for international customers. Payout routing remains
   operational rather than application business logic. The planned foreign EUR
@@ -485,9 +484,9 @@ R42, R53, and the relevant release gates stay open.
 The remaining live validation of the approved Lava.top integration and customer
 delivery requires the real deployed HTTPS environment. Production deployment
 and that validation are intentionally deferred until the approved
-pre-deployment release gates below are complete. No Lava.top browser return is
-currently integrated; `/payment/result` remains neutral unless a supported
-return flow is separately approved and implemented.
+pre-deployment release gates below are complete. The implemented Lava.top
+browser return still needs live provider and production customer-journey
+validation under REL-001.
 Availability of Stripe is not an MVP release dependency. Hosting availability,
 domain ownership, DNS infrastructure, and Calendly account setup are not the
 current blockers.

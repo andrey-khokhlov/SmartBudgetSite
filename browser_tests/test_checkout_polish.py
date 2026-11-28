@@ -9,8 +9,62 @@ from app.core.db import Base
 from app.main import app
 from app.models.product import Product
 from app.models.product_price import ProductPrice
+from app.models.sale import Sale
 from app.models.service_addon import ServiceAddon
 from browser_tests.test_feedback_form import _running_app
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize(
+    ("lang", "pending_title", "paid_title"),
+    [
+        ("en", "Payment is being verified", "Payment confirmed"),
+        ("ru", "Платёж проверяется", "Оплата подтверждена"),
+    ],
+)
+def test_browser_return_refresh_reads_current_payment_status(
+    review_sessions, lang, pending_title, paid_title
+):
+    invoice_id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    with review_sessions.begin() as db:
+        Base.metadata.create_all(db.get_bind())
+        sale = Sale(
+            customer_email="browser-return-private@example.test",
+            amount=Decimal("39.00"),
+            currency="EUR",
+            payment_provider="lava_top",
+            payment_status="pending",
+            external_payment_id=invoice_id,
+        )
+        db.add(sale)
+        db.flush()
+        sale_id = sale.id
+
+    with _running_app() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, channel="chromium")
+        try:
+            page = browser.new_page(viewport={"width": 390, "height": 900})
+            response = page.goto(
+                f"{base_url}/payment/result?invoiceId={invoice_id}&status=success&lang={lang}"
+            )
+            assert response is not None and response.ok
+            assert response.headers["cache-control"] == "no-store"
+            assert response.headers["referrer-policy"] == "no-referrer"
+            expect(page.get_by_role("heading", name=pending_title)).to_be_visible()
+            alternate = "ru" if lang == "en" else "en"
+            expect(page.locator(".language-switch a")).to_have_attribute(
+                "href", f"?lang={alternate}"
+            )
+
+            with review_sessions.begin() as db:
+                db.get(Sale, sale_id).payment_status = "paid"
+
+            page.reload()
+            expect(page.get_by_role("heading", name=paid_title)).to_be_visible()
+            assert invoice_id not in page.content()
+            assert "browser-return-private@example.test" not in page.content()
+        finally:
+            browser.close()
 
 
 @pytest.mark.browser

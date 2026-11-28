@@ -5,12 +5,14 @@ from ipaddress import IPv4Address
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import AnyHttpUrl, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ENV_FILE allows switching environments (dev/prod/test)
 # Default is ".env" if ENV_FILE is not explicitly set
 ENV_FILE = os.getenv("ENV_FILE", ".env")
+PAYMENT_RESULT_PATH = "/payment/result"
+LAVA_TOP_RETURN_URL_MAX_LENGTH = 512
 
 
 class Settings(BaseSettings):
@@ -162,26 +164,6 @@ class Settings(BaseSettings):
                         "delivery is enabled"
                     )
 
-            parsed_base_url = urlsplit(required_email_settings["PUBLIC_BASE_URL"])
-            if (
-                parsed_base_url.scheme not in {"http", "https"}
-                or not parsed_base_url.netloc
-                or parsed_base_url.query
-                or parsed_base_url.fragment
-            ):
-                raise ValueError(
-                    "PUBLIC_BASE_URL must be an absolute HTTP(S) URL without "
-                    "a query string or fragment"
-                )
-            if self.APP_ENV == "prod" and parsed_base_url.scheme != "https":
-                raise ValueError(
-                    "PUBLIC_BASE_URL must use HTTPS when purchase email delivery "
-                    "is enabled in production"
-                )
-            self.PUBLIC_BASE_URL = required_email_settings["PUBLIC_BASE_URL"].rstrip(
-                "/"
-            )
-
         if self.APP_ENV != "prod":
             return self
 
@@ -200,6 +182,75 @@ class Settings(BaseSettings):
                 "checkout is enabled in production"
             )
 
+        return self
+
+    @model_validator(mode="after")
+    def validate_public_base_url(self) -> "Settings":
+        base_url = (self.PUBLIC_BASE_URL or "").strip()
+        lava_checkout_enabled = bool((self.LAVA_TOP_API_KEY or "").strip())
+        production_lava_checkout = self.APP_ENV == "prod" and lava_checkout_enabled
+        if not base_url:
+            if production_lava_checkout:
+                raise ValueError(
+                    "PUBLIC_BASE_URL must be set when Lava.top checkout is enabled in production"
+                )
+            self.PUBLIC_BASE_URL = None
+            return self
+
+        try:
+            parsed = urlsplit(base_url)
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.hostname
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.netloc.endswith(":")
+                or "%" in parsed.netloc
+                or parsed.port == 0
+                or any(char in base_url for char in "?#\\")
+                or any(
+                    char.isspace() or ord(char) < 32 or ord(char) == 127
+                    for char in base_url
+                )
+            ):
+                raise ValueError
+            public_url = AnyHttpUrl(base_url)
+        except ValueError:
+            raise ValueError(
+                "PUBLIC_BASE_URL must be an absolute HTTP(S) URL without credentials, "
+                "a query string or a fragment"
+            ) from None
+
+        requires_https = self.APP_ENV == "prod" and (
+            lava_checkout_enabled or self.PURCHASE_EMAIL_DELIVERY_ENABLED
+        )
+        if requires_https and parsed.scheme != "https":
+            raise ValueError(
+                "PUBLIC_BASE_URL must use HTTPS when Lava.top checkout or purchase "
+                "email delivery is enabled in production"
+            )
+
+        if production_lava_checkout and (
+            public_url.host != self.SMARTBUDGET_HOST.lower()
+            or parsed.path not in {"", "/"}
+            or parsed.port not in {None, 443}
+        ):
+            raise ValueError(
+                "PUBLIC_BASE_URL must be the HTTPS origin of SMARTBUDGET_HOST with "
+                "the default port and an empty or root path for production Lava.top checkout"
+            )
+
+        normalized_url = str(public_url).rstrip("/")
+        return_url_length = len(f"{normalized_url}{PAYMENT_RESULT_PATH}?lang=en")
+        if (
+            lava_checkout_enabled
+            and parsed.scheme == "https"
+            and return_url_length > LAVA_TOP_RETURN_URL_MAX_LENGTH
+        ):
+            raise ValueError(
+                "PUBLIC_BASE_URL exceeds the Lava.top return URL length limit"
+            )
+        self.PUBLIC_BASE_URL = normalized_url
         return self
 
     @model_validator(mode="after")

@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from app.core.config import settings
 from app.models.consultation_entitlement import ConsultationEntitlement
 from app.models.download_entitlement import DownloadEntitlement
 from app.models.enums import PaymentStatus
@@ -121,8 +122,9 @@ def provider(monkeypatch):
 
 @pytest.mark.parametrize("language", ["ru", "en"])
 def test_post_creates_only_pending_service_sale(
-    client, db_session, catalog, provider, language
+    client, db_session, catalog, provider, language, monkeypatch
 ):
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://shop.example.test")
     offer_id = catalog["EUR"]
     path = f"/consultations/checkout/{offer_id}"
     checkout = client.get(path, params={"currency": "EUR", "lang": language})
@@ -141,11 +143,15 @@ def test_post_creates_only_pending_service_sale(
     )
     assert response.status_code == 303
     assert response.headers["location"] == "https://pay.example/hosted"
+    return_url = f"https://shop.example.test/payment/result?lang={language}"
     provider.assert_called_once_with(
         email="buyer@example.com",
         offer_id="private-EUR",
         currency="EUR",
         amount=Decimal("101.25"),
+        successful_return_url=return_url,
+        failure_return_url=return_url,
+        cancel_return_url=return_url,
     )
     sale = db_session.query(Sale).one()
     assert sale.payment_status == PaymentStatus.PENDING

@@ -322,11 +322,10 @@ the Product ID. The real mapping is operational data and is not hardcoded or
 seeded until a repository convention for provider mapping population is
 approved.
 
-The provider client, invoice orchestration, public checkout initiation route,
-and neutral payment result page are implemented with mocked provider tests.
-Webhook authentication, retry semantics, payout-country compatibility, real
-hosted-checkout browser behavior, and complete production payment behavior
-remain unvalidated.
+The provider client, invoice orchestration, and public checkout initiation
+and return routes have local coverage with mocked provider calls. Live Lava.top
+browser returns, webhook delivery, payout-country compatibility, and complete
+production payment behavior remain open for release-environment validation.
 
 The account observations do not change the approved responsibility boundary.
 Lava.top owns only the provider boundary, including hosted checkout, payment
@@ -363,22 +362,31 @@ Product page
     -> Backend prepares pending Sale and SaleItems
     -> Backend creates Lava.top payment
     -> Hosted Lava.top checkout
-    -> Payment
-    -> Buyer may remain on Lava.top
+    -> Payment outcome
+    -> Browser return to /payment/result
 ```
 
-No Lava.top browser return to SmartBudgetSite is currently integrated; after
-payment, the buyer may remain on Lava.top. `/payment/result` provides only a
-neutral verification state if opened directly or used by a future supported
-redirect. Browser navigation is never proof of payment. Payment completion is
-currently confirmed automatically by the authenticated provider webhook.
+The shared invoice creation path sets the same localized result URL for success,
+failure, and cancellation using `PUBLIC_BASE_URL` and `Sale.purchase_language`.
+Lava.top preserves `lang` and appends `invoiceId` and `status` under its
+[documented return contract](https://developers.lava.top/en). Live return
+behavior still needs validation.
+
+`GET /payment/result` uses a single exact provider and UUID invoice lookup on
+the existing unique index. It reads only the stored payment status, without a
+row lock. Only `paid`, `pending`, `failed`, and `refunded` are shown as known
+states. Invalid, missing, ambiguous, or unknown IDs receive neutral guidance.
+Browser `status` has no effect. The page keeps the query out of rendered links
+and sends `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+
+The authenticated provider webhook owns automatic payment confirmation.
 Explicit server-to-server payment verification is available to the founder for
 known invoices and live validation. G13D-2a implements an
 [automatic recovery pass](#purchase-delivery-monitoring-g13d) for unresolved
 invoices. Scheduled execution remains open.
 
-While backend confirmation is pending, the payment result page may display a
-payment-confirmation state. Only confirmed payment may:
+The result page is read-only across all states, including repeated refreshes.
+Only authoritative payment processing may:
 
 - mark a `Sale` as paid;
 - create download entitlements;

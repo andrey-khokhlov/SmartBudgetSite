@@ -81,6 +81,11 @@ def test_capability_path_detection_ignores_ordinary_routes(path):
             "encoded-secret",
             "/forward%2Fconsultation%2Fbook%2F[REDACTED]%2Fcontinue",
         ),
+        (
+            "/payment/result?invoiceId=3fa85f64-5717-4562-b3fc-2c963f66afa6&status=success",
+            "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "/payment/result",
+        ),
     ],
 )
 def test_uvicorn_access_output_redacts_capabilities_and_queries(

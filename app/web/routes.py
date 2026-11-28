@@ -19,7 +19,7 @@ from app.products_catalog import products_index, product_by_slug
 from app.faq_content import FAQ_GROUPS
 from app.core.i18n import get_lang, set_lang_cookie, t
 from app.web.navigation import public_navigation_context
-from app.core.config import settings
+from app.core.config import PAYMENT_RESULT_PATH, settings
 from app.dependencies import get_db, require_admin
 from app.repositories.feedback_admin_repository import FeedbackAdminRepository
 from app.repositories.refund_request_repository import (
@@ -92,6 +92,7 @@ from app.services.payment_service import (
     ProductReleaseUnavailableError,
     initiate_lava_top_product_checkout,
     initiate_lava_top_standalone_consultation_checkout,
+    resolve_lava_top_payment_result,
     resolve_standalone_consultation_checkout,
 )
 from app.services.payment_provider_offer_service import (
@@ -1490,14 +1491,15 @@ def initiate_consultation_checkout(
     )
 
 
-@router.get("/payment/result", response_class=HTMLResponse)
-def payment_result_page(request: Request):
-    """Render the non-authoritative browser return state for a payment."""
-
+@router.get(PAYMENT_RESULT_PATH, response_class=HTMLResponse)
+def payment_result_page(request: Request, db: Session = Depends(get_db)):
+    result = resolve_lava_top_payment_result(
+        db, request.query_params.getlist("invoiceId")
+    )
     return render(
         request,
         "payment_result.html",
-        {"result_state": "pending"},
+        {"result_state": result, "language_switch_query": ""},
     )
 
 

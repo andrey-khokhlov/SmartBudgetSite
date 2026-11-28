@@ -13,7 +13,8 @@ from app.services.lava_top.client import (
 )
 
 
-def test_create_invoice_sends_sale_snapshot_and_parses_response(monkeypatch):
+@pytest.mark.parametrize("language", [None, "ru", "en"])
+def test_create_invoice_sends_sale_snapshot_and_parses_response(monkeypatch, language):
     captured = {}
 
     def fake_post(url, **kwargs):
@@ -34,11 +35,20 @@ def test_create_invoice_sends_sale_snapshot_and_parses_response(monkeypatch):
     monkeypatch.setattr(settings, "LAVA_TOP_API_BASE_URL", "https://gate.lava.top/")
     monkeypatch.setattr(httpx, "post", fake_post)
 
+    return_urls = {}
+    if language is not None:
+        return_url = f"https://shop.example.test/payment/result?lang={language}"
+        return_urls = {
+            "successful_return_url": return_url,
+            "failure_return_url": return_url,
+            "cancel_return_url": return_url,
+        }
     invoice = create_invoice(
         email="buyer@example.com",
         offer_id="offer-from-database",
         currency="RUB",
         amount=Decimal("50.00"),
+        **return_urls,
     )
 
     assert captured["url"] == "https://gate.lava.top/api/v3/invoice"
@@ -48,6 +58,7 @@ def test_create_invoice_sends_sale_snapshot_and_parses_response(monkeypatch):
         "offerId": "offer-from-database",
         "currency": "RUB",
         "amount": 50.0,
+        **return_urls,
     }
     assert isinstance(captured["timeout"], httpx.Timeout)
     assert invoice.invoice_id == "invoice-123"

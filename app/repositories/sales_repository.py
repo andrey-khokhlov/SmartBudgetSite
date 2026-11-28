@@ -94,6 +94,21 @@ def list_admin_sales(
     return list(db.execute(stmt).scalars().all())
 
 
+def get_sale_payment_status(
+    db: Session, *, payment_provider: str, external_payment_id: str
+) -> str | None:
+    """Read only the status associated with an exact provider invoice."""
+    stmt = (
+        select(Sale.payment_status)
+        .where(
+            Sale.payment_provider == payment_provider,
+            Sale.external_payment_id == external_payment_id,
+        )
+        .execution_options(autoflush=False)
+    )
+    return db.execute(stmt).scalar_one_or_none()
+
+
 def get_sale_for_payment_reconciliation(
     db: Session,
     *,

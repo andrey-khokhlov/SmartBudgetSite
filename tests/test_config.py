@@ -247,6 +247,22 @@ def test_production_purchase_email_requires_https_public_base_url() -> None:
         )
 
 
+def test_production_purchase_email_alone_allows_a_different_https_base() -> None:
+    configured_settings = build_settings(
+        APP_ENV="prod",
+        ADMIN_TOKEN="production-admin-token",
+        SECRET_KEY="production-secret-key",
+        SMARTBUDGET_HOST="shop.example.test",
+        LAVA_TOP_API_KEY=None,
+        PURCHASE_EMAIL_DELIVERY_ENABLED=True,
+        RESEND_API_KEY="resend-key",
+        MAIL_FROM_EMAIL="support@example.test",
+        MAIL_FROM_NAME="SmartBudget",
+        PUBLIC_BASE_URL="https://access.example.test:8443/store/",
+    )
+    assert configured_settings.PUBLIC_BASE_URL == "https://access.example.test:8443/store"
+
+
 def test_production_lava_checkout_requires_separate_webhook_secret() -> None:
     with pytest.raises(
         ValidationError,
@@ -260,17 +276,84 @@ def test_production_lava_checkout_requires_separate_webhook_secret() -> None:
         )
 
 
-def test_production_lava_checkout_accepts_webhook_secret() -> None:
+@pytest.mark.parametrize(
+    "public_base_url",
+    [
+        "https://shop.example.test",
+        "https://shop.example.test/",
+        "https://shop.example.test:443",
+        "HTTPS://SHOP.EXAMPLE.TEST:443/",
+    ],
+)
+def test_production_lava_checkout_accepts_matching_https_origin(public_base_url):
     configured_settings = build_settings(
         APP_ENV="prod",
         ADMIN_TOKEN="production-admin-token",
         SECRET_KEY="production-secret-key",
         LAVA_TOP_API_KEY="outbound-key",
         LAVA_TOP_WEBHOOK_SECRET="different-inbound-key",
-        SMARTBUDGET_HOST="smartbudget.example.test",
+        SMARTBUDGET_HOST="Shop.Example.Test",
+        PURCHASE_EMAIL_DELIVERY_ENABLED=False,
+        PUBLIC_BASE_URL=public_base_url,
     )
 
     assert configured_settings.LAVA_TOP_WEBHOOK_SECRET == "different-inbound-key"
+    assert configured_settings.PUBLIC_BASE_URL == "https://shop.example.test"
+    assert not configured_settings.PURCHASE_EMAIL_DELIVERY_ENABLED
+
+
+@pytest.mark.parametrize(
+    "public_base_url",
+    [
+        None,
+        " ",
+        "https://shop.example.test/store",
+        "https://shop.example.test/./",
+        "https://shop.example.test:8443",
+        "https://localhost",
+        "https://other.example.test",
+        "http://shop.example.test",
+        "/relative",
+        "https:///shop.example.test",
+        "https://user:password@shop.example.test/",
+        "https://shop.example.test?source=checkout",
+        "https://shop.example.test#",
+        "https://shop.example.test:bad",
+        "https://shop.example.test:65536",
+        "https://shop.example.test:",
+        "https://shop.example.test\\other.example.test",
+    ],
+)
+def test_production_lava_checkout_requires_safe_https_base_url(public_base_url):
+    with pytest.raises(ValidationError, match="PUBLIC_BASE_URL"):
+        build_settings(
+            APP_ENV="prod",
+            ADMIN_TOKEN="production-admin-token",
+            SECRET_KEY="production-secret-key",
+            LAVA_TOP_API_KEY="outbound-key",
+            LAVA_TOP_WEBHOOK_SECRET="different-inbound-key",
+            SMARTBUDGET_HOST="shop.example.test",
+            PURCHASE_EMAIL_DELIVERY_ENABLED=False,
+            PUBLIC_BASE_URL=public_base_url,
+        )
+
+
+@pytest.mark.parametrize("app_env", ["dev", "test"])
+def test_local_lava_checkout_can_keep_http_base_url(app_env: str) -> None:
+    configured_settings = build_settings(
+        APP_ENV=app_env,
+        LAVA_TOP_API_KEY="example",
+        PUBLIC_BASE_URL="http://127.0.0.1:8800/",
+    )
+    assert configured_settings.PUBLIC_BASE_URL == "http://127.0.0.1:8800"
+
+
+def test_lava_top_return_url_still_has_a_length_limit():
+    public_base_url = "https://shop.example.test/" + "x" * 512
+    with pytest.raises(ValidationError, match="Lava.top return URL length limit"):
+        build_settings(
+            APP_ENV="test", LAVA_TOP_API_KEY="example", PUBLIC_BASE_URL=public_base_url
+        )
 
 
 def test_lava_top_inbound_and_outbound_secrets_must_differ() -> None:

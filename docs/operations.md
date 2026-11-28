@@ -654,9 +654,18 @@ Purchase-email delivery is controlled by
 `PURCHASE_EMAIL_DELIVERY_ENABLED`. When enabled, `RESEND_API_KEY`,
 `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, and an absolute server-owned
 `PUBLIC_BASE_URL` are required at startup. `PUBLIC_BASE_URL` owns customer
-download and consultation link construction; request Host headers are never
-used. Keep delivery disabled in local environments unless a deliberate
-provider send is intended. Automated tests always use fake transports.
+download and consultation link construction. Keep delivery disabled in local
+environments unless a deliberate provider send is intended. Automated tests
+always use fake transports.
+
+When `LAVA_TOP_API_KEY` is configured in production, `PUBLIC_BASE_URL` must be
+the HTTPS origin served by `SMARTBUDGET_HOST`, regardless of the email switch.
+For example, `SMARTBUDGET_HOST=shop.example.test` uses
+`PUBLIC_BASE_URL=https://shop.example.test`. A root slash and explicit port
+443 are accepted. The URL must omit credentials, query strings, and fragments.
+Each final return URL must fit Lava.top's 512-character limit. Local development
+can use an HTTP base URL. Checkout omits the return fields when the local base
+URL is HTTP or unset.
 
 `PRODUCT_RELEASE_MAX_UPLOAD_BYTES` owns the application-level administrative
 release archive limit. Its default and production value are 52,428,800 bytes
@@ -904,6 +913,19 @@ fallback when the Admin UI is unavailable:
 Public checkout continues to resolve the exact active price, active release,
 and Product/provider mapping server-side and fails closed when configuration is
 missing.
+
+When an HTTPS public base is configured, checkout supplies all three Lava.top
+return URLs with the persisted purchase language. The result page uses only
+the exact returned `invoiceId` to read one payment status from the existing
+provider/invoice index. Missing, malformed, or ambiguous identifiers skip the
+database lookup. Browser `status` is ignored. The result has `no-store` and
+`no-referrer`, and the language switch carries only `lang`. Access logging
+continues to omit the query string.
+
+Mocked checkout and local browser regressions cover the implemented return
+flow. Release validation still needs the real hosted success, failure, and
+cancellation behaviors and a refresh after authoritative confirmation. Verify
+the customer journey under REL-001 in the deployed HTTPS environment.
 
 ## G13D-1 purchase delivery monitoring
 

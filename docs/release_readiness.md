@@ -1017,12 +1017,17 @@ The public checkout now posts customer email, explicit currency, and the
 selected consultation state to SmartBudgetSite. Server-side orchestration
 re-resolves every authoritative commerce value, persists separate product and
 optional consultation snapshots, derives the sale total from those items, and
-returns HTTP 303 to the hosted Lava.top checkout. `/payment/result` provides
-only a neutral pending state, and expected initiation failures render an opaque
-customer-facing result without creating paid or fulfillment state.
-No Lava.top browser return to SmartBudgetSite is currently integrated, so a
-buyer may remain on Lava.top after payment; browser navigation is not payment
-proof.
+returns HTTP 303 to the hosted Lava.top checkout. The shared invoice path
+sets localized success, failure, and cancellation return URLs. The result page
+displays only the stored payment status for the exact Lava.top invoice ID.
+Unknown results receive neutral guidance, and checkout initiation and capacity
+errors retain their existing presentation. Local tests cover mocked invoice
+creation, browser returns before and after confirmation, and privacy headers.
+
+REL-001 remains open for the live Lava.top return and deployed customer journey.
+Verify all three outcomes, preservation of `lang`, the returned invoice ID,
+the page before webhook confirmation and after refresh, and delivery through
+the existing webhook flow. Production SEC-012 validation remains open.
 
 The first authoritative confirmation and fulfillment slice is implemented:
 authenticated Lava.top Payment-result events and explicit invoice lookup share
@@ -1188,6 +1193,13 @@ per-IP perimeter limits, application quota enforcement, and `429` with
 `Retry-After` through Caddy. Verify HTTPS redirects, response headers, and
 capability-safe caching and logging. See the
 [production Docker runbook](operations.md#production-docker-configuration-rel-002).
+
+`/payment/result` performs one indexed status lookup per syntactically valid
+invoice UUID and has no dedicated SEC-007 or SEC-012 quota. Before public
+commercial launch, run controlled concurrent requests using valid-format
+unknown invoice IDs. Measure database connection-pool pressure, response
+latency, and impact on other endpoints. Add rate limiting only if validation
+evidence justifies it and the change is separately approved.
 
 ### Public discoverability (`SEO-001`)
 

@@ -62,6 +62,9 @@ def create_invoice(
     offer_id: str,
     currency: str,
     amount: Decimal,
+    successful_return_url: str | None = None,
+    failure_return_url: str | None = None,
+    cancel_return_url: str | None = None,
 ) -> LavaTopInvoice:
     """Create a hosted Lava.top invoice using server-owned credentials."""
 
@@ -69,16 +72,24 @@ def create_invoice(
     if not api_key:
         raise LavaTopConfigurationError("Lava.top API key is not configured.")
 
+    payload = {
+        "email": email,
+        "offerId": offer_id,
+        "currency": currency,
+        "amount": float(amount),
+    }
+    return_urls = {
+        "successful_return_url": successful_return_url,
+        "failure_return_url": failure_return_url,
+        "cancel_return_url": cancel_return_url,
+    }
+    payload.update({key: url for key, url in return_urls.items() if url is not None})
+
     try:
         response = httpx.post(
             f"{settings.LAVA_TOP_API_BASE_URL.rstrip('/')}/api/v3/invoice",
             headers={"X-Api-Key": api_key},
-            json={
-                "email": email,
-                "offerId": offer_id,
-                "currency": currency,
-                "amount": float(amount),
-            },
+            json=payload,
             timeout=httpx.Timeout(10.0, connect=5.0),
         )
         response.raise_for_status()

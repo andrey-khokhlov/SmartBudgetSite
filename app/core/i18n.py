@@ -263,13 +263,29 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.product_refund": "You can receive a full refund for SmartBudget within 14 calendar days of payment confirmation.",
         "checkout.consultation_refund": "You can cancel your consultation before it starts and receive a full refund of the amount paid for the service. The terms applicable after a consultation has started and the refund request procedure are described in the Refund Policy.",
         "payment_result.title": "Payment status",
+        "payment_result.paid_title": "Payment confirmed",
+        "payment_result.paid_message": (
+            "Purchase access instructions are sent to the email address you used at checkout."
+        ),
         "payment_result.pending_title": "Payment is being verified",
         "payment_result.pending_message": (
-            "SmartBudgetSite has not yet received authoritative payment confirmation."
+            "We're waiting for payment confirmation. You can refresh this page to check again."
         ),
         "payment_result.pending_note": (
-            "After confirmation, your fulfillment links will be emailed to your "
-            "purchase address."
+            "Once payment is confirmed, purchase access instructions are sent by email."
+        ),
+        "payment_result.failed_title": "Payment unsuccessful",
+        "payment_result.failed_message": (
+            "If you're unsure whether you were charged, contact support."
+        ),
+        "payment_result.refunded_title": "Payment refunded",
+        "payment_result.refunded_message": (
+            "If you have questions about your refund, contact support."
+        ),
+        "payment_result.unknown_title": "Unable to confirm payment status",
+        "payment_result.unknown_message": (
+            "Check the inbox for the address you used at checkout. If you're unsure "
+            "whether you were charged, contact support before making another payment."
         ),
         "payment_result.error_title": "Checkout is temporarily unavailable",
         "payment_result.error_message": (
@@ -787,13 +803,29 @@ TRANSLATIONS: Final[dict[str, dict[str, str]]] = {
         "checkout.product_refund": "Вы можете получить полный возврат стоимости SmartBudget в течение 14 календарных дней с момента подтверждения оплаты.",
         "checkout.consultation_refund": "Вы можете отменить консультацию до начала её проведения и получить полный возврат стоимости услуги. Условия после начала консультации и порядок обращения указаны в Политике возвратов.",
         "payment_result.title": "Статус оплаты",
+        "payment_result.paid_title": "Оплата подтверждена",
+        "payment_result.paid_message": (
+            "Инструкции по получению покупки отправляются на электронную почту, указанную при оплате."
+        ),
         "payment_result.pending_title": "Платёж проверяется",
         "payment_result.pending_message": (
-            "SmartBudgetSite ещё не получил достоверное подтверждение оплаты."
+            "Мы ждём подтверждения оплаты. Вы можете обновить страницу, чтобы проверить статус."
         ),
         "payment_result.pending_note": (
-            "После подтверждения ссылки для получения покупки будут отправлены "
-            "на указанный при покупке email."
+            "После подтверждения оплаты инструкции по получению покупки отправляются по электронной почте."
+        ),
+        "payment_result.failed_title": "Оплата не завершена",
+        "payment_result.failed_message": (
+            "Если вы не уверены, списались ли деньги, обратитесь в поддержку."
+        ),
+        "payment_result.refunded_title": "Оплата возвращена",
+        "payment_result.refunded_message": (
+            "Если у вас есть вопросы о возврате, обратитесь в поддержку."
+        ),
+        "payment_result.unknown_title": "Не удалось подтвердить статус оплаты",
+        "payment_result.unknown_message": (
+            "Проверьте почту, указанную при оплате. Если вы не уверены, списались ли деньги, "
+            "обратитесь в поддержку перед повторной оплатой."
         ),
         "payment_result.error_title": "Оплата временно недоступна",
         "payment_result.error_message": (

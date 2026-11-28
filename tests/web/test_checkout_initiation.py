@@ -5,13 +5,11 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.config import Settings
+from app.core.config import Settings, settings
 from app.core.sale_reference import SALE_REFERENCE_PATTERN
 from app.core.rate_limiting import RollingWindowRateLimiter
 from app.dependencies import get_db
 from app.main import app
-from app.models.consultation_entitlement import ConsultationEntitlement
-from app.models.download_entitlement import DownloadEntitlement
 from app.models.payment_provider_offer import PaymentProviderOffer
 from app.models.product import Product
 from app.models.product_price import ProductPrice
@@ -187,6 +185,7 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     monkeypatch,
     language,
 ):
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://shop.example.test")
     product = create_checkout_catalog(
         db_session,
         slug="smartbudget-int-standard-product-checkout-test",
@@ -202,6 +201,7 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     client.cookies.set("sb_lang", "en" if language == "ru" else "ru")
     response = client.post(
         action,
+        headers={"Host": "untrusted.example.test"},
         data={
             "customer_email": " Buyer@Example.com ",
             "currency": " eur ",
@@ -210,6 +210,7 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
             "total": "0.01",
             "payment_provider": "browser-provider",
             "provider_offer_id": "browser-offer",
+            "public_base_url": "https://untrusted.example.test",
         },
         follow_redirects=False,
     )
@@ -226,15 +227,20 @@ def test_product_only_checkout_uses_normalized_authoritative_catalog_data(
     assert sale.amount == Decimal("39.00")
     assert sale.currency == "EUR"
     assert sale.payment_provider == "lava_top"
+    assert sale.external_payment_id == "invoice-checkout-route-123"
     assert sale.payment_status == "pending"
     assert len(items) == 1
     assert items[0].item_type == "product"
     assert items[0].amount == Decimal("39.00")
+    return_url = f"https://shop.example.test/payment/result?lang={language}"
     assert captured == {
         "email": "buyer@example.com",
         "offer_id": f"offer-{product.slug}",
         "currency": "EUR",
         "amount": Decimal("39.00"),
+        "successful_return_url": return_url,
+        "failure_return_url": return_url,
+        "cancel_return_url": return_url,
     }
 
 
@@ -244,6 +250,7 @@ def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     db_session,
     monkeypatch,
 ):
+    monkeypatch.setattr(settings, "PUBLIC_BASE_URL", "https://shop.example.test")
     product = create_checkout_catalog(
         db_session,
         slug="smartbudget-int-standard-addon-initiation-test",
@@ -293,6 +300,9 @@ def test_checkout_with_consultation_persists_separate_snapshot_and_total(
     assert service_item.item_name == "SmartBudget setup consultation"
     assert service_item.currency_code == "EUR"
     assert captured["amount"] == Decimal("74.00")
+    assert sale.purchase_language == "en"
+    for field in ("successful_return_url", "failure_return_url", "cancel_return_url"):
+        assert captured[field] == "https://shop.example.test/payment/result?lang=en"
     assert SALE_REFERENCE_PATTERN.fullmatch(sale.sale_reference)
 
 
@@ -710,32 +720,3 @@ def test_checkout_rejects_unavailable_consultation_addon(
     assert response.status_code == 400
     assert db_session.query(Sale).count() == 0
     assert provider_called is False
-
-
-def test_payment_result_page_is_non_authoritative_and_creates_no_fulfillment(
-    client,
-    db_session,
-):
-    sale = Sale(
-        product_id=None,
-        customer_email="buyer@example.com",
-        amount=Decimal("39.00"),
-        currency="EUR",
-        payment_provider="lava_top",
-        payment_status="pending",
-        external_payment_id="invoice-result-page-test",
-    )
-    db_session.add(sale)
-    db_session.commit()
-
-    response = client.get("/payment/result")
-
-    assert response.status_code == 200
-    assert "Payment is being verified" in response.text
-    assert "has not yet received authoritative payment confirmation" in response.text
-    assert "fulfillment links will be emailed" in response.text
-    assert "Payment successful" not in response.text
-    db_session.refresh(sale)
-    assert sale.payment_status == "pending"
-    assert db_session.query(DownloadEntitlement).count() == 0
-    assert db_session.query(ConsultationEntitlement).count() == 0

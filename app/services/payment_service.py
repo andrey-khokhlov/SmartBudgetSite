@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import logging
+import re
+from collections.abc import Sequence
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.config import PAYMENT_RESULT_PATH, settings
 from app.models.enums import PaymentStatus
 from app.models.product import Product
 from app.models.sale import Sale
@@ -18,6 +21,7 @@ from app.repositories.payment_provider_offer_repository import (
 )
 from app.repositories.product_release_repository import ProductReleaseRepository
 from app.repositories.products_repository import ProductsRepository
+from app.repositories.sales_repository import get_sale_payment_status
 from app.repositories.service_addon_repository import ServiceAddonRepository
 from app.repositories.service_payment_provider_offer_repository import (
     ServicePaymentProviderOfferRepository,
@@ -63,6 +67,21 @@ class CheckoutValidationError(Exception):
 
 LAVA_TOP_PROVIDER = "lava_top"
 EMAIL_ADAPTER = TypeAdapter(EmailStr)
+LAVA_TOP_INVOICE_ID = re.compile(
+    r"[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}"
+)
+
+
+def resolve_lava_top_payment_result(db: Session, invoice_ids: Sequence[str]) -> str:
+    if len(invoice_ids) != 1 or not LAVA_TOP_INVOICE_ID.fullmatch(invoice_ids[0]):
+        return "unknown"
+
+    status = get_sale_payment_status(
+        db, payment_provider=LAVA_TOP_PROVIDER, external_payment_id=invoice_ids[0]
+    )
+    if status is not None and status in PaymentStatus:
+        return status
+    return "unknown"
 
 
 def normalize_checkout_email(customer_email: str) -> str:
@@ -324,11 +343,22 @@ def _create_and_persist_lava_top_invoice(
                 "No Lava.top offer is configured for the selected product."
             )
 
+        return_urls = {}
+        base_url = settings.PUBLIC_BASE_URL
+        if base_url and base_url.startswith("https://"):
+            query = urlencode({"lang": sale.purchase_language})
+            return_url = f"{base_url}{PAYMENT_RESULT_PATH}?{query}"
+            return_urls = {
+                "successful_return_url": return_url,
+                "failure_return_url": return_url,
+                "cancel_return_url": return_url,
+            }
         invoice = create_invoice(
             email=sale.customer_email,
             offer_id=external_offer_id,
             currency=sale.currency,
             amount=sale.amount,
+            **return_urls,
         )
     except (LavaTopProviderError, PaymentCheckoutError) as exc:
         sale.payment_status = PaymentStatus.FAILED

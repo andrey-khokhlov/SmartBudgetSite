@@ -4,10 +4,17 @@ from collections.abc import MutableSequence
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.core.config import PAYMENT_RESULT_PATH
+
 CAPABILITY_RESPONSE_HEADERS = (
     (b"cache-control", b"private, no-store, max-age=0"),
     (b"pragma", b"no-cache"),
     (b"expires", b"0"),
+    (b"referrer-policy", b"no-referrer"),
+)
+
+PAYMENT_RESULT_RESPONSE_HEADERS = (
+    (b"cache-control", b"no-store"),
     (b"referrer-policy", b"no-referrer"),
 )
 
@@ -36,7 +43,7 @@ def _replace_header(
 
 
 class CapabilityResponseProtectionMiddleware:
-    """Apply cache and referrer protection only to capability-bearing routes."""
+    """Apply cache and referrer protection to customer capability and result routes."""
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -47,14 +54,23 @@ class CapabilityResponseProtectionMiddleware:
         receive: Receive,
         send: Send,
     ) -> None:
-        if scope["type"] != "http" or not is_capability_path(scope["path"]):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope["path"]
+        if is_capability_path(path):
+            response_headers = CAPABILITY_RESPONSE_HEADERS
+        elif path in (PAYMENT_RESULT_PATH, f"{PAYMENT_RESULT_PATH}/"):
+            response_headers = PAYMENT_RESULT_RESPONSE_HEADERS
+        else:
             await self.app(scope, receive, send)
             return
 
         async def send_protected(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
-                for name, value in CAPABILITY_RESPONSE_HEADERS:
+                for name, value in response_headers:
                     _replace_header(headers, name, value)
                 message["headers"] = headers
             await send(message)
